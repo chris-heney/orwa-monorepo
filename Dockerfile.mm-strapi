@@ -1,44 +1,39 @@
-# Multi-stage build to reduce image size
-FROM node:18-alpine as dependencies
+# Multi-stage build for Strapi in Nx monorepo
+FROM node:18-alpine as build
 
 WORKDIR /workspace
+
+# Install pnpm
+RUN npm install -g pnpm
 
 # Copy package files and workspace configuration
 COPY package*.json ./
+COPY pnpm-lock.yaml ./
 COPY nx.json ./
 COPY tsconfig.base.json ./
+COPY jest.config.ts ./
+COPY jest.preset.js ./
 
-# Copy the Strapi app
+# Copy only the Strapi application
 COPY apps/mm-strapi ./apps/mm-strapi/
 
-# Install dependencies with legacy peer deps and clean cache
-RUN npm install --legacy-peer-deps --no-optional && \
-    npm cache clean --force
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Production stage
-FROM node:18-alpine as production
-
-WORKDIR /workspace
-
-# Copy dependencies from previous stage
-COPY --from=dependencies /workspace/node_modules ./node_modules
-COPY --from=dependencies /workspace/package*.json ./
-
-# Copy application code
-COPY apps/mm-strapi ./apps/mm-strapi/
-
-# Create strapi user
+# Create strapi user first (before copying files to avoid permission issues)
 RUN addgroup -g 1001 -S strapi && \
     adduser -S strapi -u 1001
 
-# Change ownership
-RUN chown -R strapi:strapi /workspace
+# Create required directories with proper ownership from start
+RUN mkdir -p /workspace/apps/mm-strapi/public/uploads && \
+    chmod 755 /workspace/apps/mm-strapi/public/uploads && \
+    chown -R strapi:strapi /workspace/apps/mm-strapi
+
 USER strapi
 
 # Expose port
 EXPOSE 1337
 
-# Change to strapi directory and start
+# Start Strapi using direct binary with proper working directory
 WORKDIR /workspace/apps/mm-strapi
-CMD ["npm", "run", "develop"]
-
+CMD ["../../node_modules/.bin/strapi", "develop"]

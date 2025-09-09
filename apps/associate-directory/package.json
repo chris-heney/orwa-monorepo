@@ -1,6 +1,7 @@
 {
   "name": "associate-directory",
   "version": "0.0.0",
+  "type": "module",
   "private": true,
   "scripts": {
     "build": "../../node_modules/.bin/vite build",

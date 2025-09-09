@@ -197,7 +197,7 @@ const AddExtras = ({
                         <FormControlLabel value="no" control={<Radio />} label="No" />
                       </RadioGroup>
                       <div className="text-left text-red-500 text-sm">
-                        {/* @ts-ignore */}
+                        {/* @ts-expect-error - Dynamic property access on errors object */}
                         {errors.extras && errors.extras[extra.id]?.message}
                       </div>
                       <span className="text-gray-500 text-sm">

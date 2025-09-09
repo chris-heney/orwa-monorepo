@@ -1,6 +1,6 @@
 import { IScoringCriteria } from "../types/types";
 
-export const  getSelectedCriterias = (selectedProjects: string[], scoringCriterias: IScoringCriteria[], drinking_or_wastewater: String) => {
+export const  getSelectedCriterias = (selectedProjects: string[], scoringCriterias: IScoringCriteria[], drinking_or_wastewater: string) => {
     return scoringCriterias
       .filter((criteria) => {
         return (

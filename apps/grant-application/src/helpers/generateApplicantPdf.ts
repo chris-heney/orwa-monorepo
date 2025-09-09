@@ -408,7 +408,7 @@ export async function generatePDF(
           font: timesRomanFont,
         });
 
-        let checkboxXPosition = xPosition + 220; // Adjust the checkbox position for the left column
+        const checkboxXPosition = xPosition + 220; // Adjust the checkbox position for the left column
 
         page.drawRectangle({
           x: checkboxXPosition,
@@ -446,7 +446,7 @@ export async function generatePDF(
           font: timesRomanFont,
         });
 
-        let checkboxXPosition = xPosition + 250; // Adjust the checkbox position for the right column
+        const checkboxXPosition = xPosition + 250; // Adjust the checkbox position for the right column
 
         page.drawRectangle({
           x: checkboxXPosition,

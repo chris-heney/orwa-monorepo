@@ -36,7 +36,7 @@ export default ({ strapi }) => ({
       ctx.body =  associateMembershipApplication
 
     } catch (err) {
-      ctx.status
+      ctx.status = 500;
 
       console.log("err", err);
       ctx.body = {

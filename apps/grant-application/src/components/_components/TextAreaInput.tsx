@@ -30,7 +30,7 @@ const TextAreaInput = ({
   const [rowCount, setRowCount] = useState(0);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    let value = event.target.value;
+    const value = event.target.value;
 
     const newRowCount = value.split("\n").length;
 
