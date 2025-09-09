@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@theme {
+  /* Custom theme configuration for associate-directory */
+  --max-height-well: 540px;
+}
+
+body {
+    background-color: #FFFFFF;
+}
+
+section.sponsors img {
+    max-height: 160px;
+    width: auto;
+    height: auto;
+}
+
+#schedule-tables thead {
+    display: none;
+}
+#schedule-tables tr {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+}
+
+@media (min-width: 768px) {
+    #schedule-tables thead {
+        display: table-header-group;
+    }
+    #schedule-tables label {
+        display: none;
+    }
+    #schedule-tables tr {
+        display: table-row;
+        padding: 0;
+    }
+}
