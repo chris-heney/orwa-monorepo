@@ -3,20 +3,24 @@ FROM node:18-alpine as build
 
 WORKDIR /workspace
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Copy package files and workspace configuration
 COPY package*.json ./
+COPY pnpm-lock.yaml ./
 COPY nx.json ./
 COPY tsconfig.base.json ./
 COPY jest.config.ts ./
 COPY jest.preset.js ./
 
-# Copy the specific app and its dependencies
+# Copy only the specific app (no interdependencies in this setup)
 COPY apps/associate-directory ./apps/associate-directory/
 
 # Install dependencies
-RUN npm install
+RUN pnpm install --frozen-lockfile
 
-# Build the application using NX
+# Build the application using NX (from workspace root)
 RUN npx nx build associate-directory --prod
 
 # Production stage

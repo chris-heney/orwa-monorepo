@@ -75,8 +75,7 @@ const _sendEmail = async ( data: EmailPayload) => {
 }
 
 const _transform_single = (data: IStrapiRecord) => ({
-  id: data.id,
-  ...data.attributes
+  ...data,
 })
 
 const _transform_list = (data: IStrapiRecord[]) => data.map(_transform_single)

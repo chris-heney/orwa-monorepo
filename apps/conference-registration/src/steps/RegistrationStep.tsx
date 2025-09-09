@@ -52,10 +52,12 @@ const RegistrationStep = () => {
         break;
       case "Vendor":
         stepsToHide.push("attendee_registration");
-        (ConferenceOptions.booths_available <= 0 && !(isAdminView && isLoggedIn)) &&
+        if (ConferenceOptions.booths_available <= 0 && !(isAdminView && isLoggedIn)) {
           stepsToHide.push("booth_registration");
-        registrationSource === "kiosk" &&
+        }
+        if (registrationSource === "kiosk") {
           stepsToHide.push("booth_registration");
+        }
         break;
       default:
         stepsToHide.push(
@@ -124,12 +126,14 @@ const RegistrationStep = () => {
               registrationType="Attendee"
               checked={registrationType}
               setRegistrationType={() => {
-                registrationType === "Attendee"
-                  ? setValue("registration_type", null)
-                  : (setValue("registration_type", "Attendee"),
-                    setValue("booths", []),
-                    setValue("tickets", []));
-                    unregister("organization");
+                if (registrationType === "Attendee") {
+                  setValue("registration_type", null);
+                } else {
+                  setValue("registration_type", "Attendee");
+                  setValue("booths", []);
+                  setValue("tickets", []);
+                }
+                unregister("organization");
               }}
             />
             <VendorOrAttendeeBox
@@ -137,11 +141,13 @@ const RegistrationStep = () => {
               registrationType="Vendor"
               checked={registrationType}
               setRegistrationType={() => {
-                registrationType === "Vendor"
-                  ? setValue("registration_type", null)
-                  : (setValue("registration_type", "Vendor"),
-                    setValue("tickets", []));
-                    unregister("organization");
+                if (registrationType === "Vendor") {
+                  setValue("registration_type", null);
+                } else {
+                  setValue("registration_type", "Vendor");
+                  setValue("tickets", []);
+                }
+                unregister("organization");
               }}
             />
           </div>

@@ -14,7 +14,7 @@ export default ({ strapi }) => ({
       });
       ctx.body = user;
     } catch (err) {
-      ctx.body;
+      ctx.body = err;
     }
   },
   sortSystemFees: async (ctx, next) => {

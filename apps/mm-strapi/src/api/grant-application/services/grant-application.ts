@@ -131,9 +131,9 @@ export default ({ strapi }) => ({
       applied_to_other_loans,
     } = ctx.request.body as IGrantApplicationFormPayload;
 
-    let contactId = 0;
-    let chairmanId = 0;
-    let engineerId = 0;
+    const contactId = 0;
+    const chairmanId = 0;
+    const engineerId = 0;
 
     //return an id of the status
     const getStatus = async (status: string) => {

@@ -20,7 +20,7 @@ const GrantApplicationScoring = () => {
     return scoringCriterias
       .filter((criteria) => {
         return (
-          criteria.project_type.data.attributes &&  selectedProjects.includes(
+          criteria.project_type.data &&  selectedProjects.includes(
             criteria.project_type.data.id.toString()
           )
         );

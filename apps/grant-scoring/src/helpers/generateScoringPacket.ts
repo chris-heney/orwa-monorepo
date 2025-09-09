@@ -215,17 +215,17 @@ export async function generatePDF(
 
     const itemsPerColumn = Math.ceil(scoringCriterias.length / 2);
     const columnWidth = (width - 2 * margin) / 2;
-    let columnYPosition = yPosition;
+    const columnYPosition = yPosition;
 
     const maxLineWidth = 180; // Set the maximum width before wrapping
     const wrapText = (text: string, font: PDFFont, fontSize: number, maxWidth: number) => {
-      let lines = [];
+      const lines = [];
       text = sanitizeText(text);
-      let words = text.split(" ");
+      const words = text.split(" ");
       let currentLine = words[0];
 
       for (let i = 1; i < words.length; i++) {
-        let width = font.widthOfTextAtSize(
+        const width = font.widthOfTextAtSize(
           currentLine + " " + words[i],
           fontSize
         );

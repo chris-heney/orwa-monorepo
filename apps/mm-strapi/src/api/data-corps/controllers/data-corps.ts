@@ -34,7 +34,7 @@ export default ({ strapi }) => ({
            *    type_id (relationship) using the type (string).
            */
           break;
-        case 'heal-organization':
+        case 'heal-organization': {
           const healOrganization = async () => {
 
             const registrations = await strapi.documents('api::conference-registration.conference-registration').findMany({
@@ -103,7 +103,8 @@ export default ({ strapi }) => ({
           await healOrganization()
 
           break;
-        case 'heal-registration-type':
+        }
+        case 'heal-registration-type': {
 
           const healRegistrationType = async () => {
 
@@ -146,6 +147,7 @@ export default ({ strapi }) => ({
           await healRegistrationType()
 
           break;
+        }
         case 'heal-names':
           // Do something
           break;

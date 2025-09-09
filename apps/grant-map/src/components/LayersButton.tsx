@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Button, Menu, MenuItem, Checkbox } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useMediaQuery } from '@uidotdev/usehooks';
-import { useAppContext } from '@/providers/AppContext';
-import { MapLayer } from '@/types/MapLayer';
+import { useAppContext } from '../providers/AppContext';
+import { MapLayer } from '../types/MapLayer';
 
 
 const LayersButton = () => {
