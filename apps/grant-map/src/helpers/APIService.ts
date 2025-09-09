@@ -5,7 +5,7 @@ import { SpatialRegion } from "../types/SpatialRegion";
 import { MapLayer } from "../types/MapLayer";
 import { polygon } from "@turf/turf";
 
-const STRAPI_API_ENDPOINT = import.meta.env.VITE_STRAPI_API_ENDPOINT;
+const STRAPI_API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 
 const login = async (identifier: string, password: string) => {
   return await (
