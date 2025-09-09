@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "registration_addons",
+  "info": {
+    "singularName": "registration-addon",
+    "pluralName": "registration-addons",
+    "displayName": "Registration Addon",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "price_online": {
+      "type": "decimal"
+    },
+    "price_event": {
+      "type": "decimal"
+    },
+    "counted": {
+      "type": "boolean"
+    },
+    "max_qty": {
+      "type": "integer"
+    },
+    "max_qty_each": {
+      "type": "integer"
+    },
+    "icon": {
+      "type": "text"
+    },
+    "details": {
+      "type": "richtext"
+    },
+    "conferences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference.conference",
+      "inversedBy": "registration_addons"
+    },
+    "context": {
+      "type": "enumeration",
+      "enum": [
+        "Attendee",
+        "Contestant",
+        "Vendor",
+        "Booth"
+      ]
+    }
+  }
+}

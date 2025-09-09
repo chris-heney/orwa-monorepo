@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_feedbacks",
+  "info": {
+    "singularName": "conference-feedback",
+    "pluralName": "conference-feedbacks",
+    "displayName": "Conference Feedback",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "email": {
+      "type": "email"
+    },
+    "name": {
+      "type": "string"
+    },
+    "feedback": {
+      "type": "text"
+    }
+  }
+}

@@ -1,0 +1,203 @@
+{
+  "kind": "collectionType",
+  "collectionName": "soonerwarns",
+  "info": {
+    "singularName": "soonerwarn",
+    "pluralName": "soonerwarns",
+    "displayName": "Soonerwarn",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "system_name": {
+      "type": "string"
+    },
+    "physical_address_street": {
+      "type": "string"
+    },
+    "physical_address_city": {
+      "type": "string"
+    },
+    "physical_address_state": {
+      "type": "enumeration",
+      "enum": [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming"
+      ]
+    },
+    "physical_address_zip": {
+      "type": "string"
+    },
+    "application_date": {
+      "type": "date"
+    },
+    "county": {
+      "type": "enumeration",
+      "enum": [
+        "Adair",
+        "Alfalfa",
+        "Atoka",
+        "Beaver",
+        "Beckham",
+        "Blaine",
+        "Bryan",
+        "Caddo",
+        "Canadian",
+        "Carter",
+        "Cherokee",
+        "Choctaw",
+        "Cimarron",
+        "Cleveland",
+        "Coal",
+        "Comanche",
+        "Cotton",
+        "Craig",
+        "Creek",
+        "Custer",
+        "Delaware",
+        "Dewey",
+        "Ellis",
+        "Garfield",
+        "Garvin",
+        "Grady",
+        "Grant",
+        "Greer",
+        "Harmon",
+        "Harper",
+        "Haskell",
+        "Hughes",
+        "Jackson",
+        "Jefferson",
+        "Johnston",
+        "Kay",
+        "Kingfisher",
+        "Kiowa",
+        "Latimer",
+        "LeFlore",
+        "Lincoln",
+        "Logan",
+        "Love",
+        "Major",
+        "Marshall",
+        "Mayes",
+        "McClain",
+        "McCurtain",
+        "McIntosh",
+        "Murray",
+        "Muskogee",
+        "Noble",
+        "Nowata",
+        "Okfuskee",
+        "Oklahoma",
+        "Okmulgee",
+        "Osage",
+        "Ottawa",
+        "Pawnee",
+        "Payne",
+        "Pittsburg",
+        "Pontotoc",
+        "Pottawatomie",
+        "Pushmataha",
+        "Roger Mills",
+        "Rogers",
+        "Seminole",
+        "Sequoyah",
+        "Stephens",
+        "Texas",
+        "Tillman",
+        "Tulsa",
+        "Wagoner",
+        "Washington",
+        "Washita",
+        "Woods",
+        "Woodward"
+      ]
+    },
+    "location": {
+      "type": "json"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::soonerwarn-status.soonerwarn-status"
+    },
+    "regions": {
+      "type": "json"
+    },
+    "member_since": {
+      "type": "date"
+    },
+    "primary_contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "secondary_contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "contacts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::contact.contact"
+    }
+  }
+}

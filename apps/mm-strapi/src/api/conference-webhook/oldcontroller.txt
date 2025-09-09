@@ -1,0 +1,1675 @@
+import { AdminOptions } from "../../membership-forms/types";
+
+type Identifier = number;
+
+interface IContactEntity {
+  id: number;
+  first: string;
+  last: string;
+  email: string;
+  phone: string;
+  contact_type:
+    | "associate"
+    | "watersystem"
+    | "instructor"
+    | "staff"
+    | "administrator";
+  title?: string;
+  license?: string;
+  user: number;
+  passport: number | null;
+}
+
+interface IAttendeeEntity {
+  id?: number;
+  conference: number;
+  year: number;
+  registration: number;
+  first: string;
+  last: string;
+  type: string; // Based on ticket type
+  contact: number;
+  passport_id?: number; // Based on Contact ID
+  training_type: "None" | "Both" | "Operator" | "Board";
+  organization: string; // Based on registration_type: Attendee: Organization, Vendor: Association
+  email: string; // Based on Contact, if not available, use the email from the registration
+  phone: string; // Based on Contact, if not available, use the phone from the registration
+  license?: string;
+  items?: IExtraEntity[];
+  conference_ticket: Identifier;
+  orwa_voting_status?: string;
+  orwaag_voting_status?: string;
+  title?: string;
+  speaker?: string;
+  promotional_emails?: boolean;
+}
+
+export interface ITicketOption {
+  id: Identifier;
+  attributes: any;
+  name: string;
+  price_online: number;
+  price_event: number;
+  description: string;
+  includes: IExtraEntity[];
+  excludes: IExtraEntity[];
+  context: "Attendee" | "Vendor" | "Contestant";
+}
+
+export interface IExtraOption {
+  context: "Booth" | "Attendee" | "Registration" | "Contestants";
+  id: any;
+  max_qty_each: number;
+  extra: Identifier; // To enable a relationship that will define if it is counted on the summary.
+  name: string;
+  quantity: number;
+  amount: number;
+  price_online: number;
+  price_event: number;
+  max_qty: number;
+  counted: boolean;
+  details: string;
+  included: {
+    data: ITicketOption[];
+  };
+  excluded: {
+    data: ITicketOption[];
+  };
+  conference: Identifier;
+  description: string;
+}
+
+export interface ITicketPayload {
+  participating_in_demo: boolean; // only for expo conference
+  first: string;
+  last: string;
+  email: string;
+  phone: string;
+  license?: string;
+  training_type?: "None" | "Both" | "Operator" | "Board";
+  type: "Attendee" | "Vendor" | "Guest";
+  price: number;
+  extras: number[];
+  ticket_type: ITicketOption;
+  [key: string]: unknown;
+}
+
+interface IBoothMeta {
+  id?: number;
+  key: string;
+  value: string;
+  label: string;
+  type: string;
+}
+
+interface IBoothEntity {
+  id?: number;
+  conference: number;
+  year: number;
+  registration: number;
+  organization: string;
+  subtotal: number;
+  wp_eid: number;
+  items?: IBoothMeta[];
+}
+
+interface IRegistrationEntity {
+  conference: number;
+  year: number;
+  registration_date: Date;
+  registrant: number;
+  total: number;
+  payment_method: string;
+  booths?: number[];
+  sponsors?: number[];
+}
+
+interface ISponsorEntity {
+  id: Identifier;
+  name: string;
+  description: string;
+  available: string;
+  amount: number;
+}
+
+interface IExtraEntity {
+  item: Identifier;
+  context: "booth" | "attendee";
+  id: any;
+  max_qty_each: number;
+  extra: Identifier; // To enable a relationship that will define if it is counted on the summary.
+  name: string;
+  quantity: number;
+  amount: number;
+  price_online: number;
+  price_event: number;
+  max_qty: number;
+  counted: boolean;
+  included: Identifier[];
+  excluded: Identifier[];
+  conference: Identifier;
+}
+
+interface IExtraEntityRaw extends IAttendeeEntity {
+  included: ITicketOption[];
+  excluded: ITicketOption[];
+}
+
+// orwa-strapi  | - Authorize.Net Response { messages: { resultCode: 'Error', message: [ [Object] ] } }
+
+interface IAuthNetResponse {
+  messages: {
+    resultCode: string;
+    message: {
+      code: string;
+      text: string;
+    }[];
+  };
+  transactionResponse: {
+    authCode: string;
+    transId: string;
+    networkTransId: string;
+  };
+  responseCode: string;
+}
+
+const state_map = [
+  { Alabama: "AL" },
+  { Alaska: "AK" },
+  { Arizona: "AZ" },
+  { Arkansas: "AR" },
+  { California: "CA" },
+  { Colorado: "CO" },
+  { Connecticut: "CT" },
+  { Delaware: "DE" },
+  { Florida: "FL" },
+  { Georgia: "GA" },
+  { Hawaii: "HI" },
+  { Idaho: "ID" },
+  { Illinois: "IL" },
+  { Indiana: "IN" },
+  { Iowa: "IA" },
+  { Kansas: "KS" },
+  { Kentucky: "KY" },
+  { Louisiana: "LA" },
+  { Maine: "ME" },
+  { Maryland: "MD" },
+  { Massachusetts: "MA" },
+  { Michigan: "MI" },
+  { Minnesota: "MN" },
+  { Mississippi: "MS" },
+  { Missouri: "MO" },
+  { Montana: "MT" },
+  { Nebraska: "NE" },
+  { Nevada: "NV" },
+  { "New Hampshire": "NH" },
+  { "New Jersey": "NJ" },
+  { "New Mexico": "NM" },
+  { "New York": "NY" },
+  { "North Carolina": "NC" },
+  { "North Dakota": "ND" },
+  { Ohio: "OH" },
+  { Oklahoma: "OK" },
+  { Oregon: "OR" },
+  { Pennsylvania: "PA" },
+  { "Rhode Island": "RI" },
+  { "South Carolina": "SC" },
+  { "South Dakota": "SD" },
+  { Tennessee: "TN" },
+  { Texas: "TX" },
+  { Utah: "UT" },
+  { Vermont: "VT" },
+  { Virginia: "VA" },
+  { Washington: "WA" },
+  { "West Virginia": "WV" },
+  { Wisconsin: "WI" },
+  { Wyoming: "WY" },
+];
+
+const user_base = {
+  provider: "local",
+  confirmed: true,
+  blocked: false,
+  role: 9,
+  username: "",
+  email: "",
+  password: "password",
+};
+
+const PAYMENT_GATEWAY_API = "https://api.authorize.net/xml/v1/request.api";
+const PAYMENT_GATEWAY_API_SANDBOX =
+  "https://apitest.authorize.net/xml/v1/request.api";
+const PAYMENT_GATEWAY_LOGIN = "7u228GQk2DK";
+const PAYMENT_GATEWAY_KEY = "56nen4B5v4P35H3A";
+const PAYMENT_GATEWAY_LOGIN_SANDBOX = "3946T8QkQw2";
+const PAYMENT_GATEWAY_KEY_SANDBOX = "67wC6W9s3b3yj9Cj";
+
+const currentYear = new Date().getFullYear();
+
+export default ({ strapi }) => {
+  const getUserIdByEmail = async (email) => {
+    const users =
+      (await strapi.plugins["users-permissions"].services.user.fetchAll({
+        fields: ["id", "wp_uid"],
+        filters: { email },
+        limit: 1,
+      })) || [];
+
+    // console.log('User Search Results:', JSON.stringify(users), users.length);
+
+    return users.length > 0
+      ? {
+          userId: users[0].id,
+          wp_uid: users[0].wp_uid,
+        }
+      : { userId: null, wp_uid: null };
+  };
+
+  /**
+   * Get Contact IDs using strapi's contact service
+   * @param email email address of the contact
+   */
+  const getContact = async (email, contactData, userData) => {
+    // console.log('Search for contact with email: ', email);
+
+    const contactList =
+      (await strapi.entityService.findMany("api::contact.contact", {
+        fields: ["id", "first", "last", "phone", "contact_type"],
+        filters: { email },
+        limit: 1,
+        populate: { user: true },
+      })) || [];
+
+    // console.log('Contact Search Results:', JSON.stringify(contactList));
+
+    // Contact Not Found ... Creating One
+    if (contactList.length === 0) {
+      // console.log('No Contact Found.  Creating One.', JSON.stringify(contactData));
+      contactList.push(
+        await strapi.entityService.create("api::contact.contact", {
+          data: contactData,
+        })
+      );
+      // console.log('Contact created.', JSON.stringify(contactList[0]));
+      // console.log('Now we will try to find a user.');
+    }
+
+    // Contact Found With User Included
+    if (contactList[0].user) {
+      // console.log('Returning contact with user: ', JSON.stringify({
+      //   ...contactList[0],
+      //   user: contactList[0].user?.id,
+      //   passport: contactList[0].user?.wp_uid
+      // }));
+
+      // Update the contact found with missing informatioon
+
+      console.log("Updating Contact:", JSON.stringify(contactList[0]));
+      await updateContact(contactList[0].id, {
+        first: contactList[0].first ? contactList[0].first : contactData.first,
+        last: contactList[0].last ? contactList[0].last : contactData.last,
+        phone: contactList[0].phone ? contactList[0].phone : contactData.phone,
+      });
+
+      return {
+        ...contactList[0],
+        user: contactList[0].user?.id,
+        passport: contactList[0].user?.wp_uid,
+      };
+    }
+
+    // Update the contact found with missing informatioon
+
+    if (contactList[0].first || contactList[0].last || contactList[0].phone) {
+      await updateContact(contactList[0].id, {
+        first: contactList[0].first ? contactList[0].first : contactData.first,
+        last: contactList[0].last ? contactList[0].last : contactData.last,
+        phone: contactList[0].phone ? contactList[0].phone : contactData.phone,
+      });
+    }
+
+    const { userId, wp_uid } = await getUserIdByEmail(email);
+
+    // User Found: Return the contact with user
+    if (userId) {
+      // @TODO: Update the contact with the user
+
+      await updateContact(contactList[0].id, {
+        user: userId,
+      });
+      // await strapi.entityService.update('api::contact.contact', contactList[0].id, { data: { user: userId } });
+
+      // console.log('Returning Contact with found user:', JSON.stringify({ ...contactList[0], userId, passport: wp_uid }));
+
+      return {
+        ...contactList[0],
+        user: userId,
+        passport: wp_uid,
+      };
+    }
+
+    // User Not Found: Create user and return contact with the new user
+    // console.log('User Not Found.  Creating One.', JSON.stringify(userData));
+    const user = await strapi.plugins["users-permissions"].services.user.add(
+      userData
+    );
+    // console.log('User Manually Created:', JSON.stringify(user));
+    return {
+      ...contactList[0],
+      user: user.id,
+      passport: null,
+    };
+  };
+
+  const updateContact = async (
+    contactId: number,
+    contact: Partial<IContactEntity>,
+    retries = 3
+  ) => {
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        console.log(
+          `Updating Contact (Attempt ${attempt + 1}):`,
+          JSON.stringify(contact)
+        );
+        const response = await strapi.entityService.update(
+          "api::contact.contact",
+          contactId,
+          { data: contact }
+        );
+        return response.data;
+      } catch (error) {
+        if (error.code === "ER_LOCK_DEADLOCK" && attempt < retries - 1) {
+          console.warn(
+            `Deadlock detected. Retrying (${attempt + 1}/${retries})...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, 100)); // Small delay before retry
+        } else {
+          throw error; // Throw error if all retries fail
+        }
+      }
+      attempt++;
+    }
+  };
+
+  const handleSubractExtrasAvailable = async (extras: IExtraEntity[]) => {
+    if (extras.length === 0) return;
+
+    extras.forEach(async (extra) => {
+      const extraData = await strapi.entityService.findOne(
+        "api::conference-extra.conference-extra",
+        extra.item
+      );
+      await strapi.entityService.update(
+        "api::conference-extra.conference-extra",
+        extra.item,
+        {
+          data: {
+            max_qty: extraData.max_qty - 1,
+          },
+        }
+      );
+    });
+  };
+
+  const handleSubractRegistrationAddonsAvailable = async (
+    extras: IExtraEntity[]
+  ) => {
+    if (extras.length === 0) return;
+
+    extras.forEach(async (extra) => {
+      const extraData = await strapi.entityService.findOne(
+        "api::registration-addon.registration-addon",
+        extra.id
+      );
+      await strapi.entityService.update(
+        "api::registration-addon.registration-addon",
+        extra.id,
+        {
+          data: {
+            max_qty: extraData.max_qty - 1,
+          },
+        }
+      );
+    });
+  };
+
+  const fetchExtrasData = async (conference: number, extraIds: number[]) => {
+    return await strapi.entityService.findMany(
+      "api::conference-extra.conference-extra",
+      {
+        filters: {
+          conference,
+          year: currentYear,
+          id: {
+            $in: extraIds,
+          },
+        },
+        populate: "*",
+      }
+    );
+  };
+
+  const fetchRegistrationAddonData = async (conference: number, addonIds: number[]) => {
+    console.log("FETCHING ADDONS", addonIds);
+    return await strapi.entityService.findMany(
+      "api::registration-addon.registration-addon",
+      {
+        filters: {
+          conference,
+          year: currentYear,
+          id: {
+            $in: addonIds,
+          },
+        },
+        populate: "*",
+      }
+    );
+  };
+
+  const fetchRegistrationExtraData = async (
+    conference: number,
+    extraIds: number[]
+  ) => {
+    console.log("FETCHING EXTRAS", extraIds);
+  
+    return await strapi.entityService.findMany(
+      "api::conference-extra.conference-extra",
+      {
+        filters: { 
+          conference, 
+          year: currentYear,
+          id: {
+            $in: extraIds,
+          },
+        },
+        populate: "*",
+      }
+    );
+  };
+
+  const logFormData = async (data: any, resource: string) => {
+    await strapi.entityService.create("api::log.log", {
+      data: {
+        data: {
+          ...data,
+          paymentData: {
+            ...data.paymentData,
+            cardNumber: null,
+            expirationDate: null,
+            cardCode: null,
+          },
+        },
+        resource,
+      },
+    });
+  };
+
+  return {
+    /**
+     * Registration
+     * Conference Registrations can come from different source and different cotexts.
+     * @param ctx Koa Context
+     * @param next Koa Next
+     */
+    registration: async (ctx, next) => {
+      ctx.body = "ok";
+
+      console.log(
+        "↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ Starting Registration ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓"
+      );
+      // console.log('Starting Registration');
+
+      try {
+        const {
+          booths,
+          conference,
+          organization,
+          registrant,
+          registration_type,
+          paymentType,
+          paymentData,
+          tickets,
+          sponsors,
+          registrationSource,
+          nonMemberFee, // agency false and memberType Non Member
+          registrationAddonsIds,
+          registrationExtrasIds,
+          team,
+          logo,
+          watersystem,
+          adminOptions,
+          secondary_email,
+        } = ctx.request.body;
+
+        const conferenceData = await strapi.entityService.findOne(
+          "api::conference.conference",
+          conference,
+          {
+            populate: "*",
+          }
+        );
+
+        const fetchAddonsForRegistration = async (
+          registrationAddonsIds: number[]
+        ) => {
+          if (registrationAddonsIds?.length > 0) {
+            console.log("FETCHING ADDONS", registrationAddonsIds);
+          const addonsArrays = await fetchRegistrationAddonData(
+            conference,
+            registrationAddonsIds
+            );
+            return addonsArrays.flat();
+          }
+          else {
+            return [];
+          }
+        };
+
+        const fetchExtrasForRegistration = async (
+          registrationExtrasIds: number[]
+        ) => {
+          console.log("FETCHING EXTRAS", registrationExtrasIds);
+          if (registrationExtrasIds?.length > 0) {
+            const extrasArrays = await fetchRegistrationExtraData(
+              conference,
+            registrationExtrasIds
+          );
+          return extrasArrays.flat();
+          }
+          else {
+            return [];
+          }
+        };
+
+        if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
+          logFormData(
+            {
+              ...ctx.request.body,
+            },
+            "conference-registration"
+          );
+
+          console.log("- Request Body:", JSON.stringify(ctx.request.body));
+          console.log(
+            "-------------------------------------------------------------"
+          );
+
+          /**
+           * Handle Payment
+           */
+          if (paymentType === "Card") {
+            const {
+              billingAddress,
+              amount,
+              cardNumber,
+              expirationDate,
+              cardCode,
+            } = paymentData;
+
+            // need to move from MM/YY to YYYY-MM - 2023-12 ... 01/23 -> 2023-12 OR 12/23 -> 2023-12
+
+            // this one did not turn the 2-digit year into a 4-digit year
+            // const expiry = expirationDate.split('/').reverse().join('-');
+
+            // const expiry = expirationDate
+            //   .split("/")
+            //   .reverse()
+            //   .map((value, index) => {
+            //     return index === 1 ? `20${value}` : value;
+            //   })
+            //   .join("-");
+
+            const createTransactionRequest = {
+              createTransactionRequest: {
+                merchantAuthentication: {
+                  name: PAYMENT_GATEWAY_LOGIN,
+                  transactionKey: PAYMENT_GATEWAY_KEY,
+                },
+                // refId: '123456',
+                transactionRequest: {
+                  transactionType: "authCaptureTransaction",
+                  amount,
+                  payment: {
+                    creditCard: {
+                      cardNumber,
+                      expirationDate,
+                      cardCode,
+                    },
+                  },
+                  billTo: {
+                    firstName: registrant.first,
+                    lastName: registrant.last,
+                    company: organization,
+                    // Convert the full-text state name to the state code
+                    state:
+                      state_map.find((state) => state[billingAddress.state])?.[
+                        billingAddress.state
+                      ] ?? billingAddress.state,
+                    country: "US",
+                  },
+                  // customerIP: '192.168.1.1',
+                },
+              },
+            };
+
+            // @TODO: _FUTURE_ Extract Authorize.Net API Call to a shared strapi service!
+            // const authorizeNetResponse = await strapi.services.authorizeNet.createTransaction(payload);
+
+            const authorizeNetResponse: IAuthNetResponse = (await (
+              await fetch(PAYMENT_GATEWAY_API, {
+                method: "POST",
+                body: JSON.stringify(createTransactionRequest),
+                headers: {
+                  "Content-Type": "application/json",
+                },
+              })
+            ).json()) as IAuthNetResponse;
+
+            console.log(
+              "- Authorize.Net:",
+              JSON.stringify(authorizeNetResponse)
+            );
+            console.log(
+              "-------------------------------------------------------------"
+            );
+
+            if (authorizeNetResponse.messages.resultCode !== "Ok") {
+              ctx.body = {
+                result: "error",
+                message: authorizeNetResponse.messages.message[0].text,
+                data: authorizeNetResponse,
+              };
+              return;
+            }
+
+            const newTransaction = await strapi.entityService.create(
+              "api::conference-transaction.conference-transaction",
+              {
+                data: {
+                  email: registrant.email,
+                  auth_code: authorizeNetResponse.transactionResponse.authCode,
+                  transaction_id:
+                    authorizeNetResponse.transactionResponse.transId,
+                  network_trans_id:
+                    authorizeNetResponse.transactionResponse.networkTransId,
+                },
+              }
+            );
+          }
+
+          /**
+           * Handle Registrant as Contact
+           */
+
+          console.log(
+            "-------------------------------------------------------------"
+          );
+          console.log("REGISTRANT", registrant);
+
+          const regisgrantContact: IContactEntity = await getContact(
+            registrant.email,
+            {
+              first: registrant.first,
+              last: registrant.last,
+              email: registrant.email,
+              phone: registrant.phone,
+            },
+            {
+              ...user_base,
+              username: registrant.email,
+              email: registrant.email,
+              password: btoa(registrant.email),
+            }
+          );
+
+          console.log("- Registrant:", JSON.stringify(regisgrantContact));
+          console.log(
+            "-------------------------------------------------------------"
+          );
+
+          /**
+           * Handle Registration
+           */
+
+          const selectedRegistrationAddons = await fetchAddonsForRegistration(
+            registrationAddonsIds
+          );
+
+          const extrasData = await fetchExtrasData(
+            conference,
+            registrationExtrasIds
+          );
+
+          const registrationAddons = selectedRegistrationAddons.map(
+            (addon: IExtraEntity, index) => {
+              return {
+                key: addon.name + " " + index,
+                value:
+                  registrationSource === "online"
+                    ? addon.price_online.toString()
+                    : addon.price_event.toString(),
+                label: addon.name,
+                addon: addon.id,
+              };
+            }
+          );
+
+          const extras = extrasData.map((extra: IExtraEntity) => {
+            return {
+              key: extra.name,
+              value:
+                registrationSource === "online"
+                  ? extra.price_online.toString()
+                  : extra.price_event.toString(),
+              label: extra.name,
+              item: extra.id,
+            };
+          });
+
+          if (registrationAddons?.length > 0) {
+            handleSubractRegistrationAddonsAvailable(
+              selectedRegistrationAddons
+            );
+          }
+          if (registrationExtrasIds?.length > 0) {
+            handleSubractExtrasAvailable(extras);
+          }
+
+          const items = extras.concat(registrationAddons);
+
+          const newRegistration = await strapi.entityService.create(
+            "api::conference-registration.conference-registration",
+            {
+              data: {
+                conference,
+                year: currentYear,
+                registration_date: new Date(),
+                registrant: regisgrantContact.id,
+                total: paymentData.amount,
+                payment_method: paymentType === "Card" ? "Card" : paymentType,
+                type: registration_type,
+                organization: organization,
+                sponsorships: sponsors.map(
+                  (sponsor: ISponsorEntity) => sponsor.id
+                ),
+                address: {
+                  street: paymentData.billingAddress.address,
+                  city: paymentData.billingAddress.city,
+                  state: paymentData.billingAddress.state,
+                  zip: paymentData.billingAddress.zip,
+                },
+                non_member_fee: nonMemberFee ? true : false,
+                items: items,
+                registration_source: registrationSource ?? "online",
+              },
+            }
+          );
+
+          console.log("- Registration:", JSON.stringify(newRegistration));
+          console.log(
+            "-------------------------------------------------------------"
+          );
+
+          const registrationId = newRegistration.id;
+
+          // Handle Water Taste Test Contestants
+
+          if (
+            registrationAddons.some(
+              (item) => item.label === "Water Taste Test Contestant"
+            )
+          ) {
+            await strapi.entityService.create(
+              "api::taste-test-contestant.taste-test-contestant",
+              {
+                data: {
+                  conference,
+                  year: currentYear,
+                  first: registrant.first,
+                  last: registrant.last,
+                  email: registrant.email,
+                  phone: registrant.phone,
+                  organization,
+                  watersystem: watersystem.id,
+                  registration: registrationId,
+                },
+              }
+            );
+          }
+
+          /**
+           * Handle Sponsors
+           */
+
+          if (sponsors.length > 0) {
+            const total = sponsors.reduce(
+              (acc, sponsor) => acc + sponsor.amount,
+              0
+            );
+
+            await strapi.entityService.create(
+              "api::conference-sponsor.conference-sponsor",
+              {
+                data: {
+                  conference,
+                  year: currentYear,
+                  registration: registrationId,
+                  phone: registrant.phone,
+                  email: registrant.email,
+                  organization: organization,
+                  // sponsorships: sponsors.map(
+                  //   (sponsor: ISponsorEntity) => sponsor.id
+                  // ),
+                  sponsorship_items: sponsors.map(
+                    (sponsor: ISponsorEntity, index: number) => {
+                      return {
+                        key: sponsor.name + " " + index,
+                        value: sponsor.amount,
+                        label: sponsor.name,
+                        sponsorship: sponsor.id,
+                      };
+                    }
+                  ),
+                  amount: total ?? 0,
+                  logo,
+                },
+              }
+            );
+
+            // from the conferece-sponsorship collection subtract 1 from the available field for each sponsorhip bought
+
+            sponsors.forEach(async (sponsor) => {
+              const sponsorData = await strapi.entityService.findOne(
+                "api::conference-sponsorship.conference-sponsorship",
+                sponsor.id
+              );
+              await strapi.entityService.update(
+                "api::conference-sponsorship.conference-sponsorship",
+                sponsor.id,
+                {
+                  data: {
+                    available: sponsorData.available - 1,
+                  },
+                }
+              );
+            });
+          }
+
+          /**
+           * Handle Attendees
+           */
+          tickets
+            .filter((ticket: ITicketPayload) => {
+              return ticket.ticket_type.context !== "Contestant";
+            })
+            .forEach(async (ticket) => {
+              const selectedExtras = await fetchExtrasData(
+                conference,
+                ticket.extras
+              );
+
+              const extras: IExtraEntity[] = selectedExtras.map(
+                (extra: IExtraEntity, index) => {
+                  return {
+                    key: extra.name + " " + index,
+                    value:
+                      registrationSource === "online"
+                        ? extra.price_online.toString()
+                        : extra.price_event.toString(),
+                    label: extra.name,
+                    item: extra.id,
+                  };
+                }
+              );
+
+              handleSubractExtrasAvailable(extras);
+
+              const attendeeContact: IContactEntity = await getContact(
+                ticket.email,
+                {
+                  first: ticket.first,
+                  last: ticket.last,
+                  email: ticket.email,
+                  phone: ticket.phone,
+                },
+                {
+                  ...user_base,
+                  username: ticket.email,
+                  email: ticket.email,
+                  password: btoa(ticket.email),
+                }
+              );
+
+              console.log("- Attendee Contact:", JSON.stringify(ticket));
+
+              const newAttendee: IAttendeeEntity = {
+                conference,
+                year: currentYear,
+                registration: registrationId,
+                first: ticket.first,
+                last: ticket.last,
+                type: ticket.type,
+                contact: attendeeContact.id,
+                training_type: ticket.training_type,
+                organization: ticket.organization
+                  ? ticket.organization
+                  : organization,
+                email: ticket.email,
+                phone: ticket.phone,
+                items: extras,
+                orwa_voting_status: ticket.orwa_voting_status ?? null,
+                orwaag_voting_status: ticket.orwaag_voting_status ?? null,
+                title: ticket.title ?? null,
+                license: ticket.license ?? null,
+                conference_ticket: ticket.ticket_type.id,
+                speaker: ticket.speaker ?? null,
+                promotional_emails: ticket.promotional_emails ?? false,
+              };
+
+              const attendee = await strapi.entityService.create(
+                "api::conference-attendee.conference-attendee",
+                { data: newAttendee }
+              );
+
+              console.log("- Attendee:", JSON.stringify(attendee));
+              console.log(
+                "-------------------------------------------------------------"
+              );
+            });
+
+          /**
+           * Handle Booths
+           */
+
+          await strapi.entityService.update(
+            "api::conference.conference",
+            conference,
+            {
+              data: {
+                booths_available:
+                  conferenceData.booths_available - booths.length,
+              },
+            }
+          );
+
+          // fetch current booths filter by conference and year
+
+          const currentBooths = await strapi.entityService.findMany(
+            "api::conference-booth.conference-booth",
+            {
+              filters: { conference, year: currentYear },
+            }
+          );
+
+          booths.forEach(async (booth, index) => {
+            /**
+             * Handle Booth Meta/Extras
+             */
+            let boothNumber = currentBooths.length + index + 1;
+
+            const selectedExtras = await fetchExtrasData(
+              conference,
+              booth.extras
+            );
+
+            const boothExtras: IExtraEntity[] = selectedExtras.map(
+              (extra: IExtraEntity, index) => {
+                return {
+                  key: extra.name + " " + index,
+                  value: extra.price_online.toString(),
+                  label: extra.name,
+                  item: extra.id,
+                };
+              }
+            );
+
+            handleSubractExtrasAvailable(boothExtras);
+
+            const boothData = {
+              conference,
+              year: currentYear,
+              registration: registrationId,
+              organization,
+              subtotal: booth.subtotal,
+              booth_number: boothNumber.toString(),
+              items: boothExtras,
+              secondary_email: secondary_email,
+            };
+
+            const newBooth = await strapi.entityService.create(
+              "api::conference-booth.conference-booth",
+              {
+                data: boothData,
+              }
+            );
+
+            console.log("- Booth:", JSON.stringify(newBooth));
+            console.log(
+              "-------------------------------------------------------------"
+            );
+          });
+
+          /**
+           * Handle Contestants
+           */
+
+          let contestantIds: number[] = [];
+
+          if (
+            tickets &&
+            tickets.filter((ticket: ITicketPayload) => {
+              return ticket.ticket_type.context === "Contestant";
+            }).length > 0
+          ) {
+            // Map over contestants to create promises for each contestant
+            const contestantPromises = tickets
+              .filter((ticket: ITicketPayload) => {
+                return ticket.ticket_type.context === "Contestant";
+              })
+              .map(async (contestant: ITicketPayload) => {
+                // Handle contestant extras
+
+                const selectedExtras = await fetchExtrasData(
+                  conference,
+                  contestant.extras
+                );
+
+                const contestantExtras: any[] = selectedExtras.map(
+                  (extra: any, index) => {
+                    return {
+                      key: extra.name + " " + index,
+                      value:
+                        registrationSource === "online"
+                          ? extra.price_online.toString()
+                          : extra.price_event.toString(),
+                      label: extra.name,
+                      item: extra.id,
+                    };
+                  }
+                );
+
+                const newContestant = {
+                  conference,
+                  year: currentYear,
+                  registration: registrationId,
+                  first: contestant.first,
+                  last: contestant.last,
+                  organization: organization,
+                  email: contestant.email,
+                  phone: contestant.phone,
+                  conference_ticket: contestant.ticket_type.id,
+                  type: contestant.type,
+                  fee: contestant.price,
+                  items: contestantExtras,
+                };
+
+                const contestantEntity = await strapi.entityService.create(
+                  "api::conference-contestant.conference-contestant",
+                  {
+                    data: newContestant,
+                  }
+                );
+
+                if (contestant.ticket_type.name === "Golfer") {
+                  contestantIds.push(contestantEntity.id);
+                }
+
+                console.log(contestantIds);
+                console.log("- Contestant:", JSON.stringify(contestantEntity));
+                console.log(
+                  "-------------------------------------------------------------"
+                );
+              });
+
+            // Wait for all contestant creation promises to resolve
+            await Promise.all(contestantPromises);
+
+            await strapi.entityService.update(
+              "api::conference.conference",
+              conference,
+              {
+                data: {
+                  available_contestants:
+                    conferenceData.available_contestants -
+                    tickets.filter((contestant: ITicketPayload) => {
+                      return contestant.ticket_type.name === "Golfer";
+                    }).length,
+                },
+              }
+            );
+
+            /**
+             * Handle Team Creation: attach the created contestants to the team
+             */
+
+            if (team) {
+              console.log("contestantIds", contestantIds);
+              const newTeam = await strapi.entityService.create(
+                "api::conference-team.conference-team",
+                {
+                  data: {
+                    conference,
+                    year: currentYear,
+                    registration: registrationId,
+                    name: team,
+                    contestants: contestantIds,
+                  },
+                }
+              );
+
+              console.log("- Team:", JSON.stringify(newTeam));
+              console.log(
+                "-------------------------------------------------------------"
+              );
+            }
+          }
+        }
+
+        /**
+         * Handle Email
+         */
+        //  message: authorizeNetResponse.messages.message[0].text,
+
+        const freeVendors = () => {
+          if (booths.length === 1) {
+            return 2;
+          } else if (booths.length === 2) {
+            return 3;
+          } else {
+            return 0;
+          }
+        };
+
+        const currencyFormatter = new Intl.NumberFormat("en-US", {
+          style: "currency",
+          currency: "USD",
+        });
+
+        // For ticket itmes or booth items inside the current cell display them in a bullet list
+        // For the ticket items, display the name of the item and the price
+
+        const YearMonthDay: Intl.DateTimeFormatOptions = {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour12: true,
+        };
+
+        const createdAt = new Date().toLocaleDateString("en-US", YearMonthDay);
+
+        const isExtraIncluded = (
+          ticket: ITicketPayload,
+          extra: IExtraEntityRaw
+        ): boolean => {
+          return extra.included.some((include: ITicketOption) => {
+            return include.id === ticket.ticket_type?.id;
+          });
+        };
+
+        const fetchExtrasForTickets = async (tickets) => {
+          return await Promise.all(
+            tickets.map(async (ticket) => {
+              const selectedExtras = await fetchExtrasData(
+                conference,
+                ticket.extras
+              );
+              return { ticket, selectedExtras };
+            })
+          );
+        };
+
+        const fetchExtrasForBooths = async (booths) => {
+          return await Promise.all(
+            booths.map(async (booths) => {
+              const selectedExtras = await fetchExtrasData(
+                conference,
+                booths.extras
+              );
+              return { booths, selectedExtras };
+            })
+          );
+        };
+
+        const ticketDetails = await fetchExtrasForTickets(tickets);
+        const boothDetails = await fetchExtrasForBooths(booths);
+        const registrationAddonsDetails = await fetchAddonsForRegistration(
+          registrationAddonsIds
+        );
+        const registrationExtrasDetails = await fetchExtrasForRegistration(
+          registrationExtrasIds
+        );
+
+        const html = `
+      <div>
+          <h3>
+              <span class="il">ORWA ${conferenceData.name}</span>
+              <span class="il">Registration</span> Details
+          </h3>
+          <div>
+          <label style="font-weight:800">
+              <span class="il">Registration Source </span> </label>: ${
+                registrationSource.charAt(0).toUpperCase() +
+                registrationSource.slice(1)
+              }
+        </div>
+          <div>
+            <label style="font-weight:800">
+                <span class="il">Registration </span> Date </label>: ${createdAt}
+          </div>
+          ${
+            registration_type
+              ? `
+          <div>
+              <label style="font-weight:800">
+                  <span class="il">Registration</span> Type </label>: ${registration_type}
+          </div>
+          `
+              : ""
+          }
+          ${
+            organization
+              ? `
+          <div>
+              <label style="font-weight:800">Organization</label>: ${organization}
+          </div>
+          `
+              : ""
+          }
+          <label style="font-weight:800">Registrant:</label> ${
+            registrant.first + " " + registrant.last
+          }
+          </div>
+          <div>
+              <label style="font-weight:800">Phone</label>: ${registrant.phone}
+          </div>
+          <div>
+              <label style="font-weight:800">Email</label>: <a href="${
+                registrant.email
+              }" target="_blank">${registrant.email}</a>
+          </div>
+          <div>
+              <label style="font-weight:800">Pay By</label>: ${paymentType}
+          </div>
+          <div>
+              <label style="font-weight:800">Address</label>: 
+              ${paymentData.billingAddress.address}, 
+              ${paymentData.billingAddress.city}, 
+              ${paymentData.billingAddress.state},
+              ${paymentData.billingAddress.zip}
+          </div>
+          ${
+            watersystem
+              ? `<div>
+            <label style="font-weight:800">Watersystem</label>:
+            <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+              <li><strong>Name:</strong> ${watersystem.name ?? ""}</li>
+              <li><strong>County:</strong> ${watersystem.county ?? ""}</li>
+              <li><strong>Address:</strong> ${watersystem.address ?? ""}</li>
+              <li><strong>Phone:</strong> ${watersystem.phone ?? ""}</li>
+              <li>
+                <strong>Email:</strong> 
+                <a href="mailto:${watersystem.email ?? ""}" target="_blank">
+                  ${watersystem.email ?? ""}
+                </a>
+              </li>
+            </ul>
+          </div>`
+              : ""
+          }
+          
+          <hr/>
+  
+          ${
+            nonMemberFee
+              ? `<div>
+  
+          <label style="font-weight:800">Non Member Fee</label>: ${currencyFormatter.format(
+            conferenceData.non_member_fee
+          )}
+  
+      </div>`
+              : ""
+          }
+          ${
+            booths && booths.length > 0
+              ? `
+      <div>
+      <label style="font-weight: 800; margin-top: 10px; display: inline-block;">Booth Count</label>: ${
+        booths.length
+      }
+      </div>
+      <table cellspacing="0" cellpadding="0" style="width:100%">
+      <table cellspacing="0" cellpadding="0" style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr style="background-color:#000; color:#fff; text-align:left; border-bottom: 2px solid #000;">
+          <th style="padding: 8px; text-align:left;">Registration Fee</th>
+          <th style="padding: 8px; text-align:left;">Items</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${boothDetails
+          .map(
+            ({ booth, selectedExtras }, index) => `
+            <tr style="background-color:${
+              index % 2 === 0 ? "#f9f9f9" : "#fff"
+            }; border-bottom: 1px solid #ddd;">
+        
+              <td style="padding: 8px; border-right: 1px solid #ddd;">
+                ${
+                  index === 0
+                    ? currencyFormatter.format(conferenceData.booth_price)
+                    : currencyFormatter.format(conferenceData.booth_price_2)
+                }
+              </td>
+              <td style="padding: 8px; border-right: 1px solid #ddd;">
+                <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
+                  ${selectedExtras
+                    .map(
+                      (extra) => `
+                      <li>${extra.name} ${
+                        registrationSource === "online"
+                          ? currencyFormatter.format(extra.price_online)
+                          : currencyFormatter.format(extra.price_event)
+                      }</li>`
+                    )
+                    .join("")}
+                </ul>
+              </td>
+            </tr>
+          `
+          )
+          .join("")}
+      </tbody>
+    </table>
+      <hr>
+  `
+              : ""
+          }
+  ${
+    sponsors && sponsors.length > 0
+      ? `
+  <div>
+  <label style="font-weight: 800; margin-top: 10px; display: inline-block;">Sponsorship Count</label>: ${
+    sponsors.length
+  }
+  </div>
+  <table cellspacing="0" cellpadding="0" style="width:100%">
+  <table cellspacing="0" cellpadding="0" style="width:100%; border-collapse: collapse;">
+  <thead>
+    <tr style="background-color:#000; color:#fff; text-align:left; border-bottom: 2px solid #000;">
+      <th style="padding: 8px;">Sponsorship</th>
+      <th style="padding: 8px;">Amount</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${sponsors
+      .map(
+        (sponsor, index) => `
+        <tr style="background-color:${
+          index % 2 === 0 ? "#f9f9f9" : "#fff"
+        }; border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; border-right: 1px solid #ddd;">${
+            sponsor.name
+          }</td>
+          <td style="padding: 8px;">${currencyFormatter.format(
+            sponsor.amount
+          )}</td>
+        </tr>
+      `
+      )
+      .join("")}
+  </tbody>
+</table>
+  `
+      : ""
+  }
+  
+  ${
+    tickets && tickets.length > 0
+      ? `
+  <div>
+  <label style="font-weight: 800; margin-top: 10px; display: inline-block;">Ticket Count</label>: ${
+    tickets.length
+  }
+  </div>
+
+  ${
+    team
+      ? `<div>
+      <label style="font-weight:800">Team Name</label>: ${team}
+  </div>`
+      : ``
+  }
+  
+  <table cellspacing="0" cellpadding="0" style="width:100%; border-collapse: collapse;">
+  <thead>
+    <tr style="text-align:left; background-color:#000; color:#fff; border-bottom: 2px solid #000;">
+      <th style="padding: 8px;">Name</th>
+      <th style="padding: 8px;">Ticket Type</th>
+      <th style="padding: 8px;">Fee</th>
+      <th style="padding: 8px;">Items</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${ticketDetails
+      .map(({ ticket, selectedExtras }, ticketIndex) => {
+        return `
+        <tr style="background-color:#f9f9f9; border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; border-right: 1px solid #ddd;">${
+            ticket.first
+          } ${ticket.last}</td>
+          <td style="padding: 8px; border-right: 1px solid #ddd;">${
+            ticket.ticket_type.name
+          }</td>
+          <td style="padding: 8px; border-right: 1px solid #ddd;">
+            ${
+              ticket.type === "Vendor" && ticketIndex + 1 <= freeVendors()
+                ? "Included"
+                : currencyFormatter.format(
+                    registrationSource === "online"
+                      ? ticket.ticket_type.price_online
+                      : ticket.ticket_type.price_event
+                  )
+            }
+          </td>
+          <td style="padding: 8px;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tbody>
+                ${selectedExtras
+                  .sort((extra) => {
+                    return isExtraIncluded(ticket, extra) ? -1 : 1;
+                  })
+                  .map(
+                    (extra) => `
+                    <tr>
+                      <td style="padding: 4px; border-bottom: 1px solid #ddd;">${
+                        extra.name
+                      }</td>
+                      <td style="padding: 4px; text-align: right;">${
+                        isExtraIncluded(ticket, extra)
+                          ? "Included"
+                          : registrationSource === "online"
+                          ? currencyFormatter.format(extra.price_online)
+                          : currencyFormatter.format(extra.price_event)
+                      }</td>
+                    </tr>
+                  `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </td>
+        </tr>
+        `;
+      })
+      .join("")}
+  </tbody>
+</table>
+  `
+      : ""
+  }
+  ${
+    registrationAddonsIds && registrationAddonsIds.length > 0
+      ? `
+  <div>
+  <label style="font-weight: 800; margin-top: 10px; display: inline-block;">Registration Addons Count</label>: ${
+    registrationAddonsIds.length
+  }
+  </div>
+  <table cellspacing="0" cellpadding="0" style="width:100%; border-collapse: collapse;">
+  <thead>
+    <tr style="background-color:#000; color:#fff; text-align:left; border-bottom: 2px solid #000;">
+      <th style="padding: 8px; text-align:left;">Item</th>
+      <th style="padding: 8px; text-align:left;">Fee</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${registrationAddonsDetails
+      .map(
+        (addon, index) => `
+        <tr style="background-color:${
+          index % 2 === 0 ? "#f9f9f9" : "#fff"
+        }; border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; border-right: 1px solid #ddd;">${
+            addon.name
+          }</td>
+          <td style="padding: 8px;">
+            ${
+              registrationSource === "online"
+                ? currencyFormatter.format(addon.price_online)
+                : currencyFormatter.format(addon.price_event)
+            }
+          </td>
+        </tr>
+      `
+      )
+      .join("")}
+  </tbody>
+</table>
+`
+      : ""
+  }
+
+  ${
+    registrationExtrasIds && registrationExtrasIds.length > 0
+      ? `
+  <div>
+  <label style="font-weight: 800; margin-top: 10px; display: inline-block;">Registration Extras Count</label>: ${
+    registrationExtrasIds.length
+  }
+  </div>
+  <table cellspacing="0" cellpadding="0" style="width:100%; border-collapse: collapse;">
+  <thead>
+    <tr style="background-color:#000; color:#fff; text-align:left; border-bottom: 2px solid #000;">
+      <th style="padding: 8px; text-align:left;">Item</th>
+      <th style="padding: 8px; text-align:left;">Fee</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${registrationExtrasDetails
+      .map(
+        (extra, index) => `
+        <tr style="background-color:${
+          index % 2 === 0 ? "#f9f9f9" : "#fff"
+        }; border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; border-right: 1px solid #ddd;">${
+            extra.name
+          }</td>
+          <td style="padding: 8px;">
+            ${
+              registrationSource === "online"
+                ? currencyFormatter.format(extra.price_online)
+                : currencyFormatter.format(extra.price_event)
+            }
+          </td>
+        </tr>
+      `
+      )
+      .join("")}
+  </tbody>
+</table>
+`
+      : ""
+  }
+    <div> Total Fee: ${currencyFormatter.format(paymentData.amount)}</div>
+  `;
+
+        const emailPayloadRegistrant = {
+          to: registrant.email,
+          // to: "marcosje2005@gmail.com",
+          from: "office@orwa.org",
+          subject: `ORWA ${conferenceData.name} Registration`,
+          html,
+        };
+
+        const emailPayloadOffice = {
+          to: "office@orwa.org",
+          // to: "marcosje2005@gmail.com",
+          from: "website@orwa.org",
+          subject: `ORWA ${conferenceData.name} Registration`,
+          html,
+        };
+
+        const myEmailPayload = {
+          to: "marcosje2005@gmail.com",
+          from: "website@orwa.org",
+          subject: `ORWA ${conferenceData.name} Registration`,
+          html,
+        };
+
+        await strapi.plugins["email"].services.email.send(myEmailPayload);
+
+        if (adminOptions) {
+          const { registrantNotification, adminNotification, customEmail } =
+            adminOptions as AdminOptions;
+
+          if (registrantNotification && !customEmail) {
+            await strapi.plugins["email"].services.email.send(
+              emailPayloadRegistrant
+            );
+          }
+
+          if (adminNotification && !customEmail) {
+            await strapi.plugins["email"].services.email.send(
+              emailPayloadOffice
+            );
+          }
+
+          if (customEmail) {
+            const emails = (customEmail as string).split(",");
+
+            emails.forEach(async (email) => {
+              await strapi.plugins["email"].services.email.send({
+                to: email.trim(),
+                from: "website@orwa.org",
+                subject: `ORWA ${conferenceData.name} Registration`,
+                html,
+              });
+            });
+          }
+        } else {
+          // await strapi.plugins["email"].services.email.send(emailPayloadOffice);
+          // await strapi.plugins["email"].services.email.send(
+          //   emailPayloadRegistrant
+          // );
+        }
+
+        // console.log('Email Sent:', A, B, C)
+        console.log(
+          "↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ Ending ↑ Registration ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑ ↑"
+        );
+
+        ctx.body = {
+          result: "success",
+          message: "Registration Successful",
+        };
+      } catch (err) {
+        console.log("Error:", err);
+        console.log("Error: Details", err?.details?.errors);
+        ctx.body = err;
+      }
+    },
+  };
+};

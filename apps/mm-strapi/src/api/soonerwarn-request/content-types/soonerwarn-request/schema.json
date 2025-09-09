@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "soonerwarn_requests",
+  "info": {
+    "singularName": "soonerwarn-request",
+    "pluralName": "soonerwarn-requests",
+    "displayName": "Soonerwarn Request",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "system": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::soonerwarn.soonerwarn"
+    },
+    "status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::request-status.request-status"
+    }
+  }
+}

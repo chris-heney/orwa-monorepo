@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_tickets",
+  "info": {
+    "singularName": "conference-ticket",
+    "pluralName": "conference-tickets",
+    "displayName": "Conference Ticket",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conferences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference.conference",
+      "inversedBy": "conference_tickets"
+    },
+    "price_online": {
+      "type": "decimal"
+    },
+    "price_event": {
+      "type": "decimal"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "includes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference-extra.conference-extra",
+      "mappedBy": "included"
+    },
+    "excludes": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference-extra.conference-extra",
+      "mappedBy": "excluded"
+    },
+    "context": {
+      "type": "enumeration",
+      "enum": [
+        "Attendee",
+        "Contestant",
+        "Vendor"
+      ]
+    }
+  }
+}

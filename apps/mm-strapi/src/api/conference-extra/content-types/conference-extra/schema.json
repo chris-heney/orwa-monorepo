@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_extras",
+  "info": {
+    "singularName": "conference-extra",
+    "pluralName": "conference-extras",
+    "displayName": "Conference Extra",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "price_online": {
+      "type": "decimal"
+    },
+    "price_event": {
+      "type": "decimal"
+    },
+    "conferences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference.conference",
+      "inversedBy": "conference_extras"
+    },
+    "included": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference-ticket.conference-ticket",
+      "inversedBy": "includes"
+    },
+    "excluded": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference-ticket.conference-ticket",
+      "inversedBy": "excludes"
+    },
+    "context": {
+      "type": "string"
+    },
+    "counted": {
+      "type": "boolean"
+    },
+    "max_qty": {
+      "type": "integer"
+    },
+    "max_qty_each": {
+      "type": "integer"
+    },
+    "details": {
+      "type": "richtext"
+    },
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "order": {
+      "type": "integer"
+    }
+  }
+}

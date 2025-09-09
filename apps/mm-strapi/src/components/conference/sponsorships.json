@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_conference_sponsorships",
+  "info": {
+    "displayName": "sponsorships",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "key": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "sponsorship": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-sponsorship.conference-sponsorship"
+    },
+    "value": {
+      "type": "decimal"
+    }
+  }
+}

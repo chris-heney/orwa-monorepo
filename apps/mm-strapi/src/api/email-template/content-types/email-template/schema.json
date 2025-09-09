@@ -1,0 +1,70 @@
+{
+  "kind": "collectionType",
+  "collectionName": "email_templates",
+  "info": {
+    "singularName": "email-template",
+    "pluralName": "email-templates",
+    "displayName": "Email Template",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "subject": {
+      "type": "string",
+      "required": false
+    },
+    "body": {
+      "type": "richtext"
+    },
+    "module": {
+      "type": "string"
+    },
+    "email_name": {
+      "type": "string"
+    },
+    "from_email": {
+      "type": "string"
+    },
+    "from_name": {
+      "type": "string"
+    },
+    "to": {
+      "type": "string"
+    },
+    "cc": {
+      "type": "string"
+    },
+    "bcc": {
+      "type": "string"
+    },
+    "grant_status": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::grant-status.grant-status",
+      "inversedBy": "email_templates"
+    },
+    "grant_sub_status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-sub-status.grant-sub-status",
+      "inversedBy": "email_template"
+    },
+    "attachments": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "resource": {
+      "type": "string"
+    }
+  }
+}

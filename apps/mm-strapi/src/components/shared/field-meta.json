@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_shared_field_metas",
+  "info": {
+    "displayName": "Field Meta",
+    "icon": "oneToMany",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "key": {
+      "type": "string"
+    },
+    "value": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "item": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-extra.conference-extra"
+    }
+  }
+}

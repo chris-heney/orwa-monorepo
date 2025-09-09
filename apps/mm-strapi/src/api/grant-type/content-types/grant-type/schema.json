@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_types",
+  "info": {
+    "singularName": "grant-type",
+    "pluralName": "grant-types",
+    "displayName": "Grant Type",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "eligibility": {
+      "type": "text"
+    }
+  }
+}

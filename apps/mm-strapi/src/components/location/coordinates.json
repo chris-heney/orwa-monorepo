@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_location_coordinates",
+  "info": {
+    "displayName": "Coordinates",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "latitude": {
+      "type": "float",
+      "required": true,
+      "default": "35.4828466"
+    },
+    "longitude": {
+      "type": "float",
+      "required": true,
+      "default": "-97.6192809"
+    },
+    "altitude": {
+      "type": "float"
+    }
+  }
+}

@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_booths",
+  "info": {
+    "singularName": "conference-booth",
+    "pluralName": "conference-booths",
+    "displayName": "Conference Booth",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "organization": {
+      "type": "string"
+    },
+    "subtotal": {
+      "type": "decimal"
+    },
+    "registration": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::conference-registration.conference-registration",
+      "inversedBy": "booths"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.field-meta"
+    },
+    "booth_number": {
+      "type": "integer"
+    },
+    "secondary_email": {
+      "type": "email"
+    }
+  }
+}

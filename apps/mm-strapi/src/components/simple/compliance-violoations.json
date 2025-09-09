@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_simple_compliance_violoations",
+  "info": {
+    "displayName": "Compliance Violoations"
+  },
+  "options": {},
+  "attributes": {
+    "reference_number": {
+      "type": "string"
+    },
+    "reference_file": {
+      "allowedTypes": [
+        "files"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

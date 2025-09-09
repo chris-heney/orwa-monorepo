@@ -1,0 +1,130 @@
+{
+  "kind": "collectionType",
+  "collectionName": "assets",
+  "info": {
+    "singularName": "asset",
+    "pluralName": "assets",
+    "displayName": "Asset",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "serial_number": {
+      "type": "string"
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "Camera",
+        "Camera Drone",
+        "Camera Video",
+        "Copier",
+        "Display Monitor",
+        "Display Projector",
+        "Display Projector Screen",
+        "Display Television",
+        "Display Wifi Module",
+        "Equipment Drone",
+        "Equipment Measurement",
+        "Equipment Test",
+        "Network Hardware",
+        "PC Desktop",
+        "PC Embedded",
+        "PC Group Tote",
+        "PC Laptop",
+        "PC Tablet",
+        "PC Workstation",
+        "Phone Hotspot",
+        "Phone KSU Hardware",
+        "Phone Smart",
+        "Printer",
+        "Printer AIO",
+        "Printer Fax",
+        "Printer LGF",
+        "Printer Mobile",
+        "Printer Postage",
+        "Printer Tag",
+        "Security Hardware",
+        "Signage Conference",
+        "Signage State Event",
+        "Software Management",
+        "Software OS",
+        "Software Productivity",
+        "Tool",
+        "Tool Fixed",
+        "Tool Set",
+        "Vehicle Gator",
+        "Vehicle Mower",
+        "Vehicle Trailer",
+        "Vehicle Truck"
+      ]
+    },
+    "make": {
+      "type": "string"
+    },
+    "model": {
+      "type": "string"
+    },
+    "tangible": {
+      "type": "boolean"
+    },
+    "location": {
+      "type": "enumeration",
+      "enum": [
+        "Boardroom",
+        "Building 3",
+        "Storage Closet - Floor 1",
+        "Storage Closet - Floor 2",
+        "Floor 1",
+        "Floor 2",
+        "Floor 3",
+        "Mobile",
+        "Vault - Floor 1",
+        "Vault - Floor 2",
+        "Warehouse 1",
+        "Warehouse 2"
+      ]
+    },
+    "organization": {
+      "type": "enumeration",
+      "enum": [
+        "ORWA",
+        "ORWAAG"
+      ]
+    },
+    "fair_market_value": {
+      "type": "decimal"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "sub_assets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::asset.asset"
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "assigned_to": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::staff-member.staff-member",
+      "inversedBy": "assigned_assets"
+    }
+  }
+}

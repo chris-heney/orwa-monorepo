@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_schedule_blocks",
+  "info": {
+    "singularName": "training-schedule-block",
+    "pluralName": "training-schedule-blocks",
+    "displayName": "Training Schedule Block",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "training_sessions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::training-session.training-session"
+    },
+    "am_pm": {
+      "type": "enumeration",
+      "enum": [
+        "AM",
+        "PM"
+      ]
+    }
+  }
+}

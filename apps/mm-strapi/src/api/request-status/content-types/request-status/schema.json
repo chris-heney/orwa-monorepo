@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "request_statuses",
+  "info": {
+    "singularName": "request-status",
+    "pluralName": "request-statuses",
+    "displayName": "Request Status",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "email_template": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::email-template.email-template"
+    },
+    "next_statuses": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::request-status.request-status"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events_annual_conference_booth_rosters",
+  "info": {
+    "singularName": "events-annual-conference-booth-roster",
+    "pluralName": "events-annual-conference-booth-rosters",
+    "displayName": "Events Annual Conference Booth Roster",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "organization": {
+      "type": "string"
+    },
+    "member_level": {
+      "type": "enumeration",
+      "enum": [
+        "Non Member",
+        "Basic",
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum"
+      ]
+    },
+    "electric": {
+      "type": "boolean"
+    },
+    "tables": {
+      "type": "integer"
+    },
+    "fee_booth": {
+      "type": "decimal"
+    },
+    "fee_tables": {
+      "type": "decimal"
+    },
+    "fee_electric": {
+      "type": "decimal"
+    },
+    "fee_total": {
+      "type": "decimal"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "wp_seid": {
+      "type": "integer"
+    },
+    "year": {
+      "type": "integer"
+    }
+  }
+}

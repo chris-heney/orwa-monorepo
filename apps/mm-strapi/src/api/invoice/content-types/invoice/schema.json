@@ -1,0 +1,73 @@
+{
+  "kind": "collectionType",
+  "collectionName": "invoices",
+  "info": {
+    "singularName": "invoice",
+    "pluralName": "invoices",
+    "displayName": "Invoice",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "email": {
+      "type": "text"
+    },
+    "company": {
+      "type": "string"
+    },
+    "auth_code": {
+      "type": "string"
+    },
+    "transaction_id": {
+      "type": "text"
+    },
+    "network_trans_id": {
+      "type": "text"
+    },
+    "amount": {
+      "type": "decimal"
+    },
+    "resource": {
+      "type": "string"
+    },
+    "payment_details": {
+      "type": "text"
+    },
+    "reciept": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "payment_date": {
+      "type": "date"
+    },
+    "entity_id": {
+      "type": "biginteger"
+    },
+    "data": {
+      "type": "json"
+    },
+    "context": {
+      "type": "string"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "payment_method": {
+      "type": "enumeration",
+      "enum": [
+        "Card",
+        "Invoice"
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "soonerwarn_statuses",
+  "info": {
+    "singularName": "soonerwarn-status",
+    "pluralName": "soonerwarn-statuses",
+    "displayName": "Soonerwarn Status",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "next_statuses": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::soonerwarn-status.soonerwarn-status"
+    },
+    "email_template": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::email-template.email-template"
+    }
+  }
+}

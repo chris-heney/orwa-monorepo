@@ -1,0 +1,150 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conferences",
+  "info": {
+    "singularName": "conference",
+    "pluralName": "conferences",
+    "displayName": "Conference",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "blocks"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "Coming Soon",
+        "Online Registration",
+        "Online Registration Closed",
+        "Kiosk Registration",
+        "Closed",
+        "Archived"
+      ]
+    },
+    "start_date": {
+      "type": "date"
+    },
+    "end_date": {
+      "type": "date"
+    },
+    "slug": {
+      "type": "string"
+    },
+    "conference_extras": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference-extra.conference-extra",
+      "mappedBy": "conferences"
+    },
+    "conference_tickets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::conference-ticket.conference-ticket",
+      "mappedBy": "conferences"
+    },
+    "venue": {
+      "type": "component",
+      "repeatable": false,
+      "component": "simple.address"
+    },
+    "booths_available": {
+      "type": "integer"
+    },
+    "training_hours_available": {
+      "type": "integer"
+    },
+    "booth_price": {
+      "type": "integer"
+    },
+    "booth_price_2": {
+      "type": "decimal"
+    },
+    "non_member_fee": {
+      "type": "decimal"
+    },
+    "registration_cost": {
+      "type": "decimal"
+    },
+    "attendee_price": {
+      "type": "decimal"
+    },
+    "vendor_price": {
+      "type": "decimal"
+    },
+    "registration_start": {
+      "type": "date"
+    },
+    "registration_end": {
+      "type": "date"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "recipient_email": {
+      "type": "email"
+    },
+    "available_contestants": {
+      "type": "integer"
+    },
+    "purchasable_booths": {
+      "type": "integer"
+    },
+    "booth_map": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "conference_details": {
+      "type": "component",
+      "repeatable": true,
+      "component": "conference.conference-details"
+    },
+    "vendor_information": {
+      "type": "component",
+      "repeatable": true,
+      "component": "conference.conference-details"
+    },
+    "attendee_information": {
+      "type": "component",
+      "repeatable": true,
+      "component": "conference.conference-details"
+    },
+    "closed_message": {
+      "type": "text"
+    },
+    "online_registration_end": {
+      "type": "date"
+    },
+    "registration_addons": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::registration-addon.registration-addon",
+      "mappedBy": "conferences"
+    },
+    "brochure_link": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_statuses",
+  "info": {
+    "singularName": "grant-status",
+    "pluralName": "grant-statuses",
+    "displayName": "Grant Status",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "color": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "next_statuses": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::grant-status.grant-status"
+    },
+    "grant_sub_statuses": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::grant-sub-status.grant-sub-status",
+      "inversedBy": "grant_statuses"
+    },
+    "email_templates": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::email-template.email-template",
+      "mappedBy": "grant_status"
+    }
+  }
+}

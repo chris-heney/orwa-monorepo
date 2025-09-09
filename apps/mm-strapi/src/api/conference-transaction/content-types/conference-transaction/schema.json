@@ -1,0 +1,28 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_transactions",
+  "info": {
+    "singularName": "conference-transaction",
+    "pluralName": "conference-transactions",
+    "displayName": "Conference Transaction",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "email": {
+      "type": "email"
+    },
+    "auth_code": {
+      "type": "string"
+    },
+    "transaction_id": {
+      "type": "string"
+    },
+    "network_trans_id": {
+      "type": "string"
+    }
+  }
+}

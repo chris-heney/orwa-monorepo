@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "saved_queries",
+  "info": {
+    "singularName": "saved-query",
+    "pluralName": "saved-queries",
+    "displayName": "Saved Query",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "filters": {
+      "type": "json"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "saved_queries"
+    },
+    "is_public": {
+      "type": "boolean"
+    },
+    "resource": {
+      "type": "string"
+    }
+  }
+}

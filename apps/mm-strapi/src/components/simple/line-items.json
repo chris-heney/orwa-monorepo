@@ -1,0 +1,31 @@
+{
+  "collectionName": "components_simple_line_items",
+  "info": {
+    "displayName": "Line Items",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Product",
+        "Service"
+      ]
+    },
+    "amount": {
+      "type": "decimal"
+    },
+    "estimates": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "files"
+      ]
+    }
+  }
+}

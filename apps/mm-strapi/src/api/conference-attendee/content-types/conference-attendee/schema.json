@@ -1,0 +1,109 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_attendees",
+  "info": {
+    "singularName": "conference-attendee",
+    "pluralName": "conference-attendees",
+    "displayName": "Conference Attendee",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "registration": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::conference-registration.conference-registration",
+      "inversedBy": "attendees"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "passport_id": {
+      "type": "integer"
+    },
+    "training_type": {
+      "type": "enumeration",
+      "enum": [
+        "None",
+        "Both",
+        "Operator",
+        "Board"
+      ]
+    },
+    "organization": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "qr_url": {
+      "type": "string"
+    },
+    "license": {
+      "type": "string"
+    },
+    "first": {
+      "type": "string"
+    },
+    "last": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.field-meta"
+    },
+    "orwa_voting_status": {
+      "type": "enumeration",
+      "enum": [
+        "Non Voting",
+        "Voting Delegate",
+        "Voting Alternate"
+      ]
+    },
+    "orwaag_voting_status": {
+      "type": "enumeration",
+      "enum": [
+        "Non Voting",
+        "Voting Delegate",
+        "Voting Alternate"
+      ]
+    },
+    "speaker": {
+      "type": "boolean"
+    },
+    "conference_ticket": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-ticket.conference-ticket"
+    },
+    "promotional_emails": {
+      "type": "boolean"
+    }
+  }
+}

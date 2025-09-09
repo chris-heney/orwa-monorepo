@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_tickets_purchaseds",
+  "info": {
+    "displayName": "Tickets Purchased",
+    "icon": "file"
+  },
+  "options": {},
+  "attributes": {
+    "contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "ticket_type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-ticket.conference-ticket"
+    },
+    "amount": {
+      "type": "decimal"
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_payouts",
+  "info": {
+    "singularName": "grant-payout",
+    "pluralName": "grant-payouts",
+    "displayName": "Grant Payout",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "amount": {
+      "type": "decimal"
+    },
+    "transaction_date": {
+      "type": "date"
+    },
+    "application": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::grant-application-final.grant-application-final",
+      "inversedBy": "payouts"
+    },
+    "grant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant.grant"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "Requested",
+        "Approved",
+        "Denied",
+        "Paid",
+        "Paid in Full"
+      ]
+    },
+    "supporting_documents": {
+      "type": "text"
+    },
+    "date_approved": {
+      "type": "date"
+    },
+    "comments": {
+      "type": "text"
+    },
+    "payout_status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::payout-status.payout-status"
+    },
+    "project_type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::project-type.project-type"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Administrative",
+        "Reimbursement"
+      ]
+    }
+  }
+}

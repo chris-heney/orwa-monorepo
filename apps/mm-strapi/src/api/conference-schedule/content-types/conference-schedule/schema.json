@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_schedules",
+  "info": {
+    "singularName": "conference-schedule",
+    "pluralName": "conference-schedules",
+    "displayName": "Conference Schedule",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "date": {
+      "type": "date"
+    },
+    "start": {
+      "type": "time"
+    },
+    "end": {
+      "type": "time"
+    },
+    "description": {
+      "type": "text"
+    },
+    "speaker": {
+      "type": "string"
+    },
+    "company": {
+      "type": "string"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "event": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "training_hours": {
+      "type": "decimal"
+    }
+  }
+}

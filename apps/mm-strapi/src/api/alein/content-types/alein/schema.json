@@ -1,0 +1,18 @@
+{
+  "kind": "collectionType",
+  "collectionName": "aleins",
+  "info": {
+    "singularName": "alein",
+    "pluralName": "aleins",
+    "displayName": "alein"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    }
+  }
+}

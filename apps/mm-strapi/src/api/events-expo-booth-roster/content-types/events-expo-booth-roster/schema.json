@@ -1,0 +1,51 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events_expo_booth_rosters",
+  "info": {
+    "singularName": "events-expo-booth-roster",
+    "pluralName": "events-expo-booth-rosters",
+    "displayName": "Events Expo Booth Roster",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "organization": {
+      "type": "string"
+    },
+    "member_level": {
+      "type": "enumeration",
+      "enum": [
+        "Non Member",
+        "Basic",
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum"
+      ]
+    },
+    "fee_booth": {
+      "type": "decimal"
+    },
+    "fee_total": {
+      "type": "decimal"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "wp_seid": {
+      "type": "integer"
+    },
+    "training_demo_participant": {
+      "type": "boolean"
+    },
+    "year": {
+      "type": "integer"
+    }
+  }
+}

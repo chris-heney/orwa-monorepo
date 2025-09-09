@@ -1,0 +1,33 @@
+{
+  "kind": "collectionType",
+  "collectionName": "corporate_sponsors",
+  "info": {
+    "singularName": "corporate-sponsor",
+    "pluralName": "corporate-sponsors",
+    "displayName": "Corporate Sponsor",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    }
+  }
+}

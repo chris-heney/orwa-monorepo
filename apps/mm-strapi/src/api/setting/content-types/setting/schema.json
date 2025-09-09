@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "settings",
+  "info": {
+    "singularName": "setting",
+    "pluralName": "settings",
+    "displayName": "Settings",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "label": {
+      "type": "string",
+      "required": true,
+      "unique": false
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "module": {
+      "type": "string"
+    },
+    "field_type": {
+      "type": "enumeration",
+      "enum": [
+        "text",
+        "textarea",
+        "number",
+        "boolean",
+        "autocomplete",
+        "radio",
+        "select"
+      ],
+      "required": true,
+      "default": "text"
+    },
+    "props": {
+      "type": "json"
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+}

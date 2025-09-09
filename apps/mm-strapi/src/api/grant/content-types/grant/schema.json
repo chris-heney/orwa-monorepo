@@ -1,0 +1,64 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grants",
+  "info": {
+    "singularName": "grant",
+    "pluralName": "grants",
+    "displayName": "Grant",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "Open",
+        "Closed",
+        "Suggested"
+      ]
+    },
+    "reimbursement_type": {
+      "type": "enumeration",
+      "enum": [
+        "Lump Sum",
+        "Reimbursement"
+      ]
+    },
+    "opens": {
+      "type": "date"
+    },
+    "closes": {
+      "type": "date"
+    },
+    "type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-type.grant-type"
+    },
+    "grant_amount": {
+      "type": "biginteger"
+    },
+    "funds_approved": {
+      "type": "biginteger"
+    },
+    "funds_provided": {
+      "type": "biginteger"
+    },
+    "max_award": {
+      "type": "integer"
+    },
+    "eligibility": {
+      "type": "text"
+    },
+    "admin_amount": {
+      "type": "biginteger"
+    }
+  }
+}

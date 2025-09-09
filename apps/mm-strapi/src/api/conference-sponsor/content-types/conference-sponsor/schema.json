@@ -1,0 +1,64 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_sponsors",
+  "info": {
+    "singularName": "conference-sponsor",
+    "pluralName": "conference-sponsors",
+    "displayName": "Conference Sponsor",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "registration": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-registration.conference-registration",
+      "inversedBy": "conference_sponsor"
+    },
+    "sponsorships": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conference-sponsorship.conference-sponsorship"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "biginteger"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "sponsorship_items": {
+      "displayName": "sponsorships",
+      "type": "component",
+      "repeatable": true,
+      "component": "conference.sponsorships"
+    },
+    "organization": {
+      "type": "string"
+    }
+  }
+}

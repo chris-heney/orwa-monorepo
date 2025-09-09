@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_topics",
+  "info": {
+    "singularName": "training-topic",
+    "pluralName": "training-topics",
+    "displayName": "Training Topic",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "hours": {
+      "type": "integer"
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "Certificate Training",
+        "Renewals",
+        "Board Training"
+      ]
+    }
+  }
+}
