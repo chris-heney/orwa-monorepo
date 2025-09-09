@@ -1,0 +1,68 @@
+{
+  "kind": "collectionType",
+  "collectionName": "contacts",
+  "info": {
+    "singularName": "contact",
+    "pluralName": "contacts",
+    "displayName": "Contact",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "first": {
+      "type": "string",
+      "required": false
+    },
+    "last": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email",
+      "required": false,
+      "unique": true
+    },
+    "phone": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "contact_type": {
+      "type": "enumeration",
+      "enum": [
+        "associate",
+        "watersystem",
+        "instructor",
+        "staff",
+        "administrator"
+      ]
+    },
+    "license": {
+      "type": "string"
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "avatar": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "badges": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::contact-badge.contact-badge"
+    }
+  }
+}

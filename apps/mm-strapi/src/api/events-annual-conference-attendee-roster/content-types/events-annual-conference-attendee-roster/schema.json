@@ -1,0 +1,112 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events_annual_conference_attendee_rosters",
+  "info": {
+    "singularName": "events-annual-conference-attendee-roster",
+    "pluralName": "events-annual-conference-attendee-rosters",
+    "displayName": "Events Annual Conference Attendee Roster",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "active": {
+      "type": "boolean"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Award",
+        "Attendee",
+        "Attendee-Full",
+        "Attendee-Partial",
+        "Attendee-Guest",
+        "ORWA Board Member",
+        "ORWAAG Board Member",
+        "Speaker",
+        "Staff",
+        "Vendor",
+        "Voting",
+        "VIP"
+      ]
+    },
+    "organization": {
+      "type": "string"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "license_number": {
+      "type": "string"
+    },
+    "orwa_voting_status": {
+      "type": "enumeration",
+      "enum": [
+        "Non Voting",
+        "Voting Delegate",
+        "Voting Alternate"
+      ]
+    },
+    "year": {
+      "type": "integer"
+    },
+    "meal_breakfast": {
+      "type": "boolean"
+    },
+    "meal_social": {
+      "type": "boolean"
+    },
+    "meal_lunch": {
+      "type": "boolean"
+    },
+    "meal_dinner": {
+      "type": "boolean"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "orwaag_voting_status": {
+      "type": "enumeration",
+      "enum": [
+        "Non Voting",
+        "Voting Delegate",
+        "Voting Alternate"
+      ]
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "wp_seid": {
+      "type": "integer"
+    },
+    "qr_code": {
+      "type": "text"
+    },
+    "passport_id": {
+      "type": "integer"
+    },
+    "training_type": {
+      "type": "enumeration",
+      "enum": [
+        "None",
+        "Both",
+        "Operator",
+        "Board"
+      ]
+    }
+  }
+}

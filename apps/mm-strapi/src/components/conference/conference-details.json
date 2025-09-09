@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_conference_conference_details",
+  "info": {
+    "displayName": "Conference Details",
+    "icon": "information",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "richtext"
+    },
+    "important": {
+      "type": "boolean"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "hidden": {
+      "type": "boolean"
+    }
+  }
+}

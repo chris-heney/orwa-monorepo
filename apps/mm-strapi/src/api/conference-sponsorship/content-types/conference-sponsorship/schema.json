@@ -1,0 +1,36 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_sponsorships",
+  "info": {
+    "singularName": "conference-sponsorship",
+    "pluralName": "conference-sponsorships",
+    "displayName": "Conference Sponsorship",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "amount": {
+      "type": "decimal"
+    },
+    "available": {
+      "type": "integer"
+    },
+    "max_purchasable": {
+      "type": "integer"
+    }
+  }
+}

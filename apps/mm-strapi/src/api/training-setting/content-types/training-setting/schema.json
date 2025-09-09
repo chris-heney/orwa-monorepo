@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_settings",
+  "info": {
+    "singularName": "training-setting",
+    "pluralName": "training-settings",
+    "displayName": "Training Setting",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "street": {
+      "type": "string"
+    },
+    "city": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string"
+    },
+    "zip": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "fax": {
+      "type": "string"
+    },
+    "hours": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "kind": "collectionType",
+  "collectionName": "activities",
+  "info": {
+    "singularName": "activity",
+    "pluralName": "activities",
+    "displayName": "Activity",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "timestamp": {
+      "type": "datetime"
+    },
+    "description": {
+      "type": "text"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_scoring_tokens",
+  "info": {
+    "singularName": "grant-scoring-token",
+    "pluralName": "grant-scoring-tokens",
+    "displayName": "Grant Scoring Token",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "public_key": {
+      "type": "text"
+    },
+    "application_status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-status.grant-status"
+    },
+    "private_key": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "next_status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-status.grant-status"
+    },
+    "default_member_name": {
+      "type": "string"
+    },
+    "default_member_email": {
+      "type": "string"
+    }
+  }
+}

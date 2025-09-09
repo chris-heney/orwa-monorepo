@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_sessions",
+  "info": {
+    "singularName": "training-session",
+    "pluralName": "training-sessions",
+    "displayName": "Training Session",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "start": {
+      "type": "time"
+    },
+    "training_instructor": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::training-instructor.training-instructor"
+    },
+    "summary": {
+      "type": "text"
+    },
+    "category": {
+      "type": "string"
+    },
+    "end": {
+      "type": "time"
+    },
+    "topic": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::training-topic.training-topic"
+    }
+  }
+}

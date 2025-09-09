@@ -1,0 +1,115 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_registrations",
+  "info": {
+    "singularName": "conference-registration",
+    "pluralName": "conference-registrations",
+    "displayName": "Conference Registration",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "registration_date": {
+      "type": "date"
+    },
+    "registrant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "total": {
+      "type": "decimal"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "attendees": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conference-attendee.conference-attendee",
+      "mappedBy": "registration"
+    },
+    "booths": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conference-booth.conference-booth",
+      "mappedBy": "registration"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "passport_id": {
+      "type": "integer"
+    },
+    "payment_method": {
+      "type": "string"
+    },
+    "organization": {
+      "type": "string"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Attendee",
+        "Vendor"
+      ]
+    },
+    "sponsorships": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conference-sponsorship.conference-sponsorship"
+    },
+    "address": {
+      "type": "component",
+      "repeatable": false,
+      "component": "simple.address"
+    },
+    "non_member_fee": {
+      "type": "boolean"
+    },
+    "registration_source": {
+      "type": "enumeration",
+      "enum": [
+        "online",
+        "kiosk"
+      ]
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "conference.line-items"
+    },
+    "conference_sponsor": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-sponsor.conference-sponsor",
+      "mappedBy": "registration"
+    },
+    "team": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-team.conference-team",
+      "mappedBy": "registration"
+    },
+    "contestants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conference-contestant.conference-contestant",
+      "mappedBy": "registration"
+    },
+    "taste_test_contestants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::taste-test-contestant.taste-test-contestant",
+      "mappedBy": "registration"
+    }
+  }
+}

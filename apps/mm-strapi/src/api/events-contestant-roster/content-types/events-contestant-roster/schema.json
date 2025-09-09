@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events_contestant_rosters",
+  "info": {
+    "singularName": "events-contestant-roster",
+    "pluralName": "events-contestant-rosters",
+    "displayName": "Events Contestant Roster",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "event": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    },
+    "organization": {
+      "type": "string"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "registration_fee": {
+      "type": "decimal"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "wp_seid": {
+      "type": "integer"
+    },
+    "team": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

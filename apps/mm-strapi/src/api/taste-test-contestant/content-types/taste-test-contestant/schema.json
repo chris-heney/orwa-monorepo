@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "taste_test_contestants",
+  "info": {
+    "singularName": "taste-test-contestant",
+    "pluralName": "taste-test-contestants",
+    "displayName": "Taste Test Contestant",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "watersystem": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::watersystem.watersystem"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "first": {
+      "type": "string"
+    },
+    "last": {
+      "type": "string"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "registration": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::conference-registration.conference-registration",
+      "inversedBy": "taste_test_contestants"
+    },
+    "organization": {
+      "type": "string"
+    }
+  }
+}

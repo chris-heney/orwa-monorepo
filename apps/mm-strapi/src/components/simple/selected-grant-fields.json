@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_simple_selected_grant_fields",
+  "info": {
+    "displayName": "Selected Grant Fields",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "field": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string"
+    }
+  }
+}

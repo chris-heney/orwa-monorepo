@@ -1,0 +1,122 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_events",
+  "info": {
+    "singularName": "training-event",
+    "pluralName": "training-events",
+    "displayName": "Training Event",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "start": {
+      "type": "datetime"
+    },
+    "end": {
+      "type": "datetime"
+    },
+    "hours": {
+      "type": "integer"
+    },
+    "training_type": {
+      "type": "enumeration",
+      "enum": [
+        "Certification Renewal",
+        "Board Member",
+        "New Board Member",
+        "Class A Water",
+        "Class B Water",
+        "Class C Water",
+        "Class D Water",
+        "Class A Wastewater",
+        "Class B Wastewater",
+        "Class C Wastewater",
+        "Class D Wastewater",
+        "Class A Water Lab",
+        "Class B Water Lab",
+        "Class C Water Lab",
+        "Class A Wastewater Lab",
+        "Class B Wastewater Lab",
+        "Class C Wastewater Lab"
+      ],
+      "required": true
+    },
+    "audience": {
+      "type": "enumeration",
+      "enum": [
+        "Operators & Managers",
+        "Decision Makers",
+        "Bookkeepers/Office Managers",
+        "All System Personnel",
+        "Board Members"
+      ]
+    },
+    "location": {
+      "type": "string"
+    },
+    "address": {
+      "type": "component",
+      "repeatable": false,
+      "component": "simple.address"
+    },
+    "phone": {
+      "type": "string",
+      "minLength": 10
+    },
+    "deq_exam": {
+      "type": "boolean"
+    },
+    "exam_datetime": {
+      "type": "datetime"
+    },
+    "private_notes": {
+      "type": "text"
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "DRAFT",
+        "REVIEW",
+        "DEQ",
+        "RSVP",
+        "LIVE",
+        "COMPLETE",
+        "CANCELLED"
+      ],
+      "default": "DRAFT"
+    },
+    "deq_class_number": {
+      "type": "string"
+    },
+    "instructor": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::training-instructor.training-instructor"
+    },
+    "schedule": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::training-schedule.training-schedule"
+    },
+    "venue_id": {
+      "type": "integer"
+    },
+    "public_notes": {
+      "type": "string"
+    },
+    "program_billed": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::program.program"
+    },
+    "training_event_registrations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::training-event-registration.training-event-registration",
+      "mappedBy": "training_event"
+    }
+  }
+}

@@ -1,0 +1,348 @@
+{
+  "kind": "collectionType",
+  "collectionName": "associates",
+  "info": {
+    "singularName": "associate",
+    "pluralName": "associates",
+    "displayName": "Associate",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "Accountant",
+        "Attorneys Bond Counsel",
+        "Automated Controls",
+        "Automatic Flushing",
+        "Automatic Meter Reading",
+        "Automotive Dealer",
+        "CNG",
+        "Car Dealership",
+        "Commercial",
+        "Communications",
+        "Community Service",
+        "Computers and Software",
+        "Construction",
+        "Consulting Service",
+        "Control Valve Sales and Service",
+        "Damage Prevention",
+        "Distributor",
+        "Electric Motor and Pump Repair",
+        "Electronic Fusion",
+        "Engineer",
+        "Environmental Service",
+        "Equipment Service Rental and Sales",
+        "Financial Service",
+        "Flow Meters",
+        "GIS",
+        "GPS Mapping and Survey Equipment",
+        "Geophysical Water Well Logging",
+        "Government Accounting Software",
+        "Health Care",
+        "Insurance",
+        "Lagoon Cleanouts",
+        "Landscape and Lawn Care",
+        "Manufacturer",
+        "Manufactures Rep",
+        "Mechanical/Plumbing and Maintenance",
+        "Meter and Automation",
+        "Meters and Meter Reading Equipment",
+        "Motor Carriers",
+        "Motor and Pump Repair",
+        "Municipal Services",
+        "Non-Destructive Testing",
+        "Oil Field Construction",
+        "Oilfield Flowback Services",
+        "Oilfield Service Company",
+        "Other",
+        "Painting and Coatings",
+        "Print and Mail Services",
+        "Pumps",
+        "Rail Car Maintenance and Repair",
+        "Ranching",
+        "Residential and Industrial",
+        "Roofing",
+        "SCADA/Telemetry",
+        "Sales Representative",
+        "Sales Representatives",
+        "Sanitary Sewer Evaluation Services",
+        "Software and Supplies",
+        "Storage Tanks",
+        "Suppliers",
+        "Tank Inspection",
+        "Tank Maintenance",
+        "Training",
+        "Truck Equipment",
+        "Valves",
+        "Vehicles",
+        "Water Analysis",
+        "Water Metering",
+        "Water Meters",
+        "Water Operator Training",
+        "Water Tanks",
+        "Water Treatment",
+        "Water Well Drilling and Pump Installation",
+        "Website Provider",
+        "Welding/Fabrication"
+      ],
+      "required": false
+    },
+    "member_level": {
+      "type": "enumeration",
+      "enum": [
+        "None",
+        "Basic",
+        "Bronze",
+        "Silver",
+        "Gold",
+        "Platinum"
+      ]
+    },
+    "website": {
+      "type": "string"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "contacts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::contact.contact"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "total_years": {
+      "type": "integer"
+    },
+    "email": {
+      "type": "email"
+    },
+    "contact_primary": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "contact_secondary": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "address_street": {
+      "type": "string"
+    },
+    "address_city": {
+      "type": "string"
+    },
+    "address_state": {
+      "type": "enumeration",
+      "enum": [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming"
+      ]
+    },
+    "address_zip": {
+      "type": "string",
+      "maxLength": 10
+    },
+    "membership_directory_type": {
+      "type": "enumeration",
+      "enum": [
+        "Digital",
+        "Mail",
+        "Both",
+        "None"
+      ]
+    },
+    "payment_last_date": {
+      "type": "date"
+    },
+    "payment_method": {
+      "type": "enumeration",
+      "enum": [
+        "Card",
+        "eCheck",
+        "Invoice"
+      ]
+    },
+    "payment_amount": {
+      "type": "decimal"
+    },
+    "fee_membership": {
+      "type": "decimal"
+    },
+    "fee_scholarship": {
+      "type": "decimal"
+    },
+    "fee_apprenticeship": {
+      "type": "decimal"
+    },
+    "payment_details": {
+      "type": "text"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "application_date": {
+      "type": "date"
+    },
+    "directory_mailed": {
+      "type": "boolean"
+    },
+    "primary_ad": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "payment_previous_date": {
+      "type": "date"
+    },
+    "directory_sent_date": {
+      "type": "date"
+    },
+    "mailing_address_street": {
+      "type": "string"
+    },
+    "mailing_address_city": {
+      "type": "string"
+    },
+    "mailing_address_state": {
+      "type": "enumeration",
+      "enum": [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming"
+      ]
+    },
+    "mailing_address_zip": {
+      "type": "string"
+    },
+    "membership": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::membership.membership",
+      "inversedBy": "associates"
+    }
+  }
+}

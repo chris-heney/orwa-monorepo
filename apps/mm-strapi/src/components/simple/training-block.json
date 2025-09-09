@@ -1,0 +1,24 @@
+{
+  "collectionName": "components_simple_training_blocks",
+  "info": {
+    "displayName": "Training Block"
+  },
+  "options": {},
+  "attributes": {
+    "am_pm": {
+      "type": "enumeration",
+      "enum": [
+        "AM",
+        "PM"
+      ]
+    },
+    "date": {
+      "type": "date"
+    },
+    "training_topics": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::training-topic.training-topic"
+    }
+  }
+}

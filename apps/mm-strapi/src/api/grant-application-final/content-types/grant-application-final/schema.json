@@ -1,0 +1,332 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_application_finals",
+  "info": {
+    "singularName": "grant-application-final",
+    "pluralName": "grant-application-finals",
+    "displayName": "Grant Application",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "legal_entity_name": {
+      "type": "string"
+    },
+    "facility_id": {
+      "type": "string"
+    },
+    "county": {
+      "type": "string"
+    },
+    "physical_address_street": {
+      "type": "string"
+    },
+    "physical_address_line_two": {
+      "type": "string"
+    },
+    "physical_address_city": {
+      "type": "string"
+    },
+    "physical_address_state": {
+      "type": "string"
+    },
+    "physical_address_zip": {
+      "type": "string"
+    },
+    "physical_same_as_mailing": {
+      "type": "boolean"
+    },
+    "mailing_address_street": {
+      "type": "string"
+    },
+    "mailing_address_line_two": {
+      "type": "string"
+    },
+    "mailing_address_city": {
+      "type": "string"
+    },
+    "mailing_address_state": {
+      "type": "string"
+    },
+    "mailing_address_zip": {
+      "type": "string"
+    },
+    "point_of_contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "chairman": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "chairman_also_mayer_of_municipal_city": {
+      "type": "boolean"
+    },
+    "has_engineer": {
+      "type": "boolean"
+    },
+    "engineer": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "drinking_or_wastewater": {
+      "type": "enumeration",
+      "enum": [
+        "Drinking Water",
+        "Wastewater"
+      ]
+    },
+    "drinking_water_projects_selected": {
+      "type": "string"
+    },
+    "wastewater_projects_selected": {
+      "type": "string"
+    },
+    "other_describe": {
+      "type": "text"
+    },
+    "description_justification_estimated_cost": {
+      "type": "text"
+    },
+    "project_proposal_birds": {
+      "type": "text"
+    },
+    "engineering_report": {
+      "type": "string"
+    },
+    "upload_engineering_report": {
+      "type": "text"
+    },
+    "report_approved_by_deq": {
+      "type": "string"
+    },
+    "resolves_violation": {
+      "type": "string"
+    },
+    "notice_of_violation": {
+      "type": "text"
+    },
+    "signatory_name": {
+      "type": "string"
+    },
+    "signatory_title": {
+      "type": "string"
+    },
+    "signature": {
+      "type": "text"
+    },
+    "application_status": {
+      "type": "string"
+    },
+    "approved_project_cost": {
+      "type": "integer"
+    },
+    "award_amount": {
+      "type": "integer"
+    },
+    "expected_utility_match": {
+      "type": "integer"
+    },
+    "projects_approved": {
+      "type": "text"
+    },
+    "other_needs": {
+      "type": "text"
+    },
+    "additional_files": {
+      "type": "text"
+    },
+    "change_order_request": {
+      "type": "string"
+    },
+    "population_served": {
+      "type": "integer"
+    },
+    "combined_cost_of_projects": {
+      "type": "biginteger"
+    },
+    "requested_grant_amount": {
+      "type": "biginteger"
+    },
+    "portion_matched_by_recipient": {
+      "type": "biginteger"
+    },
+    "minimum_utility_financial_contribution": {
+      "type": "string"
+    },
+    "deq_action": {
+      "type": "string"
+    },
+    "grant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant.grant"
+    },
+    "committee_date": {
+      "type": "date"
+    },
+    "application_date": {
+      "type": "date"
+    },
+    "status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-status.grant-status"
+    },
+    "sub_status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-sub-status.grant-sub-status"
+    },
+    "payouts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::grant-payout.grant-payout",
+      "mappedBy": "application"
+    },
+    "email": {
+      "type": "string"
+    },
+    "application_id": {
+      "type": "string"
+    },
+    "location": {
+      "type": "json"
+    },
+    "approved_projects": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::project-type.project-type"
+    },
+    "selected_projects": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::project-type.project-type"
+    },
+    "grant_application_score": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-application-score.grant-application-score",
+      "mappedBy": "grant_application"
+    },
+    "engineering_report_deq_approved": {
+      "type": "boolean"
+    },
+    "proposals": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "uploaded_engineering_report": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "uploaded_additional_files": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "uploaded_notice_of_violation": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "satisfy_deq_issued_order": {
+      "type": "boolean"
+    },
+    "consent_order_number": {
+      "type": "string"
+    },
+    "consent_order": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "applied_to_other_loans": {
+      "type": "boolean"
+    },
+    "money_set_aside": {
+      "type": "boolean"
+    },
+    "additional_information": {
+      "type": "text"
+    },
+    "applicant_pdf": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "award_letter": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "other_entities": {
+      "type": "text"
+    },
+    "additional_funding_requested": {
+      "type": "integer"
+    },
+    "lrsp_plan": {
+      "type": "boolean"
+    },
+    "regions": {
+      "type": "json"
+    },
+    "closed_out": {
+      "type": "boolean"
+    },
+    "previous_application_id": {
+      "type": "string"
+    }
+  }
+}

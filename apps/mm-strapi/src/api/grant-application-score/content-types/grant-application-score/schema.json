@@ -1,0 +1,68 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_application_scores",
+  "info": {
+    "singularName": "grant-application-score",
+    "pluralName": "grant-application-scores",
+    "displayName": "Grant Application Score",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "grant_application": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant-application-final.grant-application-final",
+      "inversedBy": "grant_application_score"
+    },
+    "score": {
+      "type": "integer"
+    },
+    "approved": {
+      "type": "boolean"
+    },
+    "date": {
+      "type": "date"
+    },
+    "orwa_signature": {
+      "type": "text"
+    },
+    "deq_signature": {
+      "type": "text"
+    },
+    "orwa_member_name": {
+      "type": "string"
+    },
+    "deq_member_name": {
+      "type": "string"
+    },
+    "projects_approved": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::project-type.project-type"
+    },
+    "other_describe": {
+      "type": "text"
+    },
+    "other_describe_2": {
+      "type": "text"
+    },
+    "orwa_member_email": {
+      "type": "string"
+    },
+    "deq_member_email": {
+      "type": "string"
+    },
+    "grant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant.grant"
+    },
+    "notes": {
+      "type": "text"
+    }
+  }
+}

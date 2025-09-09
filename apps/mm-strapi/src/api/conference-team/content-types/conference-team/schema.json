@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_teams",
+  "info": {
+    "singularName": "conference-team",
+    "pluralName": "conference-teams",
+    "displayName": "conference-team",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "registration": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-registration.conference-registration",
+      "inversedBy": "team"
+    },
+    "contestants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::conference-contestant.conference-contestant",
+      "mappedBy": "team"
+    }
+  }
+}

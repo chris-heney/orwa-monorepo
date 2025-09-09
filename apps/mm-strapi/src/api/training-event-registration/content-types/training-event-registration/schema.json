@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_event_registrations",
+  "info": {
+    "singularName": "training-event-registration",
+    "pluralName": "training-event-registrations",
+    "displayName": "Training Event Registration",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "first": {
+      "type": "string"
+    },
+    "last": {
+      "type": "string"
+    },
+    "attendee_id": {
+      "type": "integer"
+    },
+    "training_event": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::training-event.training-event",
+      "inversedBy": "training_event_registrations"
+    },
+    "class_number": {
+      "type": "integer"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    }
+  }
+}

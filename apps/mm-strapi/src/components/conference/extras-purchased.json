@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_extras_purchaseds",
+  "info": {
+    "displayName": "Conference Extras Purchased",
+    "icon": "apps"
+  },
+  "options": {},
+  "attributes": {
+    "extra_type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-extra.conference-extra"
+    },
+    "amount": {
+      "type": "decimal"
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "payout_statuses",
+  "info": {
+    "singularName": "payout-status",
+    "pluralName": "payout-statuses",
+    "displayName": "Payout Status",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    },
+    "email_template": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::email-template.email-template"
+    },
+    "next_statuses": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::payout-status.payout-status"
+    }
+  }
+}

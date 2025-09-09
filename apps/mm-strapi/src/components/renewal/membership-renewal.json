@@ -1,0 +1,41 @@
+{
+  "collectionName": "components_renewal_membership_renewals",
+  "info": {
+    "displayName": "Membership Renewal",
+    "icon": "air-freshener"
+  },
+  "options": {},
+  "attributes": {
+    "date_renewed": {
+      "type": "date",
+      "required": true,
+      "default": "2022-01-01"
+    },
+    "renewal_amount": {
+      "type": "decimal",
+      "required": true
+    },
+    "application_type": {
+      "type": "enumeration",
+      "enum": [
+        "Paper",
+        "Electronic"
+      ],
+      "default": "Paper",
+      "required": true
+    },
+    "payment_type": {
+      "type": "enumeration",
+      "enum": [
+        "Invoice",
+        "Electronic",
+        "Other"
+      ],
+      "default": "Invoice",
+      "required": true
+    },
+    "membership_notes": {
+      "type": "richtext"
+    }
+  }
+}

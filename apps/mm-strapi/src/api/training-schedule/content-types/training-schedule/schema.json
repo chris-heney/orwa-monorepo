@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_schedules",
+  "info": {
+    "singularName": "training-schedule",
+    "pluralName": "training-schedules",
+    "displayName": "Training Schedule",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "training_sessions": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::training-session.training-session"
+    },
+    "training_schedule_blocks": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::training-schedule-block.training-schedule-block"
+    },
+    "event": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::training-event.training-event"
+    }
+  }
+}

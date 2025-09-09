@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "scheduled_email_tasks",
+  "info": {
+    "singularName": "scheduled-email-task",
+    "pluralName": "scheduled-email-tasks",
+    "displayName": "scheduled-email-task",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "cron_rule": {
+      "type": "string"
+    },
+    "email_template": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::email-template.email-template"
+    },
+    "entity": {
+      "type": "string"
+    },
+    "condition": {
+      "type": "json"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "last_sent": {
+      "type": "datetime"
+    }
+  }
+}

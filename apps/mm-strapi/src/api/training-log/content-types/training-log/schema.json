@@ -1,0 +1,46 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_logs",
+  "info": {
+    "singularName": "training-log",
+    "pluralName": "training-logs",
+    "displayName": "Training Log",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "training_minutes": {
+      "type": "integer"
+    },
+    "class_name": {
+      "type": "string"
+    },
+    "location": {
+      "type": "string"
+    },
+    "latitude": {
+      "type": "float"
+    },
+    "longitude": {
+      "type": "float"
+    },
+    "auth_uid": {
+      "type": "integer"
+    },
+    "license": {
+      "type": "string"
+    },
+    "attendee_id": {
+      "type": "integer"
+    },
+    "passport_id": {
+      "type": "integer"
+    },
+    "event": {
+      "type": "string"
+    }
+  }
+}

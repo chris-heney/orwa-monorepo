@@ -1,0 +1,27 @@
+{
+  "kind": "collectionType",
+  "collectionName": "staff",
+  "info": {
+    "singularName": "staff-member",
+    "pluralName": "staff",
+    "displayName": "Staff",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "assigned_assets": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::asset.asset",
+      "mappedBy": "assigned_to"
+    },
+    "contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events_expo_attendee_rosters",
+  "info": {
+    "singularName": "events-expo-attendee-roster",
+    "pluralName": "events-expo-attendee-rosters",
+    "displayName": "Events Expo Attendee Roster",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Attendee",
+        "ORWA Board Member",
+        "ORWAAG Board Member",
+        "Dinner Attendee",
+        "Speaker",
+        "Staff",
+        "Vendor"
+      ]
+    },
+    "organization": {
+      "type": "string"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "license_number": {
+      "type": "string"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "wp_seid": {
+      "type": "integer"
+    },
+    "passport_id": {
+      "type": "integer"
+    },
+    "qr_code": {
+      "type": "string"
+    },
+    "dinner": {
+      "type": "boolean"
+    },
+    "training_demo_participant": {
+      "type": "boolean"
+    },
+    "training_type": {
+      "type": "enumeration",
+      "enum": [
+        "None",
+        "Both",
+        "Operator",
+        "Board"
+      ]
+    },
+    "sponsor": {
+      "type": "boolean"
+    },
+    "wp_eid": {
+      "type": "integer"
+    }
+  }
+}

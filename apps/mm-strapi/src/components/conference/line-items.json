@@ -1,0 +1,30 @@
+{
+  "collectionName": "components_conference_line_items",
+  "info": {
+    "displayName": "Line Items",
+    "icon": "bulletList",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "key": {
+      "type": "string"
+    },
+    "value": {
+      "type": "string"
+    },
+    "label": {
+      "type": "string"
+    },
+    "item": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-extra.conference-extra"
+    },
+    "addon": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::registration-addon.registration-addon"
+    }
+  }
+}

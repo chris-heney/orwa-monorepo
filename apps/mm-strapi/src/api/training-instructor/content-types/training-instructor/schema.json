@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "training_instructors",
+  "info": {
+    "singularName": "training-instructor",
+    "pluralName": "training-instructors",
+    "displayName": "Training Instructor",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "staff": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::staff-member.staff-member"
+    },
+    "instructor": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact"
+    },
+    "training_instructor_certification": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::training-instructor-certification.training-instructor-certification",
+      "mappedBy": "instructor"
+    },
+    "operator_license": {
+      "type": "integer"
+    }
+  }
+}

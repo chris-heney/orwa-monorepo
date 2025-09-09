@@ -1,0 +1,28 @@
+{
+  "collectionName": "components_certification_certifications",
+  "info": {
+    "displayName": "certifications"
+  },
+  "options": {},
+  "attributes": {
+    "certification": {
+      "type": "enumeration",
+      "enum": [
+        "Class A Water",
+        "Class B Water",
+        "Class C Water",
+        "Class D Water",
+        "Class A Wastewater",
+        "Class B Wastewater",
+        "Class C Wastewater",
+        "Class D Wastewater",
+        "Class A Water Lab",
+        "Class B Water Lab",
+        "Class C Water Lab",
+        "Class A Wastewater Lab",
+        "Class B Wastewater Lab",
+        "Class C Wastewater Lab"
+      ]
+    }
+  }
+}

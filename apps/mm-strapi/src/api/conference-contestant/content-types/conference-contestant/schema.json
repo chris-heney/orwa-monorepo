@@ -1,0 +1,67 @@
+{
+  "kind": "collectionType",
+  "collectionName": "conference_contestants",
+  "info": {
+    "singularName": "conference-contestant",
+    "pluralName": "conference-contestants",
+    "displayName": "Conference Contestant",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "conference": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference.conference"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "type": {
+      "type": "string"
+    },
+    "organization": {
+      "type": "string"
+    },
+    "fee": {
+      "type": "decimal"
+    },
+    "first": {
+      "type": "string"
+    },
+    "last": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "conference_ticket": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::conference-ticket.conference-ticket"
+    },
+    "items": {
+      "type": "component",
+      "repeatable": true,
+      "component": "shared.field-meta"
+    },
+    "team": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::conference-team.conference-team",
+      "inversedBy": "contestants"
+    },
+    "registration": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::conference-registration.conference-registration",
+      "inversedBy": "contestants"
+    }
+  }
+}

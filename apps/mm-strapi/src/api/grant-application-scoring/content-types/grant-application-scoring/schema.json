@@ -1,0 +1,38 @@
+{
+  "kind": "collectionType",
+  "collectionName": "grant_application_scorings",
+  "info": {
+    "singularName": "grant-application-scoring",
+    "pluralName": "grant-application-scorings",
+    "displayName": "Grant Application Scoring",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "grant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::grant.grant"
+    },
+    "order": {
+      "type": "string"
+    },
+    "score": {
+      "type": "integer"
+    },
+    "icon": {
+      "type": "text"
+    },
+    "project_type": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::project-type.project-type"
+    }
+  }
+}

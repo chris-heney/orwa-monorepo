@@ -1,0 +1,83 @@
+{
+  "kind": "collectionType",
+  "collectionName": "events_fall_conference_attendee_rosters",
+  "info": {
+    "singularName": "events-fall-conference-attendee-roster",
+    "pluralName": "events-fall-conference-attendee-rosters",
+    "displayName": "Events Fall Conference Attendee Roster",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "active": {
+      "type": "boolean"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "Attendee",
+        "ORWA Board Member",
+        "ORWAAG Board Member",
+        "Dinner Attendee",
+        "Speaker",
+        "Staff",
+        "Vendor"
+      ]
+    },
+    "organization": {
+      "type": "string"
+    },
+    "first_name": {
+      "type": "string"
+    },
+    "last_name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "email"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "license_number": {
+      "type": "string"
+    },
+    "year": {
+      "type": "integer"
+    },
+    "dinner": {
+      "type": "boolean"
+    },
+    "wp_uid": {
+      "type": "integer"
+    },
+    "wp_eid": {
+      "type": "integer"
+    },
+    "wp_seid": {
+      "type": "integer"
+    },
+    "training_type": {
+      "type": "enumeration",
+      "enum": [
+        "None",
+        "Both",
+        "Operator",
+        "Board"
+      ]
+    },
+    "passport_id": {
+      "type": "integer",
+      "default": 0
+    },
+    "title": {
+      "type": "string"
+    },
+    "qr_code": {
+      "type": "string"
+    }
+  }
+}
