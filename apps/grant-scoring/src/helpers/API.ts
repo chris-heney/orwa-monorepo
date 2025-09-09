@@ -1,4 +1,4 @@
-import { API_ENDPOINT, API_TOKEN } from '../config'
+import { API_ENDPOINT, API_KEY } from '../config'
 import axios from 'axios'
 
 /**
@@ -21,7 +21,7 @@ export const FindApplication = async (applicationId: string) => {
         'sort': 'id:ASC',
       },
       headers: {
-        'Authorization': `Bearer ${API_TOKEN}`
+        'Authorization': `Bearer ${API_KEY}`
       }
     })
 
@@ -55,7 +55,7 @@ export const GetSteps = async () => {
         'sort': 'order:ASC'
       },
       headers: {
-        'Authorization': `Bearer ${API_TOKEN}`
+        'Authorization': `Bearer ${API_KEY}`
       }
     })
 
@@ -81,7 +81,7 @@ export const GetSteps = async () => {
 //       'filters': { status }
 //     },
 //     headers: {
-//       'Authorization': `Bearer ${API_TOKEN}`,
+//       'Authorization': `Bearer ${API_KEY}`,
 //     },
 
 //   });
@@ -100,7 +100,7 @@ export const GetSteps = async () => {
 //   try {
 //     await axios.put(`${API_ENDPOINT}/grant-application-finals/${applicationId}`, payload, {
 //       headers: {
-//         'Authorization': `Bearer ${API_TOKEN}`,
+//         'Authorization': `Bearer ${API_KEY}`,
 //       },
 //     })
 //   }
@@ -118,7 +118,7 @@ export const GetScoring = async () => {
         'populate': '*'
       },
       headers: {
-        'Authorization': `Bearer ${API_TOKEN}`,
+        'Authorization': `Bearer ${API_KEY}`,
       },
 
     });
@@ -133,7 +133,7 @@ export const useGetScore = () => async (id: number) => {
   const {data: response} = await axios.get(`${API_ENDPOINT}/grant-application-scores`, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_TOKEN}`
+      Authorization: `Bearer ${API_KEY}`
     },
     params: {
       'populate': '*',
@@ -150,7 +150,7 @@ export const submitScore = async (data: any ) => {
   try {
     await axios.post(`${API_ENDPOINT}/grant-application-scores`, data, {
       headers: {
-        'Authorization ': `Bearer ${API_TOKEN}`,
+        'Authorization ': `Bearer ${API_KEY}`,
       },
     })
   } catch (error) {
@@ -162,7 +162,7 @@ export const updateApplicationScoring = async (id: number, data: any) => {
   try {
     await axios.put(`${API_ENDPOINT}/grant-application-scores/${id}`, data, {
       headers: {
-        'Authorization': `Bearer ${API_TOKEN}`,
+        'Authorization': `Bearer ${API_KEY}`,
       },
     })
   } catch (error) {
@@ -174,7 +174,7 @@ export const getNextStatus = async (name: string) => {
   try {
     const { data } = await axios.get(`${API_ENDPOINT}/grant-statuses`, {
       headers: {
-        'Authorization': `Bearer ${API_TOKEN}`,
+        'Authorization': `Bearer ${API_KEY}`,
       },
       params: {
         'populate': '*',
@@ -193,7 +193,7 @@ export const useGetScoringCriterias = () => async () => {
   const {data: response} = await axios.get(`${API_ENDPOINT}/grant-application-scorings`, {
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_TOKEN}`
+      Authorization: `Bearer ${API_KEY}`
     },
     params: {
       'populate': '*',
