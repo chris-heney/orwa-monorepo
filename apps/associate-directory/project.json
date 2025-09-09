@@ -5,5 +5,65 @@
   "projectType": "application",
   "tags": [],
   "// targets": "to see all targets run: nx show project associate-directory --web",
-  "targets": {}
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/associate-directory"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "associate-directory:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "associate-directory:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "associate-directory:build:production",
+          "hmr": false
+        }
+      },
+      "dependsOn": [{"projects": ["mm-strapi"], "target": "serve"}]
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "reportsDirectory": "../../coverage/apps/associate-directory"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    },
+    "docker:build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "docker buildx build --platform linux/amd64 --no-cache --target production -t orwa/associate-directory:latest -f Dockerfile.associate-directory .",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["docker:build"],
+      "options": {
+        "command": "docker push orwa/associate-directory:latest"
+      }
+    }
+  }
 }
