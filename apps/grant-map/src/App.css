@@ -1,0 +1,137 @@
+#root {
+  margin: 0 auto;
+  text-align: center;
+  width: 100%;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/**
+ * Map Elements
+ */
+.mapboxgl-canvas-container {
+  position: relative;
+}
+.mapboxgl-canvas {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0; right: 0;
+}
+.gapp-pin {
+  fill: #f00;
+  stroke: #000;
+  stroke-width: 2px;
+  height: 30px;
+  width: 30px;
+}
+
+.mapboxgl-popup-tip {
+  display: none;
+}
+
+.custom-popup .mapboxgl-popup-content {
+  background: none;
+  box-shadow: none;
+}
+
+
+/**
+ * Modal / Loading Icon
+ */
+#modal-overlay {
+  align-items: center;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  position: fixed;
+  z-index: 5;
+  display: flex;
+  justify-content: center;
+  width: 100vw;
+}
+#modal-content {
+  background: #fff;
+  padding: 2em;
+  border-radius: 5px;
+  box-shadow: 1px 0 5px rgba(0,0,0,0.8);
+  display: flex;
+  gap: 0.5em;
+  flex-direction: column;
+  max-width: 400px;
+  margin: 1em;
+  width: 100%;
+}
+#modal-overlay > svg {
+  fill: #fff;
+  height: 256px;
+  width: 256px;
+}
+#modal-content input {
+  padding: 10px;
+  font-size: 18px;
+}
+#modal-content button {
+  background-color: #1976d2;
+  color: #fff;
+}
+#modal-content button:hover {
+  opacity: 0.8;
+}
+
+
+ .spinner_Uvk8 {
+	animation: spinner_otJF 1.6s cubic-bezier(.52, .6, .25, .99) infinite
+}
+
+.spinner_ypeD {
+	animation-delay: .2s
+}
+
+.spinner_y0Rj {
+	animation-delay: .4s
+}
+
+@keyframes spinner_otJF {
+	0% {
+		transform: translate(12px, 12px) scale(0);
+		opacity: 1
+	}
+	75%,
+	100% {
+		transform: translate(0, 0) scale(1);
+		opacity: 0
+	}
+}
