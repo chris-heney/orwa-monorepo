@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* Global Styles */
+body {
+  background-color: #ffffff;
+}
+
+/* Sponsor Section */
+section.sponsors img {
+  max-height: 160px;
+  width: auto;
+  height: auto;
+}
+
+/* Schedule Tables */
+#schedule-tables thead {
+  display: none;
+}
+
+#schedule-tables tr {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+}
+
+@media (min-width: 768px) {
+  #schedule-tables thead {
+    display: table-header-group;
+  }
+  #schedule-tables label {
+    display: none;
+  }
+  #schedule-tables tr {
+    display: table-row;
+    padding: 0;
+  }
+}
+
+/* Animation */
+@keyframes pulse-line {
+  0% {
+    transform: scaleX(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(0);
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse-line {
+  display: block;
+  position: absolute;
+  bottom: -10px;
+  height: 2px;
+  background-color: red;
+  animation: pulse-line 2s infinite;
+  transform-origin: center;
+}
+
+/* Fetched HTML Content Styling */
+.fetched-html-content {
+  /* Headings */
+  h1, h2, h3 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  /* Paragraphs */
+  p {
+    text-align: justify;
+    line-height: 1.6;
+    display: block;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* Lists */
+  ul {
+    list-style-type: disc;
+    margin-left: 20px;
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 5px;
+    line-height: 1.6;
+
+    /* Nested Paragraphs in List Items */
+    p {
+      margin: 0;
+      padding: 0;
+      display: inline;
+    }
+  }
+
+  /* Emphasis (Italic) */
+  em {
+    font-style: italic;
+    text-decoration: none;
+
+    /* Emphasis within List Items */
+    li & {
+      font-style: italic;
+      text-decoration: none;
+    }
+  }
+}

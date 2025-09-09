@@ -3,20 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "build": "vite build",
-    "dev": "vite",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
-    "react-router-dom": "6.29.0"
-  },
-  "devDependencies": {
-    "@types/react": "19.0.0",
-    "@types/react-dom": "19.0.0",
-    "@vitejs/plugin-react": "^4.2.0",
-    "typescript": "~5.8.2",
-    "vite": "^6.0.0"
+    "build": "../../node_modules/.bin/vite build",
+    "dev": "../../node_modules/.bin/vite",
+    "preview": "../../node_modules/.bin/vite preview"
   }
 }
