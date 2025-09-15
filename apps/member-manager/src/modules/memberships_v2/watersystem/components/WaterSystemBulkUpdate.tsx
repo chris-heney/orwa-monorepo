@@ -1,4 +1,4 @@
-import { Box, Button, Grid, MenuItem, Modal, Select, Typography } from '@mui/material'
+import {Box, Button, Grid, MenuItem, Modal, Select, Typography} from "@mui/material"
 import React, { useState } from 'react'
 import { AutocompleteArrayInput, BooleanInput, ConfigurableDatagridColumn, DateInput, List, NumberInput, ReferenceArrayInput, SelectInput, SimpleForm, SimpleList, TextInput, useNotify, useStore, useUpdateMany } from 'react-admin'
 import { FieldValues } from 'react-hook-form'
@@ -56,7 +56,7 @@ const WaterSystemBulkUpdateButton = () => {
           <CustomSecondaryHeader title='Bulk Update Watersystems' />
           {/* left side field to update right side is list of water systems being updated */}
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Typography textAlign={'center'} variant='h6'>Selected Field</Typography>
               <Box sx={{ p: 1, display: 'flex' , mt: 2.5}}>
                 <Select
@@ -159,7 +159,7 @@ const WaterSystemBulkUpdateButton = () => {
                 </SimpleForm>
               </Box>
             </Grid>
-            <Grid item xs={6} >
+            <Grid xs={6}>
               <Typography textAlign={'center'} variant='h6'>Selected Watersystems</Typography>
               <List
                 title={' '}

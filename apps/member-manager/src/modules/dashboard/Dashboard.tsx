@@ -1,6 +1,6 @@
 import React from 'react'
 import ActivityFeed from '../activity/ActivityFeed'
-import { Grid } from '@mui/material'
+import { Grid } from "@mui/material"
 import NextConferencsCard from './_components/ConferencesCard'
 import StaffCard from './_components/StaffCard'
 import InstructorsCard from './_components/TrainingInstructorCard'
@@ -17,23 +17,23 @@ export interface DashboardStateFilter {
 const Dashboard = () => {
   
   return (
-    <Grid  justifyContent={'center'} mt={2} container spacing={2}> 
-      <Grid item height={400} xs={12} sm={12} md={6} lg={4}>
+    <Grid container spacing={2} sx={{ justifyContent: 'center', mt: 2 }}> 
+      <Grid xs={12} sm={12} md={6} lg={4} sx={{ height: 400 }}>
         <StaffCard />
       </Grid>
-      <Grid height={400} item xs={12} sm={12} md={6} lg={4}>
+      <Grid xs={12} sm={12} md={6} lg={4} sx={{ height: 400 }}>
         <MembershipCard/>   
       </Grid>
-      <Grid height={400} item xs={12} sm={12} md={6} lg={4  }>
+      <Grid xs={12} sm={12} md={6} lg={4} sx={{ height: 400 }}>
         <NextConferencsCard />
       </Grid>
-      <Grid height={390} item xs={12} sm={12} md={6} lg={4}>
+      <Grid xs={12} sm={12} md={6} lg={4} sx={{ height: 390 }}>
         <ActivityFeed admin={true} sx={{height:'100%', width:'100%', borderRadius : '10px'}} title="Admin Dashboard" />
       </Grid>
-      <Grid height={390} item xs={12} sm={12} md={6} lg={4}>
+      <Grid xs={12} sm={12} md={6} lg={4} sx={{ height: 390 }}>
         <InstructorsCard/>
       </Grid>
-      <Grid height={390} item xs={12} sm={12} md={6} lg={4}>
+      <Grid xs={12} sm={12} md={6} lg={4} sx={{ height: 390 }}>
         <AssetsCard />
       </Grid>  
     </Grid>  

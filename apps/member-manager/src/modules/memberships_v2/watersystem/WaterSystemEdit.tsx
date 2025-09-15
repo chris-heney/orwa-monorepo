@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { EditBase, SimpleForm, Title } from "react-admin";
 import MembershipsContextProvider from "../../memberships_v2/MembershipsContextProvider";
-import { Card, Grid, Button, Tooltip } from "@mui/material";
+import {Card, Grid, Button, Tooltip} from "@mui/material";
 import WaterSystemFields from "./components/WaterSystemFields";
 import CustomFormHeader from "../../_components/CustomFormHeader";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
@@ -17,7 +17,7 @@ const WaterSystemEdit = () => {
       <EditBase hasShow={false} redirect={false} component="div">
         <Title title="Memberships" />
         <Grid container spacing={2} py={2}>
-          <Grid item xs={12} md={showSidebar ? 9 : 12}>
+          <Grid xs={12} md={showSidebar ? 9 : 12}>
             <SimpleForm
               sx={{
                 p: 0,
@@ -46,7 +46,7 @@ const WaterSystemEdit = () => {
 
           {/* Sidebar toggle logic */}
           {showSidebar && (
-            <Grid item xs={12} md={3}>
+            <Grid xs={12} md={3}>
               <EmailSidebar module="Memberships" />
             </Grid>
           )}

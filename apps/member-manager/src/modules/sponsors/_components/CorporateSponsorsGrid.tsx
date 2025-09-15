@@ -29,9 +29,9 @@ const CorporateSponsorsGrid = () => {
       borderRadius: 2,
       overflow: "hidden"
     }}>     
-    <Grid container columnSpacing={2} rowSpacing={1} sx={{ pb: 4, p: 1 }}>
+    <Grid container spacing={2} sx={{ pb: 4, p: 1 }}>
       {data.map((sponsor) => (
-        <Grid item key={sponsor.id} xs={12} sm={6} md={4} lg={3}>
+        <Grid key={sponsor.id} xs={12} sm={6} md={4} lg={3}>
           <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             <Card
               sx={{

@@ -13,7 +13,7 @@ import {
   useNotify,
   useRedirect,
 } from "react-admin";
-import { Grid } from "@mui/material";
+import {Grid} from "@mui/material";
 import CustomHeader from "../../_components/CustomHeader";
 import { FieldValues } from "react-hook-form";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -58,7 +58,7 @@ const CreatePayout = () => {
 
       <SimpleForm onSubmit={(data: FieldValues) => createPayout(data)}>
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ReferenceInput
               perPage={1000}
               reference="grant-application-finals"
@@ -82,7 +82,7 @@ const CreatePayout = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <NumberInput
               source="amount"
               label="Amount"
@@ -91,7 +91,7 @@ const CreatePayout = () => {
               key="payout-field-2"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <DateInput
               defaultValue={new Date()}
               source="transaction_date"
@@ -101,7 +101,7 @@ const CreatePayout = () => {
               key="payout-field-4"
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ReferenceInput
               defaultValue={"Requested"}
               source="payout_status"
@@ -119,7 +119,7 @@ const CreatePayout = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ReferenceInput
               perPage={1000}
               reference="grants"
@@ -134,7 +134,7 @@ const CreatePayout = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <SelectInput
               source="type"
               label="Type"
@@ -148,7 +148,7 @@ const CreatePayout = () => {
               key="payout-field-6"
             />
           </Grid>
-          <Grid item xs={12}>
+          <Grid xs={12}>
             <TextInput
               source="comments"
               label="Notes"

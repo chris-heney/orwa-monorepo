@@ -9,7 +9,7 @@ import {
   TextInput,
   useRecordContext,
 } from "react-admin";
-import { Card, Divider, Grid, Typography } from "@mui/material";
+import {Card, Divider, Grid, Typography} from "@mui/material";
 import { formatNumber } from "../../../helpers/Formators";
 import CustomPhoneInput from "../../_components/MaskedPhoneInput";
 import CalculateSponsorCost from "./CalculateSponsorCost";
@@ -47,12 +47,12 @@ const SponsorFormFields = () => {
 
         <Grid container spacing={4}>
           {/* Left Section */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
               General Information
             </Typography>
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextInput
                   source="organization"
                   label="Organization"
@@ -60,7 +60,7 @@ const SponsorFormFields = () => {
                   helperText="Enter the name of the organization."
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <ReferenceInput
                   source="registration"
                   reference="conference-registrations"
@@ -77,7 +77,7 @@ const SponsorFormFields = () => {
                   />
                 </ReferenceInput>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <CustomPhoneInput
                   source="phone"
                   label="Phone"
@@ -85,7 +85,7 @@ const SponsorFormFields = () => {
                   helperText="Enter the phone number of the sponsor."
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <TextInput
                   source="email"
                   label="Email"
@@ -93,7 +93,7 @@ const SponsorFormFields = () => {
                   helperText="Enter the email address of the sponsor."
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid xs={12} md={6}>
                 <CalculateSponsorCost />
               </Grid>
 
@@ -102,7 +102,7 @@ const SponsorFormFields = () => {
           </Grid>
 
           {/* Right Section */}
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
               Sponsorship Items
             </Typography>

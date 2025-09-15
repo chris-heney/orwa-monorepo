@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Button, Card, Grid, Modal, Typography } from '@mui/material'
+import {Button, Card, Grid, Modal, Typography} from "@mui/material"
 import {
   BooleanInput,
   DateTimeInput,
@@ -104,14 +104,14 @@ const EventFormFields = () => {
 
   return (
     <>
-      <Grid container spacing={0} gap={0} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
-        <Grid item xs={12} md={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
+      <Grid container spacing={0} gap={0} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
+        <Grid xs={12} md={6} sm={12} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
 
           {/* DETAILS */}
           <Card sx={{ p: 2, my: 2, mx: 1 }}>
             <Typography variant='h5'>Details</Typography>
             <SelectInput helperText={false} source="training_type" label="Training Type" choices={ClassTypeOptions} fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
-            <Grid item xs={12} sm={12} md={12} lg={12}>
+            <Grid xs={12} sm={12} md={12} lg={12}>
               <Button onClick={() => setIsPorgramOpen(true)}>Add Program</Button>
               <ReferenceInput
                 reference="programs"
@@ -138,7 +138,7 @@ const EventFormFields = () => {
           <Card sx={{ p: 2, my: 2, mx: 1 }}>
             <Typography variant='h5'>Location</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <VenueAutocompleteInput venue={venue} setVenue={setVenue} />
               </Grid>
               <Grid style={{ display: 'none' }}>
@@ -147,7 +147,7 @@ const EventFormFields = () => {
 
               <FormDataConsumer<{ training_type: string }>>
                 {({ formData }) => (formData.training_type && formData.training_type.startsWith('Class')) &&
-                  <Grid item xs={6}>
+                  <Grid xs={6}>
                     <TextInput
                       helperText={false}
                       source="location"
@@ -160,28 +160,28 @@ const EventFormFields = () => {
                 }
               </FormDataConsumer>
 
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <TextInput helperText={false} defaultValue={venue?.street} source="address.street" label="Street" fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
               </Grid>
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <TextInput helperText={false} defaultValue={venue?.city} source="address.city" label="City" fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
               </Grid>
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <SelectInput helperText={false} defaultValue={venue?.state} source="address.state" label="State" choices={StateChoices} fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
               </Grid>
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <TextInput helperText={false} defaultValue={venue?.zip} source="address.zip" label="Zip" fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
               </Grid>
             </Grid>
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
+        <Grid xs={12} md={6} sm={12} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
           {/* EVENT DATES */}
           <Card sx={{ p: 2, my: 2, mx: 1 }}>
             <Typography variant='h5'>Dates</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <DateTimeInput
                   helperText={false}
                   source="start"
@@ -191,7 +191,7 @@ const EventFormFields = () => {
                   defaultValue={defaultStartDate}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <DateTimeInput
                   helperText={false}
                   source="end"
@@ -201,11 +201,11 @@ const EventFormFields = () => {
                   defaultValue={defaultEndDate}
                 />
               </Grid>
-              <Grid mt={2} item xs={6}>
+              <Grid mt={2} xs={6}>
                 <BooleanInput helperText={false} source="deq_exam" label="DEQ Exam" fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
               </Grid>
 
-              <Grid item xs={6}>
+              <Grid xs={6}>
                 <FormDataConsumer<{ deq_exam: boolean }>>
                   {({ formData }) => formData.deq_exam &&
                     <DateTimeInput
@@ -228,7 +228,7 @@ const EventFormFields = () => {
             <Typography variant='h5'>Instructor Information</Typography>
             <Typography variant='body1'>Please enter the instructor information below. If the instructor is not in the system, please click the &quot;Add Instructor&quot; button to add them.</Typography>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <ReferenceInput
                   reference="training-instructors"
                   source="instructor"
@@ -236,7 +236,7 @@ const EventFormFields = () => {
                   <TrainingInstructorAutocompleteInput filter={certificationFilter} source={'instructor'} />
                 </ReferenceInput>
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <CustomPhoneInput helperText={false} placeholder="(123) 456-7890" source="phone" label="Phone" fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
               </Grid>
             </Grid>

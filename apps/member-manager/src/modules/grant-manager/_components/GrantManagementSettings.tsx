@@ -1,4 +1,4 @@
-import { Box, Card, Grid } from '@mui/material'
+import {Box, Card, Grid} from "@mui/material"
 import React from 'react'
 import EmailInterface from '../../emails-magement/emails-templates/EmailInterface'
 import GrantStatusesInterface from './StatusesInterface'
@@ -10,22 +10,22 @@ const GrantManagementSettings = () => {
   return (
     <Box>
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <GrantStatusesInterface context='grant-statuses' />
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <EmailInterface module="Grant Management" />
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <GrantStatusesInterface context='grant-sub-statuses' />
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <CustomInterface
             InputFields={() => <ScoringFormFields />}
             rows={[
@@ -38,12 +38,12 @@ const GrantManagementSettings = () => {
             createTitle='Add New Scoring Criteria'
           />
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <GrantStatusesInterface context='payout-statuses' />
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CustomInterface
               InputFields={() => <ProjectTypeFields />}
@@ -59,7 +59,7 @@ const GrantManagementSettings = () => {
             />
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card>
             <CustomInterface
               rows={[

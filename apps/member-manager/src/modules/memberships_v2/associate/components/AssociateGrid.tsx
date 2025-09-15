@@ -76,7 +76,7 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
     : "N/A";
 
   return (
-    <Grid item key={associate.id} xs={12} sm={6} md={4} lg={3}>
+    <Grid key={associate.id} xs={12} sm={6} md={4} lg={3}>
       <Box
         sx={{
           display: "flex",
@@ -199,7 +199,7 @@ const AssociateGrid = () => {
         overflow: "hidden",
       }}
     >
-      <Grid container columnSpacing={2} rowSpacing={1} sx={{ pb: 4, p: 1 }}>
+      <Grid container spacing={2} sx={{ pb: 4, p: 1 }}>
         {data.map((associate) => (
           <AssociateGridItem key={associate.id} associate={associate} />
         ))}

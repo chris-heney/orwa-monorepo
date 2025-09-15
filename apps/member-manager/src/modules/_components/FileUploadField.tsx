@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { Box, Grid, Button, Typography, Paper } from "@mui/material";
+import {Box, Grid, Button, Typography, Paper} from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import DisplayFile from "./DisplayFile";
 import MediaLibraryDialog from "./MediaLibraryDialog";
@@ -275,7 +275,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
   }, [files, multiple, source]);
 
   return (
-    <Grid item xs={12} sm={fullWidth ? 12 : 6}>
+    <Grid xs={12} sm={fullWidth ? 12 : 6}>
       <Box display="flex" flexDirection="column" gap={1}>
         {/* Hidden file input for direct file selection */}
         <Box sx={{ display: 'none' }}>

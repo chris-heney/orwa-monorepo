@@ -3,7 +3,7 @@ import { useMembershipContext } from "../MembershipsContextProvider";
 import { ListBase } from "react-admin";
 import WaterSystemFilter from "../watersystem/components/WatersystemFilter";
 import AssociateListFilterSidebar from "../associate/components/AssociateListFilterSidebar";
-import { Grid, IconButton, Paper, Tooltip } from "@mui/material";
+import {Grid, IconButton, Paper, Tooltip} from "@mui/material";
 import CustomHeader from "../../_components/CustomHeader";
 import InvoicesFilters from "./InvoicesFilters";
 import { Favorite } from "@mui/icons-material";
@@ -24,15 +24,12 @@ const MembershipFilters = () => {
   return selectedTab === "summary" || !isFilterSidebarOpen || isLoading ? (
     <></>
   ) : (
-    <Grid
-      item
-      xs={12}
+    <Grid xs={12}
       md={2}
       sx={{
         flexGrow: 1,
         position: "relative",
-      }}
-    >
+      }}>
       <Paper
         component={"aside"}
         sx={{

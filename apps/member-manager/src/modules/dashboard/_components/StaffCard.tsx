@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card, Box, Typography, Avatar, Tooltip, Grid } from '@mui/material'
+import {Card, Box, Typography, Avatar, Tooltip, Grid} from "@mui/material"
 import { Loading, useGetList, useGetMany, useRedirect } from 'react-admin'
 import EmployeeIcon from '@mui/icons-material/Engineering'
 
@@ -77,9 +77,9 @@ const StaffCard = () => {
         <EmployeeIcon sx={{ fontSize: 30, marginRight: '8px' }} />
         <Typography variant='h5'>Staff</Typography>
       </Box>
-      <Grid container spacing={1} maxWidth={'90%'} justifyContent={'center'} overflow={'scroll'} mt={5}>
+      <Grid container spacing={1} maxWidth={'90%'} sx={{ justifyContent: 'center' }} overflow={'scroll'} mt={5}>
         {contacts?.map((staff, index) => (
-          <Grid key={index} item lg={2.3} xs={3} sm={2} md={2}>
+          <Grid key={index} lg={2.3} xs={3} sm={2} md={2}>
             <Box
               sx={{
                 display: 'flex',

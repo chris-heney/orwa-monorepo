@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Tab, Grid, Divider } from "@mui/material";
+import {Box, Tab, Grid, Divider} from "@mui/material";
 import { Title } from "react-admin";
 
 import { useMediaQuery } from "@mui/material";
@@ -65,7 +65,7 @@ const HumanResourcesDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={"95vw"}>
-      <Grid item xs={12} md={isFilterSidebarOpen && !isSettingsOpen ? 10 : 12}>
+      <Grid xs={12} md={isFilterSidebarOpen && !isSettingsOpen ? 10 : 12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Human Resources" />
           <HumanResourcesHeader />
@@ -146,7 +146,7 @@ const HumanResourcesDashboard = () => {
           </Box>
         )}
       </Grid>
-      {!isSettingsOpen && isFilterSidebarOpen && <Grid item xs={12} md={2}>
+      {!isSettingsOpen && isFilterSidebarOpen && <Grid xs={12} md={2}>
         <HumanResourcesFilters />
       </Grid>}
     </Grid>

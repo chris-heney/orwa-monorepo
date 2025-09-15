@@ -1,4 +1,4 @@
-import {  Card, Grid } from '@mui/material'
+import {Card, Grid} from "@mui/material"
 import React from 'react'
 import CustomHeader from '../../_components/CustomHeader'
 import EmailInterface from '../../emails-magement/emails-templates/EmailInterface'
@@ -12,15 +12,15 @@ const EventSettings = () => {
       <Title title='Settings' />
       <CustomHeader sx={{mt: 3}} title='Settings' />
       <Grid mt={-4} container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <OfficeDetails/>
         </Grid>
-        <Grid item xs={12} md={6}>
+        <Grid xs={12} md={6}>
           <Card sx={{mt: 2}}>
             <EmailInterface module='Training' />
           </Card>
         </Grid>
-        <Grid item xs={12} md={6}>     
+        <Grid xs={12} md={6}>     
           <CustomInterface 
             rows={[
               { source: 'name', label: 'Name', type: 'number' },
@@ -31,7 +31,7 @@ const EventSettings = () => {
             createTitle='Create Program Billed'
           />
         </Grid>
-        <Grid item xs={12} md={6}>     
+        <Grid xs={12} md={6}>     
           <CustomInterface
             rows={[
               { source: 'name', label: 'Name', type: 'number' },

@@ -3,7 +3,7 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import Sunburst from "highcharts/modules/sunburst";
 import HCDrilldown from "highcharts/modules/drilldown";
-import { Box, Grid, Typography } from "@mui/material";
+import {Box, Grid, Typography} from "@mui/material";
 import { formatNumber } from "../../../../helpers/Formators";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
 import { IGrant, IGrantPayout } from "./GrantTypes";
@@ -358,7 +358,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
       <HighchartsReact highcharts={Highcharts} options={chartOptions} />
       <Grid container spacing={2} sx={{ mt: -2 }}>
         {filteredData.map((metric, index) => (
-          <Grid item xs={filteredData.length > 5 ? 4 : 6} key={index}>
+          <Grid xs={filteredData.length> 5 ? 4 : 6} key={index}>
             <Box
               sx={{
                 textAlign: "center",

@@ -19,7 +19,7 @@ import {
   useRemoveFromStore,
   useListContext,
 } from "react-admin";
-import { Box, Button, Grid, Chip } from "@mui/material";
+import {Box, Button, Grid, Chip} from "@mui/material";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
 import { CurrencyOptions } from "../../../config/Settings";
@@ -53,19 +53,19 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
 
   return (
     <Grid container spacing={2}>
-      <Grid item xs={12} md={3}>
+      <Grid xs={12} md={3}>
         <SelectInputRegistration type="Vendor" />
       </Grid>
-      <Grid item xs={12} md={3}>
+      <Grid xs={12} md={3}>
         <TextInput source="organization" label="Organization" fullWidth />
       </Grid>
-      <Grid item xs={12} md={3}>
+      <Grid xs={12} md={3}>
         <TextInput source="secondary_email" label="Secondary Email" fullWidth />
       </Grid>
-      <Grid item xs={12} md={3}>
+      <Grid xs={12} md={3}>
         <NumberInput source="subtotal" label="Subtotal" fullWidth />
       </Grid>
-      <Grid item xs={12} md={6}>
+      <Grid xs={12} md={6}>
         <NumberInput
           source="conference"
           defaultValue={filterValues.conference}
@@ -73,7 +73,7 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
           fullWidth
         />
       </Grid>
-      <Grid item xs={12} md={6}>
+      <Grid xs={12} md={6}>
         <NumberInput
           source="year"
           defaultValue={filterValues.year}

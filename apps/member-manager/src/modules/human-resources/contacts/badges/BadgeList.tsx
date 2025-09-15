@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, IconButton, Dialog, DialogContent, Button, Box, Typography, Grid, Chip, Tooltip, TextField } from '@mui/material'
+import {Card, IconButton, Dialog, DialogContent, Button, Box, Typography, Grid, Chip, Tooltip, TextField} from "@mui/material"
 import AddIcon from '@mui/icons-material/Add'
 import BadgeGrid from './BadgeGrid'
 import ColorWheel  from '../../../_components/ColorWheel'
@@ -117,12 +117,12 @@ const BadgeList = () => {
             </Link>
           </Box>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <ColorWheel setColor={setColor} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid xs={6}>
               <Grid container spacing={2}>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <TextField
                     variant='filled'
                     label='Title'
@@ -133,21 +133,21 @@ const BadgeList = () => {
                     onChange={handleTitleChange}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <Input
                     type="file"
                     id="imageInput"
                     onChange={handleImageChange}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <CustomBooleanInput
                     label='invert'
                     value={invert}
                     onChange={() => setInvert((prev) => !prev)}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid xs={12}>
                   <Tooltip title={title} arrow>
                     <Chip
                       label={<img src={icon} alt={title} height={24} style={{filter: invert ?  'invert(1)' : ''}}/>}

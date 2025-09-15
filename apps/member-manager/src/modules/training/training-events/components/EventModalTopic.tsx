@@ -41,16 +41,16 @@ const ModalTopic: React.FC<ModalContentProps> = ({ setIsModalOpen }) => {
         <Create resource="training-topics" redirect={false}>
           <SimpleForm resource="training-topics" onSubmit={postSave} >
             <Grid container spacing={2}>
-              <Grid item xs={6} >
+              <Grid xs={6}>
                 <TextInput source="name" label="Name" fullWidth helperText={false} />
               </Grid>
-              <Grid item xs={6} >
+              <Grid xs={6}>
                 <SelectInput choices={TopicCategories} source="category" label="Category" fullWidth helperText={false} />
               </Grid>
-              <Grid item xs={6} >
+              <Grid xs={6}>
                 <NumberInput source="default_time" label="Minutes" defaultValue={60} fullWidth helperText={false} />
               </Grid>
-              <Grid item xs={6} >
+              <Grid xs={6}>
                 <ReferenceInput
                   reference="training-instructors"
                   source="training_instructors"
@@ -59,7 +59,7 @@ const ModalTopic: React.FC<ModalContentProps> = ({ setIsModalOpen }) => {
                   <TrainingInstructorAutocompleteInput source={'training_instructors'} />
                 </ReferenceInput>
               </Grid>
-              <Grid item xs={12} >
+              <Grid xs={12}>
                 <TextInput source="summary" label="Summary" fullWidth multiline rows={5} helperText={false} />
               </Grid>
             </Grid>

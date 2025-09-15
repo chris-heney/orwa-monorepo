@@ -1,4 +1,4 @@
-import { Card, Grid } from "@mui/material";
+import {Card, Grid} from "@mui/material";
 import React from "react";
 import { DeleteButton, SaveButton } from "react-admin";
 
@@ -19,12 +19,12 @@ const CustomToolBar = ({ onEdit, redirect }: CustomToolBarProps) => {
       >
         <Grid container spacing={2}>
           {/* Draft Button */}
-          <Grid item>
+          <Grid>
             {onEdit && <SaveButton alwaysEnable onSubmit={() => onEdit} />}
             {!onEdit && <SaveButton alwaysEnable />}
           </Grid>
           {/* Delete Button */}
-          <Grid item sx={{ marginLeft: "auto" }}>
+          <Grid sx={{ marginLeft: "auto" }}>
             <DeleteButton redirect={redirect ?? "list"} />
           </Grid>
         </Grid>

@@ -47,10 +47,10 @@ const ModalDenialReason = ({ setIsModalOpen }: ModalContentProps) => {
         }}} resource="grant-denial-reasons" redirect={false}>
           <SimpleForm onSubmit={postSave} >
             <Grid container spacing={2}>
-              <Grid item xs={6} >
+              <Grid xs={6}>
                 <TextInput source="name" label="Name" fullWidth helperText={false} />
               </Grid>
-              <Grid item xs={6} >
+              <Grid xs={6}>
                 <TextInput source="description" label="Description" fullWidth helperText={false} />
               </Grid>          
             </Grid>

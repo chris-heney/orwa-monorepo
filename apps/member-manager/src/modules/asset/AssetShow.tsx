@@ -14,7 +14,7 @@ import {
 } from 'react-admin'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
-import {Box, Card, Grid } from '@mui/material'
+import {Box, Card, Grid} from "@mui/material"
 import { ReactNode } from 'react'
 import { SxProps } from '@mui/material/styles'
 import ActivityFeed from '../activity/ActivityFeed'
@@ -61,8 +61,8 @@ const AssetShow = () => {
   return isLoading ? <Loading /> : (
     <Show component="div" title={'Assets'} sx={{ p: 0 }}>
       <SimpleShowLayout sx={{ p: 0 }}>
-        <Grid container spacing={1} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
-          <Grid sx={{maxHeight:650}} item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
+        <Grid container spacing={1} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
+          <Grid xs={12} md={6} lg={6} sm={12} sx={{maxHeight:65, alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
             <CustomSecondaryHeader title={record.name} />
             <Card >
               <List sx={{ pb: 0 }}>
@@ -107,7 +107,7 @@ const AssetShow = () => {
               </List>
             </Card>
           </Grid>
-          <Grid sx={{maxHeight:650}}  item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
+          <Grid xs={12} md={6} lg={6} sm={12} sx={{maxHeight:65, alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
             <ActivityFeed 
               headerSx={{
                 padding: .5,
@@ -121,10 +121,10 @@ const AssetShow = () => {
               entity_id={record.id} 
             />
           </Grid>
-          <Grid mt={2} item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
+          <Grid mt={2} xs={12} md={6} lg={6} sm={12} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
             <StaffAssignList />
           </Grid>
-          <Grid mt={2} item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
+          <Grid mt={2} xs={12} md={6} lg={6} sm={12} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
             <SubAssetAssignList />
           </Grid>
         </Grid>

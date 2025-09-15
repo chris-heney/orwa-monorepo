@@ -1,4 +1,4 @@
-import { Box, Button, Grid } from '@mui/material'
+import {Box, Button, Grid} from "@mui/material"
 import React from 'react'
 import { SaveButton, useGetRecordId, useNotify, useRefresh, useResetStore } from 'react-admin'
 import authProvider from '../../../authProvider'
@@ -58,12 +58,12 @@ const CustomToolBar = ({ onEdit, setIsEditing }: CustomToolBarProps) => {
       <Box display="flex" alignContent={'center'} sx={{ backgroundColor: '#fafafb', padding: 2 }}>
         <Grid container spacing={2}>
           {/* Draft Button */}
-          <Grid item>
+          <Grid>
             {onEdit && <SaveButton alwaysEnable onSubmit={() => onEdit} />}
             {!onEdit && <SaveButton alwaysEnable />}
           </Grid>
           {/* Delete Button */}
-          <Grid item sx={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Grid sx={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <Button color='error' onClick={() => removeRegistration()}>Remove Registration</Button>
             <span>This will remove all data attached to the registration</span>
           </Grid>

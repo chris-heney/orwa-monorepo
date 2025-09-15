@@ -1,4 +1,4 @@
-import { Box, CardContent, Divider, Grid, IconButton, Typography } from '@mui/material'
+import {Box, CardContent, Divider, Grid, IconButton, Typography} from "@mui/material"
 import dayjs from 'dayjs'
 import React from 'react'
 import { ITrainingTopic, ITrainingBlock, ITrainingSession } from '../../_types'
@@ -26,14 +26,11 @@ const EventScheduleSessionContent = ({block ,blockIndex, blocks , sessions, topi
 
             const topic = topics?.find((t: ITrainingTopic) => t.id === session.topic)
             return (
-              <Grid
-                item
-                xs={12}
+              <Grid xs={12}
                 sm={6}
                 md={6}
                 lg={6}
-                key={sessionIndex}
-              >
+                key={sessionIndex}>
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 

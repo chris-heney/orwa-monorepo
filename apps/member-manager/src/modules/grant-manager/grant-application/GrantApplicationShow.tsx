@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ShowBase, Title } from "react-admin";
 import GrantApplicationDetails from "./components/GrantApplicationDetails";
 import CustomShowHeader from "../../memberships_v2/componenets/CustomShowHeader";
-import { Box, Card, Grid, IconButton, Tooltip } from "@mui/material";
+import {Box, Card, Grid, IconButton, Tooltip} from "@mui/material";
 import ActivityFeed from "../../activity/ActivityFeed";
 import EmailIcon from "@mui/icons-material/Email";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
@@ -21,7 +21,7 @@ const GrantApplicationShow = () => {
         queryOptions={{ meta: { raw: true, populate: true } }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12} md={viewMode === "" ? 12 : 9}>
+          <Grid xs={12} md={viewMode === "" ? 12 : 9}>
             <Card
               sx={{
                 borderRadius: 0,
@@ -71,7 +71,7 @@ const GrantApplicationShow = () => {
               <GrantApplicationDetails />
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid xs={12} md={3}>
             {viewMode === "email" && <EmailSidebar module="Grant Management" />}
             {viewMode === "activity" && (
               <ActivityFeed

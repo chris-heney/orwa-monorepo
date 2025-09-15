@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Card, Divider, Grid, Typography } from "@mui/material";
+import {Box, Card, Divider, Grid, Typography} from "@mui/material";
 import {
   NumberInput,
   SelectInput,
@@ -26,27 +26,18 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
   const mergedGridItemProps = { ...defaultGridItemProps, ...gridItemProps };
   return (
     <Box>
-      <Grid
-        container
+      <Grid container
         spacing={0}
-        gap={0}
-        alignItems={"stretch"}
-        justifyItems={"stretch"}
-        alignSelf={"stretch"}
-      >
-        <Grid
-          item
-          {...mergedGridItemProps}
-          alignItems={"stretch"}
-          justifyItems={"stretch"}
-          alignSelf={"stretch"}
-        >
+        gap={0} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
+        alignSelf={"stretch"}>
+        <Grid {...mergedGridItemProps} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
+          alignSelf={"stretch"}>
           {/* Information */}
           <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
             <Typography variant="h5">Information</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Grid container columnSpacing={2} rowSpacing={1}>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+            <Grid container spacing={2}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="first"
                   label="First Name"
@@ -54,7 +45,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="last"
                   label="Last Name"
@@ -62,7 +53,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="email"
                   label="Email"
@@ -70,7 +61,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <CustomPhoneInput
                   source="phone"
                   label="Phone"
@@ -78,7 +69,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="title"
                   label="Title"
@@ -86,7 +77,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6} display={"none"}>
+              <Grid xs={12} sm={6} md={6} lg={6} display={"none"}>
                 <NumberInput
                   source="user"
                   label="User"
@@ -94,7 +85,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid item xs={12} sm={6} md={6} lg={6}>
+              <Grid xs={12} sm={6} md={6} lg={6}>
                 <SelectInput
                   source="contact_type"
                   label="Type"
@@ -112,18 +103,13 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
             </Grid>
           </Card>
         </Grid>
-        <Grid
-          item
-          {...mergedGridItemProps}
-          alignItems={"stretch"}
-          justifyItems={"stretch"}
-          alignSelf={"stretch"}
-        >
+        <Grid {...mergedGridItemProps} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
+          alignSelf={"stretch"}>
           {/* Avatar */}
           <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
             <Typography variant="h5">Avatar</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Grid container columnSpacing={2} rowSpacing={1}>
+            <Grid container spacing={2}>
                 <FileUploadField fullWidth source="avatar" label="Avatar" />
             </Grid>
           </Card>

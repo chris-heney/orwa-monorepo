@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { FilterLiveSearch, Identifier, TopToolbar, useDataProvider } from 'react-admin'
 import CustomSelectInput from './customSelectInput'
-import { Grid } from '@mui/material'
+import {Grid} from "@mui/material"
 
 interface ActivityFeedToolBarProps {
     setFilter: React.Dispatch<React.SetStateAction<object>>
@@ -51,16 +51,16 @@ const CustomActivityFeedToolbar = ({ setFilter } : ActivityFeedToolBarProps) => 
     <TopToolbar sx={{ justifyContent: 'flex-start' }}>
       <Grid container spacing={2}>
         {/* SearchBar taking full width on extra-small (xs) screens */}
-        <Grid item xs={12} sm={12} lg={4}>
+        <Grid xs={12} sm={12} lg={4}>
           <FilterLiveSearch fullWidth />
         </Grid>
 
         {/* CustomSelectInput components taking half width each on extra-small (xs) screens */}
-        <Grid item xs={6} sm={6} lg={4}>
+        <Grid xs={6} sm={6} lg={4}>
           <CustomSelectInput label={'Entity'} setFilter={setFilter} items={entityChoices} type="entity" />
         </Grid>
 
-        <Grid item xs={6} sm={6} lg={4}>
+        <Grid xs={6} sm={6} lg={4}>
           <CustomSelectInput label={'Staff'} setFilter={setFilter} items={entity_id} type="entity_id" />
         </Grid>
       </Grid>

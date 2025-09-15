@@ -1,4 +1,4 @@
-import { FormControl, Grid } from "@mui/material";
+import {FormControl, Grid} from "@mui/material";
 import { AutocompleteInput } from "react-admin";
 import React from "react";
 
@@ -8,7 +8,7 @@ interface ResourceSelectorProps {
 
 const ResourceSelector = ({ onResourceChange }: ResourceSelectorProps) => {
   return (
-    <Grid item xs={12}>
+    <Grid xs={12}>
         <AutocompleteInput
           fullWidth
           helperText="Select the resource you want to use for the email"

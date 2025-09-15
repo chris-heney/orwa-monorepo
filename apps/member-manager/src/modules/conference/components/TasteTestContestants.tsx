@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import { Box, Button, Divider, Grid, Typography } from "@mui/material";
+import {Box, Button, Divider, Grid, Typography} from "@mui/material";
 import {
   DatagridConfigurable,
   TextField,
@@ -51,7 +51,7 @@ const ConferenceAttendeeFields = () => {
         </Typography>
         <Divider />
         <Grid container spacing={2}>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ReferenceInput
               filter={{
                 conference: filterValues.conference,
@@ -70,7 +70,7 @@ const ConferenceAttendeeFields = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <ReferenceInput
               source="watersystem"
               reference="watersystems"
@@ -86,7 +86,7 @@ const ConferenceAttendeeFields = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <TextInput
               source="first"
               label="First"
@@ -95,7 +95,7 @@ const ConferenceAttendeeFields = () => {
               validate={required("First Name is required")}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <TextInput
               source="last"
               label="Last"
@@ -104,7 +104,7 @@ const ConferenceAttendeeFields = () => {
               validate={required("Last Name is required")}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <TextInput
               validate={required("Email is required")}
               source="email"
@@ -113,7 +113,7 @@ const ConferenceAttendeeFields = () => {
               helperText={false}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <CustomPhoneInput
               source="phone"
               label="Phone"
@@ -121,7 +121,7 @@ const ConferenceAttendeeFields = () => {
               helperText={false}
             />
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid xs={12} md={6}>
             <TextInput
               source="organization"
               label="Organization"

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Button, Card, Divider, Grid, Typography } from "@mui/material";
+import {Box, Button, Card, Divider, Grid, Typography} from "@mui/material";
 import {
   AutocompleteArrayInput,
   AutocompleteInput,
@@ -33,33 +33,24 @@ const AssociateFields = () => {
   const { watch } = useFormContext();
 
   return (
-    <Grid
-      container
+    <Grid container
       spacing={0}
-      gap={0}
-      alignItems={"stretch"}
-      justifyItems={"stretch"}
-      alignSelf={"stretch"}
-    >
-      <Grid
-        item
-        xs={12}
+      gap={0} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
+      alignSelf={"stretch"}>
+      <Grid xs={12}
         md={6}
         lg={6}
-        sm={12}
-        alignItems={"stretch"}
-        justifyItems={"stretch"}
-        alignSelf={"stretch"}
-      >
+        sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
+        alignSelf={"stretch"}>
         {/* Status */}
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Status</Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
-            {/* <Grid item xs={6} sm={6} md={6} lg={6}>
+          <Grid container spacing={2}>
+            {/* <Grid xs={6} sm={6} md={6} lg={6}>
               <BooleanInput source="active" label="Active" helperText={false} fullWidth />
             </Grid> */}
-            <Grid item xs={6} sm={6} md={6} lg={6}>
+            <Grid xs={6} sm={6} md={6} lg={6}>
               <BooleanInput
                 source="directory_mailed"
                 label="Directory Mailed"
@@ -73,8 +64,8 @@ const AssociateFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">General Information</Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
-            <Grid item xs={12} lg={12}>
+          <Grid container spacing={2}>
+            <Grid xs={12} lg={12}>
               <TextInput
                 source="name"
                 label="Name"
@@ -82,7 +73,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={6} sm={6} md={6} lg={6}>
+            <Grid xs={6} sm={6} md={6} lg={6}>
               <SelectInput
                 source="member_level"
                 label="Membership Level"
@@ -105,7 +96,7 @@ const AssociateFields = () => {
                 />
               </ReferenceInput>
             </Grid>
-            <Grid item xs={6} sm={6} md={6} lg={6}>
+            <Grid xs={6} sm={6} md={6} lg={6}>
               <NumberInput
                 source="total_years"
                 label="Total Years"
@@ -113,7 +104,7 @@ const AssociateFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid item xs={12} sm={12} md={6} lg={6}>
+            <Grid xs={12} sm={12} md={6} lg={6}>
               <SelectInput
                 choices={associateTypeOptions}
                 source="category"
@@ -121,7 +112,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <DateInput
                 source="directory_sent_date"
                 label="Directory Sent Date"
@@ -147,8 +138,8 @@ const AssociateFields = () => {
             </Button>
           </Box>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
-            <Grid item xs={12} lg={6}>
+          <Grid container spacing={2}>
+            <Grid xs={12} lg={6}>
               <TextInput
                 source="email"
                 label="Office Email"
@@ -156,7 +147,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <CustomPhoneInput
                 source="phone"
                 label="Phone"
@@ -164,7 +155,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={12} md={12} lg={6}>
+            <Grid xs={12} sm={12} md={12} lg={6}>
               <TextInput
                 source="website"
                 label="Website"
@@ -172,7 +163,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <ReferenceArrayInput
                 source="contacts"
                 reference="contacts"
@@ -185,7 +176,7 @@ const AssociateFields = () => {
                 ></AutocompleteArrayInput>
               </ReferenceArrayInput>
             </Grid>
-            <Grid item xs={12} >
+            <Grid xs={12}>
               <ReferenceInput
                 source="contact_primary"
                 reference="contacts"
@@ -197,7 +188,7 @@ const AssociateFields = () => {
                 }} helperText={false} />
               </ReferenceInput>
             </Grid>
-            <Grid item xs={12} >
+            <Grid xs={12}>
               <ReferenceInput
                 source="contact_secondary"
                 reference="contacts"
@@ -217,27 +208,22 @@ const AssociateFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Media</Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
+          <Grid container spacing={2}>
               <FileUploadField multiple  source="logo" label="Logo" />
               <FileUploadField   source="primary_ad" label="Primary Ad" />
           </Grid>
         </Card>
       </Grid>
-      <Grid
-        item
-        xs={12}
+      <Grid xs={12}
         md={6}
-        sm={12}
-        alignItems={"stretch"}
-        justifyItems={"stretch"}
-        alignSelf={"stretch"}
-      >
+        sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
+        alignSelf={"stretch"}>
         {/* Billing Information */}
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Payment Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2}>
-            <Grid item xs={12} lg={4}>
+            <Grid xs={12} lg={4}>
               <DateInput
                 source="payment_last_date"
                 label="Current Payment Date"
@@ -245,7 +231,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={4}>
+            <Grid xs={12} lg={4}>
               <DateInput
                 source="application_date"
                 label="Application Date"
@@ -253,7 +239,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={4}>
+            <Grid xs={12} lg={4}>
               <DateInput
                 source="payment_previous_date"
                 label="Previous Payment Date"
@@ -263,7 +249,7 @@ const AssociateFields = () => {
             </Grid>
 
             {record && (
-              <Grid item xs={12}>
+              <Grid xs={12}>
                 <MembershipExpiration
                   lastPayment={watch("payment_last_date")}
                   previousPayment={watch("payment_previous_date")}
@@ -271,7 +257,7 @@ const AssociateFields = () => {
                 />
               </Grid>
             )}
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <NumberInput
                 source="payment_amount"
                 label="Payment Amount"
@@ -279,7 +265,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <SelectInput
                 source="payment_method"
                 label="Payment Method"
@@ -288,7 +274,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <SelectInput
                 source="membership_directory_type"
                 label="Membership Directory Type"
@@ -297,7 +283,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid xs={12}>
               <TextInput
                 source="payment_details"
                 label="Payment Details"
@@ -314,8 +300,8 @@ const AssociateFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Primary Mailing Address</Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
-            <Grid item xs={12} lg={6}>
+          <Grid container spacing={2}>
+            <Grid xs={12} lg={6}>
               <TextInput
                 source="address_street"
                 label="Street"
@@ -323,7 +309,7 @@ const AssociateFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <TextInput
                 source="address_city"
                 label="City"
@@ -331,7 +317,7 @@ const AssociateFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <SelectInput
                 source="address_state"
                 choices={StateChoices}
@@ -339,7 +325,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <TextInput source="address_zip" label="Zip" fullWidth />
             </Grid>
           </Grid>
@@ -348,8 +334,8 @@ const AssociateFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Secondary Mailing Address</Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
-            <Grid item xs={12} lg={6}>
+          <Grid container spacing={2}>
+            <Grid xs={12} lg={6}>
               <TextInput
                 source="mailing_address_street"
                 label="Street"
@@ -357,7 +343,7 @@ const AssociateFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <TextInput
                 source="mailing_address_city"
                 label="City"
@@ -365,7 +351,7 @@ const AssociateFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <SelectInput
                 source="mailing_address_state"
                 choices={StateChoices}
@@ -373,7 +359,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} lg={6}>
+            <Grid xs={12} lg={6}>
               <TextInput source="mailing_address_zip" label="Zip" fullWidth />
             </Grid>
           </Grid>
@@ -382,8 +368,8 @@ const AssociateFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Passport</Typography>
           <Divider sx={{ mb: 2 }} />
-          <Grid container columnSpacing={2} rowSpacing={1}>
-            <Grid item xs={12} sm={12} md={12} lg={12}>
+          <Grid container spacing={2}>
+            <Grid xs={12} sm={12} md={12} lg={12}>
               <NumberInput
                 source="wp_uid"
                 label="WP UID"
@@ -391,7 +377,7 @@ const AssociateFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid item xs={12} sm={12} md={12} lg={12}>
+            <Grid xs={12} sm={12} md={12} lg={12}>
               <NumberInput
                 source="wp_eid"
                 label="WP EID"

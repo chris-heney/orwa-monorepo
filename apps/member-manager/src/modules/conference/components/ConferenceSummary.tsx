@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import DateStatusWidget from "../../grant-manager/_components/DateStatusWidget";
-import { Box, Grid, Typography } from "@mui/material";
+import {Box, Grid, Typography} from "@mui/material";
 import BreakfastIcon from "@mui/icons-material/EggAlt";
 import LunchIcon from "@mui/icons-material/LunchDining";
 import DinnerIcon from "@mui/icons-material/Restaurant";
@@ -99,7 +99,7 @@ const ConferenceSummary = () => {
         <Loading />
       ) : (
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
+          <Grid xs={12} sm={4}>
             <Typography
               component="h3"
               sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}
@@ -165,7 +165,7 @@ const ConferenceSummary = () => {
             ))}
           </Grid>
 
-          <Grid item xs={12} md={5}>
+          <Grid xs={12} md={5}>
             {" "}
             {/* Updated grid sizing */}
             <Typography
@@ -176,7 +176,7 @@ const ConferenceSummary = () => {
             </Typography>
             <Grid container spacing={2}>
               {filterValues?.conference === 1 && filterValues?.year === 2024 && (
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}>
                   {" "}
                   {/* Grid item for each widget */}
                   <DateStatusWidget
@@ -189,7 +189,7 @@ const ConferenceSummary = () => {
               )}
 
               {conferenceSummary.itemCounts.map(([index, metric]) => (
-                <Grid item xs={12} sm={6} key={`grid-${index}-${metric.key}`}>
+                <Grid xs={12} sm={6} key={`grid-${index}-${metric.key}`}>
                   {" "}
                   {/* Responsive grid items */}
                   <DateStatusWidget
@@ -205,7 +205,7 @@ const ConferenceSummary = () => {
               ))}
 
               {filterValues?.conference === 1 && filterValues?.year === 2024 && (
-                <Grid item xs={12} sm={6}>
+                <Grid xs={12} sm={6}>
                   <DateStatusWidget
                     WidgetIcon={BreakfastIcon}
                     heading={totalHeadCount.toString()}
@@ -216,7 +216,7 @@ const ConferenceSummary = () => {
               )}
             </Grid>
           </Grid>
-          <Grid item xs={12} sm={3}>
+          <Grid xs={12} sm={3}>
             <Typography
               component="h3"
               sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}

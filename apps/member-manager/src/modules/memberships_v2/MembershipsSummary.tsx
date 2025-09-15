@@ -1,4 +1,4 @@
-import { Box, Grid } from '@mui/material'
+import {Box, Grid} from "@mui/material"
 import React from 'react'
 import { FinancialAuditDashboard } from '../dashboards'
 import MembershipsCard from '../dashboard/_components/MembershipsCard'
@@ -13,11 +13,11 @@ const MembershipsSummary = () => {
              
         <Box>
           <Grid container rowSpacing={1} columnSpacing={3}>
-            <Grid item  xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <MembershipsCard />
             </Grid>
             {/* Membership Report */}
-            <Grid item  xs={12} md={6}>
+            <Grid xs={12} md={6}>
               <MembershipReportCard/>
             </Grid>
           </Grid>
