@@ -23,7 +23,7 @@ orwa-monorepo/
 │   ├── grant-map/                  # ⚛️ React/Vite app
 │   ├── grant-scoring/              # ⚛️ React/Vite app
 │   ├── associate-directory/        # ⚛️ React/Vite app
-│   └── mm-strapi/                  # 🚀 Strapi CMS (standalone)
+│   └── strapi/                  # 🚀 Strapi CMS (standalone)
 └── dist/                           # 📦 Build outputs
 ```
 
@@ -90,7 +90,7 @@ COPY --from=build /workspace/dist/apps/grant-application /usr/share/nginx/html
 **Used for**: Strapi CMS and other complex backend services
 
 **Characteristics**:
-- ✅ **Build Context**: App directory (`./apps/mm-strapi`)
+- ✅ **Build Context**: App directory (`./apps/strapi`)
 - ✅ **Dockerfile**: `Dockerfile` within app directory
 - ✅ **Dependencies**: Self-contained in app's package.json
 - ✅ **Isolation**: Complete independence from monorepo complexity
@@ -103,7 +103,7 @@ COPY --from=build /workspace/dist/apps/grant-application /usr/share/nginx/html
 
 **Example Structure**:
 ```dockerfile
-# apps/mm-strapi/Dockerfile
+# apps/strapi/Dockerfile
 FROM node:18-alpine
 WORKDIR /app
 
@@ -122,7 +122,7 @@ CMD ["pnpm", "run", "develop"]
 **App Package.json**:
 ```json
 {
-  "name": "mm-strapi",
+  "name": "strapi",
   "dependencies": {
     "@strapi/strapi": "5.22.0",
     "mysql2": "^3.14.3",
@@ -153,7 +153,7 @@ CMD ["pnpm", "run", "develop"]
 ### **Backend Services (Pattern 2)**
 | Service | Port | Type | Build Pattern |
 |---------|------|------|---------------|
-| mm-strapi | 1337 | Strapi 5.x CMS | Standalone |
+| strapi | 1337 | Strapi 5.x CMS | Standalone |
 | mysql | 3306 | Database | External Image |
 
 ---
@@ -192,10 +192,10 @@ CMD ["pnpm", "run", "develop"]
 }
 ```
 
-### **Strapi App (`apps/mm-strapi/package.json`)**
+### **Strapi App (`apps/strapi/package.json`)**
 ```json
 {
-  "name": "mm-strapi",
+  "name": "strapi",
   "dependencies": {
     "@strapi/strapi": "5.22.0",
     "mysql2": "^3.14.3",
@@ -224,9 +224,9 @@ services:
     ports: ["4200:80"]
 
   # Pattern 2: Standalone (Backend Services)  
-  mm-strapi:
+  strapi:
     build:
-      context: ./apps/mm-strapi    # 🎯 App directory
+      context: ./apps/strapi    # 🎯 App directory
       dockerfile: Dockerfile
     ports: ["1337:1337"]
 ```
@@ -250,7 +250,7 @@ npm run dev:detached       # Start in background
 npm run dev:stop           # Stop all services
 
 # Individual services (local development)
-npm run start:strapi       # nx serve mm-strapi
+npm run start:strapi       # nx serve strapi
 npm run start:grant-app    # nx serve grant-application
 npm run start:membership   # nx serve membership-application
 
@@ -288,7 +288,7 @@ graph TD
 ### **Strapi (Pattern 2)**
 ```mermaid
 graph TD
-    A[Docker Build Context: ./apps/mm-strapi] --> B[Copy app package.json]
+    A[Docker Build Context: ./apps/strapi] --> B[Copy app package.json]
     B --> C[pnpm install app deps]
     C --> D[Copy all app files]
     D --> E[Setup directories & permissions]

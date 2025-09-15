@@ -1,0 +1,25 @@
+{
+    "short_name": "orwa-admin-v2",
+    "name": "{{name}}",
+    "icons": [
+        {
+            "src": "favicon.ico",
+            "sizes": "32x32 24x24 16x16",
+            "type": "image/x-icon"
+        }, {
+            "src": "favicon.webp",
+            "sizes": "192x192 96x96",
+            "type": "image/webp"
+        }, {
+            "src": "android-chrome-192x192.png",
+            "type": "image/png"
+        }, {
+            "src": "android-chrome-512x512.png",
+            "type": "image/png"
+        }
+    ],
+    "start_url": "./index.html",
+    "display": "standalone",
+    "theme_color": "#000000",
+    "background_color": "#ffffff"
+}

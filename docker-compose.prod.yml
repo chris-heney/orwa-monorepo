@@ -18,10 +18,10 @@ services:
       - "traefik.enable=false"
 
   # Strapi Backend
-  mm-strapi:
+  strapi:
     build:
-      context: .
-      dockerfile: Dockerfile.mm-strapi
+      context: ./apps/strapi
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       DATABASE_HOST: mysql
@@ -43,10 +43,10 @@ services:
       - orwa_network
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mm-strapi.rule=Host(`api.${DOMAIN}`)"
-      - "traefik.http.routers.mm-strapi.tls=true"
-      - "traefik.http.routers.mm-strapi.tls.certresolver=letsencrypt"
-      - "traefik.http.services.mm-strapi.loadbalancer.server.port=1337"
+      - "traefik.http.routers.strapi.rule=Host(`api.${DOMAIN}`)"
+      - "traefik.http.routers.strapi.tls=true"
+      - "traefik.http.routers.strapi.tls.certresolver=letsencrypt"
+      - "traefik.http.services.strapi.loadbalancer.server.port=1337"
 
   # Frontend Applications
   grant-application:
@@ -55,7 +55,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - mm-strapi
+      - strapi
     networks:
       - orwa_network
     labels:
@@ -71,7 +71,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - mm-strapi
+      - strapi
     networks:
       - orwa_network
     labels:
@@ -87,7 +87,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - mm-strapi
+      - strapi
     networks:
       - orwa_network
     labels:
@@ -103,7 +103,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - mm-strapi
+      - strapi
     networks:
       - orwa_network
     labels:
@@ -119,7 +119,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - mm-strapi
+      - strapi
     networks:
       - orwa_network
     labels:
@@ -135,7 +135,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - mm-strapi
+      - strapi
     networks:
       - orwa_network
     labels:

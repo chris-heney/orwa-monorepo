@@ -1,0 +1,9 @@
+{
+  "name": "member-manager",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/member-manager/src",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project member-manager --web",
+  "targets": {}
+}

@@ -5,7 +5,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 ## 🏗️ Project Architecture
 
 ### Backend
-- **mm-strapi**: Strapi v5.22.0 CMS with TypeScript
+- **strapi**: Strapi v5.22.0 CMS with TypeScript
 - **Database**: MySQL LTS (containerized)
 
 ### Frontend Applications
@@ -47,7 +47,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 3. **Start all applications**:
    ```bash
    # Backend API
-   npx nx serve mm-strapi
+   npx nx serve strapi
    
    # Frontend applications (in separate terminals)
    npx nx serve grant-application
@@ -73,7 +73,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 ```
 orwa-monorepo/
 ├── apps/
-│   ├── mm-strapi/              # Strapi CMS backend
+│   ├── strapi/              # Strapi CMS backend
 │   │   ├── config/             # Strapi configuration
 │   │   ├── public/uploads/     # File uploads
 │   │   ├── src/                # Custom Strapi code
@@ -166,7 +166,7 @@ mysql -h localhost -u strapi -p strapi
 
 Create `.env` files in individual applications as needed:
 
-**apps/mm-strapi/.env**:
+**apps/strapi/.env**:
 ```bash
 HOST=0.0.0.0
 PORT=1337
@@ -183,7 +183,7 @@ JWT_SECRET=your-jwt-secret
 
 ### Strapi Configuration
 
-Strapi configuration files are located in `apps/mm-strapi/config/`:
+Strapi configuration files are located in `apps/strapi/config/`:
 - `database.js` - Database connection
 - `server.js` - Server configuration
 - `admin.js` - Admin panel settings

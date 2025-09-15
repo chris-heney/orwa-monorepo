@@ -1,0 +1,6 @@
+export type { default as ITrainingBlock } from './ITrainingBlock'
+export type { default as ITrainingInstructor } from './ITrainingInstructor'
+export type { default as ITrainingEvent } from './ITrainingEvent'
+export type { default as ITrainingSession } from './ITrainingSession'
+export type { default as ITrainingTopic } from './ITrainingTopic'
+export type { default as IContact } from './IContact'
