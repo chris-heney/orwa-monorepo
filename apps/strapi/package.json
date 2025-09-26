@@ -15,13 +15,9 @@
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
-    "@strapi/plugin-cloud": "5.23.3",
-    "@strapi/plugin-users-permissions": "5.23.3",
-    "@strapi/strapi": "5.23.3",
-    "ra-strapi-v4-rest": "^1.1.1",
-    "strapi-provider-email-brevo": "^1.0.4",
-    "dayjs": "^1.11.18",
-    "dayjs-ext": "^2.2.0",
+    "@strapi/plugin-cloud": "5.23.4",
+    "@strapi/plugin-users-permissions": "5.23.4",
+    "@strapi/strapi": "5.23.4",
     "mysql2": "3.9.8",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
@@ -32,7 +28,6 @@
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "@strapi/types": "^5.23.3",
     "typescript": "^5"
   },
   "engines": {
@@ -40,7 +35,7 @@
     "npm": ">=6.0.0"
   },
   "strapi": {
-    "uuid": "0a9036d3-0810-440d-ab13-436f4ea9ae30",
-    "installId": "38c77445de59c31d9761efbe071b03e88681a5341c76f30f3f926d0dd159feda"
+    "uuid": "14cda5a4-46a3-450c-a046-adc61493d4d5",
+    "installId": "3a60bbb6a3d697af1e8847285f66b5eb49a96b67b7566e1ed9d69d1a295d6a1d"
   }
 }

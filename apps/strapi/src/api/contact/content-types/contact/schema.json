@@ -63,6 +63,18 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::contact-badge.contact-badge"
+    },
+    "scholarship_applicant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::scholarship-application.scholarship-application",
+      "inversedBy": "contact"
+    },
+    "scholarship_eleligible_participants": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::scholarship-application.scholarship-application",
+      "mappedBy": "eligible_participant"
     }
   }
 }

@@ -37,8 +37,7 @@
           "buildTarget": "grant-map:build:production",
           "hmr": false
         }
-      },
-      "dependsOn": [{"projects": ["mm-strapi"], "target": "serve", "params": "forward"}]
+      }
     },
     "test": {
       "executor": "@nx/vite:test",

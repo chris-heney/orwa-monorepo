@@ -28,11 +28,11 @@ function discoverApps() {
     .filter(dirent => dirent.isDirectory() && !dirent.name.includes('-e2e'))
     .map(dirent => dirent.name);
   
-  // Create app objects with mm-strapi marked as required
+  // Create app objects with strapi marked as required
   return appFolders.map(appName => ({
     name: appName,
-    selected: appName === 'mm-strapi',
-    required: appName === 'mm-strapi'
+    selected: appName === 'strapi',
+    required: appName === 'strapi'
   }));
 }
 
@@ -154,7 +154,7 @@ process.stdin.on('keypress', (str, key) => {
   } else if (key.name === 'space') {
     // Toggle selection for regular app options
     if (currentPosition < apps.length) {
-      // Don't allow deselecting mm-strapi if it's required
+      // Don't allow deselecting strapi if it's required
       if (!(options[currentPosition].required && options[currentPosition].selected)) {
         options[currentPosition].selected = !options[currentPosition].selected;
       }

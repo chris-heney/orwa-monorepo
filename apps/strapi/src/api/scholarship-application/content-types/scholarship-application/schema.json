@@ -1,0 +1,271 @@
+{
+  "kind": "collectionType",
+  "collectionName": "scholarship_applications",
+  "info": {
+    "singularName": "scholarship-application",
+    "pluralName": "scholarship-applications",
+    "displayName": "Scholarship Application"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "delete_this_fieldd": {
+      "type": "uid"
+    },
+    "contact": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::contact.contact",
+      "mappedBy": "scholarship_applicant"
+    },
+    "watersystem": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::watersystem.watersystem",
+      "inversedBy": "scholarship_applications"
+    },
+    "relationship": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Self",
+        "DependentChild",
+        "DependentGrandchild"
+      ]
+    },
+    "eligible_participant": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::contact.contact",
+      "inversedBy": "scholarship_eleligible_participants"
+    },
+    "eligible_participant_title": {
+      "type": "string",
+      "required": true
+    },
+    "school_name": {
+      "type": "string",
+      "required": true
+    },
+    "graduation_date": {
+      "type": "date",
+      "required": true
+    },
+    "school_street": {
+      "type": "string",
+      "required": true
+    },
+    "school_city": {
+      "type": "string",
+      "required": true
+    },
+    "school_state": {
+      "type": "string",
+      "default": "Oklahoma",
+      "required": true
+    },
+    "school_zip": {
+      "type": "string",
+      "required": true
+    },
+    "high_school_gpa": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "max": 4
+    },
+    "sat_score": {
+      "type": "integer",
+      "required": true,
+      "min": 400,
+      "max": 1600
+    },
+    "act_score": {
+      "type": "integer",
+      "required": true,
+      "min": 1,
+      "max": 36
+    },
+    "transcript": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "test_scores": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "first_year_higher_education": {
+      "type": "boolean",
+      "required": true
+    },
+    "credits_completed": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "credits_required": {
+      "type": "integer",
+      "required": true,
+      "min": 0
+    },
+    "college_gpa": {
+      "type": "decimal",
+      "required": true,
+      "min": 0,
+      "max": 4
+    },
+    "education_type": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "FourYearCollege",
+        "TwoYearCollege",
+        "VocationalSchool"
+      ]
+    },
+    "major": {
+      "type": "string"
+    },
+    "awards_recognition": {
+      "type": "text"
+    },
+    "recommender1_first_name": {
+      "type": "string",
+      "required": true
+    },
+    "recommender1_last_name": {
+      "type": "string",
+      "required": true
+    },
+    "recommender1_email": {
+      "type": "email",
+      "required": true
+    },
+    "recommender1_phone": {
+      "type": "string",
+      "required": true
+    },
+    "recommendation_letter_1": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "recommender2_first_name": {
+      "type": "string",
+      "required": true
+    },
+    "recommender2_last_name": {
+      "type": "string",
+      "required": true
+    },
+    "recommender2_email": {
+      "type": "email",
+      "required": true
+    },
+    "recommender2_phone": {
+      "type": "string",
+      "required": true
+    },
+    "recommendation_letter_2": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "financial_aid_1_institution": {
+      "type": "string"
+    },
+    "financial_aid_1_amount": {
+      "type": "decimal",
+      "min": 0
+    },
+    "financial_aid_2_institution": {
+      "type": "string"
+    },
+    "financial_aid_2_amount": {
+      "type": "decimal",
+      "min": 0
+    },
+    "essay": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "biography": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "photograph": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "age_18_or_older": {
+      "type": "boolean",
+      "required": true
+    },
+    "applicant_certification": {
+      "type": "boolean",
+      "required": true
+    },
+    "applicant_certification_date": {
+      "type": "date",
+      "required": true
+    },
+    "guardian_first_name": {
+      "type": "string"
+    },
+    "guardian_last_name": {
+      "type": "string"
+    },
+    "guardian_certification": {
+      "type": "boolean"
+    },
+    "guardian_certification_date": {
+      "type": "date"
+    },
+    "application_status": {
+      "type": "enumeration",
+      "default": "Draft",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Under Review",
+        "Approved",
+        "Denied"
+      ]
+    },
+    "submission_date": {
+      "type": "datetime"
+    },
+    "review_notes": {
+      "type": "text"
+    }
+  }
+}

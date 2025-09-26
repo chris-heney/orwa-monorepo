@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "orwa-monorepo": {
+      "command": "node",
+      "args": [
+        "dist/apps/custom-mcp-server/main.js"
+      ],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
+

@@ -37,8 +37,7 @@
           "buildTarget": "associate-directory:build:production",
           "hmr": false
         }
-      },
-      "dependsOn": [{"projects": ["mm-strapi"], "target": "serve"}]
+      }
     },
     "test": {
       "executor": "@nx/vite:test",
