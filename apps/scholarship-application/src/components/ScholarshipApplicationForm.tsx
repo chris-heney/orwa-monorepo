@@ -115,6 +115,7 @@ const ScholarshipApplicationForm = () => {
               <Form
                 key={formKey}
                 defaultValues={formDefaultValues}
+                test={true}
               >
                 {/* Step Content */}
                 <div className="min-h-[500px]">

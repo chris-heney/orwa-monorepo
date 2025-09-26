@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { EmailPayload, IGrantApplicationFormPayload } from '../types/types'
+import { EmailPayload, IScholarshipApplicationPayload } from '../types/types'
 
 
 interface IStrapiResponse {
@@ -8,7 +8,7 @@ interface IStrapiResponse {
 
 interface IStrapiRecord extends Record<string, unknown> {
   id: string
-}
+} 
 
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
 const API_KEY = import.meta.env.VITE_API_KEY
@@ -28,7 +28,7 @@ const _get = async (resource: string, query = '', method = 'GET') => {
   .then((strapiResponse: IStrapiResponse) => Array.isArray(strapiResponse.data) ? _transform_list(strapiResponse.data) : _transform_single(strapiResponse.data))
 }
 
-const _submitApplication = async (resource: string, data: IGrantApplicationFormPayload) => {
+const _submitApplication = async (resource: string, data: IScholarshipApplicationPayload) => {
 
   return fetch(`${API_ENDPOINT}/${resource}`, {
     method: 'POST',
@@ -83,7 +83,7 @@ const _transform_list = (data: IStrapiRecord[]) => data.map(_transform_single)
 // add hook to fetch projects
 
 export const useGetWatersystems = () => {
-  return useQuery({ queryKey: ['watersystems'], queryFn: async () => _get('watersystems', '?filters[active][$eq]=1&pagination[limit]=1000&populate=*&sort=name:ASC&fields[0]=id&fields[1]=name&fields[2]=active') })
+  return useQuery({ queryKey: ['watersystems'], queryFn: async () => _get('watersystems', '?pagination[limit]=1000&populate=*&sort=name:ASC') })
 }
 
 export const useGetSubmissions = () => {
@@ -111,8 +111,8 @@ export const useGetCriterias = () => {
   return useQuery({ queryKey: ['grant-application-scorings'], queryFn: async () => _get('grant-application-scorings', '?pagination[limit]=1000&populate=*') })
 }
 
-export const useSubmitApplication = (payload: IGrantApplicationFormPayload) => {
-  return _submitApplication('grant-application', payload as IGrantApplicationFormPayload) 
+export const useSubmitApplication = (payload: IScholarshipApplicationPayload) => {
+  return _submitApplication('grant-application', payload as IScholarshipApplicationPayload) 
 }
 
 export const useSendEmail = (email: EmailPayload) => {

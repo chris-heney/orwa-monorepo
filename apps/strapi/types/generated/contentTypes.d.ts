@@ -4291,7 +4291,7 @@ export interface ApiWatersystemWatersystem extends Struct.CollectionTypeSchema {
     meters: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<0>;
-    namee: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
     office_hours: Schema.Attribute.String;
     orwaag: Schema.Attribute.Boolean;
     payment_amount: Schema.Attribute.Decimal;
