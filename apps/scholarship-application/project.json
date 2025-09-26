@@ -1,9 +1,73 @@
 {
   "name": "scholarship-application",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "scholarship-application/src",
+  "sourceRoot": "apps/scholarship-application/src",
   "projectType": "application",
   "tags": [],
   "// targets": "to see all targets run: nx show project scholarship-application --web",
-  "targets": {}
+  "targets": {
+    "build": {
+      "executor": "@nx/vite:build",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "outputPath": "dist/apps/scholarship-application"
+      },
+      "configurations": {
+        "development": {
+          "mode": "development"
+        },
+        "production": {
+          "mode": "production"
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/vite:dev-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "scholarship-application:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "scholarship-application:build:development",
+          "hmr": true
+        },
+        "production": {
+          "buildTarget": "scholarship-application:build:production",
+          "hmr": false
+        }
+      }
+    },
+    "preview": {
+      "executor": "@nx/vite:preview-server",
+      "defaultConfiguration": "development",
+      "options": {
+        "buildTarget": "scholarship-application:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "scholarship-application:build:development"
+        },
+        "production": {
+          "buildTarget": "scholarship-application:build:production"
+        }
+      }
+    },
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{options.reportsDirectory}"],
+      "options": {
+        "passWithNoTests": true,
+        "reportsDirectory": "../../coverage/apps/scholarship-application"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/scholarship-application/**/*.{ts,tsx,js,jsx}"]
+      }
+    }
+  }
 }
