@@ -11,9 +11,6 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "delete_this_fieldd": {
-      "type": "uid"
-    },
     "contact": {
       "type": "relation",
       "relation": "oneToOne",
@@ -26,6 +23,62 @@
       "target": "api::watersystem.watersystem",
       "inversedBy": "scholarship_applications"
     },
+    "application_status": {
+      "type": "enumeration",
+      "default": "Draft",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Under Review",
+        "Approved",
+        "Denied"
+      ]
+    },
+    "submission_date": {
+      "type": "datetime"
+    },
+    "review_notes": {
+      "type": "text"
+    },
+    "applicant_first_name": {
+      "type": "string",
+      "required": true
+    },
+    "applicant_middle_name": {
+      "type": "string"
+    },
+    "applicant_last_name": {
+      "type": "string",
+      "required": true
+    },
+    "applicant_phone": {
+      "type": "string",
+      "required": true
+    },
+    "applicant_email": {
+      "type": "email",
+      "required": true
+    },
+    "applicant_street": {
+      "type": "string",
+      "required": true
+    },
+    "applicant_city": {
+      "type": "string",
+      "required": true
+    },
+    "applicant_state": {
+      "type": "string",
+      "required": true
+    },
+    "applicant_zip": {
+      "type": "string",
+      "required": true
+    },
+    "system_name": {
+      "type": "string",
+      "required": true
+    },
     "relationship": {
       "type": "enumeration",
       "required": true,
@@ -35,15 +88,27 @@
         "DependentGrandchild"
       ]
     },
-    "eligible_participant": {
-      "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::contact.contact",
-      "inversedBy": "scholarship_eleligible_participants"
+    "eligible_participant_name": {
+      "type": "component",
+      "component": "scholarship.eligible-participant-name",
+      "repeatable": false
     },
     "eligible_participant_title": {
       "type": "string",
       "required": true
+    },
+    "eligible_participant_phone": {
+      "type": "string",
+      "required": true
+    },
+    "eligible_participant_email": {
+      "type": "email",
+      "required": true
+    },
+    "eligible_participant_address": {
+      "type": "component",
+      "component": "scholarship.address",
+      "repeatable": false
     },
     "school_name": {
       "type": "string",
@@ -53,24 +118,12 @@
       "type": "date",
       "required": true
     },
-    "school_street": {
-      "type": "string",
-      "required": true
+    "school_address": {
+      "type": "component",
+      "component": "scholarship.address",
+      "repeatable": false
     },
-    "school_city": {
-      "type": "string",
-      "required": true
-    },
-    "school_state": {
-      "type": "string",
-      "default": "Oklahoma",
-      "required": true
-    },
-    "school_zip": {
-      "type": "string",
-      "required": true
-    },
-    "high_school_gpa": {
+    "gpa": {
       "type": "decimal",
       "required": true,
       "min": 0,
@@ -105,8 +158,8 @@
         "files"
       ]
     },
-    "first_year_higher_education": {
-      "type": "boolean",
+    "first_year": {
+      "type": "string",
       "required": true
     },
     "credits_completed": {
@@ -137,16 +190,13 @@
     "major": {
       "type": "string"
     },
-    "awards_recognition": {
+    "awards": {
       "type": "text"
     },
-    "recommender1_first_name": {
-      "type": "string",
-      "required": true
-    },
-    "recommender1_last_name": {
-      "type": "string",
-      "required": true
+    "recommender1_name": {
+      "type": "component",
+      "component": "scholarship.recommender-name",
+      "repeatable": false
     },
     "recommender1_email": {
       "type": "email",
@@ -164,13 +214,10 @@
         "files"
       ]
     },
-    "recommender2_first_name": {
-      "type": "string",
-      "required": true
-    },
-    "recommender2_last_name": {
-      "type": "string",
-      "required": true
+    "recommender2_name": {
+      "type": "component",
+      "component": "scholarship.recommender-name",
+      "repeatable": false
     },
     "recommender2_email": {
       "type": "email",
@@ -188,17 +235,17 @@
         "files"
       ]
     },
-    "financial_aid_1_institution": {
+    "financial1_institution": {
       "type": "string"
     },
-    "financial_aid_1_amount": {
+    "financial1_amount": {
       "type": "decimal",
       "min": 0
     },
-    "financial_aid_2_institution": {
+    "financial2_institution": {
       "type": "string"
     },
-    "financial_aid_2_amount": {
+    "financial2_amount": {
       "type": "decimal",
       "min": 0
     },
@@ -226,8 +273,8 @@
         "images"
       ]
     },
-    "age_18_or_older": {
-      "type": "boolean",
+    "age_confirm": {
+      "type": "string",
       "required": true
     },
     "applicant_certification": {
@@ -238,11 +285,10 @@
       "type": "date",
       "required": true
     },
-    "guardian_first_name": {
-      "type": "string"
-    },
-    "guardian_last_name": {
-      "type": "string"
+    "guardian_name": {
+      "type": "component",
+      "component": "scholarship.guardian-name",
+      "repeatable": false
     },
     "guardian_certification": {
       "type": "boolean"
@@ -250,22 +296,15 @@
     "guardian_certification_date": {
       "type": "date"
     },
-    "application_status": {
-      "type": "enumeration",
-      "default": "Draft",
-      "enum": [
-        "Draft",
-        "Submitted",
-        "Under Review",
-        "Approved",
-        "Denied"
+    "applicant_pdf": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
       ]
-    },
-    "submission_date": {
-      "type": "datetime"
-    },
-    "review_notes": {
-      "type": "text"
     }
   }
 }

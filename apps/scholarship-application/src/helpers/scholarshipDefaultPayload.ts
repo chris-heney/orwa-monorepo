@@ -18,7 +18,7 @@ export const scholarshipDefaultPayload = {
 
   // High School Data (matching schema)
   school_name: '',
-  graduation_date: '',
+  graduation_date: null,
   school_street: '',
   school_city: '',
   school_state: 'Oklahoma',
@@ -30,7 +30,6 @@ export const scholarshipDefaultPayload = {
   test_scores: null,
 
   // College Data (matching schema)
-  first_year_higher_education: false,
   credits_completed: '',
   credits_required: '',
   college_gpa: '',
@@ -38,7 +37,6 @@ export const scholarshipDefaultPayload = {
   major: '',
 
   // Awards (matching schema)
-  awards_recognition: '',
 
   // Recommendations (matching schema)
   recommender1_first_name: '',
@@ -64,11 +62,10 @@ export const scholarshipDefaultPayload = {
   photograph: null,
 
   // Certification (matching schema)
-  age_18_or_older: false,
   applicant_certification: false,
-  applicant_certification_date: '',
+  applicant_certification_date: null,
   guardian_first_name: '',
   guardian_last_name: '',
   guardian_certification: false,
-  guardian_certification_date: ''
+  guardian_certification_date: null
 };

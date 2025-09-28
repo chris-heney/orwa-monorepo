@@ -1,7 +1,7 @@
 import { useForm, FormProvider } from 'react-hook-form';
 import { useEffect } from 'react';
-import { testPayload } from './data/payload-examples';
-import { useFormAutoSave } from './hooks/useFormAutoSave';
+import { testPayload } from '../data/testPayload';
+import { useFormAutoSave } from '../hooks/useFormAutoSave';
 
 interface FormProps {
     children: React.ReactNode;

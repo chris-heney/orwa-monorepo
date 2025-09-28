@@ -49,7 +49,7 @@ const RecommendationsStep = () => {
 
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="recommender1_file"
+            name="recommendation_letter_1"
             label="First Letter of Recommendation"
             required
             maxSizeMB={50}
@@ -95,7 +95,7 @@ const RecommendationsStep = () => {
 
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="recommender2_file"
+            name="recommendation_letter_2"
             label="Second Letter of Recommendation"
             required
             maxSizeMB={50}

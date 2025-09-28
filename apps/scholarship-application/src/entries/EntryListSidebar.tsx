@@ -4,12 +4,9 @@ import { useEntryList } from "../providers/EntryListProvider";
 import { useFormContext } from "react-hook-form";
 import { useUserContext } from "../providers/UserContextProvider";
 import { useNotify } from "../NotificationProvider";
-import { IGrantApplicationFormPayload } from "../types/types";
+import { IScholarshipApplicationPayload } from "../types/types";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
-import { useGetApplicationId, useSubmitApplication } from "../data/API";
-import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
-import { useScoringCriterias } from "../providers/AppContextProvider";
-import { getSelectedCriterias } from "../helpers/getCriterias";
+import { useGetApplicationId, submitApplication } from "../data/API";
 import { clearSavedFormData } from "../helpers/formPersistence";
 import { fileCache } from "../helpers/fileCache";
 
@@ -22,7 +19,6 @@ const EntryListSidebar = () => {
     }
   })();
 
-  const { scoringCriterias } = useScoringCriterias();
 
   const { getValues } = formContext || {
     getValues: (string?: string) => ({
@@ -40,9 +36,9 @@ const EntryListSidebar = () => {
 
   const onSubmitFunction = async (entry: {
     resource: string;
-    data: IGrantApplicationFormPayload;
+    data: IScholarshipApplicationPayload;
   }) => {
-    const formPayload: IGrantApplicationFormPayload = {
+    const formPayload: IScholarshipApplicationPayload = {
       ...entry.data,
       ...getValues(),
     };
@@ -57,31 +53,9 @@ const EntryListSidebar = () => {
         notify
       );
 
-      // Generate the applicant PDF and upload it
-      const uploadedPDF = await uploadApplicantPDF(
-        processedPayload,
-        notify,
-        getSelectedCriterias(
-          formPayload.selected_projects,
-          scoringCriterias,
-          formPayload.drinking_or_wastewater
-        )
-      );
-
-      const payload = {
-        ...processedPayload,
-        adminOptions,
-        applicant_pdf: uploadedPDF,
-        additional_funding_requested: Math.round(formPayload.additional_funding_requested),
-        application_id: applicationId.data,
-        engineering_report_deq_approved:
-          formPayload.engineering_report_deq_approved === "Yes" ? true : false,
-      };
-
-      // Add the uploaded PDF id to the payload
-
+      
       // Submit the processed payload
-      const response = await useSubmitApplication(payload);
+      const response = await submitApplication(processedPayload);
 
       if (response.message === "success") {
         clearSavedFormData(); // Clear saved form data on successful submission
@@ -170,7 +144,7 @@ const EntryListSidebar = () => {
       {/* Resubmit Section */}
       <div>
         <h3 className="text-md font-semibold text-gray-700 mb-2">
-          Resubmit Entry: {selectedSubmission?.data.legal_entity_name}
+          Resubmit Entry: {selectedSubmission?.data.applicant_first_name} {selectedSubmission?.data.applicant_last_name}
         </h3>
         <label className="flex items-center gap-3 cursor-pointer">
           <input
@@ -191,14 +165,14 @@ const EntryListSidebar = () => {
       <button
         type="button"
         className="w-full bg-green-600 text-white font-semibold text-sm px-4 py-3 rounded-lg shadow-md hover:bg-green-700 transition-transform duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-        onClick={() =>
-          onSubmitFunction(
-            selectedSubmission as {
-              resource: string;
-              data: IGrantApplicationFormPayload;
-            }
-          )
-        }
+        onClick={() => {
+          if (selectedSubmission) {
+            onSubmitFunction({
+              resource: 'scholarship-application',
+              data: selectedSubmission.data
+            });
+          }
+        }}
         disabled={!selectedSubmission}
       >
         Submit

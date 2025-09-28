@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { IGrantApplicationFormPayload } from "../types/types";
-import { generatePDF } from "./generateApplicantPdf";
+import { generatePDF } from "./generateScholarshipApplicatiomPdf";
 import uploadService from "../services/uploadService";
 import { useFormContext } from "react-hook-form";
 import { useGetApplicationId } from "../data/API";

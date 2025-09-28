@@ -29,9 +29,12 @@ const FileInput = ({
   const selectedFiles = watch(name) || [];
   const facilityId = watch("facility_id");
 
+  console.log("Selected files:", watch(name));
+
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const files = Array.from(event.target.files);
+      
       const transformedFiles = [];
 
       for (const file of files) {
@@ -50,14 +53,19 @@ const FileInput = ({
       if (multiple) {
         setValue(name, [...selectedFiles, ...transformedFiles]);
       } else {
+        console.log("Transformed files:", transformedFiles);
         setValue(name, transformedFiles);
       }
     }
   };
 
   const handleRemoveFile = (index: number) => {
-    const updatedFiles = selectedFiles.filter((_file: File, i: number) => i !== index);
-    setValue(name, updatedFiles);
+    if (multiple) {
+      const updatedFiles = selectedFiles.filter((_file: File, i: number) => i !== index);
+      setValue(name, updatedFiles);
+    } else {
+      setValue(name, null);
+    }
   };
 
   return (
@@ -127,16 +135,16 @@ const FileInput = ({
               ))}
             </ul>
           ) : (
-            selectedFiles.length > 0 && (
+            selectedFiles.src && (
               <div className="flex justify-between items-center text-left">
                 <a
-                  href={selectedFiles[0].src}
+                  href={selectedFiles.src}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline truncate"
-                  title={selectedFiles[0].title} // Tooltip text
+                  title={selectedFiles.title} // Tooltip text
                 >
-                  {selectedFiles[0].title}
+                  {selectedFiles.title}
                 </a>
                 <button
                   type="button"

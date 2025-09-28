@@ -80,11 +80,23 @@ const _transform_single = (data: IStrapiRecord) => ({
 
 const _transform_list = (data: IStrapiRecord[]) => data.map(_transform_single)
 
-// add hook to fetch projects
+const oneYearAgo = new Date();
+oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+const formatDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+export const oneYearAgoFormatted = formatDate(oneYearAgo);
+
 
 export const useGetWatersystems = () => {
-  return useQuery({ queryKey: ['watersystems'], queryFn: async () => _get('watersystems', '?pagination[limit]=1000&populate=*&sort=name:ASC') })
+  return useQuery({ queryKey: ['watersystems'], queryFn: async () => _get('watersystems', `?filters[payment_last_date][$gt]=${oneYearAgoFormatted}&pagination[limit]=1000&populate=*&sort=legal_entity_name:ASC`) })
 }
+
 
 export const useGetSubmissions = () => {
   return useQuery({ queryKey: ['logs'], queryFn: async () => _get('logs', `?filters[resource]=grant-application&pagination[limit]=1000&populate=*`) })
@@ -111,8 +123,8 @@ export const useGetCriterias = () => {
   return useQuery({ queryKey: ['grant-application-scorings'], queryFn: async () => _get('grant-application-scorings', '?pagination[limit]=1000&populate=*') })
 }
 
-export const useSubmitApplication = (payload: IScholarshipApplicationPayload) => {
-  return _submitApplication('grant-application', payload as IScholarshipApplicationPayload) 
+export const submitApplication = async (payload: IScholarshipApplicationPayload) => {
+  return await _submitApplication('submissions/scholarship-application', payload as IScholarshipApplicationPayload) 
 }
 
 export const useSendEmail = (email: EmailPayload) => {

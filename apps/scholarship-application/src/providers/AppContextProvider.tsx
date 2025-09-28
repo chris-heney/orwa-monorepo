@@ -1,19 +1,17 @@
-import { PropsWithChildren, createContext, useContext, useState } from "react";
+import { PropsWithChildren, createContext, useContext, useState } from 'react';
 
 // Removed grant-related API import
 import {
   EntryPayloadContext,
+  IScholarshipApplicationPayload,
   FormSubmittedContext,
-  GrantApplicationPayloadContext,
-  IGrantApplicationFormPayload,
-  IScoringCriteria,
-  ProjectOptionsContext,
-} from "../types/types";
+  IScholarshipApplicationFormPayload,
+} from '../types/types';
 import DefaultScholarshipFormSteps, {
   IFormStep,
-  IFormStepContext,
-} from "../components/ScholarshipFormSteps";
-import { defaultPayload } from "../helpers/defaultPayload";
+  IFormStepContext, 
+} from '../components/ScholarshipFormSteps';
+import { defaultPayload } from '../helpers/defaultPayload';
 
 export const FormSteps = createContext<IFormStepContext>({
   steps: DefaultScholarshipFormSteps(),
@@ -22,19 +20,14 @@ export const FormSteps = createContext<IFormStepContext>({
   setStepIndex: () => {},
 });
 
-export const PayloadProvider = createContext<GrantApplicationPayloadContext>(
-  {} as GrantApplicationPayloadContext
-);
+export const useFormSteps = () => useContext(FormSteps);
 
-interface ScoringCriteriasContext {
-  scoringCriterias: IScoringCriteria[];
-  isScoringCriteriasLoading: boolean;
-}
+export const PayloadProvider =
+  createContext<IScholarshipApplicationFormPayload>(
+    {} as IScholarshipApplicationFormPayload
+  );
 
-export const ScoringCriteriasProvider = createContext<ScoringCriteriasContext>({
-  scoringCriterias: [],
-  isScoringCriteriasLoading: false,
-});
+export const usePayload = () => useContext(PayloadProvider);
 
 export const FormSubbmited = createContext<FormSubmittedContext>({
   isFormSubmitted: false,
@@ -43,30 +36,27 @@ export const FormSubbmited = createContext<FormSubmittedContext>({
 
 export const useFormSubmittedContext = () => useContext(FormSubbmited);
 
-export const ProjectOptions = createContext<ProjectOptionsContext>({
-  drinkingWaterProjects: [],
-  wastewaterProjects: [],
-});
-
 export const EntryPayload = createContext<EntryPayloadContext>({
   entryPayload: defaultPayload || null,
   setEntryPayload: () => {},
 });
 
-export const useScoringCriterias = () => useContext(ScoringCriteriasProvider);
-
 export const useEntryPayload = () => useContext(EntryPayload);
 
 const AppContextProvider = ({ children }: PropsWithChildren) => {
-  const [grantApplicationFormPayload, setGrantApplicationFormPayload] =
-    useState<IGrantApplicationFormPayload>(defaultPayload);
+  const [
+    scholarshipApplicationFormPayload,
+    setScholarshipApplicationFormPayload,
+  ] = useState<IScholarshipApplicationPayload>(defaultPayload);
 
-  const [formSteps, setFormSteps] = useState<IFormStep[]>(DefaultScholarshipFormSteps());
+  const [formSteps, setFormSteps] = useState<IFormStep[]>(
+    DefaultScholarshipFormSteps()
+  );
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [isFormSubmitted, setIsFormSubmitted] = useState<boolean>(false);
 
   const [entryPayload, setEntryPayload] =
-    useState<IGrantApplicationFormPayload | null>(null);
+    useState<IScholarshipApplicationPayload | null>(null);
 
   // Removed scoring criteria API call - not needed for scholarship application
 
@@ -75,31 +65,25 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
     <FormSteps.Provider
       value={{ steps: formSteps, setFormSteps, stepIndex, setStepIndex }}
     >
-      <ScoringCriteriasProvider.Provider
+      <PayloadProvider.Provider
         value={{
-          scoringCriterias: [],
-          isScoringCriteriasLoading: false,
+          scholarshipApplicationFormPayload,
+          setScholarshipApplicationFormPayload,
         }}
       >
-        <PayloadProvider.Provider
-          value={{
-            grantApplicationFormPayload,
-            setGrantApplicationFormPayload,
-          }}
-        >
-          <EntryPayload.Provider value={{ entryPayload, setEntryPayload }}>
-            <FormSubbmited.Provider
-              value={{
-                isFormSubmitted,
-                setIsFormSubmitted,
-              }}
-            >
-              {/* Provider Baby */}
-              {children}
-            </FormSubbmited.Provider>
-          </EntryPayload.Provider>
-        </PayloadProvider.Provider>
-      </ScoringCriteriasProvider.Provider>
+        <EntryPayload.Provider value={{ entryPayload, setEntryPayload }}>
+          <FormSubbmited.Provider
+            value={{
+              isFormSubmitted,
+              setIsFormSubmitted,
+            }}
+          >
+            {/* Provider Baby */}
+            {children}
+          </FormSubbmited.Provider>
+        </EntryPayload.Provider>
+      </PayloadProvider.Provider>
+
       {/* </ExtraDetails.Provider> */}
     </FormSteps.Provider>
   );

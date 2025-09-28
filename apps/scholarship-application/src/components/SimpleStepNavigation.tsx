@@ -3,10 +3,16 @@ import { useFormContext } from "react-hook-form";
 import { FormSteps } from "../providers/AppContextProvider";
 import { useNotify } from "../NotificationProvider";
 import { useFormSubmittedContext } from "../providers/AppContextProvider";
+import { fileCache } from "../helpers/fileCache";
+import { clearSavedFormData } from "../helpers/formPersistence";
+import { submitApplication } from "../data/API";
+import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
+import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
+import { IScholarshipApplicationPayload } from "../types/types";
 
 const SimpleStepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
-  const { trigger } = useFormContext();
+  const { trigger, getValues, watch } = useFormContext();
   const { notify } = useNotify();
   const { setIsFormSubmitted } = useFormSubmittedContext();
   
@@ -21,7 +27,7 @@ const SimpleStepNavigation = () => {
         setStepIndex(stepIndex + 1);
       } else {
         // Final step - handle form submission
-        handleSubmit();
+        handleSubmitPayload();
       }
     } else {
       notify("Please fix the errors above before continuing.", "error");
@@ -34,18 +40,63 @@ const SimpleStepNavigation = () => {
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    
-    try {
-      // For now, just mark as submitted - you can add actual submission logic here
-      notify("Scholarship application submitted successfully!", "success");
-      setIsFormSubmitted(true);
-    } catch (error) {
-      console.error("Submission error:", error);
-      notify("Failed to submit application. Please try again.", "error");
-    } finally {
-      setIsSubmitting(false);
+  const handleSubmitPayload = async () => {
+    // Trigger form validation
+    const isValid = await trigger();
+    if (isValid) {
+      setIsSubmitting(true);
+      const formPayload = getValues() as IScholarshipApplicationPayload;
+
+      try {
+        // Process the payload and upload files if necessary
+        const processedPayload = await processAndUploadFiles({
+          ...formPayload,
+          // id: applicationId.data,
+        }, notify);
+
+        // Generate the applicant PDF and upload it
+        const uploadedPDF = await uploadApplicantPDF(
+          processedPayload,
+          notify
+        );
+
+        // Add the uploaded PDF id to the payload
+        const finalPayload = {
+          ...processedPayload,
+          applicant_pdf: uploadedPDF,        
+        };
+
+        // Submit the processed payload
+        const response = await submitApplication(finalPayload);
+
+        if (response && response.message === "success") {
+          setIsFormSubmitted(true);
+          setIsSubmitting(false); // Reset loading state
+          clearSavedFormData(); // Clear saved form data on successful submission
+          
+          // Clear file cache on successful submission
+          try {
+            await fileCache.clearCache();
+          } catch (error) {
+            console.warn('Failed to clear file cache:', error);
+          }
+          
+          notify("Application submitted successfully!", "success");
+        } else {
+          setIsSubmitting(false);
+          notify(
+            "Error submitting application. Please try again later.",
+            "error"
+          );
+        }
+      } catch (error) {
+        console.error("Submission error:", error);
+        setIsSubmitting(false);
+        notify(
+          "Error submitting application. Please try again later.",
+          "error"
+        );
+      }
     }
   };
 

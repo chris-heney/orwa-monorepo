@@ -1,16 +1,14 @@
-import { Divider } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import FormStepper from "./_components/FormStepper";
-import { Form } from "../FormProvider";
+import { Form } from "../providers/FormProvider";
 import SimpleStepNavigation from "./SimpleStepNavigation";
 import {
-  FormSteps,
-  PayloadProvider,
+  useFormSteps,
+  usePayload,
   useEntryPayload,
+  useFormSubmittedContext,
 } from "../providers/AppContextProvider";
 import { useUserContext } from "../providers/UserContextProvider";
-// Removed grant-specific entry list sidebar
-// Removed grant-specific upload test component
 import PreviousSessionModal from "./PreviousSessionModal";
 import { 
   getSavedFormData, 
@@ -20,17 +18,18 @@ import {
 import { scholarshipDefaultPayload } from "../helpers/scholarshipDefaultPayload";
 
 const ScholarshipApplicationForm = () => {
-  const { steps, setStepIndex, stepIndex } = useContext(FormSteps);
-  const payload = useContext(PayloadProvider);
+  const { steps, setStepIndex, stepIndex } = useFormSteps();
+  const payload = usePayload();
   const { entryPayload } = useEntryPayload();
   const { isAdminView, isLoggedIn } = useUserContext();
+  const { isFormSubmitted } = useFormSubmittedContext();
   
   const [showPreviousSessionModal, setShowPreviousSessionModal] = useState(false);
   const [savedTimestamp, setSavedTimestamp] = useState<number>(0);
   const [formDefaultValues, setFormDefaultValues] = useState<Record<string, any> | undefined>(
     entryPayload ?? scholarshipDefaultPayload
   );
-  const [formKey, setFormKey] = useState(0); // Force form re-render when needed
+  const [formKey, setFormKey] = useState(0); 
 
   // Check for saved form data on component mount
   useEffect(() => {
@@ -86,6 +85,52 @@ const ScholarshipApplicationForm = () => {
     setStepIndex(0);
     setFormKey(prev => prev + 1); // Force form re-render with fresh data
   };
+
+  // Show confirmation screen if form is submitted
+  if (isFormSubmitted) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden text-center">
+            <div className="p-8 sm:p-12">
+              {/* Success Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
+                <svg className="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              
+              {/* Success Message */}
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                Application Submitted Successfully!
+              </h1>
+              
+              <p className="text-lg text-gray-600 mb-8">
+                Thank you for submitting your scholarship application. We have received your application and will review it carefully.
+              </p>
+              
+              {/* Additional Information */}
+              <div className="bg-blue-50 rounded-lg p-6 mb-8">
+                <h2 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h2>
+                <ul className="text-left text-blue-800 space-y-2">
+                  <li>• Your application will be reviewed by our scholarship committee</li>
+                  <li>• You will receive an email confirmation shortly</li>
+                  <li>• We will contact you if we need any additional information</li>
+                  <li>• Award decisions will be announced by the specified deadline</li>
+                </ul>
+              </div>
+              
+              {/* Contact Information */}
+              <div className="text-sm text-gray-500">
+                <p>If you have any questions, please contact us at:</p>
+                <p className="font-semibold">scholarships@orwa.org</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <>

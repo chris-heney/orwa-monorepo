@@ -61,7 +61,7 @@ const HighSchoolDataStep = () => {
         {/* Academic Information */}
         <Grid size={{ xs: 12, md: 4 }}>
           <NumberInput
-            name="gpa"
+            name="high_school_gpa"
             label="Grade Point Average"
             step={0.01}
             min={0}
@@ -91,16 +91,16 @@ const HighSchoolDataStep = () => {
         {/* File Uploads */}
         <Grid size={{ xs: 12, md: 6 }}>
           <FileInput
-            name="upload_transcript"
+            name="transcript"
             label="Upload High School Transcript"
             required
-            maxSizeMB={50}
-            acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.png']}
+            // maxSizeMB={50}
+            // acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.png']}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <FileInput
-            name="upload_scores"
+            name="test_scores"
             label="Upload ACT/SAT Scores"
             required
             maxSizeMB={50}

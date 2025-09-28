@@ -38,7 +38,7 @@ export const useFormAutoSave = ({
           
           if (hasData) {
             saveFormData(currentFormData, stepIndex);
-            console.log('Saving form data', currentFormData);
+            // console.log('Saving form data', currentFormData);
           }
         }
       } catch (error) {

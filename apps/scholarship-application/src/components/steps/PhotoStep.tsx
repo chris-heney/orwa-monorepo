@@ -10,7 +10,7 @@ const PhotoStep = () => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="photo_upload"
+            name="photograph"
             label="Upload High Quality Photograph"
             required
             maxSizeMB={50}

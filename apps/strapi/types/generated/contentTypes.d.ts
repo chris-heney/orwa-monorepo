@@ -2979,16 +2979,28 @@ export interface ApiScholarshipApplicationScholarshipApplication
         },
         number
       >;
-    age_18_or_older: Schema.Attribute.Boolean & Schema.Attribute.Required;
+    age_confirm: Schema.Attribute.String & Schema.Attribute.Required;
     applicant_certification: Schema.Attribute.Boolean &
       Schema.Attribute.Required;
     applicant_certification_date: Schema.Attribute.Date &
       Schema.Attribute.Required;
+    applicant_city: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_email: Schema.Attribute.Email & Schema.Attribute.Required;
+    applicant_first_name: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_last_name: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_middle_name: Schema.Attribute.String;
+    applicant_pdf: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios'
+    >;
+    applicant_phone: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_state: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_street: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_zip: Schema.Attribute.String & Schema.Attribute.Required;
     application_status: Schema.Attribute.Enumeration<
       ['Draft', 'Submitted', 'Under Review', 'Approved', 'Denied']
     > &
       Schema.Attribute.DefaultTo<'Draft'>;
-    awards_recognition: Schema.Attribute.Text;
+    awards: Schema.Attribute.Text;
     biography: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
     college_gpa: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
@@ -3019,42 +3031,43 @@ export interface ApiScholarshipApplicationScholarshipApplication
         },
         number
       >;
-    delete_this_fieldd: Schema.Attribute.UID;
     education_type: Schema.Attribute.Enumeration<
       ['FourYearCollege', 'TwoYearCollege', 'VocationalSchool']
     > &
       Schema.Attribute.Required;
-    eligible_participant: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::contact.contact'
+    eligible_participant_address: Schema.Attribute.Component<
+      'scholarship.address',
+      false
     >;
+    eligible_participant_email: Schema.Attribute.Email &
+      Schema.Attribute.Required;
+    eligible_participant_name: Schema.Attribute.Component<
+      'scholarship.eligible-participant-name',
+      false
+    >;
+    eligible_participant_phone: Schema.Attribute.String &
+      Schema.Attribute.Required;
     eligible_participant_title: Schema.Attribute.String &
       Schema.Attribute.Required;
     essay: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
-    financial_aid_1_amount: Schema.Attribute.Decimal &
+    financial1_amount: Schema.Attribute.Decimal &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
         },
         number
       >;
-    financial_aid_1_institution: Schema.Attribute.String;
-    financial_aid_2_amount: Schema.Attribute.Decimal &
+    financial1_institution: Schema.Attribute.String;
+    financial2_amount: Schema.Attribute.Decimal &
       Schema.Attribute.SetMinMax<
         {
           min: 0;
         },
         number
       >;
-    financial_aid_2_institution: Schema.Attribute.String;
-    first_year_higher_education: Schema.Attribute.Boolean &
-      Schema.Attribute.Required;
-    graduation_date: Schema.Attribute.Date & Schema.Attribute.Required;
-    guardian_certification: Schema.Attribute.Boolean;
-    guardian_certification_date: Schema.Attribute.Date;
-    guardian_first_name: Schema.Attribute.String;
-    guardian_last_name: Schema.Attribute.String;
-    high_school_gpa: Schema.Attribute.Decimal &
+    financial2_institution: Schema.Attribute.String;
+    first_year: Schema.Attribute.String & Schema.Attribute.Required;
+    gpa: Schema.Attribute.Decimal &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMax<
         {
@@ -3063,6 +3076,13 @@ export interface ApiScholarshipApplicationScholarshipApplication
         },
         number
       >;
+    graduation_date: Schema.Attribute.Date & Schema.Attribute.Required;
+    guardian_certification: Schema.Attribute.Boolean;
+    guardian_certification_date: Schema.Attribute.Date;
+    guardian_name: Schema.Attribute.Component<
+      'scholarship.guardian-name',
+      false
+    >;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -3077,14 +3097,16 @@ export interface ApiScholarshipApplicationScholarshipApplication
     recommendation_letter_2: Schema.Attribute.Media<'files'> &
       Schema.Attribute.Required;
     recommender1_email: Schema.Attribute.Email & Schema.Attribute.Required;
-    recommender1_first_name: Schema.Attribute.String &
-      Schema.Attribute.Required;
-    recommender1_last_name: Schema.Attribute.String & Schema.Attribute.Required;
+    recommender1_name: Schema.Attribute.Component<
+      'scholarship.recommender-name',
+      false
+    >;
     recommender1_phone: Schema.Attribute.String & Schema.Attribute.Required;
     recommender2_email: Schema.Attribute.Email & Schema.Attribute.Required;
-    recommender2_first_name: Schema.Attribute.String &
-      Schema.Attribute.Required;
-    recommender2_last_name: Schema.Attribute.String & Schema.Attribute.Required;
+    recommender2_name: Schema.Attribute.Component<
+      'scholarship.recommender-name',
+      false
+    >;
     recommender2_phone: Schema.Attribute.String & Schema.Attribute.Required;
     relationship: Schema.Attribute.Enumeration<
       ['Self', 'DependentChild', 'DependentGrandchild']
@@ -3100,14 +3122,10 @@ export interface ApiScholarshipApplicationScholarshipApplication
         },
         number
       >;
-    school_city: Schema.Attribute.String & Schema.Attribute.Required;
+    school_address: Schema.Attribute.Component<'scholarship.address', false>;
     school_name: Schema.Attribute.String & Schema.Attribute.Required;
-    school_state: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'Oklahoma'>;
-    school_street: Schema.Attribute.String & Schema.Attribute.Required;
-    school_zip: Schema.Attribute.String & Schema.Attribute.Required;
     submission_date: Schema.Attribute.DateTime;
+    system_name: Schema.Attribute.String & Schema.Attribute.Required;
     test_scores: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
     transcript: Schema.Attribute.Media<'images' | 'files'> &
       Schema.Attribute.Required;

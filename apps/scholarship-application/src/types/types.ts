@@ -1,5 +1,10 @@
 import { Dispatch, SetStateAction } from "react";
 
+export interface FormSubmittedContext {
+  isFormSubmitted: boolean;
+  setIsFormSubmitted: Dispatch<SetStateAction<boolean>>;
+}
+
 export interface IStep {
   label: string;
   component: React.ReactNode;
@@ -9,6 +14,7 @@ export interface IStep {
 export default interface IWatersystemOption {
   id: number;
   name: string;
+  legal_entity_name?: string;
   region: "Region 1" | "Region 2" | "Region 3" | "Region 4";
   office_hours: string;
   meters: number;
@@ -245,6 +251,7 @@ export interface EntryPayloadContext {
 export default interface IWatersystemOption {
   id: number;
   name: string;
+  legal_entity_name?: string;
   region: "Region 1" | "Region 2" | "Region 3" | "Region 4";
   office_hours: string;
   meters: number;
@@ -425,6 +432,10 @@ export interface ParagraphBlock {
 }
 
 
+export interface IScholarshipApplicationFormPayload {
+  scholarshipApplicationFormPayload: IScholarshipApplicationPayload;
+  setScholarshipApplicationFormPayload: Dispatch<SetStateAction<IScholarshipApplicationPayload>>;
+}
 
 // Define scholarship application payload interface
 export interface IScholarshipApplicationPayload {
@@ -440,26 +451,44 @@ export interface IScholarshipApplicationPayload {
   applicant_zip: string;
 
   // Eligibility
-  watersystem_id?: number;
+  watersystem: number;
   relationship: "Self" | "DependentChild" | "DependentGrandchild";
   eligible_participant_id?: number;
+  eligible_participant_name?: {
+    first: string;
+    last: string;
+  };
   eligible_participant_title: string;
+  eligible_participant_phone?: string;
+  eligible_participant_email?: string;
+  eligible_participant_address?: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
 
   // Academic Data
   school_name: string;
-  graduation_date: string;
+  graduation_date: string | null;
   school_street: string;
   school_city: string;
   school_state: string;
   school_zip: string;
+  school_address?: {
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+  };
   high_school_gpa: number;
   sat_score: number;
   act_score: number;
   transcript: StrapiFormattedFile | null;
-  test_scores: StrapiFormattedFile | null;
+  test_scores: StrapiFormattedFile[] | null;
 
   // College Data
-  first_year_higher_education: boolean;
+  first_year?: string;
   credits_completed: number;
   credits_required: number;
   college_gpa: number;
@@ -467,16 +496,24 @@ export interface IScholarshipApplicationPayload {
   major?: string;
 
   // Additional Info
-  awards_recognition?: string;
+  awards?: string;
 
   // Recommendations
   recommender1_first_name: string;
   recommender1_last_name: string;
+  recommender1_name?: {
+    first: string;
+    last: string;
+  };
   recommender1_email: string;
   recommender1_phone: string;
   recommendation_letter_1: StrapiFormattedFile | null;
   recommender2_first_name: string;
   recommender2_last_name: string;
+  recommender2_name?: {
+    first: string;
+    last: string;
+  };
   recommender2_email: string;
   recommender2_phone: string;
   recommendation_letter_2: StrapiFormattedFile | null;
@@ -486,6 +523,10 @@ export interface IScholarshipApplicationPayload {
   financial_aid_1_amount?: number;
   financial_aid_2_institution?: string;
   financial_aid_2_amount?: number;
+  financial1_institution?: string;
+  financial1_amount?: number;
+  financial2_institution?: string;
+  financial2_amount?: number;
 
   // Uploads
   essay: StrapiFormattedFile | null;
@@ -493,15 +534,19 @@ export interface IScholarshipApplicationPayload {
   photograph: StrapiFormattedFile | null ;
 
   // Certification
-  age_18_or_older: boolean;
+  age_confirm?: string;
   applicant_certification: boolean;
-  applicant_certification_date: string;
+  applicant_certification_date: string | null;
   guardian_first_name?: string;
   guardian_last_name?: string;
+  guardian_name?: {
+    first: string;
+    last: string;
+  };
   guardian_certification?: boolean;
-  guardian_certification_date?: string;
+  guardian_certification_date?: string | null;
 
-  // Admin options
+  // Admin options  
   adminOptions?: AdminOptions;
 }
 

@@ -1,17 +1,7 @@
 /**
- * scholarship-application router
+ * soonerwarn router
  */
 
-export default {
-  routes: [
-    {
-      method: 'POST',
-      path: '/scholarship-applications',
-      handler: 'scholarship-application.createScholarshipApplication',
-      config: {
-        policies: [],
-        middlewares: [],
-      },
-    },
-  ],
-};
+import { factories } from '@strapi/strapi';
+
+export default factories.createCoreRouter('api::scholarship-application.scholarship-application');

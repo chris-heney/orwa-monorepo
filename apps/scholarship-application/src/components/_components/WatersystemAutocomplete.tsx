@@ -22,8 +22,9 @@ const WatersystemAutocomplete: React.FC<WatersystemAutocompleteProps> = ({
     setValue,
     watch,
   } = useFormContext();
-
   const { data: watersystems, isLoading } = useGetWatersystems();
+  const typedWatersystems = watersystems as IWatersystemOption[] | undefined;
+  
   const [filteredOptions, setFilteredOptions] = useState<IWatersystemOption[]>([]);
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -31,19 +32,42 @@ const WatersystemAutocomplete: React.FC<WatersystemAutocompleteProps> = ({
 
   const selectedValue = watch(name);
 
+  // Helper function to get the display name for a watersystem
+  const getDisplayName = (watersystem: IWatersystemOption): string => {
+    return watersystem.legal_entity_name && watersystem.legal_entity_name.trim() !== '' 
+      ? watersystem.legal_entity_name 
+      : watersystem.name;
+  };
+
   // Initialize input value from form data
   useEffect(() => {
-    if (selectedValue && typeof selectedValue === 'string') {
-      setInputValue(selectedValue);
+    if (selectedValue !== undefined && selectedValue !== null) {
+      // If selectedValue is a number (ID), find the corresponding watersystem name
+      if (typedWatersystems && typeof selectedValue === 'number') {
+        const watersystem = typedWatersystems.find(ws => ws.id === selectedValue);
+        if (watersystem) {
+          setInputValue(getDisplayName(watersystem));
+        }
+      } else if (typeof selectedValue === 'string') {
+        // If it's a string, check if it's a number string (ID)
+        if (!isNaN(Number(selectedValue)) && typedWatersystems) {
+          const watersystem = typedWatersystems.find(ws => ws.id === Number(selectedValue));
+          if (watersystem) {
+            setInputValue(getDisplayName(watersystem));
+          }
+        } else {
+          setInputValue(selectedValue);
+        }
+      }
     }
-  }, [selectedValue]);
+  }, [selectedValue, typedWatersystems]);
 
   // Initialize filtered options when watersystems data loads
   useEffect(() => {
-    if (watersystems) {
-      setFilteredOptions(watersystems);
+    if (typedWatersystems) {
+      setFilteredOptions(typedWatersystems);
     }
-  }, [watersystems]);
+  }, [typedWatersystems]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -51,25 +75,32 @@ const WatersystemAutocomplete: React.FC<WatersystemAutocompleteProps> = ({
     setValue(name, value);
     setDropdownOpen(true);
 
-    if (watersystems) {
-      const filtered = watersystems.filter((option: IWatersystemOption) =>
-        option.name.toLowerCase().includes(value.toLowerCase())
-      );
+    if (typedWatersystems) {
+      const filtered = typedWatersystems.filter((option: IWatersystemOption) => {
+        const searchValue = value?.toLowerCase();
+        const nameMatch = option.name?.toLowerCase().includes(searchValue);
+        const legalEntityMatch = option.legal_entity_name && option.legal_entity_name.trim() !== '' 
+          ? option.legal_entity_name?.toLowerCase().includes(searchValue) 
+          : false;
+          
+        return nameMatch || legalEntityMatch;
+      });
       setFilteredOptions(filtered);
     }
   };
 
   const handleSelect = (watersystem: IWatersystemOption) => {
-    setInputValue(watersystem.name);
-    setValue(name, watersystem.name);
-    setValue("watersystem_id", watersystem.id);
+    const displayName = getDisplayName(watersystem);
+    setInputValue(displayName);
+    setValue(name, displayName);
+    setValue("watersystem", watersystem.id);
     setDropdownOpen(false);
   };
 
   const handleFocus = () => {
-    if (watersystems) {
+    if (typedWatersystems) {
       setDropdownOpen(true);
-      setFilteredOptions(watersystems);
+      setFilteredOptions(typedWatersystems);
     }
   };
 
@@ -106,11 +137,17 @@ const WatersystemAutocomplete: React.FC<WatersystemAutocompleteProps> = ({
           type="text"
           {...register(name, {
             required: required ? `${label} is required` : false,
-            validate: (value) => {
-              if (required && watersystems && !watersystems.find((option: IWatersystemOption) => option.name === value)) {
-                return "Please select a valid watersystem from the dropdown";
-              }
-            }
+            // validate: (value) => {
+            //   if (required && typedWatersystems) {
+            //     const isValid = typedWatersystems.find((option: IWatersystemOption) => {
+            //       const displayName = option.legal_entity_name || option.name;
+            //       return displayName === value;
+            //     });
+            //     if (!isValid) {
+            //       return "Please select a valid watersystem from the dropdown";
+            //     }
+            //   }
+            // }
           })}
           value={inputValue}
           onChange={handleInputChange}
@@ -139,9 +176,17 @@ const WatersystemAutocomplete: React.FC<WatersystemAutocompleteProps> = ({
                 className="p-3 hover:bg-blue-50 cursor-pointer text-left border-b border-gray-100 last:border-b-0"
                 onClick={() => handleSelect(option)}
               >
-                <div className="font-medium text-gray-900">{option.name}</div>
+                <div className="font-medium text-gray-900">
+                  {getDisplayName(option)}
+                </div>
+                {option.legal_entity_name && option.legal_entity_name.trim() !== '' && option.name !== option.legal_entity_name && (
+                  <div className="text-sm text-gray-600">({option.name})</div>
+                )}
                 {option.county && (
                   <div className="text-sm text-gray-500">{option.county} County</div>
+                )}
+                {option.region && (
+                  <div className="text-sm text-gray-500">{option.region}</div>
                 )}
               </li>
             ))}

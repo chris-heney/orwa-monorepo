@@ -10,11 +10,11 @@ const BiographyStep = () => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="bio_upload"
+            name="biography"
             label="Upload Biography"
             required
-            maxSizeMB={50}
-            acceptedTypes={['.pdf', '.doc', '.docx']}
+            // maxSizeMB={50}
+            // acceptedTypes={['.pdf', '.doc', '.docx']}
             helperText="Please upload your biography document."
           />
         </Grid>

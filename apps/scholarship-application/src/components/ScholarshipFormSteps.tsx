@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react'
+import { Dispatch, JSX, SetStateAction } from 'react'
 import PersonalDataStep from './steps/PersonalDataStep'
 import EligibilityStep from './steps/EligibilityStep'
 import HighSchoolDataStep from './steps/HighSchoolDataStep'

@@ -153,6 +153,57 @@ export interface RenewalMembershipRenewal extends Struct.ComponentSchema {
   };
 }
 
+export interface ScholarshipAddress extends Struct.ComponentSchema {
+  collectionName: 'components_scholarship_addresses';
+  info: {
+    description: 'Address component with street, city, state, zip';
+    displayName: 'Address';
+  };
+  attributes: {
+    city: Schema.Attribute.String & Schema.Attribute.Required;
+    state: Schema.Attribute.String & Schema.Attribute.Required;
+    street: Schema.Attribute.String & Schema.Attribute.Required;
+    zip: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ScholarshipEligibleParticipantName
+  extends Struct.ComponentSchema {
+  collectionName: 'components_scholarship_eligible_participant_names';
+  info: {
+    description: 'Name fields for eligible participant';
+    displayName: 'Eligible Participant Name';
+  };
+  attributes: {
+    first: Schema.Attribute.String & Schema.Attribute.Required;
+    last: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ScholarshipGuardianName extends Struct.ComponentSchema {
+  collectionName: 'components_scholarship_guardian_names';
+  info: {
+    description: 'Name fields for guardian';
+    displayName: 'Guardian Name';
+  };
+  attributes: {
+    first: Schema.Attribute.String & Schema.Attribute.Required;
+    last: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ScholarshipRecommenderName extends Struct.ComponentSchema {
+  collectionName: 'components_scholarship_recommender_names';
+  info: {
+    description: 'Name fields for recommender';
+    displayName: 'Recommender Name';
+  };
+  attributes: {
+    first: Schema.Attribute.String & Schema.Attribute.Required;
+    last: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface SharedFieldMeta extends Struct.ComponentSchema {
   collectionName: 'components_shared_field_metas';
   info: {
@@ -320,6 +371,10 @@ declare module '@strapi/strapi' {
       'conference.tickets-purchased': ConferenceTicketsPurchased;
       'location.coordinates': LocationCoordinates;
       'renewal.membership-renewal': RenewalMembershipRenewal;
+      'scholarship.address': ScholarshipAddress;
+      'scholarship.eligible-participant-name': ScholarshipEligibleParticipantName;
+      'scholarship.guardian-name': ScholarshipGuardianName;
+      'scholarship.recommender-name': ScholarshipRecommenderName;
       'shared.field-meta': SharedFieldMeta;
       'simple.address': SimpleAddress;
       'simple.compliance-violoations': SimpleComplianceVioloations;

@@ -13,10 +13,10 @@ export const processAndUploadFiles = async (payload: any, notify: {
         const fileArray = processedPayload[key];
         if (fileArray.length > 0 && fileArray[0]?.rawFile) {
           try {
-            const uploadedFiles = await uploadService.uploadFiles(
+            const uploadedFilesIds = await uploadService.uploadFiles(
               fileArray.map((file: StrapiFormattedFile) => file.rawFile)
             );
-            processedPayload[key] = uploadedFiles;
+            processedPayload[key] = uploadedFilesIds;
           } catch (error) {
             notify(
               `Error uploading files for ${key}. Please try again later.`,
@@ -27,10 +27,11 @@ export const processAndUploadFiles = async (payload: any, notify: {
       } else if (processedPayload[key]?.rawFile) {
         // If the key holds a single StrapiFormattedFile
         try {
-          const uploadedFile = await uploadService.uploadFile(
+          console.log("Uploading file:", processedPayload[key].rawFile);
+          const uploadedFileId = await uploadService.uploadFile(
             processedPayload[key].rawFile
           );
-          processedPayload[key] = uploadedFile[0]; // Replace with uploaded file metadata
+          processedPayload[key] = uploadedFileId; // Replace with uploaded file metadata
         } catch (error) {
           console.error(`Error uploading file for ${key}:`, error);
           notify(

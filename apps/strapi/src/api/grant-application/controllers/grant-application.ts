@@ -2,7 +2,6 @@
  * A set of functions called "actions" for `wp-grant-applications`
  */
 
-import { AdminOptions } from "../../membership-forms/types";
 import { IContactEntity, IGrantApplicationFormPayload } from "../types";
 
 // get the contact

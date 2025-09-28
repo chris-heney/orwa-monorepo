@@ -1,6 +1,5 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import SectionHeading from '../_components/SectionHeading';
 import { TextInput } from '../_components/TextInput';
 import MaskedPhoneInput from '../_components/MaskedPhoneInput';
 import { SelectInput } from '../_components/SelectInput';
@@ -23,7 +22,7 @@ const EligibilityStep = () => {
         {/* System Name */}
         <Grid size={{ xs: 12 }}>
           <WatersystemAutocomplete
-            name="system_name"
+            name="watersystem"
             label="Water System Name"
             required
             helperText="Select the ORWA member water system associated with the eligible participant"
