@@ -1,0 +1,18 @@
+export const cronOptions = [
+    { label: "Every Minute", value: "* * * * *" },
+    { label: "Every 5 Minutes", value: "*/5 * * * *" },
+    { label: "Every 15 Minutes", value: "*/15 * * * *" },
+    { label: "Every 30 Minutes", value: "*/30 * * * *" },
+    { label: "Every Hour", value: "0 * * * *" },
+    { label: "Every 3 Hours", value: "0 */3 * * *" },
+    { label: "Every 6 Hours", value: "0 */6 * * *" },
+    { label: "Every Day at Midnight", value: "0 0 * * *" },
+    { label: "Every Day at 8 AM", value: "0 8 * * *" },
+    { label: "Every Day at Noon", value: "0 12 * * *" },
+    { label: "Every Day at 6 PM", value: "0 18 * * *" },
+    { label: "Every Monday at 8 AM", value: "0 8 * * 1" },
+    { label: "Every Friday at 5 PM", value: "0 17 * * 5" },
+    { label: "First Day of the Month at 8 AM", value: "0 8 1 * *" },
+    { label: "Last Day of the Month at 6 PM", value: "0 18 L * *" },
+    { label: "Every Year on January 1st at 8 AM", value: "0 8 1 1 *" },
+  ];

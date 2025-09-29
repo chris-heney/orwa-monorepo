@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "@ci-connect/types": ["../../libs/types/src/index.ts"],
+            "@ci-connect/utils": ["../../libs/utils/src/index.ts"],
+            "@ci-connect/ui-components": [
+                "../../libs/ui-components/src/index.ts"
+            ],
+            "@ci-connect/api-client": ["../../libs/api-client/src/index.ts"],
+            "@ci-connect/database": ["../../libs/database/src/index.ts"]
+        },
+        "jsx": "react",
+        "resolveJsonModule": true
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "dist", "build"]
+}

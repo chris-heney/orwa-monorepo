@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strictNullChecks": true,
+    "baseUrl": ".",
+    "paths": {
+      "@ci-connect/types": ["/app/libs/types/src/index.ts"],
+      "@ci-connect/utils": ["/app/libs/utils/src/index.ts"],
+      "@ci-connect/ui-components": ["/app/libs/ui-components/src/index.ts"],
+      "@ci-connect/api-client": ["/app/libs/api-client/src/index.ts"],
+      "@ci-connect/database": ["/app/libs/database/src/index.ts"]
+    }
+  },
+  "include": [
+    "src"
+  ]
+} 

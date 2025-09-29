@@ -1,0 +1,30 @@
+networks:
+    web:
+        name: web
+        external: true
+
+services:
+    synapse:
+        container_name: synapse
+        image: ghcr.io/ciwebgroup/synapse:${VERSION_TAG:-latest}
+        env_file: .env
+        # Required environment variables in .env file:
+        # VITE_API_URL=https://api.your-domain.com
+        # VITE_AUTHENTIK_CLIENT_ID=your_client_id
+        # VITE_AUTHENTIK_CLIENT_SECRET=your_client_secret
+        # VITE_AUTHENTIK_AUTH_URL=https://auth.your-domain.com/application/o/authorize/
+        # VITE_AUTHENTIK_TOKEN_URL=https://auth.your-domain.com/application/o/token/
+        # VITE_AUTHENTIK_LOGOUT_URL=https://auth.your-domain.com/application/o/your-app/end-session/
+        # VITE_REDIRECT_URI=https://your-app.com/auth/callback
+        # VITE_GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+        networks:
+            - web
+        expose:
+            - 80
+        labels:
+            - 'ci.groups=website,tool'
+            - 'traefik.enable=true'
+            - 'traefik.http.routers.synapse.rule=Host(`synapse.ciwebgroup.com`)'
+            - 'traefik.http.routers.synapse.tls=true'
+            - 'traefik.http.routers.synapse.tls.certresolver=lets-encrypt'
+            - 'traefik.http.services.synapse.loadbalancer.server.port=80'
