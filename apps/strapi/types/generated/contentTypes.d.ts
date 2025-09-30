@@ -831,6 +831,87 @@ export interface ApiAssociateAssociate extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAwardNominationAwardNomination
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'award_nominations';
+  info: {
+    description: 'ORWA Awards Nomination submissions';
+    displayName: 'Award Nomination';
+    pluralName: 'award-nominations';
+    singularName: 'award-nomination';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    address: Schema.Attribute.String & Schema.Attribute.Required;
+    award_type: Schema.Attribute.Enumeration<
+      [
+        'Water/Wastewater System of the Year',
+        'Excellence in Operations',
+        'Excellence in Management',
+        'Excellence in Office Operations',
+      ]
+    > &
+      Schema.Attribute.Required;
+    award_year: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<2025>;
+    beginning_members: Schema.Attribute.Integer;
+    city: Schema.Attribute.String & Schema.Attribute.Required;
+    clerical_employees: Schema.Attribute.Integer;
+    contact: Schema.Attribute.Relation<'manyToOne', 'api::contact.contact'>;
+    county: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    current_members: Schema.Attribute.Integer;
+    daytime_phone: Schema.Attribute.String & Schema.Attribute.Required;
+    email: Schema.Attribute.Email & Schema.Attribute.Required;
+    employment_date: Schema.Attribute.Date;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::award-nomination.award-nomination'
+    > &
+      Schema.Attribute.Private;
+    management_employees: Schema.Attribute.Integer;
+    nomination_description: Schema.Attribute.Text & Schema.Attribute.Required;
+    nomination_pdf: Schema.Attribute.Media<'files'>;
+    nomination_status: Schema.Attribute.Enumeration<
+      [
+        'Draft',
+        'Submitted',
+        'Under Review',
+        'Winner',
+        'Runner Up',
+        'Not Selected',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Submitted'>;
+    nominee_name: Schema.Attribute.String & Schema.Attribute.Required;
+    operation_maintenance_employees: Schema.Attribute.Integer;
+    operation_start_date: Schema.Attribute.Date;
+    publishedAt: Schema.Attribute.DateTime;
+    review_notes: Schema.Attribute.Text;
+    state: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'OK'>;
+    submission_date: Schema.Attribute.DateTime;
+    supporting_documents: Schema.Attribute.Media<'files' | 'images', true>;
+    system_name: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    watersystem: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::watersystem.watersystem'
+    >;
+    zip: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ApiConferenceAttendeeConferenceAttendee
   extends Struct.CollectionTypeSchema {
   collectionName: 'conference_attendees';
@@ -4925,6 +5006,7 @@ declare module '@strapi/strapi' {
       'api::alein.alein': ApiAleinAlein;
       'api::asset.asset': ApiAssetAsset;
       'api::associate.associate': ApiAssociateAssociate;
+      'api::award-nomination.award-nomination': ApiAwardNominationAwardNomination;
       'api::conference-attendee.conference-attendee': ApiConferenceAttendeeConferenceAttendee;
       'api::conference-booth.conference-booth': ApiConferenceBoothConferenceBooth;
       'api::conference-contestant.conference-contestant': ApiConferenceContestantConferenceContestant;

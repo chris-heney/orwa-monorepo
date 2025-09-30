@@ -46,6 +46,7 @@ import {
     EmailsTemplates,
     EmailTasks,
     ScholarshipApplications,
+    AwardNominations,
 } from './modules';
 import {
     AdminDashboard,
@@ -221,7 +222,7 @@ const App = () => {
 
                 {/* PROGRAMS */}
                 <Resource name="scholarship-applications" {...ScholarshipApplications} />
-                {/* <Resource name="awards" {...Awards} /> */}
+                <Resource name="award-nominations" {...AwardNominations} />
 
                 {/* --- MUI Pages--- */}
                 <CustomRoutes>

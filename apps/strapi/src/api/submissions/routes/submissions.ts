@@ -13,5 +13,14 @@ export default {
         middlewares: [],
       },
     },
+    {
+      method: 'POST',
+      path: '/submissions/award-nomination',
+      handler: 'submissions.createAwardNomination',
+      config: {
+        policies: [],
+        middlewares: [],
+      },
+    },
   ],
 };

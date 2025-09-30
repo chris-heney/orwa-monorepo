@@ -132,23 +132,23 @@ const ProgramMenuItem = (): ReactElement => {
                     </Typography>
                     <SolarMenu.List dense>
                         {/* Scholarship Applications */}
-                        <SolarMenu.Item
-                            selected={location.pathname.startsWith(
-                                '/scholarship'
-                            )}
-                            name="scholarship-dashboard"
-                            to="/scholarship/dashboard"
-                            label="Scholarship Applications"
-                            title="Scholarship Applications"
-                            icon={<SchoolIcon />}
-                        />
-                        <SolarMenu.Item
-                            name="awards"
-                            to="/awards"
-                            label="Awards"
-                            selected={location.pathname.startsWith('/awards')}
-                            icon={<EmojiEvents />}
-                        />
+            <SolarMenu.Item
+                selected={location.pathname.startsWith(
+                    '/scholarship'
+                )}
+                name="scholarship-dashboard"
+                to="/scholarship/dashboard"
+                label="Scholarship Applications"
+                title="Scholarship Applications"
+                icon={<SchoolIcon />}
+            />
+            <SolarMenu.Item
+                name="award-nominations"
+                to="/award-nominations"
+                label="Award Nominations"
+                selected={location.pathname.startsWith('/award-nominations')}
+                icon={<EmojiEvents />}
+            />
                     </SolarMenu.List>
                 </>
             }

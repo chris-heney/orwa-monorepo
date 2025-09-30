@@ -56,6 +56,7 @@ const ModuleSelector = ({ moduleValue }: ModuleSelectorProps) => {
           { id: "Staff", name: "Staff" },
           { id: "Assets", name: "Assets" },
           { id: "Activities", name: "Activities" },
+          { id: "Scholarship Applications", name: "Scholarship Applications" },
         ]}
         fullWidth
         helperText="Select the module this email is associated with"

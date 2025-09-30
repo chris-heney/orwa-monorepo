@@ -118,7 +118,7 @@ export default ({ strapi }) => {
     provider: "local",
     confirmed: true,
     blocked: false,
-    role: 1, // Use role 1 (Authenticated) instead of 9
+    // Remove role assignment - let Strapi handle default role
     username: "",
     email: "",
     password: "password",
@@ -432,6 +432,210 @@ export default ({ strapi }) => {
         ctx.body = {
           message: "error",
           error: err.message,
+        };
+      }
+    },
+
+    createAwardNomination: async (ctx) => {
+      try {
+        console.log("=== AWARD NOMINATION CONTROLLER CALLED ===");
+        console.log("ctx.request.body", ctx.request?.body);
+
+        const requestBody = ctx.request?.body;
+
+        const {
+          adminOptions,
+          nominee_name,
+          system_name,
+          watersystem,
+          county,
+          address,
+          city,
+          state,
+          zip,
+          daytime_phone,
+          email,
+          operation_start_date,
+          employment_date,
+          current_members,
+          beginning_members,
+          clerical_employees,
+          operation_maintenance_employees,
+          management_employees,
+          nomination_description,
+          award_type,
+          supporting_documents,
+          nomination_pdf,
+          award_year,
+        } = requestBody;
+
+
+        if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
+          console.log("ctx.request.body", requestBody);
+          logFormData(requestBody, "award-nomination");
+
+          console.log("Nominee Contact", { email, nominee_name });
+
+          // Get or create contact for the nominator
+          const nominatorContact = await getContact(
+            email,
+            {
+              first: nominee_name.split(' ')[0] || nominee_name,
+              last: nominee_name.split(' ').slice(1).join(' ') || '',
+              email: email,
+              phone: daytime_phone,
+            },
+            {
+              ...user_base,
+              username: email,
+              email: email,
+              password: btoa(email),
+            }
+          );
+
+          console.log("- Nominator Contact:", JSON.stringify(nominatorContact));
+          console.log("-------------------------------------------------------------");
+
+          // Ensure required fields are provided
+          if (!nominee_name || !system_name || !award_type || !nomination_description) {
+            ctx.status = 400;
+            ctx.body = { message: "Missing required fields." };
+            return;
+          }
+
+          const data = {
+            contact: nominatorContact.id,
+            nominee_name: nominee_name,
+            system_name: system_name,
+            watersystem: watersystem || null,
+            county: county,
+            address: address,
+            city: city,
+            state: state || 'OK',
+            zip: zip,
+            daytime_phone: daytime_phone,
+            email: email,
+            operation_start_date: operation_start_date,
+            employment_date: employment_date,
+            current_members: current_members,
+            beginning_members: beginning_members,
+            clerical_employees: clerical_employees,
+            operation_maintenance_employees: operation_maintenance_employees,
+            management_employees: management_employees,
+            nomination_description: nomination_description,
+            award_type: award_type,
+            supporting_documents: supporting_documents,
+            nomination_pdf: nomination_pdf,
+            award_year: award_year || new Date().getFullYear(),
+            nomination_status: "Submitted",
+            submission_date: new Date(),
+          };
+
+          console.log("Data:", data);
+
+          const awardNomination = await strapi.documents("api::award-nomination.award-nomination").create({
+            data: data,
+          });
+
+          ctx.status = 200;
+          ctx.body = {
+            message: "success",
+            awardNomination,
+          };
+        } else {
+          // Send email functionality
+          const emailTemplates = await strapi.documents("api::email-template.email-template").findMany({
+            filters: {
+              email_name: "Award Nomination Receipt",
+            },
+            populate: "*",
+          });
+
+          const emailTemplate = emailTemplates[0];
+
+          const { email, nominee_name } = requestBody;
+
+          const fileData = nomination_pdf ? await strapi.documents('plugin::upload.file').findOne({
+            documentId: nomination_pdf,
+            populate: '*'
+          }) : null;
+
+          const variables = {
+            nominee_name: nominee_name,
+            email: email,
+            award_type: award_type,
+            system_name: system_name,
+          };
+
+          const variableSearch = /{([^}]+)}/g;
+
+          const html = emailTemplate.body.replace(
+            variableSearch,
+            (match, key) => {
+              const replacement = variables[key.trim()];
+              return replacement !== undefined ? replacement : match;
+            }
+          );
+
+          const subject = emailTemplate.subject.replace(
+            variableSearch,
+            (match, key) => {
+              const replacement = variables[key.trim()];
+              return replacement !== undefined ? replacement : match;
+            }
+          );
+
+          const emailPayload = (emailTo: string) => ({
+            to: emailTo,
+            from: emailTemplate.from_name + `<${emailTemplate.from_email}>`,
+            subject: subject,
+            html: html,
+            attachment: fileData ? [
+              {
+                name: `${nominee_name.replace(/\s+/g, '_')}_award_nomination.pdf`,
+                url: `https://admin.orwa.org${fileData.url}`,
+              },
+            ] : [],
+          });
+
+          if (adminOptions) {
+            const { registrantNotification, adminNotification, customEmail } = adminOptions;
+
+            if (registrantNotification && !customEmail) {
+              await strapi.plugins["email"].services.email.send(
+                emailPayload(email)
+              );
+            }
+
+            if (adminNotification && !customEmail) {
+              await strapi.plugins["email"].services.email.send(emailPayload("awards@orwa.org"));
+            }
+
+            if (customEmail) {
+              const emails = (customEmail as string).split(",");
+
+              emails.forEach(async (emailAddr) => {
+                await strapi.plugins["email"].services.email.send(
+                  emailPayload(emailAddr.trim())
+                );
+              });
+            }
+          }
+
+          ctx.body = {
+            message: "success",
+          };
+        }
+      } catch (err) {
+        console.error("=== AWARD NOMINATION ERROR DETAILS ===");
+        console.error("Full error object:", err.details?.errors);
+        console.error("=====================================");
+        
+        ctx.status = 500;
+        ctx.body = {
+          message: "error",
+          error: err.message,
+          details: err.stack, // Include stack trace in response for debugging
         };
       }
     },

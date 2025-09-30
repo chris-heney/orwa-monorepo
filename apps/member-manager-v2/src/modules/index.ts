@@ -26,4 +26,5 @@ export { default as CorporateSponsors } from './sponsors'
 export { default as EmailsTemplates } from './emails-magement/emails-templates'
 export { default as EmailTasks } from './emails-magement/email-taks'
 export { default as ScholarshipApplications } from './programs/scholarship-application'
+export { default as AwardNominations } from './programs/award-nomination'
     

@@ -1,0 +1,137 @@
+{
+  "kind": "collectionType",
+  "collectionName": "award_nominations",
+  "info": {
+    "singularName": "award-nomination",
+    "pluralName": "award-nominations",
+    "displayName": "Award Nomination",
+    "description": "ORWA Awards Nomination submissions"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nomination_status": {
+      "type": "enumeration",
+      "required": true,
+      "default": "Submitted",
+      "enum": [
+        "Draft",
+        "Submitted",
+        "Under Review",
+        "Winner",
+        "Runner Up",
+        "Not Selected"
+      ]
+    },
+    "submission_date": {
+      "type": "datetime"
+    },
+    "review_notes": {
+      "type": "text"
+    },
+    "award_year": {
+      "type": "integer",
+      "required": true,
+      "default": 2025
+    },
+    "nominee_name": {
+      "type": "string",
+      "required": true
+    },
+    "system_name": {
+      "type": "string",
+      "required": true
+    },
+    "watersystem": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::watersystem.watersystem"
+    },
+    "county": {
+      "type": "string",
+      "required": true
+    },
+    "address": {
+      "type": "string",
+      "required": true
+    },
+    "city": {
+      "type": "string",
+      "required": true
+    },
+    "state": {
+      "type": "string",
+      "default": "OK",
+      "required": true
+    },
+    "zip": {
+      "type": "string",
+      "required": true
+    },
+    "daytime_phone": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "operation_start_date": {
+      "type": "date"
+    },
+    "employment_date": {
+      "type": "date"
+    },
+    "current_members": {
+      "type": "integer"
+    },
+    "beginning_members": {
+      "type": "integer"
+    },
+    "clerical_employees": {
+      "type": "integer"
+    },
+    "operation_maintenance_employees": {
+      "type": "integer"
+    },
+    "management_employees": {
+      "type": "integer"
+    },
+    "nomination_description": {
+      "type": "text",
+      "required": true
+    },
+    "award_type": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "Water/Wastewater System of the Year",
+        "Excellence in Operations",
+        "Excellence in Management",
+        "Excellence in Office Operations"
+      ]
+    },
+    "contact": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::contact.contact"
+    },
+    "supporting_documents": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "files",
+        "images"
+      ]
+    },
+    "nomination_pdf": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "files"
+      ]
+    }
+  }
+}
