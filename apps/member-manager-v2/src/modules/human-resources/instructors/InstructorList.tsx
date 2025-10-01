@@ -21,7 +21,12 @@ const InstructorsList = ({title= 'Training Instructors'}: InstructorListProps) =
       actions={false}
       filter={instructorFilters || {}}
       filterDefaultValues={instructorFilters || {}}
-      exporter={false}>
+      exporter={false}
+      sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
+      }}>
       <InstructorListCardGird source='instructor'/>
     </List>
 

@@ -4,6 +4,7 @@ import {
   Theme,
   Typography,
   useMediaQuery,
+  useTheme,
   // Tooltip,
   // IconButton,
 } from "@mui/material";
@@ -12,9 +13,11 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 // import SettingsIcon from "@mui/icons-material/Settings";
 import { useEmailManagementContext } from "./EmailManagementContextProvider";
 import RecordCount from "../_components/RecordCount";
-import AddIcon from "@mui/icons-material/Add";
 
 const EmailManagemenHeader = () => {
+
+  const theme = useTheme();
+
   const {
     selectedTab,
     setIsFilterSidebarOpen,
@@ -33,7 +36,7 @@ const EmailManagemenHeader = () => {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#262626",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         px: 1,
       }}
     >
@@ -42,7 +45,7 @@ const EmailManagemenHeader = () => {
         sx={{
           fontSize: isSmall ? "10px" : null,
           alignItems: "center",
-          color: "white",
+          color: "primary.contrastText",
           fontWeight: "bold",
           textTransform: "uppercase",
           textAlign: "left",
@@ -68,18 +71,18 @@ const EmailManagemenHeader = () => {
             >
               <RecordCount />
             
-              {selectedTab !==  "email-logs"  && <CreateButton size="small" sx={{ color: "white" }}/>}
+              {selectedTab !==  "email-logs"  && <CreateButton size="small" sx={{ color: "primary.contrastText" }}/>}
 
               <SelectColumnsButton
-                style={{
-                  color: "white",
+                sx={{
+                  color: "primary.contrastText",
                 }}
               />
 
               <Button
                 label="Filter"
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                   mr: 2,
                 }}
                 onClick={() => {

@@ -151,7 +151,7 @@ const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
         <ResourceSelector onResourceChange={setResource} />
 
         {/* Recipient Details */}
-        <Grid xs={12}>
+        <Grid item xs={12}>
           <RecipientDetails 
             onFieldFocus={handleCursorPosition}
             onInsertFieldClick={(field) => {
@@ -163,13 +163,13 @@ const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
         </Grid>
 
         {/* Email Name */}
-        <Grid xs={12} md={module?.length ?? 0> 0 ? 6 : 6}>
+        <Grid item xs={12} md={module?.length ?? 0> 0 ? 6 : 6}>
           <TextInput source="email_name" fullWidth helperText={false} validate={required()} />
         </Grid>
 
         {/* Hidden Module Field if module is provided */}
         {module && (
-          <Grid sx={{ display: "none" }}>
+          <Grid item sx={{ display: "none" }}>
             <TextInput source="module" defaultValue={module} />
           </Grid>
         )}
@@ -180,7 +180,7 @@ const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
         )}
 
         {/* Rich Text Editor for Body */}
-        <Grid xs={12}>
+        <Grid item xs={12}>
           <EnhancedRichTextEditor
             onInsertFieldClick={() => {
               setCurrentFocusField("body");
@@ -204,7 +204,7 @@ const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
       </Grid>
 
       {/* Attachment */}
-      <Grid xs={12} sx={{ mt: 2 }}>
+      <Grid item xs={12} sx={{ mt: 2 }}>
         <FileUploadField multiple source="attachments" label="Attachment" />
       </Grid>
     </Box>

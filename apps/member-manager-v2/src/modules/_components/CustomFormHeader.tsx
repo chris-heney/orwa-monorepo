@@ -47,7 +47,7 @@ const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
             <Button
               onClick={() => redirect(redirectTo)}
               sx={{
-                color: "white",
+                color: "primary.contrastText",
                 mr: 2,
               }}
               label="Back"
@@ -57,7 +57,7 @@ const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
             {(hasShow) && (
               <ShowButton
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                   mr: 2,
                 }}
                 resource={resource}

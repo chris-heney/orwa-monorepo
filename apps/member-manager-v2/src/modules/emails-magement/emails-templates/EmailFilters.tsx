@@ -11,27 +11,7 @@ import MoneyIcon from "@mui/icons-material/AttachMoney";
 import { useEmailManagementContext } from "../EmailManagementContextProvider";
 import SavedFilters from "../../_components/SavedFilters";
 
-// type TFilters = {
-//   region: string[];
-// };
 
-// const isSelected = (value: TWaterSystem, filters: TFilters) => {
-//   const regions = filters.region || [];
-//   return regions.includes(value.region);
-// };
-
-// const toggleFilter = (
-//   value: { region: string },
-//   filters: { region: string[] }
-// ) => {
-//   const regions = filters.region || [];
-
-//   return Object.assign({}, filters, {
-//     region: regions.includes(value.region)
-//       ? regions.filter((v) => v !== value.region)
-//       : [...regions, value.region],
-//   });
-// };
 const EmailFilters = () => {
   const { setEmailFilters, savingQuery, setSavingQuery, selectedTab } = useEmailManagementContext();
   const { filterValues } = useListFilterContext();
@@ -60,6 +40,7 @@ const EmailFilters = () => {
         maxHeight: "70vh",
         overflow: "auto",
         position: "sticky",
+        borderRadius: 0,
       }}
     >
       <CardContent>

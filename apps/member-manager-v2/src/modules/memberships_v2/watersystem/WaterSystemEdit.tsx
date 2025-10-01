@@ -17,7 +17,7 @@ const WaterSystemEdit = () => {
       <EditBase hasShow={false} redirect={false} component="div">
         <Title title="Memberships" />
         <Grid container spacing={2} py={2}>
-          <Grid xs={12} md={showSidebar ? 9 : 12}>
+          <Grid item xs={12} md={showSidebar ? 9 : 12}>
             <SimpleForm
               sx={{
                 p: 0,
@@ -46,7 +46,7 @@ const WaterSystemEdit = () => {
 
           {/* Sidebar toggle logic */}
           {showSidebar && (
-            <Grid xs={12} md={3}>
+            <Grid item xs={12} md={3}>
               <EmailSidebar module="Memberships" />
             </Grid>
           )}

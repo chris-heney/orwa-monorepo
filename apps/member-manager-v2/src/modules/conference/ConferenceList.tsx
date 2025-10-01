@@ -4,7 +4,13 @@ import { List } from 'react-admin'
 
 const ConferenceList = () => {
   return (
-    <List>
+    <List
+      sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
+      }}
+    >
       ConferenceList
     </List>
   )

@@ -22,6 +22,11 @@ const ScheduledTaskList = () => {
       actions={false}
       exporter={false}
       filter={emailTaskFilters}
+      sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
+      }}
     >
       <DatagridConfigurable
         bulkActionButtons={false}

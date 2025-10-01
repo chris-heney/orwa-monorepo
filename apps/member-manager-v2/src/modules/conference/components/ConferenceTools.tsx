@@ -5,7 +5,7 @@ import RandomAttendeeGenerator from './RandomAttendeeGenerator'
 const ConferenceTools = () => {
   return (
     <Grid container spacing={2}>
-      <Grid xs={12}>
+      <Grid item xs={12}>
          <RandomAttendeeGenerator />
       </Grid>
     </Grid>

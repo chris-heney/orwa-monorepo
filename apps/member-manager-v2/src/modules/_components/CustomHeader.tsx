@@ -1,5 +1,5 @@
 import React, { JSX } from 'react'
-import { Box, Theme, Typography, useMediaQuery } from '@mui/material'
+import { Box, Theme, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { SxProps } from '@mui/system'
 
 interface CustomHeaderProps {
@@ -10,7 +10,7 @@ interface CustomHeaderProps {
 }
 
 const CustomHeader: React.FC<CustomHeaderProps> = ({ title, sx, Component, textSx}) => {
-
+  const theme = useTheme();
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
 
   return (
@@ -18,7 +18,7 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ title, sx, Component, textS
       display: 'flex', 
       alignItems: 'center', 
       width: '100%', 
-      backgroundColor: '#262626',  
+      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
       overflow: 'hidden',
       borderTopRightRadius: 3,
       borderTopLeftRadius: 3,
@@ -32,8 +32,7 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ title, sx, Component, textS
         sx={{
           fontSize: isSmall ? '10px'  : null,
           alignItems: 'center',
-          color: 'white',
-          backgroundColor: '#262626',
+          color: 'primary.contrastText',
           fontWeight: 'bold',
           textTransform: 'uppercase',
           p: 1,

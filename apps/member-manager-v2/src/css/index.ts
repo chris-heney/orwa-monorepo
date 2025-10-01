@@ -1,6 +1,6 @@
 export const customDatagridStyle = {
   '& .RaDatagrid-rowOdd': {
-    backgroundColor: '#eeeeee',
+    backgroundColor: 'action.hover',
   },
   '& .css-19tabqp-RaBulkActionsToolbar-root .RaBulkActionsToolbar-toolbar': {
     justifyContent: 'flex-start',
@@ -15,11 +15,13 @@ export const customDatagridStyle = {
   },
   "tr th": {
     py: 1,
-    border: "1px solid #ccc",
+    border: "1px solid",
+    borderColor: 'divider',
   },
   "tr td": {
     py: .5,
-    border: "1px solid #ccc",
+    border: "1px solid",
+    borderColor: 'divider',
   }
 }
 

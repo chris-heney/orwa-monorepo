@@ -11,7 +11,7 @@ interface StatWidgetProps {
 
 const StatWidget = ({ heading, subheading, WidgetIcon }: StatWidgetProps) => {
   return (
-    <Grid xs={12} sm={6}>
+    <Grid item xs={12} sm={6}>
       <Card sx={{
         height: 100,
         background: 'linear-gradient(-39deg, #4991f8 0%, #4bc1ff 100%)',

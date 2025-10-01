@@ -26,4 +26,4 @@ export { UniversalListToolbar } from './UniversalListToolbar';
 export { UniversalListContent } from './UniversalListContent';
 export { UniversalMobileLayout } from './UniversalMobileLayout';
 export { default as ResourceAutocomplete } from './ResourceAutocomplete';
-export { default as TopicFormFields } from '../modules/pubsub/topics/components/TopicFormFields';
+    

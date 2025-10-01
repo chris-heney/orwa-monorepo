@@ -6,7 +6,7 @@ import {
   Typography,
   IconButton,
   Tooltip,
-  Chip,
+  useTheme,
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -32,12 +32,13 @@ const ScholarshipDashboardHeader = () => {
     setIsActivitySidebarOpen,
   } = useScholarshipContext();
 
+  const theme = useTheme();
   const stats = [
-    { label: 'Total Applications', value: totalApplications, color: '#2196f3' },
-    { label: 'Pending Review', value: pendingCount, color: '#ff9800' },
-    { label: 'Under Review', value: reviewCount, color: '#9c27b0' },
-    { label: 'Approved', value: approvedCount, color: '#4caf50' },
-    { label: 'Denied', value: deniedCount, color: '#f44336' },
+    { label: 'Total Applications', value: totalApplications, color: theme.palette.primary.main },
+    { label: 'Pending Review', value: pendingCount, color: theme.palette.warning.main },
+    { label: 'Under Review', value: reviewCount, color: theme.palette.secondary.main },
+    { label: 'Approved', value: approvedCount, color: theme.palette.success.main },
+    { label: 'Denied', value: deniedCount, color: theme.palette.error.main },
   ];
 
   return (

@@ -58,6 +58,9 @@ const ScoreList = () => {
       sort={{ field: "date", order: "DESC" }}
       disableSyncWithLocation
       sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
         " .RaList-actions": {
           display: "flex",
           justifyContent: "flex-start",

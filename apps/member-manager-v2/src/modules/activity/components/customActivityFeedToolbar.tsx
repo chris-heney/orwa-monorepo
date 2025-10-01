@@ -51,16 +51,16 @@ const CustomActivityFeedToolbar = ({ setFilter } : ActivityFeedToolBarProps) => 
     <TopToolbar sx={{ justifyContent: 'flex-start' }}>
       <Grid container spacing={2}>
         {/* SearchBar taking full width on extra-small (xs) screens */}
-        <Grid xs={12} sm={12} lg={4}>
+        <Grid item xs={12} sm={12} lg={4}>
           <FilterLiveSearch fullWidth />
         </Grid>
 
         {/* CustomSelectInput components taking half width each on extra-small (xs) screens */}
-        <Grid xs={6} sm={6} lg={4}>
+        <Grid item xs={6} sm={6} lg={4}>
           <CustomSelectInput label={'Entity'} setFilter={setFilter} items={entityChoices} type="entity" />
         </Grid>
 
-        <Grid xs={6} sm={6} lg={4}>
+        <Grid item xs={6} sm={6} lg={4}>
           <CustomSelectInput label={'Staff'} setFilter={setFilter} items={entity_id} type="entity_id" />
         </Grid>
       </Grid>

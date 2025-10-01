@@ -60,7 +60,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
   return (
     <Box>
       <Grid container spacing={2}>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <DateInput
             source="date"
             label="Date"
@@ -71,7 +71,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
           />
         </Grid>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <Grid xs={12} sm={3}>
+          <Grid item xs={12} sm={3}>
             <TimeField
               fullWidth
               label="Start Time"
@@ -81,7 +81,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
               helperText={false}
             />
           </Grid>
-          <Grid xs={12} sm={3}>
+          <Grid item xs={12} sm={3}>
             <TimeField
               fullWidth
               label="End Time"
@@ -92,7 +92,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             />
           </Grid>
         </LocalizationProvider>
-        <Grid xs={12} sm={12}>
+        <Grid item xs={12} sm={12}>
           <TextInput
             source="event"
             label="Event"
@@ -103,7 +103,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             rows={4}
           />
         </Grid>
-        <Grid xs={12} sm={12}>
+        <Grid item xs={12} sm={12}>
           <TextInput
             source="description"
             label="Description"
@@ -114,7 +114,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             helperText={false}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextInput
             source="company"
             label="Company"
@@ -125,7 +125,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             rows={4}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextInput
             source="speaker"
             label="Speaker"
@@ -136,7 +136,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             rows={4}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextInput
             source="location"
             label="Location"
@@ -147,7 +147,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             rows={4}
           />
         </Grid>
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <NumberInput
             fullWidth
             source="training_hours"
@@ -156,7 +156,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
             helperText={false}
           />
         </Grid>
-        <Grid xs={12} display="flex" justifyContent="space-between">
+        <Grid item xs={12} display="flex" justifyContent="space-between">
           <Button
             sx={{
               width: "48%",

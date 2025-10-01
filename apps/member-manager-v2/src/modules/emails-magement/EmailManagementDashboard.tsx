@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Tab, Divider, useMediaQuery, Grid} from "@mui/material";
+import {Box, Tab, Divider, useMediaQuery, Grid, useTheme} from "@mui/material";
 import { TabContext, TabPanel, TabList } from "@mui/lab";
 import { Title } from "react-admin";
 import { Theme } from "@mui/material/styles";
@@ -14,6 +14,7 @@ import EmailLogsList from "./email-logs/EmailLogList";
 import EmailManagementFilterSidebar from "./EmailManagamentFilterSidebar";
 
 const EmailManagementDashboard = () => {
+  const theme = useTheme();
   const { selectedTab, setSelectedTab, isSettingsOpen, isFilterSidebarOpen } =
     useEmailManagementContext();
   // const { role, isLoading } = useUserRoleContext();
@@ -40,7 +41,7 @@ const EmailManagementDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
-      <Grid xs={12} md={(isSettingsOpen || !isFilterSidebarOpen) ? 12 : 10}>
+      <Grid item xs={12} md={(isSettingsOpen || !isFilterSidebarOpen) ? 12 : 10}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Email Management" />
           <EmailManagemenHeader/>
@@ -52,7 +53,7 @@ const EmailManagementDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: "#eee",
+                    backgroundColor: theme.palette.background.paper,
                     maxWidth: isSmall ? 320 : undefined,
                     overflow: "clip",
                   }}
@@ -88,9 +89,9 @@ const EmailManagementDashboard = () => {
             }}
           >
             <Box sx={{ overflow: "hidden", flexGrow: 1 }}>
-              <Box sx={{ overflow: "scroll" }}>
+              <Box sx={{ overflow: "scroll", backgroundColor: theme.palette.background.paper,
+}}>
                 <TabContext value={selectedTab}>
-                  <Box sx={{ backgroundColor: "#fff" }}>
                     <TabPanel value="email-templates" {...a11yTabPanelProps(1)}>
                       <EmailInterface />
                     </TabPanel>
@@ -100,7 +101,6 @@ const EmailManagementDashboard = () => {
                     <TabPanel value="email-logs" {...a11yTabPanelProps(2)}>
                       <EmailLogsList />
                     </TabPanel>               
-                  </Box>
                 </TabContext>
               </Box>
             </Box>

@@ -275,7 +275,7 @@ const FileUploadField: React.FC<FileUploadFieldProps> = ({
   }, [files, multiple, source]);
 
   return (
-    <Grid xs={12} sm={fullWidth ? 12 : 6}>
+    <Grid item xs={12} sm={fullWidth ? 12 : 6}>
       <Box display="flex" flexDirection="column" gap={1}>
         {/* Hidden file input for direct file selection */}
         <Box sx={{ display: 'none' }}>

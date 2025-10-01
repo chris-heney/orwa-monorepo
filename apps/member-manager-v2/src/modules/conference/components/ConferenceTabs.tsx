@@ -1,4 +1,4 @@
-import { Paper, Tab, Theme, useMediaQuery } from '@mui/material';
+import { Paper, Tab, Theme, useMediaQuery, useTheme } from '@mui/material';
 import { TabPanel } from '@mui/lab';
 import { TabList } from "@mui/lab";
 import { TabContext } from "@mui/lab";
@@ -80,6 +80,7 @@ const getTabComponent = (tabValue: string) => {
   };
 
 const ConferenceTabs = () => {
+  const theme = useTheme();
   const { selectedTab, setSelectedTab, setResource, isFilterSidebarOpen } =
     useConferenceContext();
   const { filterValues } = useListFilterContext();
@@ -189,7 +190,7 @@ const ConferenceTabs = () => {
   return (
     <Box sx={{ p: 0 }}>
       <TabContext value={selectedTab.toString()}>
-        <Box sx={{ justifyContent: "center", backgroundColor: "#eee" }}>
+        <Box sx={{ justifyContent: "center", backgroundColor: theme.palette.background.paper }}>
           {/* need to fix max width for mobile and smallwer screen tab list isnt responsive  */}
           <TabList
             variant="scrollable"
@@ -238,7 +239,7 @@ const ConferenceTabs = () => {
         <Paper
           sx={{
             mb: 2,
-            backgroundColor: "#fff",
+            backgroundColor: theme.palette.background.paper,
             maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
             overflow: "scroll",
           }}

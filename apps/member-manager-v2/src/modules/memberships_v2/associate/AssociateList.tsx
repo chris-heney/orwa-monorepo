@@ -43,6 +43,9 @@ const AssociateList = () => {
       actions={false}
       sx={{
         mt: selectedIds.length > 0 ? 6 : 0,
+        '& .RaList-noActions': {
+          mt: '0',
+        },
       }}
       disableSyncWithLocation
       perPage={100}
@@ -83,7 +86,7 @@ const AssociateList = () => {
               );
               const backgroundColor = expirationDate.isValid()
                 ? getExpiryBackground(expirationDate)
-                : "orange"; // Set background color to orange if date is invalid (N/A)
+                : "warning.main"; // Set background color to warning if date is invalid (N/A)
               const active = getExpirationDate(
                 record.payment_previous_date,
                 record.payment_last_date
@@ -91,7 +94,8 @@ const AssociateList = () => {
               return (
                 <Box
                   sx={{
-                    backgroundColor: active ? backgroundColor : "#ff5555",
+                    backgroundColor: active ? backgroundColor : "error.main",
+                    color: active ? "text.primary" : "error.contrastText",
                     textAlign: "center",
                     fontWeight: 600,
                     px: 1,

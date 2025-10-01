@@ -29,7 +29,7 @@ const ScholarshipApplicationShow = () => {
         }}
       >
         <Grid container spacing={2}>
-          <Grid xs={12} md={viewMode === "" ? 12 : 9}>
+          <Grid item xs={12} md={viewMode === "" ? 12 : 9}>
             <Card sx={{ borderRadius: 0 }}>
               <Title title="Scholarship Application Details" />
               <CustomShowHeader
@@ -75,7 +75,7 @@ const ScholarshipApplicationShow = () => {
             </Card>
           </Grid>
           {viewMode !== "" && (
-            <Grid xs={12} md={3}>
+            <Grid item xs={12} md={3}>
               {viewMode === "email" && <EmailSidebar module="Scholarship Management" />}
               {viewMode === "activity" && (
                 <ActivityFeed

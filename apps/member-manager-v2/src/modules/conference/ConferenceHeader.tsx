@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Theme, Typography, useMediaQuery } from "@mui/material";
+import { Box, Theme, Typography, useMediaQuery, useTheme } from "@mui/material";
 import {
   Button,
   ExportButton,
@@ -15,6 +15,7 @@ import RecordCount from "../_components/RecordCount";
 import { useConferenceContext } from "./ConferenceContext";
 
 const ConferenceHeader = () => {
+  const theme = useTheme();
   const {
     selectedTab,
     setIsFilterSidebarOpen,
@@ -41,7 +42,7 @@ const ConferenceHeader = () => {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#262626",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         px: 1,
         py: isSmall ? 1 : 0,
       }}
@@ -50,7 +51,7 @@ const ConferenceHeader = () => {
         variant={isSmall ? "subtitle2" : "h6"}
         sx={{
           alignItems: "center",
-          color: "white",
+          color: "primary.contrastText",
           fontWeight: "bold",
           textTransform: "uppercase",
           textAlign: "left",
@@ -92,7 +93,7 @@ const ConferenceHeader = () => {
                   }
                 }}
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                 }}
                 label={`Add ${
                   title.endsWith("s")
@@ -106,15 +107,15 @@ const ConferenceHeader = () => {
               {/* Columns Button */}
 
               <SelectColumnsButton
-                style={{
-                  color: "white",
+                sx={{
+                  color: "primary.contrastText",
                 }}
               />
 
               {/* Export Button */}
               <ExportButton
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                 }}
               />
             </>
@@ -123,7 +124,7 @@ const ConferenceHeader = () => {
           <Button
             label="Filter"
             sx={{
-              color: "white",
+              color: "primary.contrastText",
               mr: isSmall ? 0 : 2,
             }}
             onClick={() => {

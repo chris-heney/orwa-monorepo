@@ -37,7 +37,7 @@ const ContestantFormFields = () => {
   const { filterValues } = useListContext();
 
   return (
-    <Grid xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
+    <Grid item xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
       <Typography variant="h6">Contestant Info.</Typography>
       <Divider />
       <Grid display={"none"} xs={12} md={6} lg={4}>
@@ -65,7 +65,7 @@ const ContestantFormFields = () => {
       </Grid>
       <Grid container spacing={2}>
         {/* first,last email,phoen */}
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="first"
             label="First Name"
@@ -73,7 +73,7 @@ const ContestantFormFields = () => {
             validate={required("First name is Required")}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="last"
             label="Last Name"
@@ -81,14 +81,14 @@ const ContestantFormFields = () => {
             validate={required("Last name is Required")}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="email" label="Email" fullWidth />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="phone" label="Phone" fullWidth />
         </Grid>
 
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             source="team"
             reference="conference-teams"
@@ -98,7 +98,7 @@ const ContestantFormFields = () => {
             <AutocompleteInput optionText="name" />
           </ReferenceInput>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="organization"
             label="Organization"
@@ -106,7 +106,7 @@ const ContestantFormFields = () => {
             validate={required("Organization is Required")}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             filter={{ conferences: [filterValues.conference] }}
             source="conference_ticket"
@@ -126,7 +126,7 @@ const ContestantFormFields = () => {
             {id: 'Fisher', name: 'Fisher'},
           ]} /> */}
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <NumberInput source="fee" label="Fee" fullWidth />
         </Grid>
       </Grid>

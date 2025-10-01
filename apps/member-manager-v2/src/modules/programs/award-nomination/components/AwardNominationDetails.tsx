@@ -18,20 +18,38 @@ import { formatDate } from "../../../../helpers/dateFormatter";
 import { formatNumber } from "../../../../helpers/Formators";
 import getContrastColor from "../../../_helpers/getContrastColor";
 
-const statusColors: Record<string, string> = {
-  'Draft': '#9e9e9e',
-  'Submitted': '#2196f3',
-  'Under Review': '#ff9800',
-  'Winner': '#4caf50',
-  'Runner Up': '#8bc34a',
-  'Not Selected': '#f44336',
+const getStatusColor = (status: string, theme: any) => {
+  switch (status) {
+    case 'Draft':
+      return theme.palette.grey[500];
+    case 'Submitted':
+      return theme.palette.info.main;
+    case 'Under Review':
+      return theme.palette.warning.main;
+    case 'Winner':
+      return theme.palette.success.main;
+    case 'Runner Up':
+      return theme.palette.success.light;
+    case 'Not Selected':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.grey[500];
+  }
 };
 
-const awardTypeColors: Record<string, string> = {
-  'Water/Wastewater System of the Year': '#1976d2',
-  'Excellence in Operations': '#388e3c',
-  'Excellence in Management': '#7b1fa2',
-  'Excellence in Office Operations': '#f57c00',
+const getAwardTypeColor = (type: string, theme: any) => {
+  switch (type) {
+    case 'Water/Wastewater System of the Year':
+      return theme.palette.primary.main;
+    case 'Excellence in Operations':
+      return theme.palette.success.main;
+    case 'Excellence in Management':
+      return theme.palette.secondary.main;
+    case 'Excellence in Office Operations':
+      return theme.palette.warning.main;
+    default:
+      return theme.palette.grey[500];
+  }
 };
 
 const FileDisplay = ({ file, label }: { file: any; label: string }) => {

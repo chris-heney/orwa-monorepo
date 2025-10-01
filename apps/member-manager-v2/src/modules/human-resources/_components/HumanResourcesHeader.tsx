@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Theme, Typography, useMediaQuery } from "@mui/material";
+import { Box, Theme, Typography, useMediaQuery, useTheme } from "@mui/material";
 import {
   Button,
   ConfigurableDatagridColumn,
@@ -23,6 +23,7 @@ import useCurrentUser from "../../_helpers/useCurrentUser";
 import RolesContextProvider from "../../../context/RolesContextProvider";
 
 const HumanResourcesHeader = () => {
+  const theme = useTheme();
   const {
     selectedTab,
     setIsFilterSidebarOpen,
@@ -106,7 +107,7 @@ const HumanResourcesHeader = () => {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#262626",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         px: 1,
       }}
     >
@@ -115,7 +116,7 @@ const HumanResourcesHeader = () => {
         sx={{
           fontSize: isSmall ? "10px" : null,
           alignItems: "center",
-          color: "white",
+          color: "primary.contrastText",
           fontWeight: "bold",
           textTransform: "uppercase",
           textAlign: "left",
@@ -144,8 +145,8 @@ const HumanResourcesHeader = () => {
 
               {selectedTab === "contacts" && (
                 <SelectColumnsButton
-                  style={{
-                    color: "white",
+                  sx={{
+                    color: "primary.contrastText",
                   }}
                 />
               )}
@@ -154,7 +155,7 @@ const HumanResourcesHeader = () => {
                 <ExportButton
                   size="small"
                   sx={{
-                    color: "white",
+                    color: "primary.contrastText",
                   }}
                 />
               )}
@@ -168,7 +169,7 @@ const HumanResourcesHeader = () => {
                 <CustomCreateButton
                   size="small"
                   sx={{
-                    color: "white",
+                    color: "primary.contrastText",
                   }}
                   label=""
                 />
@@ -176,7 +177,7 @@ const HumanResourcesHeader = () => {
 
               <Button
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                 }}
                 size="small"
                 onClick={() => {
@@ -200,9 +201,9 @@ const HumanResourcesHeader = () => {
               <SettingsIcon
                 fontSize="small"
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                   "&:hover": {
-                    color: "white",
+                    color: "primary.contrastText",
                   },
                 }}
               />

@@ -6,6 +6,7 @@ import {
   Theme,
   Typography,
   useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
@@ -29,6 +30,7 @@ import ExportAdminPayouts from "../grant-application/helpers/ExportAdminPayouts"
 import { IGrantApplication } from "../grant-application/GrantApplicationTypes";
 
 const GrantDashboardHeader = () => {
+  const theme = useTheme();
   const {
     isFilterSidebarOpen,
     setIsFilterSidebarOpen,
@@ -102,7 +104,7 @@ const GrantDashboardHeader = () => {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#262626",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         px: 2,
       }}
     >
@@ -111,7 +113,7 @@ const GrantDashboardHeader = () => {
         variant="h6"
         sx={{
           fontSize: isSmall ? "10px" : null,
-          color: "white",
+          color: "primary.contrastText",
           fontWeight: "bold",
           textTransform: "uppercase",
           textAlign: "left",
@@ -183,8 +185,8 @@ const GrantDashboardHeader = () => {
               }
             >
               <RecordCount />
-              <ExportButton sx={{ color: "white" }} />
-              <SelectColumnsButton style={{ color: "white" }} />
+              <ExportButton sx={{ color: "primary.contrastText" }} />
+              <SelectColumnsButton sx={{ color: "primary.contrastText" }} />
             </ListBase>
           )}
 
@@ -232,12 +234,10 @@ const GrantDashboardHeader = () => {
             >
               <FilterAltIcon
                 fontSize="small"
-                style={
-                  !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                }
                 sx={{
+                  color: "primary.contrastText",
                   "&:hover": {
-                    color: "white",
+                    color: "primary.contrastText",
                   },
                 }}
               />
@@ -254,15 +254,11 @@ const GrantDashboardHeader = () => {
                 <MarkunreadMailboxIcon
                   fontSize="small"
                   sx={{
+                    color: "primary.contrastText",
                     "&:hover": {
-                      color: "white",
+                      color: "primary.contrastText",
                     },
                   }}
-                  style={
-                    !isActivitySidebarOpen
-                      ? { stroke: "white" }
-                      : { fill: "white" }
-                  }
                 />
               </IconButton>
             </Tooltip>
@@ -277,13 +273,11 @@ const GrantDashboardHeader = () => {
               <SettingsIcon
                 fontSize="small"
                 sx={{
+                  color: "primary.contrastText",
                   "&:hover": {
-                    color: "white",
+                    color: "primary.contrastText",
                   },
                 }}
-                style={
-                  !isSettingsOpen ? { stroke: "white" } : { fill: "white" }
-                }
               />
             </IconButton>
           </Tooltip>

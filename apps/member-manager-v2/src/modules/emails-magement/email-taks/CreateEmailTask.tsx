@@ -1,4 +1,4 @@
-import {Box, Button, Card, Grid} from "@mui/material"
+import {Card, Grid} from "@mui/material"
 import React from 'react'
 import { CreateBase, Title, SimpleForm, useCreate, useNotify, useRedirect } from 'react-admin'
 import { FieldValues } from 'react-hook-form'
@@ -27,10 +27,10 @@ const CreateEmailTask = ({isCreating, setIsCreating}: CreateEmailProps) => {
         <CustomFormHeader displayField="name" redirectTo="/email-management" hasShow={false} />
         <SimpleForm onSubmit={createEmail}>
           <Grid container spacing={2}>
-            <Grid xs={12} md={8}>
+            <Grid item xs={12} md={8}>
               <ScheduledEmailTaskFormFields/>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <FormConnectedRecipientList maxHeight={600} />
             </Grid>
           </Grid>

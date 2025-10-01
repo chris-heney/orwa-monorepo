@@ -37,7 +37,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
             <Typography variant="h5">Information</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              <Grid xs={12} sm={6} md={6} lg={6}>
+              <Grid item xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="first"
                   label="First Name"
@@ -45,7 +45,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} sm={6} md={6} lg={6}>
+              <Grid item xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="last"
                   label="Last Name"
@@ -53,7 +53,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} sm={6} md={6} lg={6}>
+              <Grid item xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="email"
                   label="Email"
@@ -61,7 +61,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} sm={6} md={6} lg={6}>
+              <Grid item xs={12} sm={6} md={6} lg={6}>
                 <CustomPhoneInput
                   source="phone"
                   label="Phone"
@@ -69,7 +69,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} sm={6} md={6} lg={6}>
+              <Grid item xs={12} sm={6} md={6} lg={6}>
                 <TextInput
                   source="title"
                   label="Title"
@@ -77,7 +77,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} sm={6} md={6} lg={6} display={"none"}>
+              <Grid item xs={12} sm={6} md={6} lg={6} display={"none"}>
                 <NumberInput
                   source="user"
                   label="User"
@@ -85,7 +85,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} sm={6} md={6} lg={6}>
+              <Grid item xs={12} sm={6} md={6} lg={6}>
                 <SelectInput
                   source="contact_type"
                   label="Type"

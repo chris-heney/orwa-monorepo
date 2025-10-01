@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Tab, Divider, useMediaQuery, Grid} from "@mui/material";
+import {Box, Tab, Divider, useMediaQuery, Grid, useTheme} from "@mui/material";
 import { TabContext, TabPanel, TabList } from "@mui/lab";
 import { Title } from "react-admin";
 import { Theme } from "@mui/material/styles";
@@ -18,13 +18,14 @@ import MembershipFilters from "./componenets/MembershipFilters";
 import MembershipsSummary from "./MembershipsSummary";
 import MembershipList from "./memberships/MembershipsList";
 import MembershipItemsList from "./membership-items/MembershipItemsList";
-import InvoicesList from "../invoices/InvoicesList";
 import MembershiphHeader from "./componenets/MembershipsHeader";
 import { TabValue } from "./types/IMembershipContextProvider";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
 import MembershipSettings from "./componenets/MembershipSettings";
+import InvoicesList from "./invoices/InvoicesList";
 
 const MembershipDashboard = () => {
+  const theme = useTheme();
   const { selectedTab, setSelectedTab, isSettingsOpen, isFilterSidebarOpen} =
     useMembershipContext();
 
@@ -65,7 +66,7 @@ const MembershipDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
-      <Grid xs={12} md={((isFilterSidebarOpen && !isSettingsOpen ) && selectedTab !== "summary") ? 10 : 12}>
+      <Grid item xs={12} md={((isFilterSidebarOpen && !isSettingsOpen ) && selectedTab !== "summary") ? 10 : 12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Memberships" />
           <MembershiphHeader />
@@ -77,7 +78,7 @@ const MembershipDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: "#eee",
+                    backgroundColor: theme.palette.background.paper,
                     maxWidth: isSmall ? 320 : undefined,
                     overflow: "clip",
                   }}
@@ -118,7 +119,7 @@ const MembershipDashboard = () => {
             <Box sx={{ overflow: "hidden", flexGrow: 1 }}>
               <Box sx={{ overflow: "scroll" }}>
                 <TabContext value={selectedTab}>
-                  <Box sx={{ backgroundColor: "#fff" }}>
+                  <Box sx={{ backgroundColor: theme.palette.background.paper }}>
                     <TabPanel value="summary" {...a11yTabPanelProps(0)}>
                       <MembershipsSummary />
                     </TabPanel>

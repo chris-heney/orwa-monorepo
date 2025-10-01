@@ -20,10 +20,11 @@ import { Theme } from "@mui/material/styles";
 import AssociateLogo from "./fields/Logo";
 import { YearMonthDay } from "../../../helpers/Data";
 import getExpirationDate from "../../_helpers/getExpirationDate";
-import SimpleInvoicesList from "../../invoices/SimpleInvoiceList";
+import SimpleInvoicesList from '../invoices/SimpleInvoiceList';
 import { IAssociate } from "./AssociateInterface";
 import CustomShowHeader from "../componenets/CustomShowHeader";
 import { oneYearAgoFormatted } from "../helpers/activeOrInactiveMembership";
+import { CustomHeader } from "src/_components";
 
 const labelStyle: React.CSSProperties = {
   fontWeight: "bold",
@@ -240,18 +241,7 @@ const AssociateShow: React.FC = () => {
 
           <Grid item xs={12} md={7}>
             <Card sx={{ overflow: "auto", borderRadius: 1 }}>
-              <Typography
-                variant="h5"
-                sx={{
-                  backgroundColor: "#262626",
-                  color: "white",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  mb: 2,
-                }}
-              >
-                Transactions
-              </Typography>
+               <CustomHeader title="Transactions" />
               <SimpleInvoicesList filters={{ entity_id: record.id }} />
             </Card>
           </Grid>

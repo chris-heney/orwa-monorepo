@@ -24,10 +24,10 @@ const AssetsCard = () => {
         height: '100%',
         width: '100%',
         position: 'relative',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+        boxShadow: 3,
         borderRadius: '15px',
-        backgroundColor: '#2C3238', // Darker background color
-        color: '#ffffff', // Text color
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
         padding: '20px',
       }}
     >
@@ -39,7 +39,8 @@ const AssetsCard = () => {
           position: 'absolute',
           top: -10,
           right: -3,
-          backgroundColor: '#4C535A', // Darker gray background color
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
           padding: '10px',
           borderRadius: '50%',
           width: '50px',
@@ -77,13 +78,14 @@ const AssetsCard = () => {
               <Tooltip title={`${asset?.name}`}>
                 <Avatar
                   onClick={() => redirect(`/assets/${asset.id}/show`)}
-                  style={{
+                  sx={{
                     width: 70,
                     height: 70,
                     transition: 'transform 0.3s ease-in-out',
                     cursor: 'pointer',
                     objectFit: 'cover',
-                    border: '2px solid #cccccc',
+                    border: '2px solid',
+                    borderColor: 'divider',
                     borderRadius: '15px',
                   }}
                   src={`${import.meta.env.VITE_API_ENDPOINT}${asset.images?.[0]?.url || ''}`}

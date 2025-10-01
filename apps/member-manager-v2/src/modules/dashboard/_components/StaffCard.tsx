@@ -33,14 +33,14 @@ const StaffCard = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '100%',
         width: '100%',
         position: 'relative',
         mb: 2,
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+        maxHeight: '400px',
+        boxShadow: 3,
         borderRadius: '15px',
-        backgroundColor: '#2C3238', // Darker background color
-        color: '#ffffff', // Text color
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
       }}
     >
       <Typography
@@ -50,7 +50,8 @@ const StaffCard = () => {
           position: 'absolute',
           top: -10,
           right: -3,
-          backgroundColor: '#4C535A', // Darker gray background color
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
           padding: '10px',
           borderRadius: '50%',
           width: '50px',
@@ -77,7 +78,7 @@ const StaffCard = () => {
         <EmployeeIcon sx={{ fontSize: 30, marginRight: '8px' }} />
         <Typography variant='h5'>Staff</Typography>
       </Box>
-      <Grid container spacing={1} maxWidth={'90%'} sx={{ justifyContent: 'center' }} overflow={'scroll'} mt={5}>
+      <Grid container spacing={2} maxWidth={'90%'} sx={{ justifyContent: 'center' }} overflow={'scroll'} mt={5}>
         {contacts?.map((staff, index) => (
           <Grid key={index} lg={2.3} xs={3} sm={2} md={2}>
             <Box
@@ -86,7 +87,8 @@ const StaffCard = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 width: '100%',
-                my: 1,
+                my: 2,
+                p: 1,
               }}
             >
               <Tooltip title={`${staff?.first} ${staff?.last}`}>
@@ -95,9 +97,9 @@ const StaffCard = () => {
                   sx={{
                     width: 60,
                     height: 60,
-                    mr: 1,
                     transition: 'transform 0.3s ease-in-out',
-                    border: '2px solid #cccccc',
+                    border: '2px solid',
+                    borderColor: 'divider',
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'scale(1.2)',

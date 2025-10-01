@@ -238,16 +238,16 @@ const Dashboard = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <MonthlyRevenue value={mockData.revenue} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <MRRRatio value={mockData.mrrRatio} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <ProjectsStarted value={mockData.projectsStarted} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <ProjectsCompleted value={mockData.projectsCompleted} />
                 </Grid>
 
@@ -258,16 +258,16 @@ const Dashboard = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <Leads value={mockData.leads} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <Deals value={mockData.deals} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <ProjectsStarted value={mockData.projectsStarted} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <ProjectsCompleted value={mockData.projectsCompleted} />
                 </Grid>
 
@@ -278,16 +278,16 @@ const Dashboard = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <OpenAICalls value={mockData.openAICalls} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <GoogleCalls value={mockData.googleCalls} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <SEODataCalls value={mockData.seoDataCalls} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <AnthropicCalls value={mockData.anthropicCalls} />
                 </Grid>
 
@@ -295,10 +295,10 @@ const Dashboard = () => {
                 <Grid item xs={6}>
                     <OrderChart orders={[]} />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <UpcomingAnnouncements />
                 </Grid>
-                <Grid size={{ xs: 3 }}>
+                <Grid md={3}>
                     <ActivityStream />
                 </Grid>
 

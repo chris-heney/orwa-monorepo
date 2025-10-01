@@ -44,7 +44,7 @@ const SystemDataStep: React.FC = () => {
                 name="system_name"
                 required
                 placeholder="Enter system name"
-                helperText="Required if water system is not selected from the list above"
+                helperText="Required if water system is not selected from the list above, NAME MUST BE SPELLED THE WAY YOU WANT IT ON THE AWARD"
               />
             </Grid>
             

@@ -80,6 +80,9 @@ const AdministrativePayoutsList = () => {
           </Box>
         }
         sx={{
+          '& .RaList-noActions': {
+            mt: '0',
+          },
           " .RaList-actions": {
             display: "flex",
             justifyContent: "flex-start",

@@ -101,26 +101,26 @@ const PayoutModal = ({ setIsModalOpen, selectedPayout , payoutStatus }: ModalCon
         <SimpleForm toolbar={<CustomToolBar/>} onSubmit={(data) => updatePayout(data)}  >
           <Grid container spacing={2}>
             {payoutStatus?.name === 'Not Approved' &&
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <PayoutDenialReason setStatusId={setStatusId} />
               </Grid>
             }
             {payoutStatus?.name === 'Paid' &&
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <DateInput source="transaction_date" fullWidth />
               </Grid>
             }
             {payoutStatus?.name === 'Paid' &&
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <NumberInput source="amount" fullWidth />
               </Grid>
             }
-            <Grid xs={12}>
-              <Grid xs={12}>
+            <Grid item xs={12}>
+              <Grid item xs={12}>
                 <TextInput source="comments" fullWidth multiline minRows={5} helperText={false}/>
               </Grid>
             </Grid>
-            <Grid xs={12}>
+            <Grid item xs={12}>
               <Box sx={{display: 'flex' , alignItems:'center'}}>
                 <Checkbox checked={sendEmail} onClick={() => sendEmail ? setSendEmail(false) : setSendEmail(true)}/>
                 <Typography variant="body1">Send {`Email Payout ${status}`} to Applicant</Typography>

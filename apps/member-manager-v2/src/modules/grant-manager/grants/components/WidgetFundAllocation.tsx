@@ -358,7 +358,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
       <HighchartsReact highcharts={Highcharts} options={chartOptions} />
       <Grid container spacing={2} sx={{ mt: -2 }}>
         {filteredData.map((metric, index) => (
-          <Grid xs={filteredData.length> 5 ? 4 : 6} key={index}>
+          <Grid item xs={filteredData.length> 5 ? 4 : 6} key={index}>
             <Box
               sx={{
                 textAlign: "center",

@@ -24,9 +24,9 @@ import {
 import MapPinIcon from "@mui/icons-material/FmdGood";
 import MembershipExpiration from "../../_components/MembershipExpiration";
 import CustomShowHeader from "../../memberships_v2/componenets/CustomShowHeader";
-import SimpleInvoicesList from "../../invoices/SimpleInvoiceList";
-import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
+import SimpleInvoicesList from '../invoices/SimpleInvoiceList';
 import { oneYearAgoFormatted } from "../../memberships_v2/helpers/activeOrInactiveMembership";
+import { CustomHeader } from "src/_components";
 
 function a11yProps(index: number) {
   return {
@@ -310,7 +310,7 @@ const WatersystemShow = () => {
                 width: "100%",
               }}
             >
-              <CustomSecondaryHeader title="Transactions" />
+              <CustomHeader title="Transactions" />
               <SimpleInvoicesList filters={{ entity_id: record.id }} />
             </Box>
           )}

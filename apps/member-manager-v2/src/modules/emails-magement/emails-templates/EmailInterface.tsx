@@ -12,13 +12,17 @@ const EmailInterface = ({ module }: EmailInterfaceProps) => {
 
   return (
       <List
-        hasCreate={false}
         disableSyncWithLocation
         filter={emailFilters ? emailFilters : module ? { module: module } : {}}
         title={" "}
         resource="email-templates"
         actions={false}
         exporter={false}
+        sx={{
+          '& .RaList-noActions': {
+            mt: '0',
+          },
+        }}
       >
         <DatagridConfigurable
           bulkActionButtons={false}

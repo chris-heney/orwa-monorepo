@@ -22,7 +22,7 @@ const EmailManagementFilterSidebar = () => {
   return !isFilterSidebarOpen || isLoading ? (
     <></>
   ) : (
-    <Grid xs={12}
+    <Grid item xs={12}
       md={2}
       sx={{
         flexGrow: 1,

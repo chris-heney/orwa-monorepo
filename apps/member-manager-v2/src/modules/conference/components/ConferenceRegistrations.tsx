@@ -53,7 +53,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
   const {filterValues} = useListContext()
 
   return (
-    <Grid xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
+    <Grid item xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
       <Typography variant="h6">Registration Info.</Typography>
       <Divider />
       <Grid display={"none"} xs={12} md={6} lg={4}>
@@ -80,7 +80,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
         />
       </Grid>
       <Grid container spacing={2}>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             source="registrant"
             reference="Contacts"
@@ -93,7 +93,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             />
           </ReferenceInput>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <DateInput
             source="registration_date"
             label="Registration Date"
@@ -101,7 +101,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             helperText={false}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="organization"
             label="Organization"
@@ -109,7 +109,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             helperText={false}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <SelectInput
             source="type"
             label="Type"
@@ -118,7 +118,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             choices={RegistrationType}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <NumberInput
             source="total"
             label="Total"
@@ -126,7 +126,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             helperText={false}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <SelectInput
             source="payment_method"
             label="Payment Method"
@@ -135,7 +135,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             helperText={false}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             perPage={10000}
             source="sponsorships"
@@ -149,7 +149,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             />
           </ReferenceInput>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             perPage={10000}
             source="attendees"
@@ -163,7 +163,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             />
           </ReferenceInput>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             perPage={10000}
             source="contestants"
@@ -177,7 +177,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             />
           </ReferenceInput>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             perPage={10000}
             source="conference_sponsor"
@@ -192,7 +192,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
           </ReferenceInput>
         </Grid>
         {ticketType === "Vendor" && (
-          <Grid xs={12} md={6} lg={4}>
+          <Grid item xs={12} md={6} lg={4}>
             <ReferenceInput
               perPage={1000}
               source="booths"
@@ -207,13 +207,13 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             </ReferenceInput>
           </Grid>
         )}
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="address.street" label="Street" fullWidth />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="address.city" label="City" fullWidth />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <SelectInput
             source="address.state"
             label="State"
@@ -221,7 +221,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             choices={StateChoices}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="address.zip" label="Zip" fullWidth />
         </Grid>
       </Grid>

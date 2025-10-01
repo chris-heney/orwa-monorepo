@@ -14,7 +14,7 @@ interface GrantFieldsProps {
 const GrantFields = ({ status }: GrantFieldsProps) => {
   return (
     <>
-      <Grid xs={12}>
+      <Grid item xs={12}>
         <ReferenceArrayInput
           source="grant_status"
           reference="grant-statuses"
@@ -27,7 +27,7 @@ const GrantFields = ({ status }: GrantFieldsProps) => {
           />
         </ReferenceArrayInput>
       </Grid>
-      <Grid xs={12}>
+      <Grid item xs={12}>
         <ReferenceInput
           source="grant_sub_status"
           reference="grant-sub-statuses"

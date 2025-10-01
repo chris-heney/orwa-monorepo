@@ -40,7 +40,7 @@ const WaterSystemFields = () => {
       spacing={0}
       gap={0} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
       alignSelf={"stretch"}>
-      <Grid xs={12}
+      <Grid item xs={12}
         md={6}
         lg={6}
         sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
@@ -50,10 +50,10 @@ const WaterSystemFields = () => {
           <Typography variant="h5">Status</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            {/* <Grid xs={6} sm={6} md={6} lg={4}>
+            {/* <Grid item xs={6} sm={6} md={6} lg={4}>
               <BooleanInput source="active" label="Active" helperText={false} fullWidth />
             </Grid> */}
-            <Grid xs={6} sm={6} md={6} lg={4}>
+            <Grid item xs={6} sm={6} md={6} lg={4}>
               <BooleanInput
                 source="funding"
                 label="Funding"
@@ -61,7 +61,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6} sm={6} md={6} lg={4}>
+            <Grid item xs={6} sm={6} md={6} lg={4}>
               <BooleanInput
                 source="orwaag"
                 label="ORWAAG"
@@ -69,7 +69,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6} sm={6} md={6} lg={4}>
+            <Grid item xs={6} sm={6} md={6} lg={4}>
               <BooleanInput
                 source="workmans_comp"
                 label="Workers Comp"
@@ -77,7 +77,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6} sm={6} md={6} lg={4}>
+            <Grid item xs={6} sm={6} md={6} lg={4}>
               <BooleanInput
                 source="soonerwarn"
                 label="Soonerwarn"
@@ -92,7 +92,7 @@ const WaterSystemFields = () => {
           <Typography variant="h5">General Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} lg={12}>
+            <Grid item xs={12} lg={12}>
               <TextInput
                 source="name"
                 label="Name"
@@ -100,7 +100,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={12}>
+            <Grid item xs={12} lg={12}>
               <TextInput
                 source="legal_entity_name"
                 label="Legal Entity Name"
@@ -108,7 +108,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="region"
                 label="Region"
@@ -117,7 +117,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="county"
                 label="County"
@@ -126,7 +126,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={12}>
+            <Grid item xs={12} lg={12}>
               <TextInput
                 source="office_hours"
                 label="Office Hours"
@@ -134,7 +134,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={12}>
+            <Grid item xs={12} lg={12}>
               <TextInput
                 source="board_meeting"
                 label="Board Meeting"
@@ -142,7 +142,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <NumberInput
                 source="meters"
                 label="Meters"
@@ -150,7 +150,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <NumberInput
                 source="total_years"
                 label="Total Years"
@@ -158,7 +158,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="member_type"
                 label="Member Type"
@@ -167,7 +167,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="system_type_dirty"
                 label="System Type"
@@ -176,7 +176,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <DateInput
                 source="directory_sent_date"
                 label="Directory Sent Date"
@@ -203,7 +203,7 @@ const WaterSystemFields = () => {
           </Box>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="email"
                 label="Office Email"
@@ -211,7 +211,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <CustomPhoneInput
                 source="phone"
                 label="Phone"
@@ -219,7 +219,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <ReferenceArrayInput
                 source="contacts"
                 label="Contacts"
@@ -234,7 +234,7 @@ const WaterSystemFields = () => {
                 />
               </ReferenceArrayInput>
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="fax"
                 label="Fax"
@@ -242,7 +242,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={12}>
+            <Grid item xs={12} lg={12}>
               <TextInput
                 source="url"
                 label="URL"
@@ -253,7 +253,7 @@ const WaterSystemFields = () => {
           </Grid>
         </Card>
       </Grid>
-      <Grid xs={12}
+      <Grid item xs={12}
         md={6}
         sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
         alignSelf={"stretch"}>
@@ -262,7 +262,7 @@ const WaterSystemFields = () => {
           <Typography variant="h5">Billing Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} lg={4}>
+            <Grid item xs={12} lg={4}>
               <DateInput
                 source="payment_last_date"
                 label="Current Payment Date"
@@ -271,7 +271,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={4}>
+            <Grid item xs={12} lg={4}>
               <DateInput
                 source="application_date"
                 label="Application Date"
@@ -279,7 +279,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={4}>
+            <Grid item xs={12} lg={4}>
               <DateInput
                 source="payment_previous_date"
                 onChange={(e) => setPreviousPayment(e.target.value)}
@@ -289,7 +289,7 @@ const WaterSystemFields = () => {
               />
             </Grid>
             {record && (
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <MembershipExpiration
                   lastPayment={lastPayment}
                   previousPayment={previousPayment}
@@ -297,7 +297,7 @@ const WaterSystemFields = () => {
                 />
               </Grid>
             )}
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <NumberInput
                 source="payment_amount"
                 label="Payment Amount"
@@ -305,7 +305,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="payment_method"
                 label="Payment Method"
@@ -314,7 +314,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="membership_directory_type"
                 label="Membership Directory Type"
@@ -323,7 +323,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12}>
+            <Grid item xs={12}>
               <TextInput
                 source="payment_details"
                 label="Payment Details"
@@ -341,7 +341,7 @@ const WaterSystemFields = () => {
           <Typography variant="h5">Physical Address</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="address_physical_line1"
                 label="Physical Address Line 1"
@@ -349,7 +349,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="address_physical_line2"
                 label="Physical Address Line 2"
@@ -357,7 +357,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="address_physical_city"
                 label="Physical Address City"
@@ -365,7 +365,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="address_physical_state"
                 label="Pysical Address State"
@@ -374,7 +374,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={4}>
+            <Grid item xs={12} lg={4}>
               <TextInput
                 source="address_physical_zip"
                 label="Physical Address Zip"
@@ -382,7 +382,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={4}>
+            <Grid item xs={12} lg={4}>
               <TextInput
                 source="latitude"
                 label="Latitude"
@@ -390,7 +390,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={4}>
+            <Grid item xs={12} lg={4}>
               <TextInput
                 source="longitude"
                 label="Longitude"
@@ -405,7 +405,7 @@ const WaterSystemFields = () => {
           <Typography variant="h5">Mailing Address</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="address_mailing_pobox"
                 label="PO Box"
@@ -413,7 +413,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="address_mailing_city"
                 label="City"
@@ -421,7 +421,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <SelectInput
                 source="address_mailing_state"
                 label="State"
@@ -430,7 +430,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} lg={6}>
+            <Grid item xs={12} lg={6}>
               <TextInput
                 source="address_mailing_zip"
                 label="Zip"
@@ -447,7 +447,7 @@ const WaterSystemFields = () => {
           <Typography variant="h5">Passport</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} sm={12} md={12} lg={12}>
+            <Grid item xs={12} sm={12} md={12} lg={12}>
               <NumberInput
                 source="wp_uid"
                 label="WP UID"
@@ -455,7 +455,7 @@ const WaterSystemFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} sm={12} md={12} lg={12}>
+            <Grid item xs={12} sm={12} md={12} lg={12}>
               <NumberInput
                 source="wp_eid"
                 label="WP EID"

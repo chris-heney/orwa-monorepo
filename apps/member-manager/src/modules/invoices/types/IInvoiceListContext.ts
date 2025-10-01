@@ -1,1 +1,0 @@
-export type IInvoiceListContext = 'membership-form' | 'clients' 

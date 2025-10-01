@@ -67,6 +67,16 @@ const darkComponentsOverrides = (theme: Theme) => ({
             },
         },
     },
+    RaList: {
+        styleOverrides: {
+            root: {
+                backgroundColor: darkPalette.background.paper,
+                '& .RaList-content': {
+                    backgroundColor: darkPalette.background.paper,
+                },
+            },
+        },
+    },
     MuiAppBar: {
         styleOverrides: {
             root: {
@@ -146,6 +156,10 @@ const darkPalette = createPalette({
         paper: '#1a2332',  // Dark blue-gray paper
         default: '#0f1419', // Very dark blue-black
     },
+    text: {
+        primary: '#ffffff',  // White for main text in dark mode
+        secondary: '#b0b0b0', // Light gray for secondary text in dark mode
+    },
     info: {
         main: '#0288D1',   // Info blue
     },
@@ -164,6 +178,16 @@ const lightComponentsOverrides = (theme: Theme) => ({
                     [theme.breakpoints.up('md')]: {
                         padding: `${theme.spacing(2)}`,
                     },
+                },
+            },
+        },
+    },
+    RaList: {
+        styleOverrides: {
+            root: {
+                backgroundColor: lightPalette.background.paper,
+                '& .RaList-content': {
+                    backgroundColor: lightPalette.background.paper,
                 },
             },
         },
@@ -266,6 +290,7 @@ const lightComponentsOverrides = (theme: Theme) => ({
             root: {
                 border: '1px solid #e0e0e3',
                 backgroundClip: 'padding-box',
+                background: lightPalette.background.paper,
             },
         },
     },

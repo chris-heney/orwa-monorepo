@@ -1,7 +1,0 @@
-export { default as ContactAvatar } from './ContactAvatar'
-export { default as ContactFullName } from './ContactFullName'
-export { default as ContactFirstName } from './ContactFirst'
-export { default as ContactLastName } from './ContactLast'
-export { default as ContactEmail } from './ContactEmail'
-export { default as ContactPhone } from './ContactPhone'
-export { default as ContactTitle } from './ContactTitle'

@@ -16,7 +16,7 @@ const ActivityFeedHeader = ({ setDisplaySearch, admin = false, sx, variant }: Ac
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#262626",
+        backgroundColor: "background.default",
         px: 1,
       }}
     >
@@ -24,7 +24,7 @@ const ActivityFeedHeader = ({ setDisplaySearch, admin = false, sx, variant }: Ac
         variant={variant || 'h6'}
         sx={{
           alignItems: 'center',
-          color: 'white',
+          color: 'text.primary',
           flexGrow: 1,
           p: .5,
           ml: 1,
@@ -38,9 +38,7 @@ const ActivityFeedHeader = ({ setDisplaySearch, admin = false, sx, variant }: Ac
         color="inherit"
         onClick={() => setDisplaySearch((prev) => !prev)}
       >
-        <Typography color={'white'}>
-          <SearchIcon />
-        </Typography>
+        <SearchIcon color="inherit" />
       </IconButton>}
     </Box>
   )

@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Tab, Divider } from "@mui/material";
+import { Box, Tab, Divider, useTheme } from "@mui/material";
 import { Create, Edit, Loading, Show, SimpleForm, Title } from "react-admin";
 
 import { TabContext, TabPanel, TabList } from "@mui/lab";
@@ -31,6 +31,7 @@ import ReimbursementPayoutsList from "./payouts/PayoutsList";
 import AdministrativePayoutsList from "./payouts/AdministrativePayoutList";
 
 const GrantDashboard = () => {
+  const theme = useTheme();
   
   const {
     grants,
@@ -128,7 +129,7 @@ const GrantDashboard = () => {
             <TabContext value={selectedTab.toString()}>
               <TabList
                 variant="scrollable"
-                sx={{ backgroundColor: "#eee", overflow: "clip" }}
+                sx={{ backgroundColor: theme.palette.background.paper, overflow: "clip" }}
                 onChange={(event: React.SyntheticEvent, tv) => {
                   setSelectedTab(tv as TabValue);
                   setResource(
@@ -184,7 +185,7 @@ const GrantDashboard = () => {
                 >
                   <TabContext value={selectedTab.toString()}>
                     {dashboardContext === "edit" && (
-                      <Box sx={{ backgroundColor: "#fff" }}>
+                      <Box sx={{ backgroundColor: theme.palette.background.default }}>
                         <TabPanel
                           style={{ marginTop: -15 }}
                           value="summary"

@@ -59,7 +59,7 @@ export const ConferenceAttendeeFields = ({
   return (
     <Box>
       <Grid container spacing={2}>
-        <Grid xs={12}
+        <Grid item xs={12}
           md={
             ticketType !== "Vendor" &&
             (currentFilter.conference === 1 || currentFilter.conference === 3)
@@ -72,7 +72,7 @@ export const ConferenceAttendeeFields = ({
             </Typography>
             <Divider />
             <Grid container spacing={2}>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <ReferenceInput
                   filter={
                     currentFilter.conference
@@ -103,7 +103,7 @@ export const ConferenceAttendeeFields = ({
                 />
               </Grid>
               <NumberInput source="type_id" sx={{ display: "none" }} />
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="title"
                   label="Title"
@@ -111,7 +111,7 @@ export const ConferenceAttendeeFields = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="first"
                   label="First"
@@ -120,7 +120,7 @@ export const ConferenceAttendeeFields = ({
                   validate={required("First Name is required")}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="last"
                   label="Last"
@@ -129,7 +129,7 @@ export const ConferenceAttendeeFields = ({
                   validate={required("Last Name is required")}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   validate={required("Email is required")}
                   source="email"
@@ -138,7 +138,7 @@ export const ConferenceAttendeeFields = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="phone"
                   label="Phone"
@@ -146,7 +146,7 @@ export const ConferenceAttendeeFields = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <SelectInputRegistration type={registrationType} />
                 {/* <ReferenceInput
                     source="registration"
@@ -162,7 +162,7 @@ export const ConferenceAttendeeFields = ({
                     />
                   </ReferenceInput> */}
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="organization"
                   label="Organization"
@@ -174,7 +174,7 @@ export const ConferenceAttendeeFields = ({
                 ticketType !== "Guest" &&
                 ticketType !== "Speaker" &&
                 ticketType !== "Staff" && (
-                  <Grid xs={12} md={6}>
+                  <Grid item xs={12} md={6}>
                     <TextInput
                       source="license"
                       label="License"
@@ -184,7 +184,7 @@ export const ConferenceAttendeeFields = ({
                   </Grid>
                 )}
               {ticketType !== "Vendor" && (
-                <Grid xs={12} md={6}>
+                <Grid item xs={12} md={6}>
                   <SelectInput
                     source="training_type"
                     choices={trainingTypeOptions}
@@ -193,7 +193,7 @@ export const ConferenceAttendeeFields = ({
                   />
                 </Grid>
               )}
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="passport_id"
                   helperText="*Only Required if Participating in Training"
@@ -202,11 +202,11 @@ export const ConferenceAttendeeFields = ({
                 />
               </Grid>
               {context === "edit" && (
-                <Grid xs={12} md={6}>
+                <Grid item xs={12} md={6}>
                   <NumberInput source="wp_eid" label="WP EID" fullWidth />
                 </Grid>
               )}
-              <Grid xs={6} md={6}>
+              <Grid item xs={6} md={6}>
                 <BooleanInput
                   source="speaker"
                   label="This Conference Attendee is a Speaker"
@@ -215,7 +215,7 @@ export const ConferenceAttendeeFields = ({
                 />
               </Grid>
 
-              <Grid xs={6} md={6}>
+              <Grid item xs={6} md={6}>
                 <BooleanInput
                   source="promotional_emails"
                   label="Send Promotional Emails"
@@ -238,7 +238,7 @@ export const ConferenceAttendeeFields = ({
               {context === "edit" && 
                !(ticketType !== "Vendor" &&
                 (currentFilter.conference === 1 || currentFilter.conference === 3)) && (
-                <Grid xs={12}>
+                <Grid item xs={12}>
                   <Box mt={2}>
                     <MetaComponent
                       ticketType={ticketType}
@@ -254,13 +254,13 @@ export const ConferenceAttendeeFields = ({
         </Grid>
         {ticketType !== "Vendor" &&
           (currentFilter.conference === 1) && (
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <Card sx={{ p: 1 }}>
                 <Typography variant="h6">Voting Delegates</Typography>
                 <Divider />
                 <Box>
                   <Grid container spacing={2}>
-                    <Grid xs={12} md={6}>
+                    <Grid item xs={12} md={6}>
                       <SelectInput
                         source="orwa_voting_status"
                         label="ORWA Voting Status"
@@ -269,7 +269,7 @@ export const ConferenceAttendeeFields = ({
                       />
                     </Grid>
                     {currentFilter.conference === 1 && (
-                      <Grid xs={12} md={6}>
+                      <Grid item xs={12} md={6}>
                         <SelectInput
                           source="orwaag_voting_status"
                           label="ORWAAG Voting Status"
@@ -278,7 +278,7 @@ export const ConferenceAttendeeFields = ({
                         />
                       </Grid>
                     )}
-                    <Grid xs={12} md={6} display={"none"}>
+                    <Grid item xs={12} md={6} display={"none"}>
                       <ReferenceInput
                         source="conference"
                         reference="conferences"
@@ -292,7 +292,7 @@ export const ConferenceAttendeeFields = ({
                         />
                       </ReferenceInput>
                     </Grid>
-                    <Grid xs={12} md={6} display={"none"}>
+                    <Grid item xs={12} md={6} display={"none"}>
                       <NumberInput
                         source="year"
                         defaultValue={currentFilter.year}
@@ -303,7 +303,7 @@ export const ConferenceAttendeeFields = ({
                     
                     {/* Add MetaComponent here when in edit mode */}
                     {context === "edit" && (
-                      <Grid xs={12}>
+                      <Grid item xs={12}>
                         <Box mt={2}>
                           <Divider sx={{ mb: 2 }} />
                           <MetaComponent

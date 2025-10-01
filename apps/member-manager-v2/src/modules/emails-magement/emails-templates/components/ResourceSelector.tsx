@@ -8,7 +8,7 @@ interface ResourceSelectorProps {
 
 const ResourceSelector = ({ onResourceChange }: ResourceSelectorProps) => {
   return (
-    <Grid xs={12}>
+    <Grid item xs={12}>
         <AutocompleteInput
           fullWidth
           helperText="Select the resource you want to use for the email"

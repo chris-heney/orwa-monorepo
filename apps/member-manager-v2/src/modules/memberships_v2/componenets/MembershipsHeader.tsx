@@ -9,6 +9,7 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import {
   Button,
@@ -31,6 +32,7 @@ import { defaultWatersystemExport } from "../helpers/defaultWatersystemExport";
 import { defaultAssociateExport } from "../helpers/defaultAssociateExport";
 
 const Membershipheader = () => {
+  const theme = useTheme();
   const {
     selectedTab,
     setIsFilterSidebarOpen,
@@ -131,7 +133,7 @@ const Membershipheader = () => {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "#262626",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         px: 1,
       }}
     >
@@ -140,7 +142,7 @@ const Membershipheader = () => {
         sx={{
           fontSize: isSmall ? "10px" : null,
           alignItems: "center",
-          color: "white",
+          color: "primary.contrastText",
           fontWeight: "bold",
           textTransform: "uppercase",
           textAlign: "left",
@@ -175,15 +177,15 @@ const Membershipheader = () => {
               {role === "Admin" && (
                 <CustomCreateButton
                   sx={{
-                    color: "white",
+                    color: "primary.contrastText",
                   }}
                   label={`Add ${title.slice(0, title.length - 1)}`}
                 />
               )}
 
               <SelectColumnsButton
-                style={{
-                  color: "white",
+                sx={{
+                  color: "primary.contrastText",
                 }}
               />
 
@@ -191,7 +193,7 @@ const Membershipheader = () => {
                 value={exportType}
                 displayEmpty
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                 }}
                 size="small"
                 onChange={(e) => {
@@ -212,7 +214,7 @@ const Membershipheader = () => {
                   <IconButton
                     onClick={handleViewToggle}
                     sx={{
-                      color: "white",
+                      color: "primary.contrastText",
                     }}
                   >
                     {isGridView ? <ViewListIcon /> : <GridViewIcon />}
@@ -223,7 +225,7 @@ const Membershipheader = () => {
               <Button
                 label="Filter"
                 sx={{
-                  color: "white",
+                  color: "primary.contrastText",
                   mr: 2,
                 }}
                 onClick={() => {

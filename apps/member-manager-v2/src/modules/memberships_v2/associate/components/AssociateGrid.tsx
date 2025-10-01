@@ -1,32 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { useListContext, useRedirect, useDataProvider } from "react-admin";
-import { Grid, Card, Typography, Box, Chip, Avatar } from "@mui/material";
+import { Grid, Card, Typography, Box, Chip, Avatar, useTheme } from "@mui/material";
 import getExpirationDate from "../../../_helpers/getExpirationDate";
 import getExpiryBackground from "../../../_helpers/getExpiryBackground";
 import getContrastColor from "../../../_helpers/getContrastColor";
 import uploadService from "src/services/uploadService";
 
-// Membership level color mapping based on the image provided
-const getMembershipLevelColor = (level: string) => {
-  if (!level) return "#BDBDBD";
+// Membership level color mapping using theme colors
+const getMembershipLevelColor = (level: string, theme: any) => {
+  if (!level) return theme.palette.grey[400];
   switch (true) {
     case level.includes("Basic"):
-      return "#9E9E9E"; // Gray
+      return theme.palette.grey[500]; // Gray
     case level.includes("Bronze"):
-      return "#CD7F32"; // Bronze
+      return theme.palette.warning.dark; // Bronze
     case level.includes("Silver"):
-      return "#C0C0C0"; // Silver
+      return theme.palette.grey[300]; // Silver
     case level.includes("Gold"):
-      return "#FFD700"; // Gold
+      return theme.palette.warning.main; // Gold
     case level.includes("Platinum"):
-      return "#E5E4E2"; // Platinum
+      return theme.palette.grey[200]; // Platinum
     default:
-      return "#BDBDBD"; // Default gray for "None" or undefined
+      return theme.palette.grey[400]; // Default gray for "None" or undefined
   }
 };
 
 // Separate component for individual associate items
 const AssociateGridItem = ({ associate }: { associate: any }) => {
+  const theme = useTheme();
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [membershipLevel, setMembershipLevel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,9 +108,9 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
               right: 8,
               zIndex: 2,
               fontWeight: "bold",
-              backgroundColor: getMembershipLevelColor(membershipLevel || ""),
+              backgroundColor: getMembershipLevelColor(membershipLevel || "", theme),
               color: getContrastColor(
-                getMembershipLevelColor(membershipLevel || "")
+                getMembershipLevelColor(membershipLevel || "", theme)
               ),
             }}
           />

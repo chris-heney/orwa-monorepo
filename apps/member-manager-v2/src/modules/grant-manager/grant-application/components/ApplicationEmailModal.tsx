@@ -215,7 +215,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
                       )
                     )
                   })}
-                  {(selectedApplication?.point_of_contact === undefined  || selectedApplication.email) && <Grid xs={12} md={6}>
+                  {(selectedApplication?.point_of_contact === undefined  || selectedApplication.email) && <Grid item xs={12} md={6}>
                     {/* Render an input field if the value is missing */}
                     <TextInput
                       source='email'

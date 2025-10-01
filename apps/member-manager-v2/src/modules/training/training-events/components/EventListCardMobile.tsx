@@ -44,19 +44,19 @@ const EventListCardMobile = () => {
         <Box>
           <Grid container spacing={2} sx={{ position: 'absolute', top: 0, right: 0, padding: '8px', alignItems: 'center' }}>
             {/* Place button far left */}
-            <Grid xs={2}>
+            <Grid item xs={2}>
               <TrainingClassActionsButton />
             </Grid>
 
             {/* Centered text */}
-            <Grid xs={7} textAlign="center">
+            <Grid item xs={7} textAlign="center">
               <Typography variant="h6" fontWeight="bold" fontSize={16}>
                 {record.training_type}
               </Typography>
             </Grid>
 
             {/* Status far right */}
-            <Grid xs={3}>
+            <Grid item xs={3}>
               <Typography
                 fontWeight={'bold'}
                 variant={'h6'}

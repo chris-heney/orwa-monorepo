@@ -53,19 +53,19 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
 
   return (
     <Grid container spacing={2}>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <SelectInputRegistration type="Vendor" />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <TextInput source="organization" label="Organization" fullWidth />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <TextInput source="secondary_email" label="Secondary Email" fullWidth />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <NumberInput source="subtotal" label="Subtotal" fullWidth />
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid item xs={12} md={6}>
         <NumberInput
           source="conference"
           defaultValue={filterValues.conference}
@@ -73,7 +73,7 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
           fullWidth
         />
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid item xs={12} md={6}>
         <NumberInput
           source="year"
           defaultValue={filterValues.year}

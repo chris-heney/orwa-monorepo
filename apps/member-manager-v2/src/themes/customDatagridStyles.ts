@@ -18,12 +18,12 @@ export const customDatagridStyle = {
     'tr th': {
         py: 0.5,
         border: '.5px solid',
-        borderColor: 'grey.500',
+        borderColor: 'divider',
     },
     'tr td': {
         py: 0.2,
         border: '.5px solid',
-        borderColor: 'grey.500',
+        borderColor: 'divider',
     },
     '& .text-right': {
         textAlign: 'right',

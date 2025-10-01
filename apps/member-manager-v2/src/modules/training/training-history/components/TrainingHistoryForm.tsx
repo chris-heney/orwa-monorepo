@@ -19,27 +19,27 @@ const TrainingHistoryForm = () => {
       <CustomHeader title={title} />
       <SimpleForm >
         <Grid container spacing={2}>
-          <Grid xs={12} sm={12} md={12} lg={4}>
+          <Grid item xs={12} sm={12} md={12} lg={4}>
             <ReferenceInput source="contact" reference="Contacts" perPage={1000} fullWidth>
               <AutocompleteInput optionText={(choice) => `${choice.id} - ${choice.email}`} />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} sm={12} md={12} lg={4}>
+          <Grid item xs={12} sm={12} md={12} lg={4}>
             <ReferenceInput source="block" reference='training-schedule-blocks' helperText={false} >
               <TrainingBlockAutocompleteInput source='block' />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} sm={12} md={12} lg={4}>
+          <Grid item xs={12} sm={12} md={12} lg={4}>
             <ReferenceInput source="session" reference='training-sessions' helperText={false} >
               <TrainingSessionAutocompleteInput source='session' />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} sm={12} md={12} lg={4}>
+          <Grid item xs={12} sm={12} md={12} lg={4}>
             <ReferenceInput perPage={1000} source="event" reference='training-events' helperText={false} >
               <TrainingEventAutocompleteInput source={'event'} />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} sm={12} md={12} lg={4}>
+          <Grid item xs={12} sm={12} md={12} lg={4}>
             <SelectInput source="type" fullWidth choices={[
               { id: 'Block', name: 'Block' },
               { id: 'Session', name: 'Session' }

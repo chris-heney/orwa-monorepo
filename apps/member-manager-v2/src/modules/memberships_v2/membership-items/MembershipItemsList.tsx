@@ -38,6 +38,11 @@ const MembershipItemsList = () => {
       actions={false}
       // if ids are selected dont add marin top to this component make it a transition
       pagination={<Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}><Pagination rowsPerPageOptions={[10, 25, 50, 100]} sx={{ flexDirection: 'row-reverse' }} /></Box>}
+      sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
+      }}
     >
       {isSmall && <Button onClick={() => filterListOpen ? setFilterListOpen(false) : setFilterListOpen(true)}>
         {filterListOpen ? 'Hide Filters' : 'Add Filters'}

@@ -23,12 +23,21 @@ import { formatDate } from "../../../../helpers/dateFormatter";
 import { formatNumber } from "../../../../helpers/Formators";
 import getContrastColor from "../../../_helpers/getContrastColor";
 
-const statusColors: Record<string, string> = {
-  'Draft': '#9e9e9e',
-  'Submitted': '#2196f3',
-  'Under Review': '#ff9800',
-  'Approved': '#4caf50',
-  'Denied': '#f44336',
+const getStatusColor = (status: string, theme: any) => {
+  switch (status) {
+    case 'Draft':
+      return theme.palette.grey[500];
+    case 'Submitted':
+      return theme.palette.info.main;
+    case 'Under Review':
+      return theme.palette.warning.main;
+    case 'Approved':
+      return theme.palette.success.main;
+    case 'Denied':
+      return theme.palette.error.main;
+    default:
+      return theme.palette.grey[500];
+  }
 };
 
 const FileDisplay = ({ file, label }: { file: any; label: string }) => {

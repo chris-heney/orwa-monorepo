@@ -52,7 +52,7 @@ const SoonerwarnShow: React.FC = ({}) => {
 
         <Grid container spacing={2} sx={{ p: 2 }}>
           {/* System Information */}
-          <Grid xs={12} sm={6}>
+          <Grid item xs={12} sm={6}>
             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
               System Information
             </Typography>
@@ -117,7 +117,7 @@ const SoonerwarnShow: React.FC = ({}) => {
           </Grid>
 
           {/* Address Information */}
-          <Grid xs={12} sm={6}>
+          <Grid item xs={12} sm={6}>
             <Typography variant="h6" sx={{ fontWeight: "bold" }}>
               Address Information
             </Typography>

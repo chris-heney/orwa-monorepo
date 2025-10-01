@@ -49,7 +49,19 @@ const MembershipsCard = () => {
     datasets: [
       {
         data: donutChartData.map(item => item.value),
-        backgroundColor: ['#4CAF50', '#FF5252', '#2196F3', '#FFC107'],
+        backgroundColor: [
+          'rgba(76, 175, 80, 0.8)',   // Green for Active Associates
+          'rgba(255, 82, 82, 0.8)',   // Red for Inactive Associates  
+          'rgba(33, 150, 243, 0.8)',  // Blue for Active Water Systems
+          'rgba(255, 193, 7, 0.8)'    // Yellow for Inactive Water Systems
+        ],
+        borderColor: [
+          'rgba(76, 175, 80, 1)',
+          'rgba(255, 82, 82, 1)',
+          'rgba(33, 150, 243, 1)',
+          'rgba(255, 193, 7, 1)'
+        ],
+        borderWidth: 2,
       },
     ],
   }
@@ -76,7 +88,6 @@ const MembershipsCard = () => {
 
   const gridItemStyles = {
     padding: '10px',
-    color: '#FFFF', // Dark gray text color
   }
 
   return isAssociatesLoading || isWaterSystemsLoading ? (
@@ -89,10 +100,10 @@ const MembershipsCard = () => {
         width: '100%',
         height: '100%',
         borderRadius: '10px',
-        backgroundColor: '#474747', // Black background
-        color: '#ffffff', // White text color
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
         position: 'relative',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+        boxShadow: 3,
       }}
     >
       <Box sx={{ py: 1, px: 2, display: 'flex', alignItems: 'center', justifyContent: 'flex-start' }}>
@@ -116,11 +127,12 @@ const MembershipsCard = () => {
           {donutChartData.map((item, index) => (
             <Grid mt={3}
               key={index} xs={3}
-              style={{
+              sx={{
                 ...gridItemStyles,
                 borderTop: `2px solid ${chartData.datasets[0].backgroundColor[index]}`,
-                backgroundColor: 'black',
+                backgroundColor: 'background.default',
                 padding: '10px',
+                color: 'text.primary',
               }}>
               <Box>
                 <Typography textAlign={'center'} fontSize={10} lineHeight={1.2} variant="h6">

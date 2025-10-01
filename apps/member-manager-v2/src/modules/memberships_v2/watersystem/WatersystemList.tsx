@@ -45,6 +45,9 @@ const WaterSystemList = () => {
       perPage={100}
       sx={{
         mt: selectedIds.length > 0 ? 6 : 0,
+        '& .RaList-noActions': {
+          mt: '0',
+        },
       }}
       disableSyncWithLocation
       pagination={<CustomPagination />}

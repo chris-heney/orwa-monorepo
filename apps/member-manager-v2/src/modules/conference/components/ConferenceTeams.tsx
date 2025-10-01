@@ -37,7 +37,7 @@ const TeamFormFields = () => {
 
   return (
     <Grid container spacing={2}>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <TextInput
           source="name"
           label="Name"
@@ -45,7 +45,7 @@ const TeamFormFields = () => {
           helperText="Team Name"
         />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <ReferenceArrayInput
           reference="conference-contestants"
           source="contestants"
@@ -60,7 +60,7 @@ const TeamFormFields = () => {
           />
         </ReferenceArrayInput>
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <ReferenceInput
           reference="conference-registrations"
           source="registration"
@@ -75,10 +75,10 @@ const TeamFormFields = () => {
           />
         </ReferenceInput>
       </Grid>
-      <Grid xs={12} md={3} display={"hidden"}>
+      <Grid item xs={12} md={3} display={"hidden"}>
         <NumberInput source="year" label="Year" fullWidth defaultValue={filterValues.year} />
       </Grid>
-      <Grid xs={12} md={6} display={"hidden"}>
+      <Grid item xs={12} md={6} display={"hidden"}>
         <NumberInput
           source="conference"
           defaultValue={filterValues.conference}

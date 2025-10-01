@@ -62,7 +62,7 @@ const AssetShow = () => {
     <Show component="div" title={'Assets'} sx={{ p: 0 }}>
       <SimpleShowLayout sx={{ p: 0 }}>
         <Grid container spacing={1} sx={{ alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
-          <Grid xs={12} md={6} lg={6} sm={12} sx={{maxHeight:65, alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
+          <Grid item xs={12} md={6} lg={6} sm={12} sx={{maxHeight:65, alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
             <CustomSecondaryHeader title={record.name} />
             <Card >
               <List sx={{ pb: 0 }}>
@@ -107,7 +107,7 @@ const AssetShow = () => {
               </List>
             </Card>
           </Grid>
-          <Grid xs={12} md={6} lg={6} sm={12} sx={{maxHeight:65, alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
+          <Grid item xs={12} md={6} lg={6} sm={12} sx={{maxHeight:65, alignItems: 'stretch' }} justifyItems={'stretch'} alignSelf={'stretch'}>
             <ActivityFeed 
               headerSx={{
                 padding: .5,

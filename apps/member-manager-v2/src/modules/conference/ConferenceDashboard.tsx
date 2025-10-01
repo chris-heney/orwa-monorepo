@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Box } from "@mui/material";
+import { Box, useTheme } from "@mui/material";
 import {
   ConfigurableDatagridColumn,
   ListBase,
@@ -26,6 +26,7 @@ import exportSponsors from "./helpers/exportSponsors";
 import exportAttendees from "./helpers/exportAttendes";
 
 const ConferenceDashboard = () => {
+  const theme = useTheme();
   const {
     year,
     selectedTab,
@@ -208,7 +209,7 @@ const ConferenceDashboard = () => {
                 pb: 2,
                 overflow: "hidden",
                 flexGrow: "1",
-                backgroundColor: "transparent",
+                backgroundColor: theme.palette.background.paper,
                 maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
               }}
             >

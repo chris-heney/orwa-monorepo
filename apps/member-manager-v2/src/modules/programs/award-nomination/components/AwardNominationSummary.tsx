@@ -5,7 +5,6 @@ import {
   Grid,
   Typography,
   LinearProgress,
-  Paper,
   List,
   ListItem,
   ListItemText,
@@ -22,11 +21,11 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { useGetList } from 'react-admin';
 import { formatDate } from '../../../../helpers/dateFormatter';
+import getContrastColor from 'src/modules/_helpers/getContrastColor';
 
 const AwardNominationSummary = () => {
   const { data: nominations, isLoading } = useGetList('award-nominations', {
@@ -240,8 +239,8 @@ const AwardNominationSummary = () => {
                   label={nom.nomination_status}
                   size="small"
                   sx={{
-                    backgroundColor: COLORS[nom.nomination_status as keyof typeof COLORS],
-                    color: 'white',
+                    backgroundColor: COLORS[nom.nomination_status],
+                    color: getContrastColor(COLORS[nom.nomination_status]),
                   }}
                 />
               </ListItem>

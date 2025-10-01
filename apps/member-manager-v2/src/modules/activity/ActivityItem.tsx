@@ -31,9 +31,11 @@ const ActivityItem = () => {
   return (
     <Box
       sx={{
-        borderBottom: '1px solid #ddd',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        backgroundColor: '#fff',
+        borderBottom: '1px solid',
+        borderBottomColor: 'divider',
+        boxShadow: 1,
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
         padding: '1rem',
         display: 'flex',
         flexDirection: 'column',

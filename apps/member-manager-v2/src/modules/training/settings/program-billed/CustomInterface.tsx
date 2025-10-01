@@ -37,26 +37,26 @@ const CustomInterface = ({ rows, resource, createTitle, InputFields, inputs }: C
           {inputs?.map((input, index: number) => {
             if (input.type === 'string') {
               return (
-                <Grid key={`key-${index}`} xs={12} md={6}>
+                <Grid key={`key-${index}`} item xs={12} md={6}>
                   <TextInput source={input.source} label={input.label} fullWidth helperText={false} />
                 </Grid>
               )
             } else if (input.type === 'number') {
               return (
-                <Grid key={`key-${index}`} xs={12} md={6}>
+                <Grid key={`key-${index}`} item xs={12} md={6}>
                   <TextInput source={input.source}  label={input.label} fullWidth helperText={false} />
                 </Grid>
               )
             } else if (input.type === 'boolean') {
               return (
-                <Grid key={`key-${index}`} xs={12} md={6}>
+                <Grid key={`key-${index}`} item xs={12} md={6}>
                   <BooleanInput source={input.source}  label={input.label} fullWidth helperText={false} />
                 </Grid>
               )
             }
             else if (input.type === 'reference' && input.refernece) {
               return (
-                <Grid key={`key-${index}`} xs={12} md={6}>
+                <Grid key={`key-${index}`} item xs={12} md={6}>
                   <ReferenceInput source={input.source} reference={input.refernece} label={input.label} fullWidth helperText={false}>
                     <AutocompleteInput optionText="name" />
                   </ReferenceInput>

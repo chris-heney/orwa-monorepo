@@ -8,7 +8,7 @@ interface ModuleSelectorProps {
 
 const ModuleSelector = ({ moduleValue }: ModuleSelectorProps) => {
   return (
-    <Grid xs={12} md={6}>
+    <Grid item xs={12} md={6}>
       <AutocompleteInput
         source="module"
         defaultValue={moduleValue}

@@ -41,7 +41,10 @@ const MembershipList = () => {
       actions={false}
       // if ids are selected dont add marin top to this component make it a transition
       sx={{
-        mt: (selectedIds.length) > 0 ? 6 : 0
+        mt: (selectedIds.length) > 0 ? 6 : 0,
+        '& .RaList-noActions': {
+          mt: '0',
+        },
       }}
       pagination={<Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}><Pagination rowsPerPageOptions={[10, 25, 50, 100]} sx={{ flexDirection: 'row-reverse' }} /></Box>}
     >

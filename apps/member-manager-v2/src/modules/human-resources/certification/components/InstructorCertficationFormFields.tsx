@@ -18,27 +18,27 @@ const InstructorCertficationFormFields = ({title = 'Certification Details', id} 
             <Typography variant='h5'>{title}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container columnSpacing={2}>
-              <Grid xs={12} sm={12} md={12} lg={12}>
+              <Grid item xs={12} sm={12} md={12} lg={12}>
                 <ReferenceInput source="instructor" label="Instructor" reference="training-instructors"  perPage={2000} fullWidth>
                   <TrainingInstructorAutocompleteInput defaultValue={id ?? undefined}  source='instructor'/>
                 </ReferenceInput>
               </Grid>
-              <Grid xs={6} sm={6} md={6} lg={6}>
+              <Grid item xs={6} sm={6} md={6} lg={6}>
                 <SelectInput helperText={false} choices={InstructorCertificationWater} source="water_certification" label="Water Certification" fullWidth />
               </Grid>
-              <Grid xs={6} sm={6} md={6} lg={6}>
+              <Grid item xs={6} sm={6} md={6} lg={6}>
                 <SelectInput helperText={false} choices={InstructorCertificationWaste} source="waste_water_certification" label="Wastewater Certification" fullWidth />
               </Grid>
-              <Grid xs={6} sm={6} md={6} lg={6}>
+              <Grid item xs={6} sm={6} md={6} lg={6}>
                 <SelectInput helperText={false} choices={InstructorCertificationWaterLab} source="water_lab_certification" label="Water Lab Certification" fullWidth />
               </Grid>
-              <Grid xs={6} sm={6} md={6} lg={6}>
+              <Grid item xs={6} sm={6} md={6} lg={6}>
                 <SelectInput helperText={false} choices={InstructorCertificationWasteLab} source="waste_water_lab_certification" label="Wastewater Lab Certification" fullWidth />
               </Grid>
-              <Grid xs={12} sm={12} md={12} lg={12}>
+              <Grid item xs={12} sm={12} md={12} lg={12}>
                 <DateInput  helperText={false} source="certification_date" label="Certification Date" fullWidth />
               </Grid>
-              <Grid xs={12} sm={12} md={12} lg={12}>
+              <Grid item xs={12} sm={12} md={12} lg={12}>
                 <DateInput source="renewal_date" label="Renewal Date" fullWidth />
               </Grid>
             </Grid>

@@ -58,7 +58,7 @@ const CreatePayout = () => {
 
       <SimpleForm onSubmit={(data: FieldValues) => createPayout(data)}>
         <Grid container spacing={2}>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <ReferenceInput
               perPage={1000}
               reference="grant-application-finals"
@@ -82,7 +82,7 @@ const CreatePayout = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <NumberInput
               source="amount"
               label="Amount"
@@ -91,7 +91,7 @@ const CreatePayout = () => {
               key="payout-field-2"
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <DateInput
               defaultValue={new Date()}
               source="transaction_date"
@@ -101,7 +101,7 @@ const CreatePayout = () => {
               key="payout-field-4"
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <ReferenceInput
               defaultValue={"Requested"}
               source="payout_status"
@@ -119,7 +119,7 @@ const CreatePayout = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <ReferenceInput
               perPage={1000}
               reference="grants"
@@ -134,7 +134,7 @@ const CreatePayout = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <SelectInput
               source="type"
               label="Type"
@@ -148,7 +148,7 @@ const CreatePayout = () => {
               key="payout-field-6"
             />
           </Grid>
-          <Grid xs={12}>
+          <Grid item xs={12}>
             <TextInput
               source="comments"
               label="Notes"

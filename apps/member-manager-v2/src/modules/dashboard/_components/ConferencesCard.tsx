@@ -47,8 +47,9 @@ const NextConferencsCard = () => {
         position: 'relative',
         mb: 2,
         borderRadius: '10px',
-        backgroundColor: '#f0f0f0',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
+        boxShadow: 3,
       }}
     ><Box
         sx={{

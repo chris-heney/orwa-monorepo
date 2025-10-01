@@ -281,7 +281,7 @@ const GrantSummary = () => {
   ) : (
     <Box maxWidth={1200} mx="auto" p={2}>
       <Grid container spacing={2} p={1}>
-        <Grid xs={12} md={5}>
+        <Grid item xs={12} md={5}>
           <Box
             component="img"
             sx={{ height: 250, mx: "auto", flexGrow: 1, display: "block" }}
@@ -297,7 +297,7 @@ const GrantSummary = () => {
           />
         </Grid>
         {/* Display Leftover Funds */}
-        <Grid xs={12} md={7}>
+        <Grid item xs={12} md={7}>
           <WidgetFundAllocation
             fy1AdminFundsRemaining={fy1AdminFundsRemaining}
             fy2AdminFundsRemaining={fy2AdminFundsRemaining}
@@ -310,7 +310,7 @@ const GrantSummary = () => {
             fy1CloseoutBalance={fY1LeftoverFunds}
           />
         </Grid>
-        <Grid xs={12}>
+        <Grid item xs={12}>
           <FinancialBreakdown
             setIsModalOpen={setIsModalOpen}
             applications={applications}

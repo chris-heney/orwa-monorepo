@@ -19,7 +19,7 @@ const GrantScoringPublicKeyTokens = () => {
   return isTokensLoading ? <Loading /> : (
     <>
       {tokens && tokens.map((token: RaRecord) => (
-        <Grid xs={12} sm={6} md={4} lg={4} key={token.id} borderRadius={0}>
+        <Grid item xs={12} sm={6} md={4} lg={4} key={token.id} borderRadius={0}>
           <PublicKeyTokenWidget token={token} heading={token.name} subheading={token.public_key} />
         </Grid>
       ))}

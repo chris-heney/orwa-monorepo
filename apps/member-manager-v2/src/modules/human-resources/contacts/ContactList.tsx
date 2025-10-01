@@ -32,6 +32,11 @@ const ContactList = ({ title = "Contacts" }: ContactListProps) => {
       resource="contacts"
       actions={false}
       filter={contactFilters || {}}
+      sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
+      }}
     >
       {isSmall ? (
         <Box style={{ whiteSpace: "nowrap" }}>

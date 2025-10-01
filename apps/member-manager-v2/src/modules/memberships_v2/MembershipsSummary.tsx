@@ -13,11 +13,11 @@ const MembershipsSummary = () => {
              
         <Box>
           <Grid container rowSpacing={1} columnSpacing={3}>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <MembershipsCard />
             </Grid>
             {/* Membership Report */}
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <MembershipReportCard/>
             </Grid>
           </Grid>

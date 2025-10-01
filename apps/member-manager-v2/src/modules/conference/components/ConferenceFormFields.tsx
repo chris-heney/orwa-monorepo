@@ -18,7 +18,7 @@ const ConferenceFormFields = () => {
       spacing={0}
       gap={0} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
       alignSelf={"stretch"}>
-      <Grid xs={12}
+      <Grid item xs={12}
         md={6}
         sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
         alignSelf={"stretch"}>
@@ -29,7 +29,7 @@ const ConferenceFormFields = () => {
             Please enter the details of the event below.
           </Typography>
           <Divider />
-          <Grid xs={12} sm={12} md={12} lg={12}>
+          <Grid item xs={12} sm={12} md={12} lg={12}>
             <TextInput
               helperText={false}
               source="name"
@@ -81,21 +81,21 @@ const ConferenceFormFields = () => {
           <Typography variant="h5">Registration Details</Typography>
           <Divider />
           <Grid container spacing={2}>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="booths_available"
                 label="Booths Available"
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="training_hours_available"
                 label="Training Hours Available"
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="non_member_fee"
                 label="Non Member Fee"
@@ -103,7 +103,7 @@ const ConferenceFormFields = () => {
                 type="decimal"
               />
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="booth_price"
                 label="Booth Price 1"
@@ -111,7 +111,7 @@ const ConferenceFormFields = () => {
                 type="decimal"
               />
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="booth_price_2"
                 label="Booth Price 2"
@@ -119,7 +119,7 @@ const ConferenceFormFields = () => {
                 type="decimal"
               />
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="purchasable_booths"
                 label="Purchasable Booths"
@@ -127,7 +127,7 @@ const ConferenceFormFields = () => {
                 helperText="How many booths can be purchased at the conference?"
               />
             </Grid>
-            <Grid xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <NumberInput
                 source="available_contestants"
                 label="Available Contestants"
@@ -146,7 +146,7 @@ const ConferenceFormFields = () => {
           </Typography>
           <Divider />
           <Grid container spacing={2}>
-            <Grid xs={12} sm={12} md={12} lg={12}>
+            <Grid item xs={12} sm={12} md={12} lg={12}>
               <TextInput
                 helperText={false}
                 source="venue.name"
@@ -154,7 +154,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} sm={12} md={6} lg={6}>
+            <Grid item xs={12} sm={12} md={6} lg={6}>
               <TextInput
                 helperText={false}
                 source="venue.street"
@@ -162,7 +162,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} sm={12} md={6} lg={6}>
+            <Grid item xs={12} sm={12} md={6} lg={6}>
               <TextInput
                 helperText={false}
                 source="venue.city"
@@ -170,7 +170,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} sm={12} md={6} lg={6}>
+            <Grid item xs={12} sm={12} md={6} lg={6}>
               <SelectInput
                 helperText={false}
                 source="venue.state"
@@ -179,7 +179,7 @@ const ConferenceFormFields = () => {
                 choices={StateChoices}
               />
             </Grid>
-            <Grid xs={12} sm={12} md={6} lg={6}>
+            <Grid item xs={12} sm={12} md={6} lg={6}>
               <TextInput
                 helperText={false}
                 source="venue.zip"
@@ -192,7 +192,7 @@ const ConferenceFormFields = () => {
         </Card>
       </Grid>
 
-      <Grid xs={12}
+      <Grid item xs={12}
         md={6}
         sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
         alignSelf={"stretch"}>
@@ -202,7 +202,7 @@ const ConferenceFormFields = () => {
           <Typography variant="body1">Enter conference dates below.</Typography>
           <Divider />
           <Grid container spacing={2}>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <DateInput
                 helperText={false}
                 source="start_date"
@@ -210,7 +210,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <DateInput
                 helperText={false}
                 source="end_date"
@@ -218,7 +218,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <DateInput
                 helperText={false}
                 source="registration_start"
@@ -226,7 +226,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <DateInput
                 helperText={false}
                 source="registration_end"
@@ -234,7 +234,7 @@ const ConferenceFormFields = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <DateInput
                 helperText={false}
                 source="online_registration_end"
@@ -282,7 +282,7 @@ const ConferenceFormFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Settings</Typography>
           <Divider />
-          <Grid xs={12} sm={12} md={12} lg={12}>
+          <Grid item xs={12} sm={12} md={12} lg={12}>
             <TextInput
               helperText={
                 "Recipient Email for Confenrence Manager Applications"

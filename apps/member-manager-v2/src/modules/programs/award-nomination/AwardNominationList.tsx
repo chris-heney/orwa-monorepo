@@ -137,7 +137,7 @@ const AwardNominationList = ({ filter = {} }: AwardNominationListProps) => {
             backgroundColor: "#555",
           },
           "&::-webkit-scrollbar-corner": {
-            backgroundColor: "#f1f1f1",
+            backgroundColor: "background.default",
           },
         }}>
         <DatagridConfigurable
@@ -157,8 +157,8 @@ const AwardNominationList = ({ filter = {} }: AwardNominationListProps) => {
               padding: "4px 8px",
               fontWeight: "bold",
               fontSize: "0.9rem",
-              color: "rgba(0, 0, 0, 0.54)",
-              backgroundColor: "#f5f5f5",
+              color: "text.secondary",
+              backgroundColor: "background.default",
               whiteSpace: "nowrap",
               maxWidth: "200px",
             },

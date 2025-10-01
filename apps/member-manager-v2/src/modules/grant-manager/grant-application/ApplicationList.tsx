@@ -145,6 +145,9 @@ const GrantApplicationList = () => {
         perPage={50}
         pagination={<CustomPagination />}
         sx={{
+          '& .RaList-noActions': {
+            mt: '0',
+          },
           ".RaList-actions": {
             display: "flex",
             justifyContent: "flex-start",

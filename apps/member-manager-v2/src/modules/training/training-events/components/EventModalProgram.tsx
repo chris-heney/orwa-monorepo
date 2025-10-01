@@ -34,10 +34,10 @@ const ModalProgram: React.FC<ModalContentProps> = ({ setIsModalOpen }) => {
         <Create resource="programs" component={'div'} redirect={false}>
           <SimpleForm resource="programs" onSubmit={postSave} >
             <Grid container spacing={2}>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <TextInput source="name" label="Name" fullWidth helperText={false} />
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <TextInput source="descriptoon" label="Description"  fullWidth helperText={false} />
               </Grid>
             </Grid>

@@ -5,12 +5,12 @@ import {
   Grid,
   Typography,
   LinearProgress,
-  Paper,
   List,
   ListItem,
   ListItemText,
   Chip,
   Avatar,
+  useTheme,
 } from '@mui/material';
 import {
   PieChart,
@@ -22,13 +22,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from 'recharts';
 import { useGetList } from 'react-admin';
 import { formatDate } from '../../../../helpers/dateFormatter';
+import getContrastColor from 'src/modules/_helpers/getContrastColor';
 
 const ScholarshipSummary = () => {
+  const theme = useTheme();
   const { data: applications, isLoading } = useGetList('scholarship-applications', {
     pagination: { page: 1, perPage: 1000 },
     sort: { field: 'submission_date', order: 'DESC' },
@@ -50,12 +51,21 @@ const ScholarshipSummary = () => {
     value,
   }));
 
-  const COLORS = {
-    Draft: '#9e9e9e',
-    Submitted: '#2196f3',
-    'Under Review': '#ff9800',
-    Approved: '#4caf50',
-    Denied: '#f44336',
+  const getStatusColor = (status: string, theme: any) => {
+    switch (status) {
+      case 'Draft':
+        return theme.palette.grey[500];
+      case 'Submitted':
+        return theme.palette.primary.main;
+      case 'Under Review':
+        return theme.palette.warning.main;
+      case 'Approved':
+        return theme.palette.success.main;
+      case 'Denied':
+        return theme.palette.error.main;
+      default:
+        return theme.palette.grey[500];
+    }
   };
 
   // Education type distribution
@@ -82,6 +92,17 @@ const ScholarshipSummary = () => {
     { range: '3.0-3.5', min: 3.0, max: 3.5 },
     { range: '3.5-4.0', min: 3.5, max: 4.0 },
   ];
+
+
+  const COLORS = {
+    Draft: '#9e9e9e',
+    Submitted: '#2196f3',
+    'Under Review': '#ff9800',
+    Winner: '#4caf50',
+    'Runner Up': '#8bc34a',
+    'Not Selected': '#f44336',
+  };
+
 
   const gpaData = gpaRanges.map(range => ({
     name: range.range,
@@ -162,11 +183,11 @@ const ScholarshipSummary = () => {
                 labelLine={false}
                 label={({ name, value }) => `${name}: ${value}`}
                 outerRadius={80}
-                fill="#8884d8"
+                fill={theme.palette.primary.main}
                 dataKey="value"
               >
                 {statusData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[entry.name as keyof typeof COLORS]} />
+                  <Cell key={`cell-${index}`} fill={getStatusColor(entry.name, theme)} />
                 ))}
               </Pie>
               <Tooltip />
@@ -187,7 +208,7 @@ const ScholarshipSummary = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="count" fill="#2196f3" />
+              <Bar dataKey="count" fill={theme.palette.primary.main} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -205,7 +226,7 @@ const ScholarshipSummary = () => {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Bar dataKey="count" fill="#4caf50" />
+              <Bar dataKey="count" fill={theme.palette.success.main} />
             </BarChart>
           </ResponsiveContainer>
         </Card>
@@ -240,8 +261,8 @@ const ScholarshipSummary = () => {
                   label={app.application_status}
                   size="small"
                   sx={{
-                    backgroundColor: COLORS[app.application_status as keyof typeof COLORS],
-                    color: 'white',
+                    backgroundColor: COLORS[app.application_status],
+                    color: getContrastColor(COLORS[app.application_status]),
                   }}
                 />
               </ListItem>

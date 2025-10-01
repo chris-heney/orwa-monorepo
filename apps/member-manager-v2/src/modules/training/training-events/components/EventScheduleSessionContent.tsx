@@ -26,7 +26,7 @@ const EventScheduleSessionContent = ({block ,blockIndex, blocks , sessions, topi
 
             const topic = topics?.find((t: ITrainingTopic) => t.id === session.topic)
             return (
-              <Grid xs={12}
+              <Grid item xs={12}
                 sm={6}
                 md={6}
                 lg={6}

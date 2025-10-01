@@ -21,7 +21,12 @@ const StaffList = ({title = 'Staff'} : StaffListProps) => {
       exporter={false}
       filter={staffFilters || {}}
       filterDefaultValues={staffFilters || {}}
-      component="div">
+      component="div"
+      sx={{
+        '& .RaList-noActions': {
+          mt: '0',
+        },
+      }}>
       <StaffListCardGrid />
     </List>
   )

@@ -37,10 +37,10 @@ const InstructorsCard = () => {
         width: '100%',
         position: 'relative',
         mb: 2,
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+        boxShadow: 3,
         borderRadius: '15px',
-        backgroundColor: '#1a1a1a', // Dark background color
-        color: '#ffffff', // Text color
+        backgroundColor: 'background.paper',
+        color: 'text.primary',
       }}
     >
       <Typography
@@ -50,7 +50,8 @@ const InstructorsCard = () => {
           position: 'absolute',
           top: -10,
           right: -3,
-          backgroundColor: '#333333', // Dark gray background color
+          backgroundColor: 'primary.main',
+          color: 'primary.contrastText',
           padding: '10px',
           borderRadius: '50%',
           width: '50px',
@@ -74,7 +75,7 @@ const InstructorsCard = () => {
           alignItems: 'center',
         }}
       >
-        <InstructorIcon sx={{ fontSize: 30, marginRight: '8px', color: '#cccccc' }} />
+        <InstructorIcon sx={{ fontSize: 30, marginRight: '8px' }} />
         <Typography variant="h5">Training Instructors</Typography>
       </Box>
 
@@ -99,7 +100,8 @@ const InstructorsCard = () => {
                     height: 60,
                     mr: 2,
                     transition: 'transform 0.3s ease-in-out',
-                    border: '2px solid #cccccc',
+                    border: '2px solid',
+                    borderColor: 'divider',
                     cursor: 'pointer',
                     '&:hover': {
                       transform: 'scale(1.2)',
