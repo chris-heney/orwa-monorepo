@@ -3,7 +3,7 @@ import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
 import Sunburst from "highcharts/modules/sunburst";
 import HCDrilldown from "highcharts/modules/drilldown";
-import {Box, Grid, Typography} from "@mui/material";
+import {Box, Grid, Typography, useTheme} from "@mui/material";
 import { formatNumber } from "../../../../helpers/Formators";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
 import { IGrant, IGrantPayout } from "./GrantTypes";
@@ -14,8 +14,8 @@ import { useGrantContext } from "../../GrantContextProvider";
 dayjs.extend(isSameOrAfter);
 
 // Initialize Highcharts modules
-if (typeof Sunburst === "function") Sunburst(Highcharts);
-if (typeof HCDrilldown === "function") HCDrilldown(Highcharts);
+if (typeof Sunburst === "function") (Sunburst as any)(Highcharts);
+if (typeof HCDrilldown === "function") (HCDrilldown as any)(Highcharts);
 
 interface IWidgetFundAllocationProps {
   applications: IGrantApplication[];
@@ -39,6 +39,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
   fy2AdminFundsRemaining,
 }) => {
   const [selectedNode, setSelectedNode] = useState<string>("root");
+  const theme = useTheme();
 
   const { to, from, fiscalYearEnd, fiscalYearStart } = useGrantContext();
 
@@ -163,28 +164,28 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
       {
         id: "root",
         name: "Funding",
-        color: "#4CAF50",
+        color: theme.palette.success.main,
         value: rootFunding,
       },
       {
         id: "funding",
         name: "Funds Available",
         parent: "root",
-        color: "#077200",
+        color: theme.palette.success.dark,
         value: totalRootFunding,
       },
       {
         id: "admin",
         name: "Admin Funding",
         parent: "root",
-        color: "#673AB7",
+        color: theme.palette.secondary.main,
         value: totalAdminFunding,
       },
       {
         id: "requested",
         name: "Requested Grant Funds",
         parent: "funding",
-        color: "#219300",
+        color: theme.palette.success.light,
         value: totalRequested,
       },
      
@@ -192,55 +193,55 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
         id: "approved",
         name: "Funds Approved",
         parent: "requested",
-        color: "#2196F3",
+        color: theme.palette.primary.main,
         value: approvedFunds,
       },
       {
         id: "applied_not_approved",
         name: "Awaiting Approval",
         parent: "requested",
-        color: "#f1fc01",
+        color: theme.palette.warning.main,
         value: totalRequested - approvedFunds,
       },
       {
         name: "Funds Still Available",
         parent: "funding",
-        color: "#e91c00",
+        color: theme.palette.error.main,
         value: totalRootFunding - approvedFunds,
       },
       {
         id: "disbursed",
         name: "Funds Disbursed",
         parent: "approved",
-        color: "#FF5252",
+        color: theme.palette.error.light,
         value: totalAwardedPayouts,
       },
       {
         id: "undistributed",
         name: "Undistributed Funds",
         parent: "approved",
-        color: "#ff8914",
+        color: theme.palette.warning.dark,
         value: approvedFunds - totalAwardedPayouts,
       },
       {
         id: "admin_disbursed",
         name: "Admin Funds Disbursed",
         parent: "admin",
-        color: "#9C27B0",
+        color: theme.palette.secondary.dark,
         value: Math.round(totalAdminPayouts),
       },
       {
         id: "admin_available",
         name: "Admin Funds Available",
         parent: "admin",
-        color: "#3F51B5",
+        color: theme.palette.secondary.light,
         value: Math.round(totalAdminFunding - totalAdminPayouts),
       },
       {
         id: "closeout",
         name: "Closeout Funds Remaining",
         parent: "root",
-        color: "#FF5252",
+        color: theme.palette.error.main,
         value: lastCloseoutBalance,
       },
     ],
@@ -257,6 +258,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
       fy1CloseoutBalance,
       fy1AdminFundsRemaining,
       fy2AdminFundsRemaining,
+      theme,
     ]
   );
 
@@ -293,7 +295,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
     () => ({
       chart: {
         type: "sunburst",
-        backgroundColor: "#333333",
+        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper,
         spacing: [10, 10, 10, 10],
       },
       title: {
@@ -302,7 +304,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
             ? `${dayjs(fiscalYearStart).get("year")} - ${dayjs(fiscalYearEnd).get("year")}`
             : "Totals"
         })`,
-        style: { color: "#FFFFFF", fontSize: "18px" },
+        style: { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "18px" },
       },
       series: [
         {
@@ -313,7 +315,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
           events: {
             click: (e: any) => e.point && handleNodeSelection(e.point.id),
           },
-          dataLabels: { format: "{point.name}", style: { color: "#FFFFFF" } },
+          dataLabels: { format: "{point.name}", style: { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary } },
         },
       ],
       tooltip: {
@@ -333,26 +335,27 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
           position: { align: "center", verticalAlign: "top", y: -30 },
           buttonTheme: {
             fill: "transparent",
-            style: { color: "#FFFFFF", fontWeight: "bold" },
+            style: { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontWeight: "bold" },
             states: {
-              hover: { fill: "transparent", style: { color: "#FFD700" } },
+              hover: { fill: "transparent", style: { color: theme.palette.warning.main } },
             },
           },
           showFullPath: false,
         },
       },
     }),
-    [chartData, from, to, lastCloseoutBalance]
+    [chartData, from, to, lastCloseoutBalance, theme]
   );
 
   return (
     <Box
       sx={{
-        backgroundColor: "#333333",
+        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper,
         px: 2,
         py: 1,
         borderRadius: "10px",
-        color: "#FFFFFF",
+        color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+        border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.divider}` : 'none',
       }}
     >
       <HighchartsReact highcharts={Highcharts} options={chartOptions} />
@@ -365,7 +368,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
                 borderTop: `4px solid ${metric.color}`,
               }}
             >
-              <Typography fontSize="0.9rem" sx={{ color: "#FFFFFF" }}>
+              <Typography fontSize="0.9rem" sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>
                 {metric.name}
               </Typography>
               <Typography

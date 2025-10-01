@@ -8,6 +8,7 @@ import {
   Typography,
   Paper,
   IconButton,
+  useTheme,
 } from "@mui/material";
 import { useRecordContext } from "react-admin";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -17,6 +18,7 @@ import { IAwardNomination } from "../AwardNominationTypes";
 import { formatDate } from "../../../../helpers/dateFormatter";
 import { formatNumber } from "../../../../helpers/Formators";
 import getContrastColor from "../../../_helpers/getContrastColor";
+
 
 const getStatusColor = (status: string, theme: any) => {
   switch (status) {
@@ -56,12 +58,12 @@ const FileDisplay = ({ file, label }: { file: any; label: string }) => {
   if (!file) return null;
 
   const handleView = () => {
-    window.open(`${import.meta.env.VITE_API_ENDPOINT}${file.url}`, "_blank");
+    window.open(file.url, "_blank");
   };
 
   const handleDownload = async () => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}${file.url}`);
+      const response = await fetch(file.url);
       const blob = await response.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -96,7 +98,7 @@ const FileDisplay = ({ file, label }: { file: any; label: string }) => {
 
 const AwardNominationDetails = () => {
   const record = useRecordContext<IAwardNomination>();
-
+  const theme = useTheme();
   if (!record) return null;
 
   return (
@@ -107,8 +109,8 @@ const AwardNominationDetails = () => {
           <Chip
             label={record.nomination_status}
             sx={{
-              backgroundColor: statusColors[record.nomination_status] || '#9e9e9e',
-              color: getContrastColor(statusColors[record.nomination_status] || '#9e9e9e'),
+              backgroundColor: getStatusColor(record.nomination_status, theme) || '#9e9e9e',
+              color: getContrastColor(getStatusColor(record.nomination_status, theme) || '#9e9e9e'),
               fontWeight: 'bold',
               fontSize: '1rem',
               padding: '20px 10px',
@@ -117,8 +119,8 @@ const AwardNominationDetails = () => {
           <Chip
             label={record.award_type}
             sx={{
-              backgroundColor: awardTypeColors[record.award_type] || '#757575',
-              color: '#fff',
+              backgroundColor: getAwardTypeColor(record.award_type, theme) || '#757575',
+              color: getContrastColor(getAwardTypeColor(record.award_type, theme) || '#757575'),
               fontWeight: 'bold',
               fontSize: '0.9rem',
               padding: '18px 8px',

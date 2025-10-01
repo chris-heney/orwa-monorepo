@@ -30,7 +30,7 @@ const ActivityFeed = ({ entity = '', entity_id = 0, title = '', sx, admin = fals
 
 
   return (
-      <Card sx={{ ...sx, width: '100%' }}>
+      <Card sx={{ ...sx, width: '100%', borderRadius: 0 }}>
         <ActivityFeedHeader sx={headerSx} variant={variant} admin={admin} setDisplaySearch={setDisplaySearch} />
         <InfiniteList
           sx={{ maxHeight: "800px", overflowY: 'scroll', ...listSx }} 

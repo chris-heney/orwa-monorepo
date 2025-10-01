@@ -113,11 +113,7 @@ const GrantDashboard = () => {
     <Box
       sx={{
         display: "flex",
-        flexDirection: isSmall ? "column" : "row",
-        maxWidth:
-          isActivitySidebarOpen || isEmailSidebarOpen || isFilterSidebarOpen
-            ? "90vw"
-            : "96vw",
+        flexDirection: isSmall ? "column" : "row", 
       }}
     >
       <Box sx={{ flexGrow: 1 }}>

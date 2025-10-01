@@ -22,7 +22,7 @@ const FormStepper = ({ stepIndex, setStepIndex }: FormStepperProps) => {
                         <Step key={`step-index-${index}`}>
                             <StepButton
                                 id={`step-index-${index}`}
-                                onAbort={() => setStepIndex(index)}
+                                onClick={() => setStepIndex(index)}
                                 sx={{
                                     p: 2,
                                     pt: 2,

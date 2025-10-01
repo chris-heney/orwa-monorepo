@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Typography, IconButton } from '@mui/material'
+import { Box, Typography, IconButton, useTheme } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 
 interface ActivityFeedHeaderProps {
@@ -10,13 +10,16 @@ interface ActivityFeedHeaderProps {
 }
 
 const ActivityFeedHeader = ({ setDisplaySearch, admin = false, sx, variant }: ActivityFeedHeaderProps) => {
+
+  const theme = useTheme();
+
   return (
     <Box
       sx={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        backgroundColor: "background.default",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
         px: 1,
       }}
     >

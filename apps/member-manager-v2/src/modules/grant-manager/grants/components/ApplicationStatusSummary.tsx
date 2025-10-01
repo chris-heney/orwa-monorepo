@@ -7,6 +7,7 @@ import {
   Card,
   Divider,
   Typography,
+  useTheme,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ResponsiveListItem from "../../../_components/ResponsiveListItem";
@@ -47,7 +48,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
   to,
 }) => {
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
-  const theme = { palette: { grey: { 900: "#333333" } } }; // Example theme setup
+  const theme = useTheme();
 
   const {
     applicationsApproved,
@@ -98,17 +99,18 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
   return (
     <Card
       sx={{
-        backgroundColor: theme.palette.grey[900],
-        color: "white",
+        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper,
+        color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
         borderRadius: 2,
         overflow: "hidden",
+        border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.divider}` : 'none',
       }}
     >
       <Typography variant="h6" fontWeight="bold" p={2}>
         Applications {from && to ? `(${from.year()} - ${to.year()})` : "Totals"}
       </Typography>
 
-      <Divider sx={{ bgcolor: "rgba(255,255,255,0.12)" }} />
+      <Divider sx={{ bgcolor: theme.palette.mode === 'dark' ? "rgba(255,255,255,0.12)" : theme.palette.divider }} />
 
       <Box component="ul" sx={{ p: 0, m: 0, listStyle: "none" }}>
         <ResponsiveListItem
@@ -136,8 +138,8 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
         >
           <AccordionSummary
             sx={{
-              backgroundColor: "#333333",
-              color: "white",
+              backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper,
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
               px: 0,
               " & > .MuiAccordionSummary-content": {
                 my: 0,
@@ -148,7 +150,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
                 left: 10,
               },
             }}
-            expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+            expandIcon={<ExpandMoreIcon sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }} />}
           >
             {" "}
             <ResponsiveListItem
@@ -159,7 +161,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
             />
           </AccordionSummary>
           <AccordionDetails
-            sx={{ p: 0, mt: 1, backgroundColor: "#333333", color: "white" }}
+            sx={{ p: 0, mt: 1, backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper, color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}
           >
             {STATUS_GROUPS.approved.map((status) => (
               <ResponsiveListItem
@@ -181,8 +183,8 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
         >
           <AccordionSummary
             sx={{
-              backgroundColor: "#333333",
-              color: "white",
+              backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper,
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
               px: 0,
               " & > .MuiAccordionSummary-content": {
                 my: 0,
@@ -193,7 +195,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
                 left: 10,
               },
             }}
-            expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+            expandIcon={<ExpandMoreIcon sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }} />}
           >
             <ResponsiveListItem
               label="Unable to Approve"
@@ -203,7 +205,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
             />
           </AccordionSummary>
           <AccordionDetails
-            sx={{ p: 0, mt: 1, backgroundColor: "#333333", color: "white" }}
+            sx={{ p: 0, mt: 1, backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper, color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}
           >
             {STATUS_GROUPS.unapproved.map((status) => (
               <ResponsiveListItem

@@ -1,4 +1,4 @@
-import { Box, Card, SvgIconTypeMap, Typography } from '@mui/material'
+import { Box, Card, SvgIconTypeMap, Typography, useTheme } from '@mui/material'
 import { OverridableComponent } from '@mui/material/OverridableComponent'
 import React from 'react'
 
@@ -9,17 +9,19 @@ interface StatWidgetProps {
 }
 
 const DateStatusWidget = ({ heading, subheading, WidgetIcon }: StatWidgetProps) => {
+  const theme = useTheme();
+  
   return (
     <Card
       sx={{
-        background: 'linear-gradient(to right, #3498db, #6bb9f0)',
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.light} 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: 2,
         borderRadius: '16px',
-        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-        color: 'white',
+        boxShadow: theme.palette.mode === 'dark' ? '0px 4px 8px rgba(0, 0, 0, 0.3)' : '0px 4px 8px rgba(0, 0, 0, 0.1)',
+        color: theme.palette.common.white,
       }}
     >
       <Box
@@ -33,7 +35,7 @@ const DateStatusWidget = ({ heading, subheading, WidgetIcon }: StatWidgetProps) 
           justifyContent: 'center',
         }}
       >
-        <WidgetIcon sx={{ color: '#fff', fontSize: 32 }} />
+        <WidgetIcon sx={{ color: theme.palette.common.white, fontSize: 32 }} />
       </Box>
       <Box sx={{ flex: 1 }}>
         <Typography variant='h6' sx={{ mb: -1 }}>{heading}</Typography>

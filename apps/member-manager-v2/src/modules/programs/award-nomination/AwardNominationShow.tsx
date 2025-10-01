@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShowBase, Title, useRecordContext } from "react-admin";
+import { ShowBase, Title } from "react-admin";
 import { Box, Card, Grid, IconButton, Tooltip } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
@@ -28,7 +28,7 @@ const AwardNominationShow = () => {
             <Card sx={{ borderRadius: 0 }}>
               <Title title="Award Nomination Details" />
               <CustomShowHeader
-                displayField={(record: any) => 
+                displayField={(record: IAwardNomination) => 
                   `${record?.nominee_name} - ${record?.award_type}`
                 }
                 redirectTo="/award-nominations"

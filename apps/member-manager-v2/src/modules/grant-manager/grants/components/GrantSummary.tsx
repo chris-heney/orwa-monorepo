@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import {Box, Grid} from "@mui/material";
+import {Box, Grid, useTheme} from "@mui/material";
 import {
   Loading,
   useDataProvider,
@@ -37,6 +37,8 @@ const GrantSummary = () => {
   const [fY1LeftoverFunds, setFY1LeftoverFunds] = React.useState(0);
   const [fy1AdminFundsRemaining, setFY1AdminFundsRemaining] = React.useState(0);
   const [fy2AdminFundsRemaining, setFY2AdminFundsRemaining] = React.useState(0);
+
+  const theme = useTheme();
 
   // Fetch all payouts without filtering by date
   const { data: allPayoutsData, isLoading: payoutsLoading } = useGetList(
@@ -284,7 +286,7 @@ const GrantSummary = () => {
         <Grid item xs={12} md={5}>
           <Box
             component="img"
-            sx={{ height: 250, mx: "auto", flexGrow: 1, display: "block" }}
+            sx={{ height: 250, mx: "auto", flexGrow: 1, display: "block", filter: theme.palette.mode === 'dark' ? 'invert(1) hue-rotate(180deg)' : 'none' }}
             src={"rig-logo.webp"}
             alt="Grant Manager Logo"
             // allow to set false and true

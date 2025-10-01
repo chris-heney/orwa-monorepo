@@ -18,6 +18,7 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import dayjs from "dayjs";
 import { IGrantPayout } from "./GrantTypes";
@@ -60,6 +61,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
   payouts,
   setIsModalOpen,
 }) => {
+  const theme = useTheme();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const refresh = useRefresh(); // Add refresh hook to reload data
@@ -151,7 +153,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
 
   const sortedApplicationData = useMemo(() => {
     return [...applicationData].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: string | number | boolean, bValue: string | number | boolean;
 
       switch (sortField) {
         case "date":
@@ -200,7 +202,11 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
         return sortOrder === "asc" ? (aValue ? 1 : -1) : aValue ? -1 : 1;
       }
       // Handle numerical comparison
-      return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortOrder === "asc" ? aValue - bValue : bValue - aValue;
+      }
+      // Fallback for other types
+      return 0;
     });
   }, [applicationData, sortField, sortOrder, amountDisplay]);
 
@@ -322,10 +328,11 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
   return (
     <Box
       sx={{
-        backgroundColor: "#333333",
+        backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[900] : theme.palette.background.paper,
         p: 2,
         borderRadius: "10px",
-        color: "#FFFFFF",
+        color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+        border: theme.palette.mode === 'light' ? `1px solid ${theme.palette.divider}` : 'none',
       }}
     >
       {/* Applications Table */}
@@ -336,22 +343,22 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
           alignItems: "center",
         }}
       >
-        <Typography variant="h6" sx={{ color: "#FFFFFF", fontSize: "1.1rem" }}>
+        <Typography variant="h6" sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "1.1rem" }}>
           Applications Breakdown
         </Typography>
         <div style={{ display: "flex", gap: "1rem" }}>
           <Button
             variant="contained"
             onClick={() => setShowCalculations(!showCalculations)}
-            sx={{ backgroundColor: "#4CAF50", color: "#FFFFFF" }}
+            sx={{ backgroundColor: theme.palette.success.main, color: theme.palette.common.white }}
           >
             {showCalculations ? "Hide Summary" : "Show Summary"}
           </Button>
           <Tooltip title="How are applications filtered?">
             <IconButton
               sx={{
-                color: "#FFFFFF",
-                "&:hover": { color: "grey" },
+                color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                "&:hover": { color: theme.palette.grey[400] },
               }}
               onClick={() => setIsModalOpen(true)}
             >
@@ -366,20 +373,20 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
           placeholder="Search applications..."
           value={searchApplications}
           onChange={(e) => setSearchApplications(e.target.value)}
-          sx={{ backgroundColor: "#424242", borderRadius: "4px" }}
-          InputProps={{ style: { color: "#FFFFFF" } }}
+          sx={{ backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default, borderRadius: "4px" }}
+          InputProps={{ style: { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary } }}
         />
 
         <FormControl fullWidth sx={{ minWidth: 200 }}>
-          <InputLabel sx={{ color: "#fff" }}>Filter by Status</InputLabel>
+          <InputLabel sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>Filter by Status</InputLabel>
           <Select
             multiple
             value={selectedStatuses}
             onChange={(e) => setSelectedStatuses(e.target.value as string[])}
             sx={{
-              backgroundColor: "#424242",
-              color: "#FFFFFF",
-              "& .MuiSvgIcon-root": { color: "white" },
+              backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+              "& .MuiSvgIcon-root": { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary },
             }}
           >
             {applicationStatuses.map((status) => (
@@ -392,8 +399,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
         <Tooltip title="Export Applications">
           <IconButton
             sx={{
-              color: "#FFFFFF",
-              "&:hover": { color: "grey" },
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+              "&:hover": { color: theme.palette.grey[400] },
             }}
             onClick={() =>
               exportApplications(cumulativeApplicationData, amountDisplay)
@@ -407,7 +414,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
       <TableContainer
         component={Paper}
         sx={{
-          backgroundColor: "#424242",
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
           maxHeight: "400px",
           overflowX: "auto",
           mb: 4,
@@ -429,12 +436,12 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
                 <TableCell
                   key={field}
                   sx={{
-                    color: "#FFFFFF",
-                    backgroundColor: "#424242",
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                    backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
                     fontSize: "0.9rem",
                     padding: "8px",
                     cursor: "pointer",
-                    "&:hover": { backgroundColor: "#575757" },
+                    "&:hover": { backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[700] : theme.palette.action.hover },
                   }}
                   onClick={
                     field === "amount"
@@ -465,18 +472,18 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
             {cumulativeApplicationData.map((row, index) => (
               <TableRow key={index}>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {dayjs(row.date).format("MM/DD/YYYY")}
                 </TableCell>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {row.id}
                 </TableCell>
                 <TableCell
                   sx={{
-                    color: "#FFFFFF",
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
                     fontSize: "0.85rem",
                     padding: "8px",
                     whiteSpace: "wrap",
@@ -487,7 +494,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
                 </TableCell>
                 <TableCell
                   sx={{
-                    color: "#FFFFFF",
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
                     fontSize: "0.85rem",
                     padding: "8px",
                     whiteSpace: "wrap",
@@ -497,13 +504,13 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
                   {row.name}
                 </TableCell>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {formatNumber(row.displayAmount)}
                 </TableCell>
                 <TableCell
                   sx={{
-                    color: "#FFFFFF",
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
                     fontSize: "0.85rem",
                     padding: "8px",
                     whiteSpace: "nowrap",
@@ -524,7 +531,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
                 <TableCell
                   align="center"
                   sx={{
-                    color: "#FFFFFF",
+                    color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
                     fontSize: "0.85rem",
                     padding: "8px",
                     ":hover": { cursor: "pointer" },
@@ -542,19 +549,19 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
       {showCalculations && (
         <Grid container spacing={2} mb={2}>
           <Grid item xs={12} md={6}>
-            <Box sx={{ backgroundColor: "#424242", p: 2, borderRadius: "4px" }}>
-              <Typography variant="subtitle1" sx={{ color: "#FFFFFF", mb: 1 }}>
+            <Box sx={{ backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default, p: 2, borderRadius: "4px" }}>
+              <Typography variant="subtitle1" sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, mb: 1 }}>
                 Applications
               </Typography>
-              <Typography sx={{ color: "#FFFFFF" }}>
+              <Typography sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>
                 Total Requested:{" "}
                 {formatNumber(applicationCalculations.totalRequested)}
               </Typography>
-              <Typography sx={{ color: "#FFFFFF" }}>
+              <Typography sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>
                 Funds Approved:{" "}
                 {formatNumber(applicationCalculations.totalApproved)}
               </Typography>
-              <Typography sx={{ color: "#FFFFFF" }}>
+              <Typography sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>
                 Awaiting Approval:{" "}
                 {formatNumber(applicationCalculations.awaitingApproval)}
               </Typography>
@@ -566,7 +573,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
       {/* Payouts Table */}
       <Typography
         variant="h6"
-        sx={{ mb: 2, color: "#FFFFFF", fontSize: "1.1rem" }}
+        sx={{ mb: 2, color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "1.1rem" }}
       >
         Payouts Breakdown
       </Typography>
@@ -576,19 +583,19 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
           placeholder="Search payouts..."
           value={searchPayouts}
           onChange={(e) => setSearchPayouts(e.target.value)}
-          sx={{ backgroundColor: "#424242", borderRadius: "4px" }}
-          InputProps={{ style: { color: "#FFFFFF" } }}
+          sx={{ backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default, borderRadius: "4px" }}
+          InputProps={{ style: { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary } }}
         />
 
         <FormControl fullWidth sx={{ minWidth: 200 }}>
-          <InputLabel sx={{ color: "#fff" }}>Filter by Type</InputLabel>
+          <InputLabel sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>Filter by Type</InputLabel>
           <Select
             value={selectedPayoutType}
             onChange={(e) => setSelectedPayoutType(e.target.value as string)}
             sx={{
-              backgroundColor: "#424242",
-              color: "#FFFFFF",
-              "& .MuiSvgIcon-root": { color: "white" },
+              backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+              "& .MuiSvgIcon-root": { color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary },
             }}
           >
             <MenuItem value="all">All Types</MenuItem>
@@ -599,8 +606,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
         <Tooltip title="Export Payouts">
           <IconButton
             sx={{
-              color: "#FFFFFF",
-              "&:hover": { color: "grey" },
+              color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+              "&:hover": { color: theme.palette.grey[400] },
             }}
             onClick={() => exportPayouts(cumulativePayoutData)}
           >
@@ -611,7 +618,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
       <TableContainer
         component={Paper}
         sx={{
-          backgroundColor: "#424242",
+          backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
           maxHeight: "400px",
           overflowX: "auto",
         }}
@@ -621,8 +628,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
             <TableRow>
               <TableCell
                 sx={{
-                  color: "#FFFFFF",
-                  backgroundColor: "#424242",
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
                   fontSize: "0.9rem",
                   padding: "8px",
                 }}
@@ -631,8 +638,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#FFFFFF",
-                  backgroundColor: "#424242",
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
                   fontSize: "0.9rem",
                   padding: "8px",
                 }}
@@ -641,8 +648,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#FFFFFF",
-                  backgroundColor: "#424242",
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
                   fontSize: "0.9rem",
                   padding: "8px",
                 }}
@@ -651,8 +658,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#FFFFFF",
-                  backgroundColor: "#424242",
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
                   fontSize: "0.9rem",
                   padding: "8px",
                 }}
@@ -661,8 +668,8 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
               </TableCell>
               <TableCell
                 sx={{
-                  color: "#FFFFFF",
-                  backgroundColor: "#424242",
+                  color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary,
+                  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default,
                   fontSize: "0.9rem",
                   padding: "8px",
                 }}
@@ -675,27 +682,27 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
             {cumulativePayoutData.map((row, index) => (
               <TableRow key={index}>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {dayjs(row.date).format("MM/DD/YYYY")}
                 </TableCell>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {row.name}
                 </TableCell>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {formatNumber(row.amount)}
                 </TableCell>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {formatNumber(row.cumulativeAmount)}
                 </TableCell>
                 <TableCell
-                  sx={{ color: "#FFFFFF", fontSize: "0.85rem", padding: "8px" }}
+                  sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, fontSize: "0.85rem", padding: "8px" }}
                 >
                   {row.status}
                 </TableCell>
@@ -711,15 +718,15 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
       {showCalculations && (
         <Grid mt={2} container spacing={2}>
           <Grid item xs={12} md={6}>
-            <Box sx={{ backgroundColor: "#424242", p: 2, borderRadius: "4px" }}>
-              <Typography variant="subtitle1" sx={{ color: "#FFFFFF", mb: 1 }}>
+            <Box sx={{ backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.background.default, p: 2, borderRadius: "4px" }}>
+              <Typography variant="subtitle1" sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary, mb: 1 }}>
                 Payouts
               </Typography>
-              <Typography sx={{ color: "#FFFFFF" }}>
+              <Typography sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>
                 Funds Disbursed:{" "}
                 {formatNumber(payoutCalculations.totalDisbursed)}
               </Typography>
-              <Typography sx={{ color: "#FFFFFF" }}>
+              <Typography sx={{ color: theme.palette.mode === 'dark' ? theme.palette.common.white : theme.palette.text.primary }}>
                 Undistributed Funds:{" "}
                 {formatNumber(payoutCalculations.totalUndistributed)}
               </Typography>
