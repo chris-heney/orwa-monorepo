@@ -48,10 +48,16 @@ export interface IStrapiAttributes {
 
 export interface IStrapiRecord {
   id: number
-  attributes: IStrapiAttributes
-  meta: {
+  documentId?: string // Strapi v5 primary identifier
+  createdAt?: string
+  updatedAt?: string
+  publishedAt?: string
+  attributes?: IStrapiAttributes // Strapi v4 format (for backward compatibility)
+  meta?: {
     availableLocales: string[]
   }
+  // In Strapi v5, attributes are flattened directly into the record
+  [key: string]: any
 }
 
 export interface IStrapiRestError {

@@ -19,12 +19,10 @@ import {
   maxValue,
   maxLength,
 } from "react-admin";
-import { useFormContext } from "react-hook-form";
 import FileUploadField from "../../../_components/FileUploadField";
 
 const AwardFormFields = () => {
   const record = useRecordContext();
-  const form = useFormContext();
 
   const awardTypes = [
     { id: "Water/Wastewater System of the Year", name: "Water/Wastewater System of the Year" },

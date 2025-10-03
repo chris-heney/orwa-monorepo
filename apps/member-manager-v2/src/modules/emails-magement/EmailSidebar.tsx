@@ -7,14 +7,17 @@ import {
   Paper,
   Radio,
   RadioGroup,
+  IconButton,
 } from "@mui/material";
 import React from "react";
 import CustomHeader from "../_components/CustomHeader";
 import { RaRecord, useGetList, useNotify, useRecordContext } from "react-admin";
 import CustomTextInput from "../_components/CustomTextInput";
-import authProvider from "../../authProvider";
 import { formatNumber } from "../../helpers/Formators";
 import { createPayloadVariables, extractFieldsFromHTML } from "./Helper";
+import authProvider from "src/authProvider";
+import AddIcon from "@mui/icons-material/Add";
+import { useNavigate } from "react-router";
 
 const EmailSidebar = ({ module }: { module: string }) => {
   const [overrideTo, setOverrideTo] = React.useState("");
@@ -26,7 +29,8 @@ const EmailSidebar = ({ module }: { module: string }) => {
 
   const [emailIndex, setEmailIndex] = React.useState(0);
   const application = useRecordContext<RaRecord>();
-  const notify = useNotify();
+  const notify = useNotify(); 
+  const navigate = useNavigate();
 
   // 🔄 Replace placeholders dynamically from template fields
   const replaceVariables = (
@@ -238,7 +242,10 @@ const EmailSidebar = ({ module }: { module: string }) => {
         minWidth: 300,
       }}
     >
-      <CustomHeader title="Notifications" />
+      {/* // add a button to add a new email template redirect to email-management */}
+      <CustomHeader title="Notifications" Component={() => <IconButton onClick={() => navigate("/email-management")} >
+        <AddIcon />
+      </IconButton>}  />
       <Box sx={{ p: 2, overflowY: "scroll", maxHeight: "70vh" }}>
         <FormControl>
           <RadioGroup

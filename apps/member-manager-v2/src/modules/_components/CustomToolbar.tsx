@@ -8,7 +8,6 @@ interface CustomToolBarProps {
 }
 const CustomToolBar = ({ onEdit, redirect }: CustomToolBarProps) => {
   return (
-    <>
       <Card
         sx={{
           backgroundColor: "#f5f5f5",
@@ -29,7 +28,6 @@ const CustomToolBar = ({ onEdit, redirect }: CustomToolBarProps) => {
           </Grid>
         </Grid>
       </Card>
-    </>
   );
 };
 

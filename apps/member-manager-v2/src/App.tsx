@@ -68,7 +68,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import EventSettings from './modules/training/settings/EventSettings';
 import { strapiDataProvider } from 'ra-strapi';
 import { useCallback, useMemo } from 'react';
-import { CookieStore } from './helpers/ra-strapi-data-provider';
+import { CookieStore, StrapiRestDataProviderFactory } from './helpers/ra-strapi-data-provider';
 import { LoginPage } from './pages';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -106,15 +106,11 @@ const App = () => {
     }, []);
 
     // Memoize the dataProvider to prevent recreation on every render
-    const dataProvider = useMemo(
-        () =>
-            strapiDataProvider({
-                baseURL: `${import.meta.env.VITE_API_ENDPOINT}`,
-                httpClient: httpClient,
-            }),
-        [httpClient]
-    );
-
+    const dataProvider = new StrapiRestDataProviderFactory({
+        endpoint: `${import.meta.env.VITE_API_ENDPOINT}/api`,
+        type: "rest",
+      }).init();
+    
     return (
         <LocalizationProvider
             dateAdapter={AdapterDayjs}

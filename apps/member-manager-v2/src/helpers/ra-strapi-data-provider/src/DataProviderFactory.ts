@@ -167,42 +167,52 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    * @returns RaRecord
    */
   formatResponseRA = (record: IStrapiRecord): RaRecord => {
-    const raRecord: RaRecord = { id: record.id };
+    // In Strapi v5, use documentId as the primary ID, fall back to id for backward compatibility
+    const primaryId = (record as any).documentId || record.id;
+    const raRecord: RaRecord = { id: primaryId };
 
-    for (const key in record.attributes) {
+    // In Strapi v5, attributes are flattened, so we iterate over the record directly
+    // excluding the metadata fields
+    const { id, documentId, createdAt, updatedAt, publishedAt, ...fields } = record as any;
+    
+    for (const key in fields) {
+      const value = fields[key];
+      
       // Relationship or Image
-      if (typeof record.attributes[key] === "object") {
+      if (typeof value === "object" && value !== null) {
         // Handle Extracting URL from Image: NOTE: This worked for get ... but caused error on update.
-        // if (Array.isArray(record.attributes[key]?.data) && record.attributes[key]?.data[0]?.attributes?.mime) {
-        //   raRecord[key] = `${this.endpoint.replace(/\/api$/, '')}${record.attributes[key]?.data[0]?.attributes?.url}`
+        // if (Array.isArray(value?.data) && value?.data[0]?.attributes?.mime) {
+        //   raRecord[key] = `${this.endpoint.replace(/\/api$/, '')}${value?.data[0]?.attributes?.url}`
         //   continue
         // }
 
         // Handle Extracting ID from Single Type Relationship (or single component)
         // @note: The only difference between a single type relationship and a single component, is that
         // the single relationship will have an attributes object, and the single component will be flat.
-        if (record.attributes[key]?.data?.id) {
-          raRecord[key] = parseInt(record.attributes[key].data.id as string);
+        if (value?.data?.id) {
+          // In Strapi v5, use documentId if available, otherwise use id as string
+          raRecord[key] = value.data.documentId || value.data.id;
           continue;
         }
 
         // Handle Extracting IDs from Has Many Relationship
-        if (Array.isArray(record.attributes[key]?.data)) {
-          raRecord[key] = record.attributes[key].data.map(
-            (object: { id: Identifier }) => parseInt(object.id as string)
+        if (Array.isArray(value?.data)) {
+          raRecord[key] = value.data.map(
+            (object: { id: Identifier; documentId?: Identifier }) => 
+              object.documentId || object.id
           );
           continue;
         }
 
         // Handle Extracting ID from Repeatable Component
-        // if (Array.isArray(record.attributes[key])) {
-        //   raRecord[key] = record.attributes[key].map((object: {id: Identifier}) => parseInt(object.id as string))
+        // if (Array.isArray(value)) {
+        //   raRecord[key] = value.map((object: {id: Identifier}) => object.documentId || object.id)
         //   continue
         // }
       }
 
-      // All other fields
-      raRecord[key] = record.attributes[key];
+      // All other fields - in Strapi v5, fields are directly accessible
+      raRecord[key] = value;
     }
 
     return raRecord;
@@ -216,34 +226,42 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    * @returns
    */
   formatResponseRaw = (record: IStrapiRecord) => {
-    const { id } = record;
+    // In Strapi v5, use documentId as the primary ID, fall back to id for backward compatibility
+    const primaryId = (record as any).documentId || record.id;
 
     // Flatten the record
-    const jsonRecord: RaRecord = { id };
+    const jsonRecord: RaRecord = { id: primaryId };
 
-    for (const key in record.attributes) {
-      if (typeof record.attributes[key] !== "object") {
-        jsonRecord[key] = record.attributes[key];
+    // In Strapi v5, attributes are flattened, so we iterate over the record directly
+    // excluding the metadata fields
+    const { id, documentId, createdAt, updatedAt, publishedAt, ...fields } = record as any;
+
+    for (const key in fields) {
+      const value = fields[key];
+      
+      if (typeof value !== "object" || value === null) {
+        jsonRecord[key] = value;
         continue;
       }
 
       // data should have id and attributes
-      const { data } = record.attributes[key] || {};
+      const { data } = value || {};
       if (!data) continue;
 
       // Has Many Relationship:
       const isArray = Array.isArray(data);
 
       // Single Type Relationship:
-      const isObject =
-        typeof data?.attributes === "object"
-          ? Object.keys(data?.attributes).length > 0
-            ? true
-            : false
-          : false;
+      // In Strapi v5, attributes are flattened, so we check for the presence of fields
+      // other than the metadata fields (id, documentId, createdAt, updatedAt, publishedAt)
+      const isObject = data && typeof data === "object" && 
+        Object.keys(data).some(key => 
+          !['id', 'documentId', 'createdAt', 'updatedAt', 'publishedAt'].includes(key)
+        );
 
       if (!isArray && !isObject) {
-        jsonRecord[key] = data.id.toString();
+        // Use documentId if available, otherwise use id as string
+        jsonRecord[key] = (data.documentId || data.id).toString();
         continue;
       }
 
@@ -258,7 +276,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       }
 
       // ...this should never happen technically
-      jsonRecord[key] = data.id.toString();
+      jsonRecord[key] = (data.documentId || data.id).toString();
     }
 
     return jsonRecord;
@@ -875,9 +893,11 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         this.cache.invalidate(new RegExp(`^(getList|getMany|getManyReference):.*${resource}`));
 
         return this.executeRequest(requestKey, async () => {
-          const paramsData = { ...params.data };
           const uploadFieldNames = this.getUploadFieldNames(params.data);
           const formData = new FormData();
+          const sanitizedData = this.sanitizeRaRecordForStrapi(
+            params.data as RaRecord
+          );
           
           // Optimize file handling
           if (uploadFieldNames.length > 0) {
@@ -894,7 +914,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
             });
           }
 
-          formData.append("data", JSON.stringify(paramsData));
+          formData.append("data", JSON.stringify(sanitizedData));
 
           const options = {
             method: "POST",

@@ -7,7 +7,6 @@ import AwardFormFields from "./components/AwardFormFields";
 
 const EditAwardNomination = () => {
   return (
-    <Box sx={{ py: 2 }}>
       <EditBase title="Edit Award Nomination" redirect="show">
         <Card sx={{ borderRadius: 0 }}>
           <Title title="Award Nomination Edit" />
@@ -22,7 +21,6 @@ const EditAwardNomination = () => {
           </SimpleForm>
         </Card>
       </EditBase>
-    </Box>
   );
 };
 

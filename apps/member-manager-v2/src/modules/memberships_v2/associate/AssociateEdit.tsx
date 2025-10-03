@@ -7,12 +7,10 @@ import { Box } from "@mui/material";
 const EditAssociateForm = () => {
   return (
     <MembershipsContextProvider>
-      <Box sx={{ py: 2 }}>
       <EditBase hasShow={false} title="Associates" redirect={false}>
         <Title title="Memberships" />
         <AssociateForm />
       </EditBase>
-      </Box>
     </MembershipsContextProvider>
   );
 };
