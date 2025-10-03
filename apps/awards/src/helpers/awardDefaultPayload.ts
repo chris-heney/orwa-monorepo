@@ -26,7 +26,7 @@ export const awardDefaultPayload: IAwardNominationPayload = {
   
   // Nomination Details
   nomination_description: "",
-  award_type: 'Operator of the Year',
+  award_type: 'Water/Wastewater System of the Year',
   award_year: new Date().getFullYear(),
   
   // Documents

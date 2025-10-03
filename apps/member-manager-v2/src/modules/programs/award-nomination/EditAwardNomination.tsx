@@ -1,5 +1,5 @@
 import React from "react";
-import { EditBase, SimpleForm, Title } from "react-admin";
+import { EditBase, RaRecord, SimpleForm, Title } from "react-admin";
 import { Box, Card } from "@mui/material";
 import CustomFormHeader from "../../_components/CustomFormHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
@@ -12,10 +12,10 @@ const EditAwardNomination = () => {
         <Card sx={{ borderRadius: 0 }}>
           <Title title="Award Nomination Edit" />
           <CustomFormHeader
-            displayField={(record: any) => 
-              `${record?.nominee_name} - ${record?.award_type}`
-            }
-            redirectTo="/award-nominations"
+            display={(record: RaRecord) =>  {
+              return `${record?.nominee_name} - ${record?.award_type}`
+            }}
+            redirectTo="/award/dashboard"
           />
           <SimpleForm toolbar={<CustomToolBar />}>
             <AwardFormFields />

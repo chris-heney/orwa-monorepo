@@ -13,10 +13,15 @@ export const uploadApplicantPDF = async (
   try {
     // Generate the PDF Blob
     const pdfBlob = await generateScholarshipApplicationPDF(payload as ScholarshipApplicationWithId);
+    console.log("Generated PDF blob:", pdfBlob);
+    console.log("PDF blob size:", pdfBlob.byteLength);
 
-    // Create a File object from the Blob
+    // Create a File object from the Uint8Array
     const fileName = `${payload.applicant_first_name}_${payload.applicant_last_name}_scholarship_application.pdf`;
-    const file = new File([new Uint8Array(pdfBlob)], fileName, { type: "application/pdf" });
+    const file = new File([pdfBlob as BlobPart], fileName, { type: "application/pdf" });
+    console.log("Created file:", file);
+    console.log("File size:", file.size);
+    console.log("File type:", file.type);
 
     // Upload the file using the upload service
     const uploadedFile = await uploadService.uploadFile(file);

@@ -4,7 +4,7 @@ import { useFormSteps, useFormSubmittedContext } from "../../providers/AppContex
 import { useNotify } from "../../NotificationProvider";
 import { IAwardNominationPayload } from "../../types/types";
 import { processAndUploadFiles } from "../../helpers/processAndUploadFiles";
-import { uploadApplicantPDF } from "../../helpers/uploadApplicantPdf";
+// import { uploadApplicantPDF } from "../../helpers/uploadApplicantPdf";
 import { submitAwardNomination } from "../../data/API";
 import { clearSavedFormData } from "../../helpers/formPersistence";
 import { fileCache } from "../../helpers/fileCache";
@@ -52,16 +52,9 @@ const SimpleStepNavigation = () => {
           ...formPayload,
         }, notify);
 
-        // Generate the applicant PDF and upload it
-        const uploadedPDF = await uploadApplicantPDF(
-          processedPayload,
-          notify
-        );
-
         // Add the uploaded PDF id to the payload
         const finalPayload = {
           ...processedPayload,
-          nomination_pdf: uploadedPDF,        
         };
 
         // Submit the processed payload

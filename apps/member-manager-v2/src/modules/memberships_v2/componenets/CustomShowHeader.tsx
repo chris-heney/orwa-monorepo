@@ -1,12 +1,13 @@
 import React, { ReactNode } from 'react';
 import CustomHeader from '../../_components/CustomHeader';
-import { Button, EditButton, useRecordContext, useRedirect, useResourceContext } from 'react-admin';
+import { Button, EditButton, RaRecord, useRecordContext, useRedirect, useResourceContext } from 'react-admin';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import useCurrentUser from '../../_helpers/useCurrentUser';
 
 interface CustomShowHeaderProps {
   redirectTo?: string;
   displayField?: string;
+  display?: (record: RaRecord) => string;  // Function to generate display text from record
   hasEdit?: boolean;
   customActions?: ReactNode;  // Allow custom buttons to be injected
 }
@@ -14,13 +15,19 @@ interface CustomShowHeaderProps {
 const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
   redirectTo = '/membership-management',
   displayField = 'name',
+  display,
   hasEdit = true,
   customActions,
 }) => {
   const redirect = useRedirect();
   const resource = useResourceContext();
   const record = useRecordContext();
-  const title = record ? `${record[displayField]}` : `View ${resource.charAt(0).toUpperCase() + resource.slice(1)}`;
+  
+  // Use display function if provided, otherwise fall back to displayField
+  const title = record 
+    ? (display ? display(record) : `${record[displayField]}`)
+    : `View ${resource.charAt(0).toUpperCase() + resource.slice(1)}`;
+    
   const {role} = useCurrentUser();
 
   return (

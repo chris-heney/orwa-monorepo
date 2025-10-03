@@ -1,27 +1,27 @@
-import { useContext, useState } from "react";
-import { useFormContext } from "react-hook-form";
-import { FormSteps } from "../providers/AppContextProvider";
-import { useNotify } from "../NotificationProvider";
-import { useFormSubmittedContext } from "../providers/AppContextProvider";
-import { fileCache } from "../helpers/fileCache";
-import { clearSavedFormData } from "../helpers/formPersistence";
-import { submitApplication } from "../data/API";
-import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
-import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
-import { IScholarshipApplicationPayload } from "../types/types";
+import { useContext, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import { FormSteps } from '../providers/AppContextProvider';
+import { useNotify } from '../NotificationProvider';
+import { useFormSubmittedContext } from '../providers/AppContextProvider';
+import { fileCache } from '../helpers/fileCache';
+import { clearSavedFormData } from '../helpers/formPersistence';
+import { submitApplication } from '../data/API';
+import { uploadApplicantPDF } from '../helpers/uploadApplicantPdf';
+import { processAndUploadFiles } from '../helpers/processAndUploadFiles';
+import { IScholarshipApplicationPayload } from '../types/types';
 
 const SimpleStepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
   const { trigger, getValues, watch } = useFormContext();
   const { notify } = useNotify();
   const { setIsFormSubmitted } = useFormSubmittedContext();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleNext = async () => {
     // Trigger form validation for current step
     const isValid = await trigger();
-    
+
     if (isValid) {
       if (stepIndex < steps.length - 1) {
         setStepIndex(stepIndex + 1);
@@ -30,7 +30,7 @@ const SimpleStepNavigation = () => {
         handleSubmitPayload();
       }
     } else {
-      notify("Please fix the errors above before continuing.", "error");
+      notify('Please fix the errors above before continuing.', 'error');
     }
   };
 
@@ -49,52 +49,54 @@ const SimpleStepNavigation = () => {
 
       try {
         // Process the payload and upload files if necessary
-        const processedPayload = await processAndUploadFiles({
-          ...formPayload,
-          // id: applicationId.data,
-        }, notify);
 
         // Generate the applicant PDF and upload it
-        const uploadedPDF = await uploadApplicantPDF(
-          processedPayload,
+        const uploadedPDF = await uploadApplicantPDF(formPayload, notify);
+
+        // Process the payload and upload files if necessary
+        const processedPayload = await processAndUploadFiles(
+          {
+            ...formPayload,
+            // id: applicationId.data,
+          },
           notify
         );
 
         // Add the uploaded PDF id to the payload
         const finalPayload = {
           ...processedPayload,
-          applicant_pdf: uploadedPDF,        
+          applicant_pdf: uploadedPDF,
         };
 
         // Submit the processed payload
         const response = await submitApplication(finalPayload);
 
-        if (response && response.message === "success") {
+        if (response && response.message === 'success') {
           setIsFormSubmitted(true);
           setIsSubmitting(false); // Reset loading state
           clearSavedFormData(); // Clear saved form data on successful submission
-          
+
           // Clear file cache on successful submission
           try {
             await fileCache.clearCache();
           } catch (error) {
             console.warn('Failed to clear file cache:', error);
           }
-          
-          notify("Application submitted successfully!", "success");
+
+          notify('Application submitted successfully!', 'success');
         } else {
           setIsSubmitting(false);
           notify(
-            "Error submitting application. Please try again later.",
-            "error"
+            'Error submitting application. Please try again later.',
+            'error'
           );
         }
       } catch (error) {
-        console.error("Submission error:", error);
+        console.error('Submission error:', error);
         setIsSubmitting(false);
         notify(
-          "Error submitting application. Please try again later.",
-          "error"
+          'Error submitting application. Please try again later.',
+          'error'
         );
       }
     }
@@ -112,8 +114,8 @@ const SimpleStepNavigation = () => {
         disabled={isFirstStep}
         className={`w-full sm:w-auto px-8 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
           isFirstStep
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-white border-2 border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            : 'bg-white border-2 border-gray-300 text-gray-700 hover:border-gray-400 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
         }`}
       >
         ← Previous
@@ -129,7 +131,7 @@ const SimpleStepNavigation = () => {
             <div
               key={index}
               className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                index <= stepIndex ? "bg-blue-500" : "bg-gray-300"
+                index <= stepIndex ? 'bg-blue-500' : 'bg-gray-300'
               }`}
             />
           ))}
@@ -143,10 +145,10 @@ const SimpleStepNavigation = () => {
         disabled={isSubmitting}
         className={`w-full sm:w-auto px-8 py-3 rounded-lg text-sm font-semibold transition-all duration-200 ${
           isSubmitting
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
             : isLastStep
-            ? "bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg"
-            : "bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg"
+            ? 'bg-gradient-to-r from-green-600 to-green-700 text-white hover:from-green-700 hover:to-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 shadow-lg'
+            : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg'
         }`}
       >
         {isSubmitting ? (
@@ -155,9 +157,9 @@ const SimpleStepNavigation = () => {
             <span>Submitting...</span>
           </div>
         ) : isLastStep ? (
-          "Submit Application ✓"
+          'Submit Application ✓'
         ) : (
-          "Next →"
+          'Next →'
         )}
       </button>
     </div>

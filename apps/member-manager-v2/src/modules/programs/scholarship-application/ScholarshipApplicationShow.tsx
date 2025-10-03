@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ShowBase, Title, useRecordContext } from "react-admin";
+import { ShowBase, Title } from "react-admin";
 import { Box, Card, Grid, IconButton, Tooltip } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
@@ -33,10 +33,8 @@ const ScholarshipApplicationShow = () => {
             <Card sx={{ borderRadius: 0 }}>
               <Title title="Scholarship Application Details" />
               <CustomShowHeader
-                displayField={(record: any) => 
-                  `${record?.applicant_first_name} ${record?.applicant_last_name} - ${record?.school_name}`
-                }
-                redirectTo="/scholarship-applications"
+                display={(record) => `${record.applicant_first_name || ''} ${record.applicant_last_name || ''}`.trim() + " Scholarship Application"}
+                redirectTo="/scholarship/dashboard"
                 customActions={
                   <>
                     <Tooltip title="Open Notifications" placement="top">

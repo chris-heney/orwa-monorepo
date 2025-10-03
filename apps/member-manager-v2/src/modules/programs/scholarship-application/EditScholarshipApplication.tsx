@@ -1,5 +1,5 @@
 import React from "react";
-import { EditBase, SimpleForm, Title } from "react-admin";
+import { EditBase, RaRecord, SimpleForm, Title } from "react-admin";
 import { Box, Card } from "@mui/material";
 import CustomFormHeader from "../../_components/CustomFormHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
@@ -12,10 +12,10 @@ const EditScholarshipApplication = () => {
         <Card sx={{ borderRadius: 0 }}>
           <Title title="Scholarship Application Edit" />
           <CustomFormHeader
-            displayField={(record: any) => 
+            display={(record: RaRecord) => 
               `${record?.applicant_first_name} ${record?.applicant_last_name}`
             }
-            redirectTo="/scholarship-applications"
+            redirectTo="/scholarship/dashboard"
           />
           <SimpleForm toolbar={<CustomToolBar />}>
             <ScholarshipFormFields />

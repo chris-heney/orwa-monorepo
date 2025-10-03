@@ -28,10 +28,8 @@ const AwardNominationShow = () => {
             <Card sx={{ borderRadius: 0 }}>
               <Title title="Award Nomination Details" />
               <CustomShowHeader
-                displayField={(record: IAwardNomination) => 
-                  `${record?.nominee_name} - ${record?.award_type}`
-                }
-                redirectTo="/award-nominations"
+                display={(record) => `${record.applicant_first_name || ''} ${record.applicant_last_name || ''}`.trim() + " Award Nomination"}
+                redirectTo="/award/dashboard"
                 customActions={
                   <>
                     <Tooltip title="Open Notifications" placement="top">

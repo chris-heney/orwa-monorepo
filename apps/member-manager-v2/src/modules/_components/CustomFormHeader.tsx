@@ -2,6 +2,7 @@ import React, { ReactNode } from "react";
 import CustomHeader from "./CustomHeader";
 import {
   Button,
+  RaRecord,
   ShowButton,
   useRecordContext,
   useRedirect,
@@ -13,6 +14,7 @@ import { SxProps } from "@mui/material";
 interface CustomFormHeaderProps {
   redirectTo?: string;
   displayField?: string;
+  display?: (record: RaRecord) => string;
   hasShow?: boolean;
   customActions?: ReactNode; // Allow custom buttons to be injected
   sx?: SxProps;
@@ -21,6 +23,7 @@ interface CustomFormHeaderProps {
 const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
   redirectTo = "/membership-management",
   displayField = "name",
+  display,
   hasShow = true,
   customActions,
   sx,
@@ -29,7 +32,7 @@ const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
   const resource = useResourceContext();
   const record = useRecordContext();
   const title = record
-    ? `${record[displayField]}`
+    ? (display ? display(record) : `${record[displayField]}`)
     : `New ${resource === "invoices"
         ? "Transaction"
         : (resource.charAt(0).toUpperCase() +
