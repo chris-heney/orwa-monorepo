@@ -172,12 +172,11 @@ const AssociateShow: React.FC<AssociateShowProps> = ({
             >
               {/* LOGO */}
               <Box className="my-6">
-                {currentAssociate.logo.data != null &&
-                currentAssociate.logo.data[0].url !=
-                  null &&
-                currentAssociate.logo.data.length > 0 ? (
+                {currentAssociate.logo != null &&
+                currentAssociate.logo.length > 0 &&
+                currentAssociate.logo[0].url != null ? (
                   <img
-                    src={`${import.meta.env.VITE_API_ENDPOINT}${currentAssociate.logo.data[0].url}`}
+                    src={`${import.meta.env.VITE_API_ENDPOINT}${currentAssociate.logo[0].url}`}
                     className="mx-auto object-contain rounded"
                     style={{ width: "315px", height: "210px" }}
                     alt="Logo"
@@ -210,13 +209,13 @@ const AssociateShow: React.FC<AssociateShowProps> = ({
               </Box>
 
               {/* CONTACT INFO */}
-              {currentAssociate.contact_primary.data && (
+              {currentAssociate.contact_primary && (
                 <Box className="my-1 text-center">
                   <h3 className="font-semibold text-gray-700">
                     Primary Contact
                   </h3>
                   <p className="text-sm text-gray-600">
-                    {`${currentAssociate.contact_primary.data.first} ${currentAssociate.contact_primary.data.last}`}
+                    {`${currentAssociate.contact_primary.first} ${currentAssociate.contact_primary.last}`}
                   </p>
                 </Box>
               )}
@@ -299,13 +298,11 @@ const AssociateShow: React.FC<AssociateShowProps> = ({
               className="flex flex-col items-center text-center"
             >
               <Box className="my-6">
-                {currentAssociate.logo.data != null &&
-                currentAssociate.logo.data[0].url !=
-                  null &&
-                currentAssociate.logo.data.length > 0 ? (
+                {currentAssociate.logo != null &&
+                currentAssociate.logo.length > 0 &&
+                currentAssociate.logo[0].url != null ? (
                   <img
-                    // src={`https://data.orwa.org${currentAssociate.logo.data[0].url}`}
-                    src={`${import.meta.env.VITE_API_ENDPOINT}${currentAssociate.logo.data[0].url}`}
+                    src={`${import.meta.env.VITE_API_ENDPOINT}${currentAssociate.logo[0].url}`}
                     className="mx-auto object-contain rounded"
                     style={{ width: "315px", height: "210px" }}
                     alt="Logo"
@@ -330,16 +327,14 @@ const AssociateShow: React.FC<AssociateShowProps> = ({
               </h2>
 
               {/* CONTACT */}
-              {currentAssociate.contact_primary.data
-                 && (
+              {currentAssociate.contact_primary && (
                 <Box className="mb-2">
                   <h2 className="text-lg">
                     Contact:{" "}
-                    {currentAssociate.contact_primary.data.first !=
-                    undefined
-                      ? currentAssociate.contact_primary.data.first +
+                    {currentAssociate.contact_primary.first != undefined
+                      ? currentAssociate.contact_primary.first +
                         " " +
-                        currentAssociate.contact_primary.data.last
+                        currentAssociate.contact_primary.last
                       : ""}
                   </h2>
                 </Box>

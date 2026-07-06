@@ -102,9 +102,9 @@ const oneYearAgoFormatted = formatDate(oneYearAgo);
                 className="flex flex-col items-center justify-center relative rounded p-10 cursor-pointer transition-transform transform hover:scale-105 hover:shadow-md hover:border hover:border-gray-200 text-base md:text-lg lg:text-xl xl:text-2xl"
                 onClick={() => handleAssociateClick(associate, index)}
               >
-                {associate.logo && associate.logo.data != null && associate.logo.data[0].url != null && associate.logo.data.length > 0 ? (
+                {associate.logo && associate.logo.length > 0 && associate.logo[0].url != null ? (
                   <img
-                    src={`${import.meta.env.VITE_API_ENDPOINT}${associate.logo.data[0].url}`}
+                    src={`${import.meta.env.VITE_API_ENDPOINT}${associate.logo[0].url}`}
                     className="mx-auto mb-4 w-full rounded"
                     alt="Associate"
                   />
