@@ -49,3 +49,8 @@ vitest.config.*.timestamp*
 # Environment files
 .env.local
 .env.*.local
+# Environment files (real tokens live only on dev machines / CI)
+apps/*/.env
+apps/*/.env.development
+apps/*/.env.production
+!apps/*/.env.example
