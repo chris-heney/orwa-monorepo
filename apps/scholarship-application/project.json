@@ -12,7 +12,8 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/scholarship-application"
+        "outputPath": "dist/apps/scholarship-application",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {

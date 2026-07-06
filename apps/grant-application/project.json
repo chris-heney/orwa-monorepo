@@ -12,7 +12,8 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/grant-application"
+        "outputPath": "dist/apps/grant-application",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {

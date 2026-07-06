@@ -64,8 +64,11 @@ const SelectOrganization = ({ updateLogo, required = true }: { updateLogo?: bool
     );
 
     if (selectedAssociate && updateLogo) {
-      const formattedLogo = selectedAssociate?.logo?.data
-        ? selectedAssociate.logo.data.map((logo) => formatBackendFile(logo))
+      const logos = Array.isArray(selectedAssociate?.logo)
+        ? selectedAssociate.logo
+        : selectedAssociate?.logo?.data ?? null;
+      const formattedLogo = logos
+        ? logos.map((logo) => formatBackendFile(logo))
         : null;
 
       setValue("logo", formattedLogo);

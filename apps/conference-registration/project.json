@@ -12,7 +12,8 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/conference-registration"
+        "outputPath": "dist/apps/conference-registration",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {

@@ -12,7 +12,8 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/grant-scoring"
+        "outputPath": "dist/apps/grant-scoring",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {

@@ -131,7 +131,7 @@ const AddExtras = ({
   };
 
   return ExtraOptions.filter((extra) => {
-    const isExcluded = extra.excluded.data.some(
+    const isExcluded = extra.excluded.some(
       (excludedTicket: ITicketOption) => {
         return (
           excludedTicket.id === ticket?.ticket_type?.id && context !== "Booth"
@@ -148,7 +148,7 @@ const AddExtras = ({
           if (!a.order || !b.order) return 0;
           return a.order - b.order;
         }).filter((extra) => {
-          const isExcluded = extra.excluded.data.some(
+          const isExcluded = extra.excluded.some(
             (excludedTicket: ITicketOption) => {
               return (
                 excludedTicket.id === ticket?.ticket_type?.id &&

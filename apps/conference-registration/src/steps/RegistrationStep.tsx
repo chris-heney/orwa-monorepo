@@ -87,7 +87,7 @@ const RegistrationStep = () => {
       <div className="flex justify-center py-3">
         <img
           src={`${import.meta.env.VITE_API_ENDPOINT.replace("/api", "")}${
-            ConferenceOptions.logo.data.url
+            ConferenceOptions.logo?.url ?? ConferenceOptions.logo?.data?.url ?? ""
           }`}
           className="max-h-52 md:ml-0 bg-white"
           alt="Conference Logo"

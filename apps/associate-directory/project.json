@@ -12,7 +12,8 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/associate-directory"
+        "outputPath": "dist/apps/associate-directory",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {

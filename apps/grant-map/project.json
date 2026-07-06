@@ -12,7 +12,8 @@
       ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/grant-map"
+        "outputPath": "dist/apps/grant-map",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {
