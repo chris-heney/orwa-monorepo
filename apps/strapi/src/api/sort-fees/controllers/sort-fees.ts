@@ -14,7 +14,7 @@ export default ({ strapi }) => ({
       });
       ctx.body = user;
     } catch (err) {
-      ctx.body = err;
+      ctx.body;
     }
   },
   sortSystemFees: async (ctx, next) => {
@@ -27,7 +27,7 @@ export default ({ strapi }) => ({
       const paymentUpdates: Record<any, any>[] = [];
 
       for (let i = 0; i < systems.length; i++) {
-        const { id, name, payment_details, meters } = systems[i];
+        const { id, documentId, name, payment_details, meters } = systems[i];
         if (!payment_details) {
           continue;
         }
@@ -58,6 +58,7 @@ export default ({ strapi }) => ({
 
         paymentUpdates.push({
           id,
+          documentId,
           data: {
             system: name,
             fee_connections: connectionFee > 4000 ? 4000 : connectionFee,
@@ -77,7 +78,7 @@ export default ({ strapi }) => ({
         console.log("Updating", paymentUpdates.data.system);
         console.log("Debug", paymentUpdates.debug);
         const response = await strapi.documents("api::watersystem.watersystem").update({
-          documentId: "__TODO__",
+          documentId: paymentUpdates.documentId,
           data: paymentUpdates.data
         });
         results.push(response);
@@ -98,7 +99,7 @@ export default ({ strapi }) => ({
       const paymentUpdates: Record<any, any>[] = [];
 
       for (let i = 0; i < systems.length; i++) {
-        const { id, name, payment_details, meters } = systems[i];
+        const { id, documentId, name, payment_details, meters } = systems[i];
         if (!payment_details) {
           continue;
         }
@@ -146,6 +147,7 @@ export default ({ strapi }) => ({
                   
         paymentUpdates.push({
           id,
+          documentId,
           data: {
             associate: name,
             // fee_connections: connectionFee > 4000 ? 4000 : connectionFee,
@@ -169,7 +171,7 @@ export default ({ strapi }) => ({
         // console.log("Updating", paymentUpdates.data.system);
         console.log("Debug", paymentUpdates.debug);
         const response = await strapi.documents("api::associate.associate").update({
-          documentId: "__TODO__",
+          documentId: paymentUpdates.documentId,
           data: paymentUpdates.data
         });
         results.push(response);

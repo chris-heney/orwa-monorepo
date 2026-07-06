@@ -30,6 +30,75 @@
     "title": {
       "type": "string"
     },
+    "address_mailing_line1": {
+      "type": "string"
+    },
+    "address_mailing_line2": {
+      "type": "string"
+    },
+    "address_mailing_city": {
+      "type": "string"
+    },
+    "address_mailing_state": {
+      "type": "enumeration",
+      "enum": [
+        "Alabama",
+        "Alaska",
+        "Arizona",
+        "Arkansas",
+        "California",
+        "Colorado",
+        "Connecticut",
+        "Delaware",
+        "Florida",
+        "Georgia",
+        "Hawaii",
+        "Idaho",
+        "Illinois",
+        "Indiana",
+        "Iowa",
+        "Kansas",
+        "Kentucky",
+        "Louisiana",
+        "Maine",
+        "Maryland",
+        "Massachusetts",
+        "Michigan",
+        "Minnesota",
+        "Mississippi",
+        "Missouri",
+        "Montana",
+        "Nebraska",
+        "Nevada",
+        "New Hampshire",
+        "New Jersey",
+        "New Mexico",
+        "New York",
+        "North Carolina",
+        "North Dakota",
+        "Ohio",
+        "Oklahoma",
+        "Oregon",
+        "Pennsylvania",
+        "Rhode Island",
+        "South Carolina",
+        "South Dakota",
+        "Tennessee",
+        "Texas",
+        "Utah",
+        "Vermont",
+        "Virginia",
+        "Washington",
+        "West Virginia",
+        "Wisconsin",
+        "Wyoming"
+      ],
+      "default": "Oklahoma"
+    },
+    "address_mailing_zip": {
+      "type": "string",
+      "maxLength": 10
+    },
     "contact_type": {
       "type": "enumeration",
       "enum": [
@@ -63,18 +132,6 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::contact-badge.contact-badge"
-    },
-    "scholarship_applicant": {
-      "type": "relation",
-      "relation": "oneToOne",
-      "target": "api::scholarship-application.scholarship-application",
-      "inversedBy": "contact"
-    },
-    "scholarship_eleligible_participants": {
-      "type": "relation",
-      "relation": "oneToMany",
-      "target": "api::scholarship-application.scholarship-application",
-      "mappedBy": "eligible_participant"
     }
   }
 }

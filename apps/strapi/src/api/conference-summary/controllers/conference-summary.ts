@@ -2,6 +2,8 @@
  * A set of functions called "actions" for `conference-summary`
  */
 
+import { findOneById } from '../../../utils/document-compat';
+
 export default ({strapi}) => ({
 
   getConferenceSummary: async (ctx) => {
@@ -31,8 +33,7 @@ export default ({strapi}) => ({
       
       // Only fetch specific conference details if an actual ID is provided
       const conference = conferenceId !== "-1" ? 
-        await strapi.documents('api::conference.conference').findOne({
-          documentId: "__TODO__",
+        await findOneById('api::conference.conference', conferenceId, {
           populate: ['*']
         }) : 
         {name: 'All Conferences', booths_available: 5000}; // Default value when no specific conference

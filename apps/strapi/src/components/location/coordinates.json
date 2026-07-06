@@ -9,12 +9,12 @@
     "latitude": {
       "type": "float",
       "required": true,
-      "default": "35.4828466"
+      "default": 35.4828466
     },
     "longitude": {
       "type": "float",
       "required": true,
-      "default": "-97.6192809"
+      "default": -97.6192809
     },
     "altitude": {
       "type": "float"

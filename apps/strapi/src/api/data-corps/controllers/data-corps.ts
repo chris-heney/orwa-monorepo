@@ -34,7 +34,7 @@ export default ({ strapi }) => ({
            *    type_id (relationship) using the type (string).
            */
           break;
-        case 'heal-organization': {
+        case 'heal-organization':
           const healOrganization = async () => {
 
             const registrations = await strapi.documents('api::conference-registration.conference-registration').findMany({
@@ -56,7 +56,7 @@ export default ({ strapi }) => ({
                   console.log('Updating attendee organization from booth: ', booth.organization);
 
                   await strapi.documents('api::conference-attendee.conference-attendee').update({
-                    documentId: "__TODO__",
+                    documentId: attendee.documentId,
 
                     data: {
                       organization: booth.organization
@@ -67,7 +67,7 @@ export default ({ strapi }) => ({
                 console.log('Updating registration organization from booth: ', booth.organization);
 
                 await strapi.documents('api::conference-registration.conference-registration').update({
-                  documentId: "__TODO__",
+                  documentId: registration.documentId,
 
                   data: {
                     organization: booth.organization
@@ -88,7 +88,7 @@ export default ({ strapi }) => ({
 
                 // Update the attendee's organization
                 await strapi.documents('api::conference-registration.conference-registration').update({
-                  documentId: "__TODO__",
+                  documentId: registration.documentId,
 
                   data: {
                     organization: attendee.organization
@@ -103,8 +103,7 @@ export default ({ strapi }) => ({
           await healOrganization()
 
           break;
-        }
-        case 'heal-registration-type': {
+        case 'heal-registration-type':
 
           const healRegistrationType = async () => {
 
@@ -123,7 +122,7 @@ export default ({ strapi }) => ({
                 console.log('Updating registration type: Vendor')
 
                 await strapi.documents('api::conference-registration.conference-registration').update({
-                  documentId: "__TODO__",
+                  documentId: registration.documentId,
 
                   data: {
                     type: 'Vendor'
@@ -134,7 +133,7 @@ export default ({ strapi }) => ({
                 console.log('Updating registration type: Attendee')
 
                 await strapi.documents('api::conference-registration.conference-registration').update({
-                  documentId: "__TODO__",
+                  documentId: registration.documentId,
 
                   data: {
                     type: 'Attendee'
@@ -147,7 +146,6 @@ export default ({ strapi }) => ({
           await healRegistrationType()
 
           break;
-        }
         case 'heal-names':
           // Do something
           break;

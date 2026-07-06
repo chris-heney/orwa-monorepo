@@ -2,14 +2,15 @@
  * A set of functions called "actions" for `remove-registration`
  */
 
+import { findOneById } from '../../../utils/document-compat';
+
 export default ({ strapi }) => {
 
   return {
     removeRegistration: async (ctx) => {
       const { registrationId } = ctx.request.body
 
-      const registration = await strapi.documents('api::conference-registration.conference-registration').findOne({
-        documentId: "__TODO__",
+      const registration = await findOneById('api::conference-registration.conference-registration', registrationId, {
         populate: '*'
       })
 
@@ -42,31 +43,31 @@ export default ({ strapi }) => {
       try {
         for (const attendee of attendees) {
           await strapi.documents('api::conference-attendee.conference-attendee').delete({
-            documentId: "__TODO__"
+            documentId: attendee.documentId
           })
         }
 
         for (const booth of booths) {
           await strapi.documents('api::conference-booth.conference-booth').delete({
-            documentId: "__TODO__"
+            documentId: booth.documentId
           })
         }
 
         for (const contestantId of contestants) {
           await strapi.documents('api::conference-contestant.conference-contestant').delete({
-            documentId: "__TODO__"
+            documentId: contestantId.documentId
           })
         }
 
        if (sponsor.length > 0) {
           await strapi.documents('api::conference-sponsor.conference-sponsor').delete({
-            documentId: "__TODO__"
+            documentId: sponsor[0].documentId
           })
        }
 
 
         await strapi.documents('api::conference-registration.conference-registration').delete({
-          documentId: "__TODO__"
+          documentId: registration.documentId
         })
 
         return ctx.body = {

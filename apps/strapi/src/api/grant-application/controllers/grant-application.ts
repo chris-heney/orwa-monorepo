@@ -4,6 +4,7 @@
 
 import { AdminOptions } from "../../membership-forms/types";
 import { IContactEntity, IGrantApplicationFormPayload } from "../types";
+import { findOneById, updateById } from "../../../utils/document-compat";
 
 // get the contact
 // create or update contact
@@ -124,9 +125,8 @@ export default ({ strapi }) => {
     contact: Partial<IContactEntity>
   ) => {
     // console.log('Updating Contact:', JSON.stringify(contact));
-    const response = await strapi.documents("api::contact.contact").update({
-      documentId: "__TODO__",
-      data: contact
+    const response = await updateById("api::contact.contact", contactId, {
+      data: contact,
     });
     return response.data;
   };
@@ -222,14 +222,14 @@ export default ({ strapi }) => {
             {
               first: point_of_contact.first,
               last: point_of_contact.last,
-              email: point_of_contact.email,
+              email: point_of_contact?.email,
               phone: point_of_contact.phone,
               title: point_of_contact.title,
             },
             {
               ...user_base,
               username: point_of_contact.email,
-              email: point_of_contact.email,
+              email: point_of_contact?.email,
               password: btoa(point_of_contact.email),
             }
           );
@@ -389,8 +389,7 @@ export default ({ strapi }) => {
           applicant_pdf,
         } = ctx.request.body as IGrantApplicationFormPayload;
 
-        const fileData = await strapi.documents('plugin::upload.file').findOne({
-          documentId: "__TODO__",
+        const fileData = await findOneById('plugin::upload.file', applicant_pdf, {
           populate: '*'
         });
 

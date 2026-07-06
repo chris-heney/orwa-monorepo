@@ -26,6 +26,11 @@ export interface AdminApiToken extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         minLength: 1;
       }>;
+    adminPermissions: Schema.Attribute.Relation<
+      'oneToMany',
+      'admin::permission'
+    >;
+    adminUserOwner: Schema.Attribute.Relation<'manyToOne', 'admin::user'>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -39,6 +44,9 @@ export interface AdminApiToken extends Struct.CollectionTypeSchema {
         minLength: 1;
       }>;
     expiresAt: Schema.Attribute.DateTime;
+    kind: Schema.Attribute.Enumeration<['content-api', 'admin']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'content-api'>;
     lastUsedAt: Schema.Attribute.DateTime;
     lifespan: Schema.Attribute.BigInteger;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -56,7 +64,6 @@ export interface AdminApiToken extends Struct.CollectionTypeSchema {
     >;
     publishedAt: Schema.Attribute.DateTime;
     type: Schema.Attribute.Enumeration<['read-only', 'full-access', 'custom']> &
-      Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'read-only'>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -134,6 +141,7 @@ export interface AdminPermission extends Struct.CollectionTypeSchema {
         minLength: 1;
       }>;
     actionParameters: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>;
+    apiToken: Schema.Attribute.Relation<'manyToOne', 'admin::api-token'>;
     conditions: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -200,6 +208,64 @@ export interface AdminRole extends Struct.CollectionTypeSchema {
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     users: Schema.Attribute.Relation<'manyToMany', 'admin::user'>;
+  };
+}
+
+export interface AdminSession extends Struct.CollectionTypeSchema {
+  collectionName: 'strapi_sessions';
+  info: {
+    description: 'Session Manager storage';
+    displayName: 'Session';
+    name: 'Session';
+    pluralName: 'sessions';
+    singularName: 'session';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  pluginOptions: {
+    'content-manager': {
+      visible: false;
+    };
+    'content-type-builder': {
+      visible: false;
+    };
+    i18n: {
+      localized: false;
+    };
+  };
+  attributes: {
+    absoluteExpiresAt: Schema.Attribute.DateTime & Schema.Attribute.Private;
+    childId: Schema.Attribute.String & Schema.Attribute.Private;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    deviceId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+    expiresAt: Schema.Attribute.DateTime &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'admin::session'> &
+      Schema.Attribute.Private;
+    metadata: Schema.Attribute.JSON & Schema.Attribute.Private;
+    origin: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    sessionId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private &
+      Schema.Attribute.Unique;
+    status: Schema.Attribute.String & Schema.Attribute.Private;
+    type: Schema.Attribute.String & Schema.Attribute.Private;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    userId: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Private;
   };
 }
 
@@ -328,6 +394,8 @@ export interface AdminUser extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
+    apiTokens: Schema.Attribute.Relation<'oneToMany', 'admin::api-token'> &
+      Schema.Attribute.Private;
     blocked: Schema.Attribute.Boolean &
       Schema.Attribute.Private &
       Schema.Attribute.DefaultTo<false>;
@@ -429,31 +497,6 @@ export interface ApiActivityActivity extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     timestamp: Schema.Attribute.DateTime;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-  };
-}
-
-export interface ApiAleinAlein extends Struct.CollectionTypeSchema {
-  collectionName: 'aleins';
-  info: {
-    displayName: 'alein';
-    pluralName: 'aleins';
-    singularName: 'alein';
-  };
-  options: {
-    draftAndPublish: true;
-  };
-  attributes: {
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<'oneToMany', 'api::alein.alein'> &
-      Schema.Attribute.Private;
-    name: Schema.Attribute.String;
-    publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1153,6 +1196,8 @@ export interface ApiConferenceRegistrationConferenceRegistration
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    vendor_participation_acknowledgement: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     wp_eid: Schema.Attribute.Integer;
     year: Schema.Attribute.Integer;
   };
@@ -1543,6 +1588,68 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
+    address_mailing_city: Schema.Attribute.String;
+    address_mailing_line1: Schema.Attribute.String;
+    address_mailing_line2: Schema.Attribute.String;
+    address_mailing_state: Schema.Attribute.Enumeration<
+      [
+        'Alabama',
+        'Alaska',
+        'Arizona',
+        'Arkansas',
+        'California',
+        'Colorado',
+        'Connecticut',
+        'Delaware',
+        'Florida',
+        'Georgia',
+        'Hawaii',
+        'Idaho',
+        'Illinois',
+        'Indiana',
+        'Iowa',
+        'Kansas',
+        'Kentucky',
+        'Louisiana',
+        'Maine',
+        'Maryland',
+        'Massachusetts',
+        'Michigan',
+        'Minnesota',
+        'Mississippi',
+        'Missouri',
+        'Montana',
+        'Nebraska',
+        'Nevada',
+        'New Hampshire',
+        'New Jersey',
+        'New Mexico',
+        'New York',
+        'North Carolina',
+        'North Dakota',
+        'Ohio',
+        'Oklahoma',
+        'Oregon',
+        'Pennsylvania',
+        'Rhode Island',
+        'South Carolina',
+        'South Dakota',
+        'Tennessee',
+        'Texas',
+        'Utah',
+        'Vermont',
+        'Virginia',
+        'Washington',
+        'West Virginia',
+        'Wisconsin',
+        'Wyoming',
+      ]
+    > &
+      Schema.Attribute.DefaultTo<'Oklahoma'>;
+    address_mailing_zip: Schema.Attribute.String &
+      Schema.Attribute.SetMinMaxLength<{
+        maxLength: 10;
+      }>;
     avatar: Schema.Attribute.Media<
       'images' | 'files' | 'videos' | 'audios',
       true
@@ -1569,14 +1676,6 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     phone: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
-    scholarship_applicant: Schema.Attribute.Relation<
-      'oneToOne',
-      'api::scholarship-application.scholarship-application'
-    >;
-    scholarship_eleligible_participants: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::scholarship-application.scholarship-application'
-    >;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -2958,169 +3057,6 @@ export interface ApiScheduledEmailTaskScheduledEmailTask
   };
 }
 
-export interface ApiScholarshipApplicationScholarshipApplication
-  extends Struct.CollectionTypeSchema {
-  collectionName: 'scholarship_applications';
-  info: {
-    displayName: 'Scholarship Application';
-    pluralName: 'scholarship-applications';
-    singularName: 'scholarship-application';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    act_score: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 36;
-          min: 1;
-        },
-        number
-      >;
-    age_18_or_older: Schema.Attribute.Boolean & Schema.Attribute.Required;
-    applicant_certification: Schema.Attribute.Boolean &
-      Schema.Attribute.Required;
-    applicant_certification_date: Schema.Attribute.Date &
-      Schema.Attribute.Required;
-    application_status: Schema.Attribute.Enumeration<
-      ['Draft', 'Submitted', 'Under Review', 'Approved', 'Denied']
-    > &
-      Schema.Attribute.DefaultTo<'Draft'>;
-    awards_recognition: Schema.Attribute.Text;
-    biography: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
-    college_gpa: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 4;
-          min: 0;
-        },
-        number
-      >;
-    contact: Schema.Attribute.Relation<'oneToOne', 'api::contact.contact'>;
-    createdAt: Schema.Attribute.DateTime;
-    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    credits_completed: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    credits_required: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    delete_this_fieldd: Schema.Attribute.UID;
-    education_type: Schema.Attribute.Enumeration<
-      ['FourYearCollege', 'TwoYearCollege', 'VocationalSchool']
-    > &
-      Schema.Attribute.Required;
-    eligible_participant: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::contact.contact'
-    >;
-    eligible_participant_title: Schema.Attribute.String &
-      Schema.Attribute.Required;
-    essay: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
-    financial_aid_1_amount: Schema.Attribute.Decimal &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    financial_aid_1_institution: Schema.Attribute.String;
-    financial_aid_2_amount: Schema.Attribute.Decimal &
-      Schema.Attribute.SetMinMax<
-        {
-          min: 0;
-        },
-        number
-      >;
-    financial_aid_2_institution: Schema.Attribute.String;
-    first_year_higher_education: Schema.Attribute.Boolean &
-      Schema.Attribute.Required;
-    graduation_date: Schema.Attribute.Date & Schema.Attribute.Required;
-    guardian_certification: Schema.Attribute.Boolean;
-    guardian_certification_date: Schema.Attribute.Date;
-    guardian_first_name: Schema.Attribute.String;
-    guardian_last_name: Schema.Attribute.String;
-    high_school_gpa: Schema.Attribute.Decimal &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 4;
-          min: 0;
-        },
-        number
-      >;
-    locale: Schema.Attribute.String & Schema.Attribute.Private;
-    localizations: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::scholarship-application.scholarship-application'
-    > &
-      Schema.Attribute.Private;
-    major: Schema.Attribute.String;
-    photograph: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
-    publishedAt: Schema.Attribute.DateTime;
-    recommendation_letter_1: Schema.Attribute.Media<'files'> &
-      Schema.Attribute.Required;
-    recommendation_letter_2: Schema.Attribute.Media<'files'> &
-      Schema.Attribute.Required;
-    recommender1_email: Schema.Attribute.Email & Schema.Attribute.Required;
-    recommender1_first_name: Schema.Attribute.String &
-      Schema.Attribute.Required;
-    recommender1_last_name: Schema.Attribute.String & Schema.Attribute.Required;
-    recommender1_phone: Schema.Attribute.String & Schema.Attribute.Required;
-    recommender2_email: Schema.Attribute.Email & Schema.Attribute.Required;
-    recommender2_first_name: Schema.Attribute.String &
-      Schema.Attribute.Required;
-    recommender2_last_name: Schema.Attribute.String & Schema.Attribute.Required;
-    recommender2_phone: Schema.Attribute.String & Schema.Attribute.Required;
-    relationship: Schema.Attribute.Enumeration<
-      ['Self', 'DependentChild', 'DependentGrandchild']
-    > &
-      Schema.Attribute.Required;
-    review_notes: Schema.Attribute.Text;
-    sat_score: Schema.Attribute.Integer &
-      Schema.Attribute.Required &
-      Schema.Attribute.SetMinMax<
-        {
-          max: 1600;
-          min: 400;
-        },
-        number
-      >;
-    school_city: Schema.Attribute.String & Schema.Attribute.Required;
-    school_name: Schema.Attribute.String & Schema.Attribute.Required;
-    school_state: Schema.Attribute.String &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'Oklahoma'>;
-    school_street: Schema.Attribute.String & Schema.Attribute.Required;
-    school_zip: Schema.Attribute.String & Schema.Attribute.Required;
-    submission_date: Schema.Attribute.DateTime;
-    test_scores: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
-    transcript: Schema.Attribute.Media<'images' | 'files'> &
-      Schema.Attribute.Required;
-    updatedAt: Schema.Attribute.DateTime;
-    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
-      Schema.Attribute.Private;
-    watersystem: Schema.Attribute.Relation<
-      'manyToOne',
-      'api::watersystem.watersystem'
-    >;
-  };
-}
-
 export interface ApiSettingSetting extends Struct.CollectionTypeSchema {
   collectionName: 'settings';
   info: {
@@ -3452,6 +3388,263 @@ export interface ApiStaffMemberStaffMember extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSwRequestStatusSwRequestStatus
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'sw_request_statuses';
+  info: {
+    description: '';
+    displayName: 'Request Status';
+    pluralName: 'sw-request-statuses';
+    singularName: 'sw-request-status';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    color: Schema.Attribute.String;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.String;
+    email_template: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::email-template.email-template'
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::sw-request-status.sw-request-status'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String;
+    next_statuses: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::sw-request-status.sw-request-status'
+    >;
+    order: Schema.Attribute.Integer;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSwRequestSwRequest extends Struct.CollectionTypeSchema {
+  collectionName: 'sw_requests';
+  info: {
+    description: '';
+    displayName: 'Soonerwarn Request';
+    pluralName: 'sw-requests';
+    singularName: 'sw-request';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::sw-request.sw-request'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    status: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::sw-request-status.sw-request-status'
+    >;
+    system: Schema.Attribute.Relation<'oneToOne', 'api::sw.sw'>;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiSwSw extends Struct.CollectionTypeSchema {
+  collectionName: 'sws';
+  info: {
+    description: '';
+    displayName: 'Soonerwarn';
+    pluralName: 'sws';
+    singularName: 'sw';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    application_date: Schema.Attribute.Date;
+    contacts: Schema.Attribute.Relation<'oneToMany', 'api::contact.contact'>;
+    county: Schema.Attribute.Enumeration<
+      [
+        'Adair',
+        'Alfalfa',
+        'Atoka',
+        'Beaver',
+        'Beckham',
+        'Blaine',
+        'Bryan',
+        'Caddo',
+        'Canadian',
+        'Carter',
+        'Cherokee',
+        'Choctaw',
+        'Cimarron',
+        'Cleveland',
+        'Coal',
+        'Comanche',
+        'Cotton',
+        'Craig',
+        'Creek',
+        'Custer',
+        'Delaware',
+        'Dewey',
+        'Ellis',
+        'Garfield',
+        'Garvin',
+        'Grady',
+        'Grant',
+        'Greer',
+        'Harmon',
+        'Harper',
+        'Haskell',
+        'Hughes',
+        'Jackson',
+        'Jefferson',
+        'Johnston',
+        'Kay',
+        'Kingfisher',
+        'Kiowa',
+        'Latimer',
+        'LeFlore',
+        'Lincoln',
+        'Logan',
+        'Love',
+        'Major',
+        'Marshall',
+        'Mayes',
+        'McClain',
+        'McCurtain',
+        'McIntosh',
+        'Murray',
+        'Muskogee',
+        'Noble',
+        'Nowata',
+        'Okfuskee',
+        'Oklahoma',
+        'Okmulgee',
+        'Osage',
+        'Ottawa',
+        'Pawnee',
+        'Payne',
+        'Pittsburg',
+        'Pontotoc',
+        'Pottawatomie',
+        'Pushmataha',
+        'Roger Mills',
+        'Rogers',
+        'Seminole',
+        'Sequoyah',
+        'Stephens',
+        'Texas',
+        'Tillman',
+        'Tulsa',
+        'Wagoner',
+        'Washington',
+        'Washita',
+        'Woods',
+        'Woodward',
+      ]
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    email: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::sw.sw'> &
+      Schema.Attribute.Private;
+    location: Schema.Attribute.JSON;
+    member_since: Schema.Attribute.Date;
+    phone: Schema.Attribute.String;
+    physical_address_city: Schema.Attribute.String;
+    physical_address_state: Schema.Attribute.Enumeration<
+      [
+        'Alabama',
+        'Alaska',
+        'Arizona',
+        'Arkansas',
+        'California',
+        'Colorado',
+        'Connecticut',
+        'Delaware',
+        'Florida',
+        'Georgia',
+        'Hawaii',
+        'Idaho',
+        'Illinois',
+        'Indiana',
+        'Iowa',
+        'Kansas',
+        'Kentucky',
+        'Louisiana',
+        'Maine',
+        'Maryland',
+        'Massachusetts',
+        'Michigan',
+        'Minnesota',
+        'Mississippi',
+        'Missouri',
+        'Montana',
+        'Nebraska',
+        'Nevada',
+        'New Hampshire',
+        'New Jersey',
+        'New Mexico',
+        'New York',
+        'North Carolina',
+        'North Dakota',
+        'Ohio',
+        'Oklahoma',
+        'Oregon',
+        'Pennsylvania',
+        'Rhode Island',
+        'South Carolina',
+        'South Dakota',
+        'Tennessee',
+        'Texas',
+        'Utah',
+        'Vermont',
+        'Virginia',
+        'Washington',
+        'West Virginia',
+        'Wisconsin',
+        'Wyoming',
+      ]
+    >;
+    physical_address_street: Schema.Attribute.String;
+    physical_address_zip: Schema.Attribute.String;
+    primary_contact: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::contact.contact'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    regions: Schema.Attribute.JSON;
+    secondary_contact: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::contact.contact'
+    >;
+    status: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::sw-request-status.sw-request-status'
+    >;
+    system_name: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -4291,7 +4484,7 @@ export interface ApiWatersystemWatersystem extends Struct.CollectionTypeSchema {
     meters: Schema.Attribute.Integer &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<0>;
-    namee: Schema.Attribute.String & Schema.Attribute.Required;
+    name: Schema.Attribute.String & Schema.Attribute.Required;
     office_hours: Schema.Attribute.String;
     orwaag: Schema.Attribute.Boolean;
     payment_amount: Schema.Attribute.Decimal;
@@ -4303,10 +4496,6 @@ export interface ApiWatersystemWatersystem extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     region: Schema.Attribute.Enumeration<
       ['Region 1', 'Region 2', 'Region 3', 'Region 4']
-    >;
-    scholarship_applications: Schema.Attribute.Relation<
-      'oneToMany',
-      'api::scholarship-application.scholarship-application'
     >;
     soonerwarn: Schema.Attribute.Boolean;
     system_type_dirty: Schema.Attribute.Enumeration<
@@ -4645,12 +4834,13 @@ export interface PluginUploadFile extends Struct.CollectionTypeSchema {
     };
   };
   attributes: {
-    alternativeText: Schema.Attribute.String;
-    caption: Schema.Attribute.String;
+    alternativeText: Schema.Attribute.Text;
+    caption: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     ext: Schema.Attribute.String;
+    focalPoint: Schema.Attribute.JSON;
     folder: Schema.Attribute.Relation<'manyToOne', 'plugin::upload.folder'> &
       Schema.Attribute.Private;
     folderPath: Schema.Attribute.String &
@@ -4670,7 +4860,7 @@ export interface PluginUploadFile extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     mime: Schema.Attribute.String & Schema.Attribute.Required;
     name: Schema.Attribute.String & Schema.Attribute.Required;
-    previewUrl: Schema.Attribute.String;
+    previewUrl: Schema.Attribute.Text;
     provider: Schema.Attribute.String & Schema.Attribute.Required;
     provider_metadata: Schema.Attribute.JSON;
     publishedAt: Schema.Attribute.DateTime;
@@ -4679,7 +4869,7 @@ export interface PluginUploadFile extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
-    url: Schema.Attribute.String & Schema.Attribute.Required;
+    url: Schema.Attribute.Text & Schema.Attribute.Required;
     width: Schema.Attribute.Integer;
   };
 }
@@ -4899,12 +5089,12 @@ declare module '@strapi/strapi' {
       'admin::api-token-permission': AdminApiTokenPermission;
       'admin::permission': AdminPermission;
       'admin::role': AdminRole;
+      'admin::session': AdminSession;
       'admin::transfer-token': AdminTransferToken;
       'admin::transfer-token-permission': AdminTransferTokenPermission;
       'admin::user': AdminUser;
       'api::activity-relation.activity-relation': ApiActivityRelationActivityRelation;
       'api::activity.activity': ApiActivityActivity;
-      'api::alein.alein': ApiAleinAlein;
       'api::asset.asset': ApiAssetAsset;
       'api::associate.associate': ApiAssociateAssociate;
       'api::conference-attendee.conference-attendee': ApiConferenceAttendeeConferenceAttendee;
@@ -4952,12 +5142,14 @@ declare module '@strapi/strapi' {
       'api::request-status.request-status': ApiRequestStatusRequestStatus;
       'api::saved-query.saved-query': ApiSavedQuerySavedQuery;
       'api::scheduled-email-task.scheduled-email-task': ApiScheduledEmailTaskScheduledEmailTask;
-      'api::scholarship-application.scholarship-application': ApiScholarshipApplicationScholarshipApplication;
       'api::setting.setting': ApiSettingSetting;
       'api::soonerwarn-request.soonerwarn-request': ApiSoonerwarnRequestSoonerwarnRequest;
       'api::soonerwarn-status.soonerwarn-status': ApiSoonerwarnStatusSoonerwarnStatus;
       'api::soonerwarn.soonerwarn': ApiSoonerwarnSoonerwarn;
       'api::staff-member.staff-member': ApiStaffMemberStaffMember;
+      'api::sw-request-status.sw-request-status': ApiSwRequestStatusSwRequestStatus;
+      'api::sw-request.sw-request': ApiSwRequestSwRequest;
+      'api::sw.sw': ApiSwSw;
       'api::taste-test-contestant.taste-test-contestant': ApiTasteTestContestantTasteTestContestant;
       'api::training-event-log.training-event-log': ApiTrainingEventLogTrainingEventLog;
       'api::training-event-registration.training-event-registration': ApiTrainingEventRegistrationTrainingEventRegistration;
