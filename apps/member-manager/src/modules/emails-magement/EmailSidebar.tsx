@@ -14,7 +14,7 @@ import { RaRecord, useGetList, useNotify, useRecordContext } from "react-admin";
 import CustomTextInput from "../_components/CustomTextInput";
 import authProvider from "../../authProvider";
 import { formatNumber } from "../../helpers/Formators";
-import { createPayloadVariables, extractFieldsFromHTML } from "./helper";
+import { createPayloadVariables, extractFieldsFromHTML } from "./Helper";
 
 const EmailSidebar = ({ module }: { module: string }) => {
   const [overrideTo, setOverrideTo] = React.useState("");

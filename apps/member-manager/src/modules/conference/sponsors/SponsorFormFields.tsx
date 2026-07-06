@@ -28,7 +28,10 @@ const SponsorFormFields = () => {
           ? {
               ...record,
               sponsorship_items: record.sponsorship_items.map((item: any) => ({
-                sponsorship: item.sponsorship?.data?.id || item.sponsorship,
+                sponsorship:
+                  item.sponsorship?.id ??
+                  item.sponsorship?.data?.id ??
+                  item.sponsorship,
                 label: item.label,
                 value: item.value,
                 key: item.key,

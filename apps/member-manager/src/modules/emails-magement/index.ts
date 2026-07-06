@@ -20,7 +20,7 @@ export { default as EmailLogsList } from './email-logs/EmailLogList';
 export { default as EmailLogFilters } from './email-logs/EmailLogFilters';
 
 // Helper components
-export { default as EmailSideBar } from './EmailSideBar';
+export { default as EmailSideBar } from './EmailSidebar';
 export { default as SoonerwarnEmailSideBar } from './SoonerwarnEmailSidebar';
 
 // Types

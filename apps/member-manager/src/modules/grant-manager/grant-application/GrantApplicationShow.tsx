@@ -6,7 +6,7 @@ import { Box, Card, Grid, IconButton, Tooltip } from "@mui/material";
 import ActivityFeed from "../../activity/ActivityFeed";
 import EmailIcon from "@mui/icons-material/Email";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
-import EmailSidebar from "../../emails-magement/EmailSideBar";
+import EmailSidebar from "../../emails-magement/EmailSidebar";
 
 const GrantApplicationShow = () => {
   const [viewMode, setViewMode] = useState<"email" | "activity" | "">("");

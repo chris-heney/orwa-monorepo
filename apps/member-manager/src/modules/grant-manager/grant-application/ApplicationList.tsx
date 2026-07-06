@@ -20,7 +20,7 @@ import { CurrencyOptions } from "../../../config/Settings";
 import GrantApplicationCreateForm from "./CreateGrantApplication";
 import ModalDenialReason from "./components/ModalDenialReason";
 import BalanceField, { balance } from "../payouts/components/BalanceField";
-import { getGrantStatus } from "../../emails-magement/helper";
+import { getGrantStatus } from "../../emails-magement/Helper";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
 import TotalPayoutsField from "../payouts/components/TotalPayoutField";

@@ -1,0 +1,22 @@
+{
+  "name": "member-manager",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/member-manager/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "install": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm install", "cwd": "apps/member-manager" }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{projectRoot}/dist"],
+      "options": { "command": "npm run build", "cwd": "apps/member-manager" }
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": { "command": "npm run dev", "cwd": "apps/member-manager" }
+    }
+  }
+}

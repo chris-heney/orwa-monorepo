@@ -5,7 +5,7 @@ import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { FieldValues } from 'react-hook-form'
 import authProvider from '../../../../authProvider'
 import GrantSubStatus from './GrantSubStatus'
-import { createPayloadVariables, extractFieldsFromHTML } from '../../../emails-magement/helper'
+import { createPayloadVariables, extractFieldsFromHTML } from '../../../emails-magement/Helper'
 import SendIcon from '@mui/icons-material/Send'
 import { sendActivity } from '../../../../helpers/sendActivity'
 
