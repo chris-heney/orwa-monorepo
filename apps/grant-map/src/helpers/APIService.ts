@@ -75,10 +75,48 @@ export const useGetGrantApplications =
         })
         .join("&");
 
+    // Only request what the map actually renders. `populate=*` pulled every
+    // relation plus huge unused scalars (base64 `signature`,
+    // `grant_application_score`) — ~63 MB / 6.7s per request vs ~1.9 MB / 1.9s.
+    const usedFields = [
+      "legal_entity_name",
+      "facility_id",
+      "county",
+      "physical_address_street",
+      "physical_address_city",
+      "physical_address_state",
+      "physical_address_zip",
+      "award_amount",
+      "requested_grant_amount",
+      "approved_project_cost",
+      "combined_cost_of_projects",
+      "population_served",
+      "drinking_or_wastewater",
+      "regions",
+      "location",
+      "application_id",
+      "application_date",
+      "committee_date",
+      "closed_out",
+      "email",
+    ]
+      .map((f, i) => `fields[${i}]=${f}`)
+      .join("&");
+
+    const usedRelations = [
+      "status",
+      "sub_status",
+      "payouts",
+      "approved_projects",
+      "selected_projects",
+    ]
+      .map((r) => `populate[${r}]=true`)
+      .join("&");
+
     const { data: response } = await axios.get(
       `${STRAPI_API_ENDPOINT}/grant-application-finals?pagination[limit]=${
         perPage ?? 10000
-      }&populate=*&sort=legal_entity_name:ASC${filterParams}`,
+      }&${usedFields}&${usedRelations}&sort=legal_entity_name:ASC${filterParams}`,
       {
         headers: {
           "Content-Type": "application/json",
