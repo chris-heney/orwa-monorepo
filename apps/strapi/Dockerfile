@@ -10,7 +10,13 @@ COPY . .
 # Compile local plugin server bundles, then the Strapi app + admin panel
 RUN cd src/plugins/activity-feed && npx tsc -p tsconfig.server.json && \
     cd ../grant-management && npx tsc -p tsconfig.server.json
-ENV NODE_ENV=production
+# The admin panel bakes its backend URL at build time; without this it
+# defaults to http://localhost:1337 and the deployed admin UI breaks.
+ARG STRAPI_ADMIN_BACKEND_URL=https://admin.orwa.org
+ARG PUBLIC_URL=https://admin.orwa.org
+ENV STRAPI_ADMIN_BACKEND_URL=${STRAPI_ADMIN_BACKEND_URL} \
+    PUBLIC_URL=${PUBLIC_URL} \
+    NODE_ENV=production
 RUN npx strapi build
 
 FROM node:22-alpine AS production
