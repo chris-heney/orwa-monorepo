@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "sw_requests",
+  "info": {
+    "singularName": "sw-request",
+    "pluralName": "sw-requests",
+    "displayName": "Soonerwarn Request",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "system": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::sw.sw"
+    },
+    "status": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::sw-request-status.sw-request-status"
+    }
+  }
+}

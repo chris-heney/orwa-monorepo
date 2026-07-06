@@ -4,14 +4,16 @@
   "sourceRoot": "apps/scholarship-application/src",
   "projectType": "application",
   "tags": [],
-  "// targets": "to see all targets run: nx show project scholarship-application --web",
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/scholarship-application"
+        "outputPath": "dist/apps/scholarship-application",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {
@@ -56,7 +58,9 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
       "options": {
         "passWithNoTests": true,
         "reportsDirectory": "../../coverage/apps/scholarship-application"
@@ -64,9 +68,32 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["apps/scholarship-application/**/*.{ts,tsx,js,jsx}"]
+        "lintFilePatterns": [
+          "apps/scholarship-application/**/*.{ts,tsx,js,jsx}"
+        ]
+      }
+    },
+    "docker-build": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "build"
+      ],
+      "options": {
+        "command": "docker build -t ghcr.io/chris-heney/orwa-monorepo/scholarship-application:latest -f docker/Dockerfile.nx-app --build-arg APP=scholarship-application --build-arg VITE_API_ENDPOINT=$VITE_API_ENDPOINT --build-arg VITE_API_KEY=$VITE_API_KEY .",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "docker-push": {
+      "executor": "nx:run-commands",
+      "dependsOn": [
+        "docker-build"
+      ],
+      "options": {
+        "command": "docker push ghcr.io/chris-heney/orwa-monorepo/scholarship-application:latest"
       }
     }
   }

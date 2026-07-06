@@ -8,11 +8,11 @@ export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../node_modules/.vite/scholarship-application',
   server: {
-    port: 4200,
+    port: 4206,
     host: 'localhost',
   },
   preview: {
-    port: 4200,
+    port: 4206,
     host: 'localhost',
   },
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],

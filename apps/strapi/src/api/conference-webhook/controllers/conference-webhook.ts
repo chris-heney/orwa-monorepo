@@ -6,13 +6,14 @@ import {
   IExtraEntity,
   ISponsorEntity,
 } from "../types";
+import { findOneById } from "../../../utils/document-compat";
 
 /**
  * Conference webhook controller
  */
 export default ({ strapi }) => {
   const service = strapi.service("api::conference-webhook.conference-webhook");
-  const { currentYear } = service.getConstants();
+  const  currentYear  = new Date().getFullYear();
 
   return {
     /**
@@ -46,11 +47,11 @@ export default ({ strapi }) => {
           watersystem,
           adminOptions,
           secondary_email,
+          vendor_participation_acknowledgement,
         } = ctx.request.body;
 
         // Get conference data
-        const conferenceData = await strapi.documents("api::conference.conference").findOne({
-          documentId: "__TODO__",
+        const conferenceData = await findOneById("api::conference.conference", conference, {
           populate: "*"
         });
 
@@ -171,6 +172,8 @@ export default ({ strapi }) => {
                 zip: paymentData.billingAddress.zip,
               },
               non_member_fee: nonMemberFee ? true : false,
+              vendor_participation_acknowledgement:
+                vendor_participation_acknowledgement ? true : false,
               items: items,
               registration_source: registrationSource ?? "online",
             },
@@ -328,12 +331,10 @@ export default ({ strapi }) => {
 
     // Update available sponsorships
     for (const sponsor of sponsors) {
-      const sponsorData = await strapi.documents("api::conference-sponsorship.conference-sponsorship").findOne({
-        documentId: "__TODO__"
-      });
+      const sponsorData = await findOneById("api::conference-sponsorship.conference-sponsorship", sponsor.id);
       
       await strapi.documents("api::conference-sponsorship.conference-sponsorship").update({
-        documentId: "__TODO__",
+        documentId: sponsorData.documentId,
 
         data: {
           available: sponsorData.available - 1,
@@ -439,7 +440,7 @@ export default ({ strapi }) => {
     
     // Update available booths
     await strapi.documents("api::conference.conference").update({
-      documentId: "__TODO__",
+      documentId: conferenceData.documentId,
 
       data: {
         booths_available: conferenceData.booths_available - booths.length,
@@ -559,7 +560,7 @@ export default ({ strapi }) => {
     
     if (golferCount > 0) {
       await strapi.documents("api::conference.conference").update({
-        documentId: "__TODO__",
+        documentId: conferenceData.documentId,
 
         data: {
           available_contestants: conferenceData.available_contestants - golferCount,

@@ -9,7 +9,7 @@ import {
   TextInput,
   useRecordContext,
 } from "react-admin";
-import {Card, Divider, Grid, Typography} from "@mui/material";
+import { Card, Divider, Grid, Typography } from "@mui/material";
 import { formatNumber } from "../../../helpers/Formators";
 import CustomPhoneInput from "../../_components/MaskedPhoneInput";
 import CalculateSponsorCost from "./CalculateSponsorCost";
@@ -28,7 +28,10 @@ const SponsorFormFields = () => {
           ? {
               ...record,
               sponsorship_items: record.sponsorship_items.map((item: any) => ({
-                sponsorship: item.sponsorship?.data?.id || item.sponsorship,
+                sponsorship:
+                  item.sponsorship?.id ??
+                  item.sponsorship?.data?.id ??
+                  item.sponsorship,
                 label: item.label,
                 value: item.value,
                 key: item.key,
@@ -47,12 +50,12 @@ const SponsorFormFields = () => {
 
         <Grid container spacing={4}>
           {/* Left Section */}
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
               General Information
             </Typography>
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="organization"
                   label="Organization"
@@ -60,7 +63,7 @@ const SponsorFormFields = () => {
                   helperText="Enter the name of the organization."
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <ReferenceInput
                   source="registration"
                   reference="conference-registrations"
@@ -77,7 +80,7 @@ const SponsorFormFields = () => {
                   />
                 </ReferenceInput>
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <CustomPhoneInput
                   source="phone"
                   label="Phone"
@@ -85,7 +88,7 @@ const SponsorFormFields = () => {
                   helperText="Enter the phone number of the sponsor."
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="email"
                   label="Email"
@@ -93,7 +96,7 @@ const SponsorFormFields = () => {
                   helperText="Enter the email address of the sponsor."
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <CalculateSponsorCost />
               </Grid>
 
@@ -102,7 +105,7 @@ const SponsorFormFields = () => {
           </Grid>
 
           {/* Right Section */}
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <Typography variant="subtitle1" gutterBottom>
               Sponsorship Items
             </Typography>

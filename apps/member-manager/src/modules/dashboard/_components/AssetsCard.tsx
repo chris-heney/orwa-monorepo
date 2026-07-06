@@ -1,5 +1,5 @@
 import React from 'react'
-import {Card, Box, Typography, Tooltip, Grid, Avatar} from "@mui/material"
+import { Card, Box, Typography, Tooltip, Grid, Avatar } from '@mui/material'
 import { Loading, useGetList, useRedirect } from 'react-admin'
 import InventoryIcon from '@mui/icons-material/Inventory'
 
@@ -66,7 +66,7 @@ const AssetsCard = () => {
 
       <Grid container spacing={2} maxWidth={'100%'} mt={2} overflow={'scroll'} >
         {assets?.map((asset, index) => (
-          <Grid key={index} lg={3} xs={4} sm={3} md={4}>
+          <Grid key={index} item lg={3} xs={4} sm={3} md={4}>
             <Box
               sx={{
                 display: 'flex',

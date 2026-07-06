@@ -4,6 +4,7 @@ import IGrantApplicationStatus from "./IGrantApplicationStatus";
 
 export default interface IGrantApplication {
   id: number;
+  documentId?: string;
   legal_entity_name: string;
   facility_id: string;
   county: string;
@@ -55,20 +56,20 @@ export default interface IGrantApplication {
   committee_date: Date;
   application_date: Date;
   status: IGrantApplicationStatus;
-  sub_status: IGrantApplicationStatus;
+  sub_status: IGrantApplicationStatus | null;
   payouts: {
-    data: {
-      amount: number;
-      transaction_date: Date;
-      currentApplication: IGrantApplication | number;
-      grant: IGrant | number;
-      status: IGrantApplicationStatus;
-      supporting_documents?: unknown;
-      date_approvied: Date;
-      comments: string;
-      grant_status: IGrantApplicationStatus;
-    }[];
-  };
+    id: number;
+    documentId?: string;
+    amount: number;
+    transaction_date: Date;
+    currentApplication?: IGrantApplication | number;
+    grant?: IGrant | number;
+    status: string;
+    supporting_documents?: unknown;
+    date_approved?: Date | null;
+    comments: string | null;
+    grant_status?: IGrantApplicationStatus;
+  }[];
   email: string;
   application_id: string;
   location: {
@@ -76,18 +77,18 @@ export default interface IGrantApplication {
     lng: number;
   };
   approved_projects: {
-    data: {
-      name: string;
-      classification: "Drinking Water" | "Wastewater" | "Both";
-      context: "Project Type" | "Project Status and Impact";
-    }[];
-  };
+    id: number;
+    documentId?: string;
+    name: string;
+    classification: "Drinking Water" | "Wastewater" | "Both";
+    context: "Project Type" | "Project Status and Impact";
+  }[];
   selected_projects: {
-    data: {
-      name: string;
-      classification: "Drinking Water" | "Wastewater";
-    }[];
-  };
+    id: number;
+    documentId?: string;
+    name: string;
+    classification: "Drinking Water" | "Wastewater";
+  }[];
   regions: {
     [key: string]: string;
   };

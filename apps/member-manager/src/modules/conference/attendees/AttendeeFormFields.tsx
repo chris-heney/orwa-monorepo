@@ -1,10 +1,15 @@
 import React from "react";
 import { Card, Typography } from "@mui/material";
 import { Box } from "@mui/material";
-import {Grid} from "@mui/material";
+import { Grid } from "@mui/material";
 import { useEffect } from "react";
 import { useState } from "react";
-import { BooleanInput, useRecordContext, useRefresh } from "react-admin";
+import {
+  BooleanInput,
+  useGetOne,
+  useRecordContext,
+  useRefresh,
+} from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { Divider } from "@mui/material";
 import { ReferenceInput } from "react-admin";
@@ -24,6 +29,19 @@ import { useConferenceContext } from "../ConferenceContext";
 
 interface ConferenceAttendeeFieldsProps {
   context: "create" | "edit";
+}
+
+/** Matches list `conference_ticket.name` / `type`; use ticket context to detect vendor. */
+function typeLabelFromTicket(
+  ticket: { name?: string; context?: string } | null | undefined
+): string {
+  if (!ticket) {
+    return "";
+  }
+  if (ticket.context === "Vendor") {
+    return "Vendor";
+  }
+  return (ticket.name as string) || "";
 }
 
 export const ConferenceAttendeeFields = ({
@@ -46,37 +64,111 @@ export const ConferenceAttendeeFields = ({
     setUpdated(false);
   }, [updated]);
 
-  useEffect(() => {
-    setRegistrationType(ticketType === "Vendor" ? "Vendor" : "Attendee");
-  });
-
   // vendor then training nor licenses apply
   const form = useFormContext();
 
+  const conferenceTicketId = form.watch("conference_ticket");
+  const ticketIdForQuery =
+    conferenceTicketId != null && conferenceTicketId !== ""
+      ? typeof conferenceTicketId === "object" &&
+        conferenceTicketId !== null &&
+        "id" in conferenceTicketId
+        ? (conferenceTicketId as { id: number }).id
+        : conferenceTicketId
+      : undefined;
+
+  const { data: selectedTicket } = useGetOne(
+    "conference-tickets",
+    { id: ticketIdForQuery as number },
+    { enabled: ticketIdForQuery != null && ticketIdForQuery !== "" }
+  );
+
+  const recordTicket =
+    record &&
+    record.conference_ticket &&
+    typeof record.conference_ticket === "object"
+      ? (record.conference_ticket as { id?: number; name?: string; context?: string })
+      : undefined;
+  const recordTicketId = record
+    ? typeof record.conference_ticket === "object" &&
+      record.conference_ticket !== null
+      ? (record.conference_ticket as { id: number }).id
+      : (record.conference_ticket as number | string | undefined)
+    : undefined;
+  const canUseRecordTicket =
+    recordTicketId != null &&
+    ticketIdForQuery != null &&
+    Number(recordTicketId) === Number(ticketIdForQuery);
+
+  // Prefer the selected ticket record (updates when the dropdown changes). The
+  // `type` string is not updated by ReferenceInput, and VIP/Attendee both use
+  // context "Attendee", so the stored `type` can stay "Attendee" while the
+  // ticket name is "VIP".
+  const typeFromTicket =
+    typeLabelFromTicket(selectedTicket) ||
+    (canUseRecordTicket ? typeLabelFromTicket(recordTicket) : "") ||
+    "";
   const ticketType: string =
-    typeof record !== "undefined" ? record?.type : form.watch("type") ?? "";
+    typeFromTicket ||
+    (form.watch("type") as string) ||
+    (record?.type as string) ||
+    "";
+
+  useEffect(() => {
+    setRegistrationType(ticketType === "Vendor" ? "Vendor" : "Attendee");
+  }, [ticketType]);
+
+  console.log("ticket type", ticketType);
+
+  useEffect(() => {
+    if (!selectedTicket) {
+      return;
+    }
+    const next = typeLabelFromTicket(selectedTicket);
+    if (next && form.getValues("type") !== next) {
+      form.setValue("type", next, { shouldDirty: true, shouldTouch: true });
+    }
+  }, [selectedTicket, form]);
+
+  // Prefer the saved attendee's conference so edit screens match the record when
+  // dashboard filters (currentFilter) point at a different default conference.
+  const recordConferenceId =
+    record && record.conference != null && record.conference !== ""
+      ? Number(record.conference)
+      : undefined;
+  const conferenceId =
+    recordConferenceId !== undefined && !Number.isNaN(recordConferenceId)
+      ? recordConferenceId
+      : (currentFilter.conference as number) ?? 0;
+  const yearValue =
+    record && record.year != null && record.year !== ""
+      ? Number(record.year)
+      : (currentFilter.year as number) ?? new Date().getFullYear();
 
   return (
     <Box>
       <Grid container spacing={2}>
-        <Grid xs={12}
+        <Grid
+          item
+          xs={12}
           md={
             ticketType !== "Vendor" &&
-            (currentFilter.conference === 1 || currentFilter.conference === 3)
+            (conferenceId === 1 || conferenceId === 3)
               ? 6
               : 12
-          }>
+          }
+        >
           <Card sx={{ p: 1 }}>
             <Typography ml={1} variant="h6">
               Attendee Information
             </Typography>
             <Divider />
             <Grid container spacing={2}>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <ReferenceInput
                   filter={
-                    currentFilter.conference
-                      ? { conferences: [currentFilter.conference] }
+                    conferenceId
+                      ? { conferences: [conferenceId] }
                       : {}
                   }
                   source="conference_ticket"
@@ -92,7 +184,7 @@ export const ConferenceAttendeeFields = ({
                   />
                 </ReferenceInput>
               </Grid>
-              <Grid display={"none"} xs={12} md={6}>
+              <Grid display={"none"} item xs={12} md={6}>
                 <DateInput
                   hidden
                   source="registration_date"
@@ -103,7 +195,7 @@ export const ConferenceAttendeeFields = ({
                 />
               </Grid>
               <NumberInput source="type_id" sx={{ display: "none" }} />
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="title"
                   label="Title"
@@ -111,7 +203,7 @@ export const ConferenceAttendeeFields = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="first"
                   label="First"
@@ -120,7 +212,7 @@ export const ConferenceAttendeeFields = ({
                   validate={required("First Name is required")}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="last"
                   label="Last"
@@ -129,7 +221,7 @@ export const ConferenceAttendeeFields = ({
                   validate={required("Last Name is required")}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   validate={required("Email is required")}
                   source="email"
@@ -138,7 +230,7 @@ export const ConferenceAttendeeFields = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="phone"
                   label="Phone"
@@ -146,7 +238,7 @@ export const ConferenceAttendeeFields = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <SelectInputRegistration type={registrationType} />
                 {/* <ReferenceInput
                     source="registration"
@@ -162,7 +254,7 @@ export const ConferenceAttendeeFields = ({
                     />
                   </ReferenceInput> */}
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="organization"
                   label="Organization"
@@ -174,7 +266,7 @@ export const ConferenceAttendeeFields = ({
                 ticketType !== "Guest" &&
                 ticketType !== "Speaker" &&
                 ticketType !== "Staff" && (
-                  <Grid xs={12} md={6}>
+                  <Grid item xs={12} md={6}>
                     <TextInput
                       source="license"
                       label="License"
@@ -184,7 +276,7 @@ export const ConferenceAttendeeFields = ({
                   </Grid>
                 )}
               {ticketType !== "Vendor" && (
-                <Grid xs={12} md={6}>
+                <Grid item xs={12} md={6}>
                   <SelectInput
                     source="training_type"
                     choices={trainingTypeOptions}
@@ -193,7 +285,7 @@ export const ConferenceAttendeeFields = ({
                   />
                 </Grid>
               )}
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextInput
                   source="passport_id"
                   helperText="*Only Required if Participating in Training"
@@ -202,11 +294,11 @@ export const ConferenceAttendeeFields = ({
                 />
               </Grid>
               {context === "edit" && (
-                <Grid xs={12} md={6}>
+                <Grid item xs={12} md={6}>
                   <NumberInput source="wp_eid" label="WP EID" fullWidth />
                 </Grid>
               )}
-              <Grid xs={6} md={6}>
+              <Grid item xs={6} md={6}>
                 <BooleanInput
                   source="speaker"
                   label="This Conference Attendee is a Speaker"
@@ -215,7 +307,7 @@ export const ConferenceAttendeeFields = ({
                 />
               </Grid>
 
-              <Grid xs={6} md={6}>
+              <Grid item xs={6} md={6}>
                 <BooleanInput
                   source="promotional_emails"
                   label="Send Promotional Emails"
@@ -225,26 +317,27 @@ export const ConferenceAttendeeFields = ({
               </Grid>
               <NumberInput
                 source="year"
-                defaultValue={currentFilter.year}
+                defaultValue={yearValue}
                 sx={{ display: "none" }}
               />
               <NumberInput
                 source="conference"
-                defaultValue={currentFilter.conference}
+                defaultValue={conferenceId}
                 sx={{ display: "none" }}
               />
               
               {/* Only show MetaComponent here if Voting Delegates card is NOT displayed */}
               {context === "edit" && 
                !(ticketType !== "Vendor" &&
-                (currentFilter.conference === 1 || currentFilter.conference === 3)) && (
-                <Grid xs={12}>
+                (conferenceId === 1 || conferenceId === 3)) && (
+                <Grid item xs={12}>
                   <Box mt={2}>
                     <MetaComponent
                       ticketType={ticketType}
                       context="Attendee"
                       resource="conference-attendees"
                       setUpdated={setUpdated}
+                      conferenceId={conferenceId}
                     />
                   </Box>
                 </Grid>
@@ -253,14 +346,14 @@ export const ConferenceAttendeeFields = ({
           </Card>
         </Grid>
         {ticketType !== "Vendor" &&
-          (currentFilter.conference === 1) && (
-            <Grid xs={12} md={6}>
+          conferenceId === 1 && (
+            <Grid item xs={12} md={6}>
               <Card sx={{ p: 1 }}>
                 <Typography variant="h6">Voting Delegates</Typography>
                 <Divider />
                 <Box>
                   <Grid container spacing={2}>
-                    <Grid xs={12} md={6}>
+                    <Grid item xs={12} md={6}>
                       <SelectInput
                         source="orwa_voting_status"
                         label="ORWA Voting Status"
@@ -268,8 +361,8 @@ export const ConferenceAttendeeFields = ({
                         fullWidth
                       />
                     </Grid>
-                    {currentFilter.conference === 1 && (
-                      <Grid xs={12} md={6}>
+                    {conferenceId === 1 && (
+                      <Grid item xs={12} md={6}>
                         <SelectInput
                           source="orwaag_voting_status"
                           label="ORWAAG Voting Status"
@@ -278,7 +371,7 @@ export const ConferenceAttendeeFields = ({
                         />
                       </Grid>
                     )}
-                    <Grid xs={12} md={6} display={"none"}>
+                    <Grid item xs={12} md={6} display={"none"}>
                       <ReferenceInput
                         source="conference"
                         reference="conferences"
@@ -286,16 +379,16 @@ export const ConferenceAttendeeFields = ({
                       >
                         <NumberInput
                           source="conference"
-                          defaultValue={currentFilter.conference}
+                          defaultValue={conferenceId}
                           label="Conference"
                           fullWidth
                         />
                       </ReferenceInput>
                     </Grid>
-                    <Grid xs={12} md={6} display={"none"}>
+                    <Grid item xs={12} md={6} display={"none"}>
                       <NumberInput
                         source="year"
-                        defaultValue={currentFilter.year}
+                        defaultValue={yearValue}
                         label="Year"
                         fullWidth
                       />
@@ -303,7 +396,7 @@ export const ConferenceAttendeeFields = ({
                     
                     {/* Add MetaComponent here when in edit mode */}
                     {context === "edit" && (
-                      <Grid xs={12}>
+                      <Grid item xs={12}>
                         <Box mt={2}>
                           <Divider sx={{ mb: 2 }} />
                           <MetaComponent
@@ -311,6 +404,7 @@ export const ConferenceAttendeeFields = ({
                             context="Attendee"
                             resource="conference-attendees"
                             setUpdated={setUpdated}
+                            conferenceId={conferenceId}
                           />
                         </Box>
                       </Grid>

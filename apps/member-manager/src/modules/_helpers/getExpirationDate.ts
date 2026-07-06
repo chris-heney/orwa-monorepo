@@ -24,36 +24,65 @@
 
 // Previous Logic ^^^
 
-//  New logic
+import dayjs, { Dayjs } from "dayjs";
 
-import dayjs from "dayjs";
+// Expiration = new payment end (current + 1 year) plus overlap days when they paid early.
 
-const getExpirationDate = (previousPayment: string, lastPayment: string) => {
-  const paymentLastDate = dayjs(lastPayment);
-  const paymentPreviousDate = previousPayment ? dayjs(previousPayment) : null;
+/** Treat missing, empty, or unparseable values as "no date" (not `dayjs()` / today). */
+const parsePaymentDate = (
+  d: string | null | undefined
+): Dayjs | null => {
+  if (d == null || d === "") {
+    return null;
+  }
+  const parsed = dayjs(d);
+  return parsed.isValid() ? parsed : null;
+};
 
-  if (!paymentPreviousDate) {
-    // If no previous payment, simply add 1 year to the last payment
-    return paymentLastDate.add(1, "year");
+/**
+ * @param previousPayment - Previous payment date (e.g. 04/08/2024)
+ * @param lastPayment - Current payment date (e.g. 02/10/2025)
+ * @returns Expiration = lastPayment + 1 year. If current payment was before previous period end, adds those overlap days (e.g. 02/10/2026 + 57 days → 04/08/2026). Invalid dayjs if no valid payment to derive an end from.
+ */
+const getExpirationDate = (
+  previousPayment: string | null | undefined,
+  lastPayment: string | null | undefined
+) => {
+  const currentPaymentDate = parsePaymentDate(lastPayment);
+  const previousPaymentDate = parsePaymentDate(previousPayment);
+
+  if (!currentPaymentDate) {
+    if (previousPaymentDate) {
+      return previousPaymentDate.add(1, "year");
+    }
+    return dayjs("");
   }
 
-  // Calculate 1-year expiration for the previous payment
-  const previousExpiration = paymentPreviousDate.add(1, "year");
-
-  if (!paymentLastDate.isValid()) {
-    return previousExpiration;
+  if (!previousPaymentDate) {
+    return currentPaymentDate.add(1, "year");
   }
 
-  if (paymentLastDate.isBefore(previousExpiration)) {
-    // Calculate remaining days from the current payment date to the previous expiration
-    const remainingDays = previousExpiration.diff(paymentLastDate, "day");
+  const newPaymentEnd = currentPaymentDate.add(1, "year");
+  const previousPeriodEnd = previousPaymentDate.add(1, "year");
 
-    // Add 1 year to the current payment date + remaining days
-    return paymentLastDate.add(1, "year").add(remainingDays, "day");
+  if (currentPaymentDate.isBefore(previousPeriodEnd)) {
+    const overlapDays = previousPeriodEnd.diff(currentPaymentDate, "day");
+    return newPaymentEnd.add(overlapDays, "day");
   }
-  
-  // If no overlap, simply add 1 year to the current payment date
-  return paymentLastDate.add(1, "year");
+
+  return newPaymentEnd;
+};
+
+/** True when membership expiration (last payment + overlap rules) is still in the future. */
+export const isMembershipActiveByExpiration = (
+  paymentPreviousDate: string | null | undefined,
+  paymentLastDate: string | null | undefined
+): boolean => {
+  const expirationDate = getExpirationDate(
+    paymentPreviousDate,
+    paymentLastDate
+  );
+  return expirationDate.isValid() && expirationDate.isAfter(new Date());
 };
 
 export default getExpirationDate;

@@ -14,7 +14,7 @@ export const isExtraIncluded = (
 
   if (!selectedExtraOption) return false;
 
-  return selectedExtraOption.included.data.some((include) => {
+  return selectedExtraOption.included.some((include) => {
     return include.id === ticket.ticket_type?.id;
   });
 

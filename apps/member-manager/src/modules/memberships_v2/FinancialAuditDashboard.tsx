@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import {Grid, Paper, Typography} from "@mui/material"
+import { Grid, Paper, Typography } from '@mui/material'
 import { Loading } from 'react-admin'
 import { CurrencyOptions } from '../../config/Settings'
 import httpClient from '../../helpers/ra-strapi-data-provider/src/httpClient'
@@ -51,60 +51,60 @@ const FinancialAuditDashboard = () => {
       <CustomSecondaryHeader title={title} />
 
       <Grid container rowSpacing={1} columnSpacing={3}>
-        <Grid xs={12} md={9} lg={10}>
+        <Grid item xs={12} md={9} lg={10}>
           <Grid container rowSpacing={1} columnSpacing={3}>
-            <Grid xs={12} sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
+            <Grid item xs={12} sx={{ mt: 3, display: 'flex', justifyContent: 'space-between' }}>
               <Typography variant="h6"><strong>Unearned</strong> Membership Dues</Typography>
               <DateRange />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={WatersystemIcon} heading={USDollar.format(financialAuditTotals.watersystems.unearnedTotal)} subheading="Watersystems" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={AssociateIcon} heading={USDollar.format(financialAuditTotals.associates.unearnedTotal)} subheading="Associates" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={TotalIcon} heading={USDollar.format(financialAuditTotals.total.unearnedTotal)} subheading="Total" />
             </Grid>
-            <Grid xs={12} sx={{ mt: 3 }}>
+            <Grid item xs={12} sx={{ mt: 3 }}>
               <Typography variant="h6"><strong>Collected</strong> Membership Dues</Typography>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={WatersystemIcon} heading={USDollar.format(financialAuditTotals.watersystems.collectedTotal)} subheading="Watersystems" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={AssociateIcon} heading={USDollar.format(financialAuditTotals.associates.collectedTotal)} subheading="Associates" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={TotalIcon} heading={USDollar.format(financialAuditTotals.total.collectedTotal)} subheading="Total" />
             </Grid>
-            <Grid xs={12} sx={{ mt: 3 }}>
+            <Grid item xs={12} sx={{ mt: 3 }}>
               <Typography variant="h6"><strong>Average Daily Unearned</strong> Membership Dues</Typography>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={WatersystemIcon} heading={USDollar.format(financialAuditTotals.watersystems.unearnedDailyAverage)} subheading="Watersystems" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={AssociateIcon} heading={USDollar.format(financialAuditTotals.associates.unearnedDailyAverage)} subheading="Associates" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={TotalIcon} heading={USDollar.format(financialAuditTotals.total.unearnedDailyAverage)} subheading="Total" />
             </Grid>
-            <Grid xs={12} sx={{ mt: 3 }}>
+            <Grid item xs={12} sx={{ mt: 3 }}>
               <Typography variant="h6"><strong>Average Daily Collected</strong> Membership Dues</Typography>
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={WatersystemIcon} heading={USDollar.format(financialAuditTotals.watersystems.collectedDailyAverage)} subheading="Watersystems" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={AssociateIcon} heading={USDollar.format(financialAuditTotals.associates.collectedDailyAverage)} subheading="Associates" />
             </Grid>
-            <Grid xs={12} md={4}>
+            <Grid item xs={12} md={4}>
               <DateStatusWidget WidgetIcon={TotalIcon} heading={USDollar.format(financialAuditTotals.total.collectedDailyAverage)} subheading="Total" />
             </Grid>
           </Grid>
         </Grid>
-        <Grid xs={12} md={3} lg={2} sx={{ mt: 3 }}>
+        <Grid item xs={12} md={3} lg={2} sx={{ mt: 3 }}>
           <Typography variant="h6" sx={{ fontWeight: 900 }}>Date Filter</Typography>
           <DateField label="Attribution Date" value={fromDate} onChange={(d) => setFromDate(d as Dayjs)} fullWidth />
         </Grid>

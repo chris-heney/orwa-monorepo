@@ -1,5 +1,6 @@
 'use strict';
 import dayjs from 'dayjs'
+import { updateById } from '../../../utils/document-compat'
 /**
  * schedule-functions service
  */
@@ -93,8 +94,7 @@ export default ({ strapi }) => ({
 
                         // Update the existing session
                         try {
-                            await strapi.documents('api::training-session.training-session').update({
-                                documentId: "__TODO__",
+                            await updateById('api::training-session.training-session', updatedSession.id, {
                                 previousData: { ...updatedSession },
 
                                 // depends on dataProvider either topic or topic.id
@@ -160,8 +160,7 @@ export default ({ strapi }) => ({
 
                     try {
                         console.log('updating block')
-                        const response = await strapi.documents('api::training-schedule-block.training-schedule-block').update({
-                            documentId: "__TODO__",
+                        const response = await updateById('api::training-schedule-block.training-schedule-block', updatedBlock.id, {
                             previousData: { ...updatedBlock },
 
                             data: {
@@ -197,8 +196,7 @@ export default ({ strapi }) => ({
             if (trainingSchedule && trainingSchedule[0].id) {
                 console.log('updating training schedule')
                 try {
-                    await strapi.documents('api::training-schedule.training-schedule').update({
-                        documentId: "__TODO__",
+                    await updateById('api::training-schedule.training-schedule', trainingSchedule[0].id, {
                         previousData: { ...trainingSchedule },
 
                         data: {
@@ -215,8 +213,7 @@ export default ({ strapi }) => ({
 
                 const totlaDuration = (totalHours + totalMinutes)
 
-                await strapi.documents('api::training-event.training-event').update({
-                    documentId: "__TODO__",
+                await updateById('api::training-event.training-event', trainingEvent.id, {
                     previousData: { ...trainingEvent.data },
 
                     data: {
@@ -304,9 +301,7 @@ export default ({ strapi }) => ({
             const totalDuration = totalHours + totalMinutes;
 
             // Update the training event with the new schedule ID and total duration
-            await strapi.documents('api::training-event.training-event').update({
-                documentId: "__TODO__",
-
+            await updateById('api::training-event.training-event', eventId, {
                 data: {
                     hours: duplicateHours ? duplicateHours : totalDuration,
                     schedule: createdScheduleId,

@@ -8,7 +8,7 @@ import {
   FileField,
   useDataProvider,
 } from "react-admin";
-import {Box, Grid, Typography, Divider} from "@mui/material";
+import { Box, Grid, Typography, Divider } from "@mui/material";
 import CustomEditHeader from "../../_components/CustomFormHeader";
 import { useFormContext } from "react-hook-form";
 
@@ -53,7 +53,7 @@ const CreateInvoice = () => {
         <Typography variant="h5">Entity Information</Typography>
         <Divider sx={{ mb: 2 }} />
         <Grid container spacing={2}>
-          <Grid xs={12} sm={6}>
+          <Grid item xs={12} sm={6}>
             <SelectInput
               source="resource"
               label="Resource"
@@ -65,7 +65,7 @@ const CreateInvoice = () => {
               fullWidth
             />
           </Grid>
-          <Grid xs={12} sm={6}>
+          <Grid item xs={12} sm={6}>
             <SelectInput
               source="entity_id"
               label="Entity"
@@ -83,16 +83,16 @@ const CreateInvoice = () => {
           <Typography variant="h5">Transaction Details</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={2}>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} sm={4}>
               <TextInput source="email" label="Email" fullWidth />
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} sm={4}>
               <TextInput source="company" label="Company" fullWidth />
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} sm={4}>
               <NumberInput source="amount" label="Amount" fullWidth />
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} sm={4}>
               <SelectInput
                 source="payment_method"
                 label="Payment Method"
@@ -103,7 +103,7 @@ const CreateInvoice = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} sm={4}>
               <DateInput
                 defaultValue={new Date()}
                 source="payment_date"
@@ -111,10 +111,10 @@ const CreateInvoice = () => {
                 fullWidth
               />
             </Grid>
-            <Grid xs={12} sm={4}>
+            <Grid item xs={12} sm={4}>
               <NumberInput defaultValue={new Date().getFullYear()} source="year" label="Year" fullWidth />
             </Grid>
-            <Grid xs={12}>
+            <Grid item xs={12}>
               <TextInput
                 source="payment_details"
                 label="Payment Details"
@@ -133,7 +133,7 @@ const CreateInvoice = () => {
           <Grid container spacing={2}>
             
             
-            <Grid xs={12}>
+            <Grid item xs={12}>
               <TextInput
                 source="context"
                 label="Context"
@@ -141,7 +141,7 @@ const CreateInvoice = () => {
                 defaultValue="membership-forms"
               />
             </Grid>
-            <Grid xs={12}>
+            <Grid item xs={12}>
               <FileInput source="reciept" label="Upload Receipt" accept="*/*">
                 <FileField source="src" title="title" />
               </FileInput>

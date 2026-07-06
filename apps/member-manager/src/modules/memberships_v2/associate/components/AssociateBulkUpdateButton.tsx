@@ -1,4 +1,4 @@
-import {Box, Button, Grid, MenuItem, Modal, Select, Typography} from "@mui/material"
+import { Box, Button, Grid, MenuItem, Modal, Select, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import { AutocompleteArrayInput, AutocompleteInput, BooleanInput, ConfigurableDatagridColumn, DateInput, List, NumberInput, ReferenceArrayInput, ReferenceInput, SelectInput, SimpleForm, SimpleList, TextInput, useNotify, useStore, useUpdateMany } from 'react-admin'
 import { FieldValues } from 'react-hook-form'
@@ -6,6 +6,7 @@ import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { AssociateMemberTypeChoices, StateChoices, associateTypeOptions, paymentOptions, reportType } from '../../../../helpers/Data'
 import UpdateIcon from '@mui/icons-material/Update'
 import CustomToolBar from '../../../_components/CustomToolbar'
+import { isMembershipActiveByExpiration } from '../../../_helpers/getExpirationDate'
 
 const AssociateBulkUpdateButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -55,7 +56,7 @@ const AssociateBulkUpdateButton = () => {
           <CustomSecondaryHeader title='Bulk Update Associates' />
           {/* left side field to update right side is list of water systems being updated */}
           <Grid container spacing={2}>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <Typography textAlign={'center'} variant='h6'>Selected Field</Typography>
               <Box sx={{ p: 1, display: 'flex', mt: 2.5 }}>
                 <Select
@@ -138,7 +139,7 @@ const AssociateBulkUpdateButton = () => {
                 </SimpleForm>
               </Box>
             </Grid>
-            <Grid xs={6}>
+            <Grid item xs={6} >
               <Typography textAlign={'center'} variant='h6'>Selected Associates</Typography>
               <List
                 title={' '}
@@ -152,7 +153,17 @@ const AssociateBulkUpdateButton = () => {
                 <SimpleList
                   sx={{ overflowY: 'scroll', maxHeight: 400 }}
                   primaryText={(record) => record.name}
-                  secondaryText={(record) => (record.member_level === null ? 'No Level' : record.member_level) + ' | ' + (record.active ? 'Active' : 'Inactive')}
+                  secondaryText={(record) =>
+                    (record.member_level === null
+                      ? 'No Level'
+                      : record.member_level) +
+                    ' | ' +
+                    (isMembershipActiveByExpiration(
+                      record.payment_previous_date,
+                      record.payment_last_date
+                    )
+                      ? 'Active'
+                      : 'Inactive')}
                   tertiaryText={record => record.county} />
               </List>
             </Grid>

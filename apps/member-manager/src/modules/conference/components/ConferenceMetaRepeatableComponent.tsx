@@ -3,18 +3,22 @@ import { Box, FormControlLabel, Checkbox, FormLabel } from '@mui/material'
 import { Loading, useGetList, useNotify, useUpdate, useRecordContext } from 'react-admin'
 import { IExtra, ISharedMeta } from '../types/IConference'
 import { useConferenceContext } from '../ConferenceContext'
+import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters'
 
 interface MetaComponentProps {
   context: string
   ticketType?: string
   resource: string
   setUpdated: React.Dispatch<React.SetStateAction<boolean>>
+  /** When set (e.g. attendee’s saved conference), extras are loaded for this conference, not only dashboard filter. */
+  conferenceId?: number
 }
 
 const MetaComponent = ({
   resource,
   setUpdated,
   context,
+  conferenceId: conferenceIdProp,
 }: MetaComponentProps) => {
 
   const { currentFilter } = useConferenceContext()
@@ -23,14 +27,20 @@ const MetaComponent = ({
   const notify = useNotify()
   const [selectedExtras, setSelectedExtras] = useState<ISharedMeta[]>([])
 
+  const filterConferenceId =
+    conferenceIdProp ?? getPrimaryConferenceId(currentFilter as Record<string, unknown>)
+  const extrasListEnabled = filterConferenceId != null && filterConferenceId > 0
+
   const { data: extras, isLoading } = useGetList('conference-extras', {
     pagination: { page: 1, perPage: 100 },
     sort: { field: 'id', order: 'ASC' },
     meta: {
       raw: true,
     },
-    filter: { conferences: [currentFilter.conference] },
-  })
+    filter: extrasListEnabled
+      ? { conferences: [filterConferenceId] }
+      : { conferences: [0] },
+  }, { enabled: extrasListEnabled })
 
   useEffect(() => {
     if (record?.items) {

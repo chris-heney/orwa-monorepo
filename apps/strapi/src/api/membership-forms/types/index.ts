@@ -1,10 +1,22 @@
 
+export type WatersystemDirectoryTitle =
+  | "Chairman"
+  | "Vice-Chairman"
+  | "Manager"
+  | "Operator"
+  | "Bookkeeper";
+
 export interface IContact {
   first: string;
   last: string;
   email: string;
   phone: string;
-  title?: string;
+  title?: string | WatersystemDirectoryTitle;
+  address_mailing_line1?: string;
+  address_mailing_line2?: string;
+  address_mailing_city?: string;
+  address_mailing_state?: string;
+  address_mailing_zip?: string;
 }
 
 
@@ -43,7 +55,7 @@ export interface WatersystemMembershipPayload {
   years: number;
   orwaag: boolean;
   // workmans_comp?: boolean;
-  contacts: IContact[];
+  contacts?: IContact[];
   county:
     | "Adair"
     | "Alfalfa"

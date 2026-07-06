@@ -6,6 +6,7 @@ import { ErrorBoundary } from 'react-error-boundary'
 import { styled, SxProps } from '@mui/material/styles'
 import { MultiLevelMenu, AppLocationContext } from '@react-admin/ra-navigation'
 import InventoryIcon from '@mui/icons-material/Inventory'
+import PermMediaIcon from '@mui/icons-material/PermMedia'
 import AdminAppBar from './components/AdminAppBar'
 import TrainingIcon from '@mui/icons-material/ModelTraining'
 import EventsIcon from '@mui/icons-material/CalendarMonth'
@@ -17,7 +18,7 @@ import PeopleIcon from '@mui/icons-material/Groups'
 import BusinessIcon from '@mui/icons-material/Business'
 // import FavoriteIcon from '@mui/icons-material/Favorite';
 
-import { useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import {
   AppBarProps,
   Sidebar as DefaultSidebar,
@@ -32,6 +33,36 @@ import DashboardAppBar from '../modules/dashboard/_components/DashboardBar'
 import { Email } from '@mui/icons-material'
 import useCurrentUser from '../modules/_helpers/useCurrentUser'
 
+const STAFF_HOME = '/membership-management'
+const STAFF_ALLOWED_RESOURCES = [
+  'watersystems',
+  'associates',
+]
+
+const isStaffAllowedPath = (pathname: string) => {
+  if (pathname === STAFF_HOME) {
+    return true
+  }
+
+  return STAFF_ALLOWED_RESOURCES.some((resource) => {
+    const resourcePath = `/${resource}`
+    const showPathPattern = new RegExp(`^/${resource}/[^/]+/show$`)
+
+    return pathname === resourcePath || showPathPattern.test(pathname)
+  })
+}
+
+const StaffRouteGuard = ({ children }: { children: ReactNode }) => {
+  const { role, isLoading } = useCurrentUser()
+  const location = useLocation()
+
+  if (isLoading || role !== 'Staff' || isStaffAllowedPath(location.pathname)) {
+    return <>{children}</>
+  }
+
+  return <Navigate to={STAFF_HOME} replace />
+}
+
 
 const MyMenu = () => {
 
@@ -45,35 +76,10 @@ const MyMenu = () => {
     return (
       <MultiLevelMenu>
         <MultiLevelMenu.Item
-          name="dashboard"
-          to="/admin/dashboard"
-          label="Dashboard"
-          icon={<DashboardIcon />}
-        />
-        <MultiLevelMenu.Item
           name="membership-management"
-          to="/membership-management"
+          to={STAFF_HOME}
           label="Memberships"
           icon={<MembersIcon />}
-        />
-        <MultiLevelMenu.Item
-          name="human-resources-dashboard"
-          to="/human-resources/dashboard"
-          label="Contacts"
-          title="Contacts"
-          icon={<PeopleIcon />}
-        />
-        {/* <MultiLevelMenu.Item
-          name="corporate-sponsors"
-          to="/corporate-sponsors"
-          label="Corporate Sponsors"
-          icon={<BusinessIcon />}
-        /> */}
-        <MultiLevelMenu.Item
-          name="settings"
-          to="/admin/settings"
-          label="Settings"
-          icon={<SettingsIcon />}
         />
       </MultiLevelMenu>
     );
@@ -112,6 +118,13 @@ const MyMenu = () => {
         to="/assets"
         label="Asset Manager"
         icon={<InventoryIcon />}
+      />
+      <MultiLevelMenu.Item
+        name="media-library"
+        to="/media-library"
+        label="Media Library"
+        title="Media Library"
+        icon={<PermMediaIcon />}
       />
       <MultiLevelMenu.Item name="table" label="Training Manager" icon={<TrainingIcon />}>
         <MultiLevelMenu.Item
@@ -212,7 +225,9 @@ const DashBoard = (props: LayoutProps) => {
                   />
                 )}
               >
-                {children}
+                <StaffRouteGuard>
+                  {children}
+                </StaffRouteGuard>
               </ErrorBoundary>
             </Box>
           </main>

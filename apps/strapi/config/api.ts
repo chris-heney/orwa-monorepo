@@ -1,7 +1,7 @@
-export default {
+export default ({ env }) => ({
   rest: {
-    defaultLimit: 25,
-    maxLimit: 100,
+    defaultLimit: 1000,
+    maxLimit: 1000,
     withCount: true,
   },
-};
+});

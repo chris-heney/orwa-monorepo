@@ -23,6 +23,8 @@ export interface IHumanResourcesContextProvider {
   setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isSavingQuery: boolean;
   setSavingQuery: React.Dispatch<React.SetStateAction<boolean>>;
+  userListVersion: number;
+  refreshUserList: () => void;
 }
 
 export const HumanResourcesContext = createContext<IHumanResourcesContextProvider>({
@@ -44,6 +46,8 @@ export const HumanResourcesContext = createContext<IHumanResourcesContextProvide
   setIsSettingsOpen: () => {},
   isSavingQuery: false,
   setSavingQuery: () => {},
+  userListVersion: 0,
+  refreshUserList: () => {},
 });
 
 export const useHumanResourcesContext = () => useContext(HumanResourcesContext);
@@ -76,6 +80,8 @@ const HumanResourcesContextProvider = ({ children }: PropsWithChildren) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSavingQuery, setSavingQuery] = useState(false);
+  const [userListVersion, setUserListVersion] = useState(0);
+  const refreshUserList = () => setUserListVersion((version) => version + 1);
 
   return (
     <HumanResourcesContext.Provider
@@ -98,6 +104,8 @@ const HumanResourcesContextProvider = ({ children }: PropsWithChildren) => {
         setIsSettingsOpen,
         isSavingQuery,
         setSavingQuery,
+        userListVersion,
+        refreshUserList,
       }}
     >
       {children}

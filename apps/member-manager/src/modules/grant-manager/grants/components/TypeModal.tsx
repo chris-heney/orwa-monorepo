@@ -31,11 +31,11 @@ const TypeModal: React.FC<ModalContentProps> = ({ setIsTopicOpen }) => {
       <Typography>
         <Create resource="grant-types" redirect={false} >
           <SimpleForm >
-            <Grid sx={{ justifyContent: 'center' }} container spacing={2}>
-              <Grid xs={12} sm={12} md={12} lg={12}>
+            <Grid justifyContent={'center'} container spacing={2}>
+              <Grid item xs={12} sm={12} md={12} lg={12}>
                 <TextInput fullWidth  source="name" label="Name" />
               </Grid>
-              <Grid xs={12} sm={12} md={12}lg={12}>
+              <Grid item xs={12} sm={12} md={12}lg={12}>
                 <TextInput  fullWidth source="description" label="Description" multiline rows={10}/>
               </Grid>            
             </Grid>

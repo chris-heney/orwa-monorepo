@@ -67,7 +67,7 @@ const ModalMakePayout = ({
         <Create title={" "} resource="grant-payouts" redirect={false}>
           <SimpleForm resource="grant-payouts" onSubmit={postSave}>
             <Grid container spacing={2}>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <ReferenceInput
                   perPage={1000}
                   reference="grant-application-finals"
@@ -84,7 +84,7 @@ const ModalMakePayout = ({
                   />
                 </ReferenceInput>
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <ReferenceInput
                   perPage={1000}
                   reference="grants"
@@ -100,7 +100,7 @@ const ModalMakePayout = ({
                   />
                 </ReferenceInput>
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <NumberInput
                   source="amount"
                   label="Amount"
@@ -108,7 +108,7 @@ const ModalMakePayout = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={6}>
+              <Grid item xs={6}>
                 <DateInput
                   defaultValue={new Date()}
                   source="transaction_date"
@@ -117,7 +117,7 @@ const ModalMakePayout = ({
                   helperText={false}
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <ReferenceInput
                   perPage={1000}
                   reference="payout-statuses"
@@ -128,9 +128,11 @@ const ModalMakePayout = ({
                 >
                   <AutocompleteInput defaultValue={id} optionText="name" />
                 </ReferenceInput>
-                <Grid sx={{
+                <Grid 
+                sx={{
                   display: "none"
-                }} xs={12} md={6}>
+                }}
+                item xs={12} md={6}>
                   <SelectInput
                     source="type"
                     label="Type"

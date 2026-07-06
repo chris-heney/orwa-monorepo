@@ -131,9 +131,9 @@ export default ({ strapi }) => ({
       applied_to_other_loans,
     } = ctx.request.body as IGrantApplicationFormPayload;
 
-    const contactId = 0;
-    const chairmanId = 0;
-    const engineerId = 0;
+    let contactId = 0;
+    let chairmanId = 0;
+    let engineerId = 0;
 
     //return an id of the status
     const getStatus = async (status: string) => {
@@ -166,7 +166,7 @@ export default ({ strapi }) => ({
         // set the application to change order
 
         await strapi.documents("api::grant-application-final.grant-application-final").update({
-          documentId: "__TODO__",
+          documentId: fetchedApplication[0].documentId,
 
           data: {
             status: statusId,

@@ -13,6 +13,8 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import AddIcon from "@mui/icons-material/Add";
 import RecordCount from "../_components/RecordCount";
 import { useConferenceContext } from "./ConferenceContext";
+import VendorAttendeeExportButton from "./components/VendorAttendeeExportButton";
+import { getPrimaryConferenceId } from "./helpers/mergeConferenceAcrossTabFilters";
 
 const ConferenceHeader = () => {
   const {
@@ -23,8 +25,8 @@ const ConferenceHeader = () => {
     setIsCreating,
   } = useConferenceContext();
 
-  const {filterValues} = useListContext()
-
+  const { filterValues } = useListContext();
+  const titleConferenceId = getPrimaryConferenceId(filterValues);
 
   const redirect = useRedirect();
 
@@ -56,8 +58,9 @@ const ConferenceHeader = () => {
           textAlign: "left",
         }}
       >
-        {filterValues?.conference 
-          ? conferences.find((conference) => conference.id === filterValues?.conference)?.name
+        {titleConferenceId != null
+          ? conferences.find((conference) => conference.id === titleConferenceId)
+              ?.name
           : "All Conferences"}{" "}
         : {title}
       </Typography>
@@ -117,6 +120,7 @@ const ConferenceHeader = () => {
                   color: "white",
                 }}
               />
+              <VendorAttendeeExportButton />
             </>
           )}
 

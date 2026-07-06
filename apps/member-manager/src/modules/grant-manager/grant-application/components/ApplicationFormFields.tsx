@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Button, Card, Divider, Grid, Typography} from "@mui/material";
+import { Box, Button, Card, Divider, Grid, Typography } from "@mui/material";
 import {
   AutocompleteArrayInput,
   DateInput,
@@ -28,21 +28,30 @@ const GrantApplicationFormFields = () => {
   return !grantContext || !form.getValues() ? (
     <Loading />
   ) : (
-    <Grid container
+    <Grid
+      container
       spacing={0}
-      gap={0} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
-      alignSelf={"stretch"}>
+      gap={0}
+      alignItems={"stretch"}
+      justifyItems={"stretch"}
+      alignSelf={"stretch"}
+    >
       {/* Column 1 */}
-      <Grid xs={12}
+      <Grid
+        item
+        xs={12}
         md={6}
-        sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
-        alignSelf={"stretch"}>
+        sm={12}
+        alignItems={"stretch"}
+        justifyItems={"stretch"}
+        alignSelf={"stretch"}
+      >
         {/* system information and contacts */}
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">System Information</Typography>
           <Divider />
           <Grid container spacing={1}>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="legal_entity_name"
                 label="System Name"
@@ -50,7 +59,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="previous_application_id"
                 label="Previous Application ID"
@@ -58,7 +67,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="facility_id"
                 label="Facility ID"
@@ -66,7 +75,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="population_served"
                 label="Population Served"
@@ -74,7 +83,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="county"
                 label="County"
@@ -82,7 +91,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               {/* hidden status input, grant-denial-reasons*/}
               {/* <ReferenceInput source="status" reference="grant-statuses" defaultValue={12} fullWidth helperText={false} hidden>
                 <AutocompleteInput optionText="name" hidden defaultValue={12} />
@@ -99,7 +108,7 @@ const GrantApplicationFormFields = () => {
           <Card sx={{ p: 2, my: 2, mx: 1 }}>
             <Typography variant="h5">Media</Typography>
             <Divider sx={{ mb: 2 }} />
-            <Grid container spacing={2}>
+            <Grid container columnSpacing={2} rowSpacing={1}>
               <FileUploadField
                 source="proposals"
                 label="Proposal Bids"
@@ -126,35 +135,35 @@ const GrantApplicationFormFields = () => {
         )}
 
         {/* Mailing */}
-        {/* <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant='h5'>Mailing Address</Typography>
           <Divider />
           <Grid container spacing={1}>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput source="mailing_address_street" label="Street" fullWidth helperText={false} />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput source="mailing_address_line_two" label="Line 2" fullWidth helperText={false} />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput source="mailing_address_city" label="City" fullWidth helperText={false} />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput source="mailing_address_state" label="State" fullWidth helperText={false} />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput source="mailing_address_zip" label="Zip" fullWidth helperText={false} />
             </Grid>
           </Grid>
         </Card>
- */}
+
 
         {/* Financials */}
 
       
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Grid container spacing={1}>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <DateInput
                 source="application_date"
                 label="Application Date"
@@ -162,7 +171,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <DateInput
                 source="committee_date"
                 label="Committee Date"
@@ -174,16 +183,21 @@ const GrantApplicationFormFields = () => {
         </Card>
       </Grid>
       {/* COlUMN 2 */}
-      <Grid xs={12}
+      <Grid
+        item
+        xs={12}
         md={6}
-        sm={12} sx={{ alignItems: "stretch" }} justifyItems={"stretch"}
-        alignSelf={"stretch"}>
+        sm={12}
+        alignItems={"stretch"}
+        justifyItems={"stretch"}
+        alignSelf={"stretch"}
+      >
         {/* Physical Address */}
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Physical Address</Typography>
           <Divider />
           <Grid container spacing={1}>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="physical_address_street"
                 label="Street"
@@ -191,7 +205,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="physical_address_line_two"
                 label="Line 2"
@@ -199,7 +213,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="physical_address_city"
                 label="City"
@@ -207,7 +221,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="physical_address_state"
                 label="State"
@@ -215,7 +229,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="physical_address_zip"
                 label="Zip"
@@ -249,7 +263,7 @@ const GrantApplicationFormFields = () => {
           </Box>
           <Divider />
           <Grid container spacing={1}>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <ReferenceInput
                 source="point_of_contact"
                 label="Point of Contact"
@@ -262,7 +276,7 @@ const GrantApplicationFormFields = () => {
                 />
               </ReferenceInput>
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <ReferenceInput
                 source="chairman"
                 label="Chairman"
@@ -275,7 +289,7 @@ const GrantApplicationFormFields = () => {
                 />
               </ReferenceInput>
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="signatory_name"
                 label="Signatory Name"
@@ -284,7 +298,7 @@ const GrantApplicationFormFields = () => {
               />
             </Grid>
             <Grid />
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="signatory_title"
                 label="Signatory Title"
@@ -292,7 +306,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={12} sm={12}>
+            <Grid item xs={12} md={12} sm={12}>
               <TextInput
                 source="signature"
                 label="Signature"
@@ -305,7 +319,7 @@ const GrantApplicationFormFields = () => {
           </Grid>
         </Card>
         {/* Proposals and Information */}
-        <Grid xs={12} md={12} sm={12}>
+        <Grid item xs={12} md={12} sm={12}>
           <Card sx={{ p: 2, my: 2, mx: 1 }}>
             <Typography variant="h5">
               Project Description - Justification - Estimated Cost
@@ -353,7 +367,7 @@ const GrantApplicationFormFields = () => {
               fullWidth
               helperText={false}
             />
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="previous_application_id"
                 label="Previous Application ID"
@@ -401,7 +415,7 @@ const GrantApplicationFormFields = () => {
           <Typography variant="h5">Financials</Typography>
           <Divider />
           <Grid container spacing={1}>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="combined_cost_of_projects"
                 label="Combined Cost of Projects"
@@ -409,7 +423,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="requested_grant_amount"
                 label="Requested Grant Amount"
@@ -417,7 +431,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="portion_matched_by_recipient"
                 label="Portion Matched by Recipient"
@@ -425,7 +439,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <TextInput
                 source="minimum_utility_financial_contribution"
                 label="Minimum Utility Financial Contribution"
@@ -433,7 +447,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="award_amount"
                 label="Award Amount"
@@ -441,7 +455,7 @@ const GrantApplicationFormFields = () => {
                 helperText={false}
               />
             </Grid>
-            <Grid xs={12} md={6} sm={12}>
+            <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="expected_utility_match"
                 label="Expected Utility Match"

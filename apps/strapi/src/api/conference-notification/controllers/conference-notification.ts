@@ -2,6 +2,8 @@
  * A set of functions called "actions" for `conference-notification`
  */
 
+import { findOneById } from '../../../utils/document-compat';
+
 export default ({ strapi }) => {
 
   return {
@@ -11,8 +13,7 @@ export default ({ strapi }) => {
       const { registrationId, conferenceId } = ctx.request.body
 
       try {
-        const registration = await strapi.documents('api::conference-registration.conference-registration').findOne({
-            documentId: "__TODO__",
+        const registration = await findOneById('api::conference-registration.conference-registration', registrationId, {
             populate: '*'
         })
 
@@ -40,8 +41,7 @@ export default ({ strapi }) => {
           filters: { conferences: conferenceId }
         })
 
-        const conferenceData = await strapi.documents('api::conference.conference').findOne({
-            documentId: "__TODO__",
+        const conferenceData = await findOneById('api::conference.conference', conferenceId, {
             populate: '*'
         })
 

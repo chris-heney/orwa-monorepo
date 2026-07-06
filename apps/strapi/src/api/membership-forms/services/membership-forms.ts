@@ -4,9 +4,12 @@ import {
   AdminOptions,
   AssociateMembershipPayload,
   IAuthNetResponse,
+  IContact,
   WatersystemMembershipPayload,
   waterSystemRenewalPayload,
 } from "../types";
+
+import { findOneById, updateById } from "../../../utils/document-compat";
 
 /**
  * membership-forms service
@@ -94,11 +97,145 @@ export default ({ strapi }) => {
 
   // Utility function to update contact
   const updateContact = async (contactId: number, contact: Partial<any>) => {
-    const response = await strapi.documents("api::contact.contact").update({
-      documentId: "__TODO__",
-      data: contact
+    const response = await updateById("api::contact.contact", contactId, {
+      data: contact,
     });
     return response.data;
+  };
+
+  /** Only attributes that exist on `api::watersystem.watersystem` (excludes form-only / nested keys). */
+  const WATERSYSTEM_ENTITY_KEYS = [
+    "name",
+    "region",
+    "office_hours",
+    "meters",
+    "url",
+    "board_meeting",
+    "funding",
+    "orwaag",
+    "workmans_comp",
+    "county",
+    "total_years",
+    "member_type",
+    "email",
+    "phone",
+    "fax",
+    "latitude",
+    "longitude",
+    "address_mailing_pobox",
+    "address_mailing_city",
+    "address_mailing_state",
+    "address_mailing_zip",
+    "address_physical_line1",
+    "address_physical_line2",
+    "address_physical_city",
+    "address_physical_state",
+    "address_physical_zip",
+    "membership_directory_type",
+    "payment_last_date",
+    "payment_method",
+    "payment_amount",
+    "fee_connections",
+    "fee_membership",
+    "fee_scholarship",
+    "fee_apprenticeship",
+    "application_date",
+    "wp_uid",
+    "wp_eid",
+    "payment_details",
+    "legal_entity_name",
+    "directory_sent_date",
+    "soonerwarn",
+    "directory_mailed",
+    "payment_previous_date",
+    "expiration_notification_sent",
+  ] as const;
+
+  const pickWatersystemEntityData = (data: Record<string, any>) => {
+    const out: Record<string, any> = {};
+    for (const key of WATERSYSTEM_ENTITY_KEYS) {
+      if (data[key] !== undefined) {
+        out[key] = data[key];
+      }
+    }
+    return out;
+  };
+
+  /** A directory row is included when a title is provided (form validates the rest). */
+  const isWatersystemDirectoryContactRow = (row: IContact | Record<string, any>) =>
+    !!(row && String(row.title ?? "").trim());
+
+  const buildWatersystemDirectoryContactData = (row: IContact | Record<string, any>) => {
+    const trim = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    const l1 = trim(row.address_mailing_line1);
+    const l2 = trim(row.address_mailing_line2);
+    const city = trim(row.address_mailing_city);
+    const st = row.address_mailing_state
+      ? String(row.address_mailing_state).trim()
+      : "";
+    const zip = trim(row.address_mailing_zip);
+    const hasAddress = !!(l1 || l2 || city || st || zip);
+
+    const base: Record<string, any> = {
+      first: trim(row.first) || null,
+      last: trim(row.last) || null,
+      phone: trim(row.phone) || null,
+      title: trim(row.title) || null,
+      contact_type: "watersystem",
+    };
+
+    if (hasAddress) {
+      base.address_mailing_line1 = l1 || null;
+      base.address_mailing_line2 = l2 || null;
+      base.address_mailing_city = city || null;
+      base.address_mailing_state = st || null;
+      base.address_mailing_zip = zip || null;
+    } else {
+      base.address_mailing_line1 = null;
+      base.address_mailing_line2 = null;
+      base.address_mailing_city = null;
+      base.address_mailing_state = null;
+      base.address_mailing_zip = null;
+    }
+    return base;
+  };
+
+  /**
+   * Creates/updates directory contacts and returns their ids for the watersystem relation.
+   * Rows with email reuse `getContact` (user linking). Rows without email create standalone contacts.
+   */
+  const syncWatersystemDirectoryContacts = async (data: {
+    contacts?: IContact[];
+  }) => {
+    const rows = Array.isArray(data.contacts) ? data.contacts : [];
+    const ids: number[] = [];
+
+    for (const row of rows) {
+      if (!isWatersystemDirectoryContactRow(row)) continue;
+      const payload = buildWatersystemDirectoryContactData(row);
+      const emailRaw =
+        typeof row.email === "string" ? row.email.trim() : "";
+
+      if (emailRaw) {
+        const userData = {
+          ...user_base,
+          username: emailRaw,
+          email: emailRaw,
+        };
+        const contactData = { ...payload, email: emailRaw };
+        const fetched = await getContact(emailRaw, contactData, userData);
+        const contactId = fetched.id as number;
+        await updateContact(contactId, { ...payload, email: emailRaw });
+        ids.push(contactId);
+      } else {
+        const created = await strapi.documents("api::contact.contact").create({
+          data: payload,
+        });
+        ids.push(created.id);
+      }
+    }
+
+    return ids;
   };
 
   // Base user data object
@@ -394,10 +531,118 @@ export default ({ strapi }) => {
     }
   };
 
+  const escapeHtml = (value: unknown) =>
+    String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+
+  const isDirectoryContactRowPresent = (row: IContact) => {
+    const t = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    return !!(
+      t(row.title) ||
+      t(row.first) ||
+      t(row.last) ||
+      t(row.email) ||
+      t(row.phone) ||
+      t(row.address_mailing_line1) ||
+      t(row.address_mailing_line2) ||
+      t(row.address_mailing_city) ||
+      t(row.address_mailing_state) ||
+      t(row.address_mailing_zip)
+    );
+  };
+
+  const buildWatersystemDirectoryContactsEmailSection = (
+    contacts?: IContact[]
+  ): string => {
+    if (!Array.isArray(contacts) || contacts.length === 0) return "";
+    const rows = contacts.filter((c) => c && isDirectoryContactRowPresent(c));
+    if (rows.length === 0) return "";
+
+    const contactBlocks = rows
+      .map((c, index) => {
+        const name = [c.first, c.last]
+          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .filter(Boolean)
+          .join(" ");
+        const cityState = [c.address_mailing_city, c.address_mailing_state]
+          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .filter(Boolean)
+          .join(", ");
+        const mailLine = [
+          c.address_mailing_line1,
+          c.address_mailing_line2,
+        ]
+          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .filter(Boolean)
+          .join(", ");
+        const zip = typeof c.address_mailing_zip === "string" ? c.address_mailing_zip.trim() : "";
+        const mailing = [mailLine, cityState, zip].filter(Boolean).join(", ");
+
+        const titleRow = c.title
+          ? `<tr><td style="padding:2px 8px 2px 0; width:120px; vertical-align:top;"><strong>Title</strong></td><td style="padding:2px 0;">${escapeHtml(
+              c.title
+            )}</td></tr>`
+          : "";
+        const nameRow = name
+          ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Name</strong></td><td style="padding:2px 0;">${escapeHtml(
+              name
+            )}</td></tr>`
+          : "";
+        const emailRow = c.email
+          ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Email</strong></td><td style="padding:2px 0;">${escapeHtml(
+              c.email
+            )}</td></tr>`
+          : "";
+        const phoneRow = c.phone
+          ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Phone</strong></td><td style="padding:2px 0;">${escapeHtml(
+              c.phone
+            )}</td></tr>`
+          : "";
+        const mailRow = mailing
+          ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Mailing</strong></td><td style="padding:2px 0;">${escapeHtml(
+              mailing
+            )}</td></tr>`
+          : "";
+
+        return `
+            <tr style="background-color: ${
+              index % 2 === 0 ? "#ffffff" : "#f9f9f9"
+            };">
+              <td colspan="2" style="padding: 12px 10px; vertical-align: top;">
+                <strong style="display:block; margin-bottom:6px;">Directory contact ${
+                  index + 1
+                }</strong>
+                <table role="presentation" style="width:100%; border-collapse: collapse; font-size: 14px;">
+                  ${titleRow}
+                  ${nameRow}
+                  ${emailRow}
+                  ${phoneRow}
+                  ${mailRow}
+                </table>
+              </td>
+            </tr>`;
+      })
+      .join("");
+
+    return `
+            <tr>
+              <td colspan="2" style="padding-bottom: 10px; padding-left: 10px; border-bottom: 1px solid #eee;">
+                <h3 style="font: bold;">Directory contacts (office roster)</h3>
+              </td>
+            </tr>
+            ${contactBlocks}`;
+  };
+
   const sendWatersystemEmail = async (
     payload: waterSystemRenewalPayload,
     subject: string
   ) => {
+    const directoryContactsHtml =
+      buildWatersystemDirectoryContactsEmailSection(payload.contacts);
+
     const html = `     
         <html>
         <body style="font-family: Arial, sans-serif; color: black;">
@@ -453,6 +698,7 @@ export default ({ strapi }) => {
             </tr>`
                 : ""
             }
+            ${directoryContactsHtml}
 
             <!-- Billing Information -->
             <tr>
@@ -614,7 +860,7 @@ export default ({ strapi }) => {
 
           const response = await strapi.documents("api::watersystem.watersystem").create({
             data: {
-              ...data,
+              ...pickWatersystemEntityData(data),
               system_type_dirty: system_type_dirty,
               total_years: data.payment_method === "Card" ? 1 : 0,
               application_date: new Date().toISOString(),
@@ -624,6 +870,14 @@ export default ({ strapi }) => {
                   : null,
             },
           });
+
+          if (data.contacts !== undefined && Array.isArray(data.contacts)) {
+            const contactIds = await syncWatersystemDirectoryContacts(data);
+            await strapi.documents("api::watersystem.watersystem").update({
+              documentId: response.documentId,
+              data: { contacts: contactIds }
+            });
+          }
 
           // Submit transaction
           try {
@@ -808,9 +1062,8 @@ export default ({ strapi }) => {
 
           // Fetched membership with id
 
-          const membership = await strapi.documents("api::membership.membership").findOne({
-            documentId: "__TODO__",
-            populate: "*"
+          const membership = await findOneById("api::membership.membership", data.membership, {
+            populate: "*",
           });
 
           await sendAssociateEmail(
@@ -834,9 +1087,8 @@ export default ({ strapi }) => {
           };
         }
       } else {
-        const membership = await strapi.documents("api::membership.membership").findOne({
-          documentId: "__TODO__",
-          populate: "*"
+        const membership = await findOneById("api::membership.membership", data.membership, {
+          populate: "*",
         });
 
         sendAssociateEmail(
@@ -884,23 +1136,31 @@ export default ({ strapi }) => {
 
           const watersystemId = parseInt(data.watersystem);
 
-          const response = await strapi.documents("api::watersystem.watersystem").update({
-            documentId: "__TODO__",
+          const contactIds =
+            data.contacts !== undefined && Array.isArray(data.contacts)
+              ? await syncWatersystemDirectoryContacts(data)
+              : null;
 
-            data: {
-              ...data,
-              system_type_dirty: system_type_dirty,
-              application_date: new Date().toISOString(),
-              payment_previous_date: data.payment_last_date,
-              total_years:
-                data.payment_method === "Card" && data.total_years
-                  ? data.total_years + 1
-                  : data.total_years,
-              payment_last_date:
-                data.payment_method === "Card"
-                  ? new Date().toISOString()
-                  : null,
-            }
+          const renewalData: Record<string, any> = {
+            ...pickWatersystemEntityData(data),
+            system_type_dirty: system_type_dirty,
+            application_date: new Date().toISOString(),
+            payment_previous_date: data.payment_last_date,
+            total_years:
+              data.payment_method === "Card" && data.total_years
+                ? data.total_years + 1
+                : data.total_years,
+            payment_last_date:
+              data.payment_method === "Card"
+                ? new Date().toISOString()
+                : null,
+          };
+          if (contactIds !== null) {
+            renewalData.contacts = contactIds;
+          }
+
+          const response = await updateById("api::watersystem.watersystem", watersystemId, {
+            data: renewalData,
           });
 
           try {
@@ -1044,9 +1304,7 @@ export default ({ strapi }) => {
             }
           }
 
-          const response = await strapi.documents("api::associate.associate").update({
-            documentId: "__TODO__",
-
+          const response = await updateById("api::associate.associate", parseInt(data.associate), {
             data: {
               ...data,
               contact_primary: contact_primary,
@@ -1093,9 +1351,8 @@ export default ({ strapi }) => {
 
           // Fetched membership with id
 
-          const membership = await strapi.documents("api::membership.membership").findOne({
-            documentId: "__TODO__",
-            populate: "*"
+          const membership = await findOneById("api::membership.membership", data.membership, {
+            populate: "*",
           });
 
           await sendAssociateEmail(
@@ -1120,9 +1377,8 @@ export default ({ strapi }) => {
           };
         }
       } else {
-        const membership = await strapi.documents("api::membership.membership").findOne({
-          documentId: "__TODO__",
-          populate: "*"
+        const membership = await findOneById("api::membership.membership", data.membership, {
+          populate: "*",
         });
 
         sendAssociateEmail(

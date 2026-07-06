@@ -186,6 +186,24 @@ const EmailSidebar = ({ module }: { module: string }) => {
         : null;
     }
 
+    if (
+      emails &&
+      emails[emailIndex]?.email_name === "Application Receipt" &&
+      application.applicant_pdf
+    ) {
+      attachments = application.applicant_pdf
+        ? [
+            {
+              name: `${application.legal_entity_name}.pdf`,
+              url: `${import.meta.env.VITE_API_ENDPOINT}${
+                application.applicant_pdf.url
+              }`,
+              // url: "https://admin.orwa.org/uploads/riggrant02032025_01bccd2af1.pdf"
+            },
+          ]
+        : null;
+    }
+
     // Email payload without attachments
     const payload = {
       variables: payloadVariables,

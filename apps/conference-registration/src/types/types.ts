@@ -124,15 +124,11 @@ export interface IAssociateOption {
     | "Welding/Fabrication";
   member_level?: "None" | "Basic" | "Bronze" | "Silver" | "Gold" | "Platinum";
   website?: string;
-  logo?: {
-    data: StoredStrapiFile[];
-  };
+  logo?: StoredStrapiFile[] | { data: StoredStrapiFile[] };
   phone: string;
   total_years: number;
   email: string;
-  contact_primary: {
-    data: IContactPayload;
-  };
+  contact_primary: IContactPayload | { data: IContactPayload };
   contact_secondary: {
     data: IContactPayload;
   };
@@ -458,7 +454,8 @@ export interface IConference extends IConferenceDraft {
     | "Closed";
   available_contestants: number;
   logo: {
-    data: {
+    url: string;
+    data?: {
       url: string;
     };
   };
@@ -543,12 +540,8 @@ export interface IExtraOption {
   max_qty: number;
   counted: boolean;
   details: string;
-  included: {
-    data: ITicketOption[];
-  };
-  excluded: {
-    data: ITicketOption[];
-  };
+  included: ITicketOption[];
+  excluded: ITicketOption[];
   conference: Identifier;
   description: string;
   order: number

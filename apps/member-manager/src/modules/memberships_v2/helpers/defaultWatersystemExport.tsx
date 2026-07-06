@@ -1,6 +1,9 @@
 import { ConfigurableDatagridColumn, RaRecord } from "react-admin";
 import jsonExport from "jsonexport/dist";
-import getExpirationDate from "../../_helpers/getExpirationDate";
+import getExpirationDate, {
+  isMembershipActiveByExpiration,
+} from "../../_helpers/getExpirationDate";
+import { directoryContactFieldFromSource } from "../watersystem/directoryContacts";
 
 export const defaultWatersystemExport = (
   records: RaRecord[],
@@ -24,15 +27,12 @@ export const defaultWatersystemExport = (
       
       // Handle special function fields
       if (columnLabel === "Member") {
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-        const paymentDate = record.payment_last_date ? new Date(record.payment_last_date) : null;
-        
-        if (paymentDate && paymentDate > oneYearAgo) {
-          exportRecord[columnLabel] = "Active";
-        } else {
-          exportRecord[columnLabel] = "Inactive";
-        }
+        exportRecord[columnLabel] = isMembershipActiveByExpiration(
+          record.payment_previous_date,
+          record.payment_last_date
+        )
+          ? "Active"
+          : "Inactive";
       }
       else if (columnLabel === "Renewal") {
         if (record.payment_last_date) {
@@ -66,7 +66,12 @@ export const defaultWatersystemExport = (
       // Handle regular fields
       else {
         const sourceKey = column.source as string;
-        if (sourceKey && record[sourceKey] !== undefined) {
+        if (sourceKey?.startsWith("dir_contact_")) {
+          exportRecord[columnLabel] = directoryContactFieldFromSource(
+            record,
+            sourceKey
+          );
+        } else if (sourceKey && record[sourceKey] !== undefined) {
           // Handle different data types
           if (typeof record[sourceKey] === 'boolean') {
             exportRecord[columnLabel] = record[sourceKey] ? 'Yes' : 'No';

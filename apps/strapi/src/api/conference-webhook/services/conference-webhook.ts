@@ -8,6 +8,7 @@ import {
   IAuthNetResponse,
   state_map,
 } from "../types";
+import { findOneById, updateById } from "../../../utils/document-compat";
 
 // Constants
 const PAYMENT_GATEWAY_API = "https://api.authorize.net/xml/v1/request.api";
@@ -136,8 +137,7 @@ export default ({ strapi }) => {
             `Updating Contact (Attempt ${attempt + 1}):`,
             JSON.stringify(contact)
           );
-          const response = await strapi.documents("api::contact.contact").update({
-            documentId: "__TODO__",
+          const response = await updateById("api::contact.contact", contactId, {
             data: contact
           });
           return response.data;
@@ -160,11 +160,9 @@ export default ({ strapi }) => {
       if (extras.length === 0) return;
 
       for (const extra of extras) {
-        const extraData = await strapi.documents("api::conference-extra.conference-extra").findOne({
-          documentId: "__TODO__"
-        });
+        const extraData = await findOneById("api::conference-extra.conference-extra", extra.item);
         await strapi.documents("api::conference-extra.conference-extra").update({
-          documentId: "__TODO__",
+          documentId: extraData.documentId,
 
           data: {
             max_qty: extraData.max_qty - 1,
@@ -177,11 +175,9 @@ export default ({ strapi }) => {
       if (extras.length === 0) return;
 
       for (const extra of extras) {
-        const extraData = await strapi.documents("api::registration-addon.registration-addon").findOne({
-          documentId: "__TODO__"
-        });
+        const extraData = await findOneById("api::registration-addon.registration-addon", extra.id);
         await strapi.documents("api::registration-addon.registration-addon").update({
-          documentId: "__TODO__",
+          documentId: extraData.documentId,
 
           data: {
             max_qty: extraData.max_qty - 1,
@@ -306,8 +302,7 @@ export default ({ strapi }) => {
         watersystem,
       } = ctx.request.body;
 
-      const conferenceData = await strapi.documents("api::conference.conference").findOne({
-        documentId: "__TODO__",
+      const conferenceData = await findOneById("api::conference.conference", conference, {
         populate: "*"
       });
 

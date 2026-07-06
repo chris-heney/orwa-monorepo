@@ -54,11 +54,12 @@ const ReimbursementPayoutsList = () => {
             type: "Reimbursement",
           },
           ...(payoutStatusId && { payout_status: payoutStatusId }),
-          ...(fiscalYearStart && fiscalYearEnd && {
+          ...(fiscalYearStart &&
+            fiscalYearEnd && {
               transaction_date: {
                 $between: [fiscalYearStart, fiscalYearEnd],
               },
-          }),
+            }),
         }}
         title={" "}
         resource="grant-payouts"
@@ -69,11 +70,16 @@ const ReimbursementPayoutsList = () => {
           <Box
             sx={{
               display: "flex",
+              gap: 2,
             }}
           >
             <FilterLiveSearch
               helperText="Search by application name"
               source="application][legal_entity_name][$contains"
+            />
+            <FilterLiveSearch
+              helperText="Search by application ID"
+              source="application][application_id][$contains"
             />
             <CreateButton
               label="Payout"
@@ -121,6 +127,16 @@ const ReimbursementPayoutsList = () => {
               />
             )}
           />
+
+          <ReferenceField
+            source="application.id"
+            reference="grant-application-finals"
+            label="ID"
+            link={false}
+          >
+            <TextField source="application_id" noWrap label="Application ID" />
+          </ReferenceField>
+
           <ReferenceField
             source="application.id"
             reference="grant-application-finals"

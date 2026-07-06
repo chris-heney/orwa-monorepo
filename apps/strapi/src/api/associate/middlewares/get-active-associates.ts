@@ -13,7 +13,10 @@ const formatDate = (date: Date) => {
   return `${year}-${month}-${day}`;
 };
 
-export default (config, { strapi }) => {
+
+import type { Core } from '@strapi/strapi';
+
+export default (config, { strapi }: { strapi: Core.Strapi }) => {
 
   // Add your own logic here.
   return async (ctx, next) => {

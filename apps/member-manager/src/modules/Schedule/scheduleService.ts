@@ -14,7 +14,7 @@ export const handleSaveScheduleItem = (
   dataProvider: DataProvider,
   records: RaRecord[],
   conference: any,
-  year: number,
+  year: number
 ) => {
   setSaving(true);
   const { id, ...restFormData } = formData;
@@ -102,39 +102,43 @@ export const duplicateSchedule = (
   return dataProvider
     .getList("conference-schedules", {
       filter: { conference: sourceConference, year: sourceYear },
-      pagination: { page: 1, perPage: 100 },
+      pagination: { page: 1, perPage: 10000 },
       sort: { field: "id", order: "ASC" },
     })
-    .then(({ data }: { data: ScheduleItem[] }) => {
+    .then(async ({ data }: { data: ScheduleItem[] }) => {
       // If dates are not provided, only update the year
-      let dateAdjustmentFunction = (date: string) => `${targetYear}-${date.split("-")[1]}-${date.split("-")[2]}`;
-      
+      let dateAdjustmentFunction = (date: string) =>
+        `${targetYear}-${date.split("-")[1]}-${date.split("-")[2]}`;
+
       if (startDate && endDate) {
         // Create a mapping of source dates to target dates
         const dateMap = createDateMapping(data, startDate);
-        
+
         if (dateMap.size > 0) {
           // Use the date map for adjustment
           dateAdjustmentFunction = (date: string) => dateMap.get(date) || date;
         }
       }
-      
+
       const duplicatedData = data.map((record: ScheduleItem) => ({
-        ...record,
         year: targetYear,
         date: dateAdjustmentFunction(record.date),
         conference: targetConference,
+        start: record.start,
+        end: record.end,
+        location: record.location,
+        event: record.event,
         description: null,
         speaker: null,
         company: null,
         id: undefined, // Ensure new records are created
       }));
 
-      const createPromises = duplicatedData.map((item) =>
-        dataProvider.create("conference-schedules", { data: item })
-      );
-
-      return Promise.all(createPromises);
+      for (const item of duplicatedData) {  
+         await dataProvider.create("conference-schedules", {
+          data: item,
+        });
+      }
     })
     .then(() => {
       notify("Schedule successfully duplicated", { type: "success" });

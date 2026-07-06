@@ -1,4 +1,4 @@
-import {Box, Grid} from "@mui/material"
+import { Box, Grid } from '@mui/material'
 import React from 'react'
 import { SelectInput,TextInput } from 'react-admin'
 
@@ -6,10 +6,10 @@ const ProjectTypeFields = () => {
   return (
     <Box sx={{ width: '100%' }}>
       <Grid container gap={1}>
-        <Grid xs={12} md={5.9}>
+        <Grid item xs={12} md={5.9}>
           <TextInput source="name" fullWidth helperText={false} />
         </Grid>
-        <Grid xs={12} md={5.9}>
+        <Grid item xs={12} md={5.9}>
           <SelectInput 
             source="classification" 
             fullWidth 
@@ -21,7 +21,7 @@ const ProjectTypeFields = () => {
             ]}
           />
         </Grid>
-        <Grid xs={12} md={5.9}>
+        <Grid item xs={12} md={5.9}>
           <SelectInput 
             source="context" 
             fullWidth 
@@ -32,7 +32,7 @@ const ProjectTypeFields = () => {
             ]}
           />
         </Grid>
-        <Grid xs={12} md={12}>
+        <Grid item xs={12} md={12}>
           <TextInput source="description" fullWidth helperText={false} multiline rows={3} />
         </Grid>
       </Grid>

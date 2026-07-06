@@ -45,7 +45,10 @@ import CustomPagination from "../../_components/CustomPagination";
 const ConferenceTicketsForm = () => {
   const [showExtrasHelp, setShowExtrasHelp] = useState(false);
 
-  const { conferenceId } = useConferenceContext();
+  const { currentFilter } = useConferenceContext();
+  // Same shape as list filters: `conferences` for tickets tab (not top-level tabFilters)
+  const conferenceId =
+    currentFilter?.conferences?.[0] ?? currentFilter?.conference;
 
   return (
     <Grid container spacing={2}>
@@ -146,9 +149,9 @@ const ConferenceTicketsForm = () => {
             reference="conference-extras"
             source="includes"
             label="Includes"
-            filter={{
-              conferences: conferenceId
-            }}
+            filter={
+              conferenceId != null ? { conferences: [conferenceId] } : {}
+            }
           >
             <AutocompleteArrayInput
               optionText="name"
@@ -160,9 +163,9 @@ const ConferenceTicketsForm = () => {
             reference="conference-extras"
             source="excludes"
             label="Excludes"
-            filter={{
-              conferences: conferenceId
-            }}
+            filter={
+              conferenceId != null ? { conferences: [conferenceId] } : {}
+            }
           >
             <AutocompleteArrayInput
               optionText="name"

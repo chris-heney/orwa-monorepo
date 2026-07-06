@@ -59,10 +59,11 @@ export const GetSteps = async () => {
       }
     })
 
+    // Strapi v5: application_status is a flat object (or null), no .data wrapper
     return data.data.length ? data.data.map((step: Record<any, any>) => ({
+      ...step.application_status,
       id: step.id,
-      statusId: step.application_status.data.id,
-      ...step.application_status.data,
+      statusId: step.application_status?.id,
       label: step.name
     })) : []
 
@@ -150,7 +151,7 @@ export const submitScore = async (data: any ) => {
   try {
     await axios.post(`${API_ENDPOINT}/grant-application-scores`, data, {
       headers: {
-        'Authorization ': `Bearer ${API_KEY}`,
+        'Authorization': `Bearer ${API_KEY}`,
       },
     })
   } catch (error) {
@@ -158,9 +159,10 @@ export const submitScore = async (data: any ) => {
   }
 }
 
-export const updateApplicationScoring = async (id: number, data: any) => {
+// Strapi v5: single-entry endpoints are addressed by documentId, not numeric id
+export const updateApplicationScoring = async (documentId: string, data: any) => {
   try {
-    await axios.put(`${API_ENDPOINT}/grant-application-scores/${id}`, data, {
+    await axios.put(`${API_ENDPOINT}/grant-application-scores/${documentId}`, data, {
       headers: {
         'Authorization': `Bearer ${API_KEY}`,
       },
@@ -182,7 +184,8 @@ export const getNextStatus = async (name: string) => {
       }
     })
 
-    return data.data[0].next_statuses.data[0].id
+    // Strapi v5: next_statuses is a flat array, no .data wrapper
+    return data.data[0].next_statuses[0].id
   } catch (error) {
     console.error('Error fetching data:', error)
   }

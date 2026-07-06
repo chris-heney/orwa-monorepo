@@ -22,7 +22,7 @@ import {
   ReferenceField,
   useListFilterContext,
 } from "react-admin";
-import {Button, Chip, Grid} from "@mui/material";
+import { Button, Chip, Grid } from "@mui/material";
 import { useConferenceContext } from "../ConferenceContext";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import { createRecord } from "../../_helpers/createRecord";
@@ -30,14 +30,16 @@ import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
 //TODO fix so tickets and extras work theyre turning the contact into a null object
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 const TeamFormFields = () => {
 
   const { filterValues } = useListFilterContext();
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   return (
     <Grid container spacing={2}>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <TextInput
           source="name"
           label="Name"
@@ -45,7 +47,7 @@ const TeamFormFields = () => {
           helperText="Team Name"
         />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <ReferenceArrayInput
           reference="conference-contestants"
           source="contestants"
@@ -60,7 +62,7 @@ const TeamFormFields = () => {
           />
         </ReferenceArrayInput>
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <ReferenceInput
           reference="conference-registrations"
           source="registration"
@@ -75,13 +77,13 @@ const TeamFormFields = () => {
           />
         </ReferenceInput>
       </Grid>
-      <Grid xs={12} md={3} display={"hidden"}>
+      <Grid item xs={12} md={3} display={"hidden"}>
         <NumberInput source="year" label="Year" fullWidth defaultValue={filterValues.year} />
       </Grid>
-      <Grid xs={12} md={6} display={"hidden"}>
+      <Grid item xs={12} md={6} display={"hidden"}>
         <NumberInput
           source="conference"
-          defaultValue={filterValues.conference}
+          defaultValue={filterConferenceId}
           sx={{ display: "none" }}
           fullWidth
         />

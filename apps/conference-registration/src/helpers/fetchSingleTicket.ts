@@ -19,7 +19,7 @@ export const fetchSingleTicket = (
   });
 
   const includedExtras = extraOptions.filter((extra) => {
-    return extra.included.data.find((includedTicket: ITicketOption) => {
+    return extra.included.find((includedTicket: ITicketOption) => {
       return includedTicket.id === filteredTickets[0]?.id;
     });
   });

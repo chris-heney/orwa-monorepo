@@ -43,11 +43,13 @@ export const GrantContext = createContext<IGrantContextProvider>({
   setIsEmailSidebarOpen: () => {},
   resource: "",
   setResource: () => {},
-  fiscalYearStart: null,
-  setFiscalYearStart: () => {},
-  fiscalYearEnd: null,
-  setFiscalYearEnd: () => {},
-});
+    fiscalYearStart: null,
+    setFiscalYearStart: () => {},
+    fiscalYearEnd: null,
+    setFiscalYearEnd: () => {},
+    applicationSearchFilter: "",
+    setApplicationSearchFilter: () => {},
+  });
 
 export const useGrantContext = () => useContext(GrantContext);
 
@@ -92,6 +94,9 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
     "grants-application-status",
     ["12"]
   );
+  const [applicationSearchFilter, setApplicationSearchFilter] = useStore<string>("grants-application-search-filter", "");
+
+  // Dashboard
   const [dashboardContext, setDashboardContext] = useState<"create" | "edit">(
     "edit"
   );
@@ -173,6 +178,8 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
         setFiscalYearStart,
         fiscalYearEnd,
         setFiscalYearEnd,
+        applicationSearchFilter,
+        setApplicationSearchFilter,
       }}
     >
       {children}

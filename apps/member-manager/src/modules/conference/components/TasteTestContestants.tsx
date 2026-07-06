@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from "react";
-import {Box, Button, Divider, Grid, Typography} from "@mui/material";
+import { Box, Button, Divider, Grid, Typography } from "@mui/material";
 import {
   DatagridConfigurable,
   TextField,
@@ -29,9 +29,11 @@ import { createRecord } from "../../_helpers/createRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
 import CustomPhoneInput from "../../_components/MaskedPhoneInput";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 const ConferenceAttendeeFields = () => {
-  const { filterValues } = useListContext();    
+  const { filterValues } = useListContext();
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
   const refresh = useRefresh();
   const [updated, setUpdated] = React.useState(false);
 
@@ -51,10 +53,10 @@ const ConferenceAttendeeFields = () => {
         </Typography>
         <Divider />
         <Grid container spacing={2}>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <ReferenceInput
               filter={{
-                conference: filterValues.conference,
+                conference: filterConferenceId,
                 year: filterValues.year,
               }}
               source="registration"
@@ -70,7 +72,7 @@ const ConferenceAttendeeFields = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <ReferenceInput
               source="watersystem"
               reference="watersystems"
@@ -86,7 +88,7 @@ const ConferenceAttendeeFields = () => {
               />
             </ReferenceInput>
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextInput
               source="first"
               label="First"
@@ -95,7 +97,7 @@ const ConferenceAttendeeFields = () => {
               validate={required("First Name is required")}
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextInput
               source="last"
               label="Last"
@@ -104,7 +106,7 @@ const ConferenceAttendeeFields = () => {
               validate={required("Last Name is required")}
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextInput
               validate={required("Email is required")}
               source="email"
@@ -113,7 +115,7 @@ const ConferenceAttendeeFields = () => {
               helperText={false}
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <CustomPhoneInput
               source="phone"
               label="Phone"
@@ -121,7 +123,7 @@ const ConferenceAttendeeFields = () => {
               helperText={false}
             />
           </Grid>
-          <Grid xs={12} md={6}>
+          <Grid item xs={12} md={6}>
             <TextInput
               source="organization"
               label="Organization"
@@ -136,7 +138,7 @@ const ConferenceAttendeeFields = () => {
           />
           <NumberInput
             source="conference"
-            defaultValue={filterValues.conference}
+            defaultValue={filterConferenceId}
             sx={{ display: "none" }}
           />
         </Grid>

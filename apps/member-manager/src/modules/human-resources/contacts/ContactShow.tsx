@@ -5,9 +5,8 @@ import {
   Card,
   Divider,
   Grid,
-  IconButton,
   Theme,
-  Tooltip,
+  Typography,
   useMediaQuery,
 } from "@mui/material";
 import {
@@ -79,6 +78,37 @@ const ContactShow = () => {
                     <ContactEmail link />
                     <ContactPhone link />
                   </>
+                )}
+                {(record.address_mailing_line1 ||
+                  record.address_mailing_city ||
+                  record.address_mailing_zip) && (
+                  <Box
+                    sx={{
+                      mt: 2,
+                      pt: 2,
+                      borderTop: "1px solid rgba(0, 0, 0, 0.12)",
+                      width: "100%",
+                      textAlign: "center",
+                    }}
+                  >
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Mailing (directory)
+                    </Typography>
+                    <Typography variant="body2">
+                      {[record.address_mailing_line1, record.address_mailing_line2]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </Typography>
+                    <Typography variant="body2">
+                      {[
+                        record.address_mailing_city,
+                        record.address_mailing_state,
+                        record.address_mailing_zip,
+                      ]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             </SimpleShowLayout>

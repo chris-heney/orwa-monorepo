@@ -1,7 +1,8 @@
 import jsonExport from "jsonexport/dist";
-import { downloadCSV, ConfigurableDatagridColumn } from "react-admin";
-import { oneYearAgoFormatted } from "./activeOrInactiveMembership";
-import { IWatersystem } from "../../membership/watersystem/WatersystemInterface";
+import { downloadCSV, ConfigurableDatagridColumn, RaRecord } from "react-admin";
+import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
+import { IWatersystem } from "../watersystem/WatersystemInterface";
+import { directoryContactFieldFromSource } from "../watersystem/directoryContacts";
 
 export const NaylorExportWaterSystem = (
   RecordList: IWatersystem[],
@@ -39,15 +40,25 @@ export const NaylorExportWaterSystem = (
 
     for (const column of columns) {
       if (column.label && column.label.trim() !== "") {
-        let value = watersytem[column.source as keyof typeof watersytem];
-     
-        value = typeof value === "boolean" ? (value ? "+" : " ") : value;
+        const sourceKey = String(column.source ?? "");
+        let value: unknown = sourceKey.startsWith("dir_contact_")
+          ? directoryContactFieldFromSource(
+              watersytem as unknown as RaRecord,
+              sourceKey
+            )
+          : watersytem[column.source as keyof typeof watersytem];
 
+        value =
+          typeof value === "boolean" ? (value ? "+" : " ") : value;
 
-        // if (column.label === "System Name") then {record.payment_last_date > oneYearAgoFormatted ? 'Active' : 'Inactive'}
 
         if (column.label === "Name") {
-          value = (watersytem["payment_last_date"] as any) > oneYearAgoFormatted ? `*${watersytem.name}` : `${watersytem.name}`;
+          value = isMembershipActiveByExpiration(
+            watersytem.payment_previous_date,
+            watersytem.payment_last_date
+          )
+            ? `*${watersytem.name}`
+            : `${watersytem.name}`;
         }
 
         // Use the columnMap to get the new label

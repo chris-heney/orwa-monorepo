@@ -9,6 +9,25 @@ export interface IUserIdentity extends UserIdentity {
   token: string
 }
 
+const getRoleName = (user: any) => user?.role?.name ?? user?.role?.attributes?.name
+
+const fetchUserWithRole = async (apiEndpoint: string, userId: Identifier, token: string) => {
+  const response = await fetch(`${apiEndpoint}/api/users/${userId}?populate=role`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData?.message || "Failed to fetch user role")
+  }
+
+  return response.json()
+}
+
 const authProvider: AuthProvider = {
 
   getIdentity: async (): Promise<IUserIdentity> => {
@@ -58,14 +77,22 @@ const authProvider: AuthProvider = {
       }
   
       const userMeta = await userMetaResponse.json();
+      const userWithRole = getRoleName(userMeta)
+        ? userMeta
+        : await fetchUserWithRole(apiEndpoint, userData.user.id, userData.jwt)
+      const roleName = getRoleName(userWithRole)
+
+      if (!roleName) {
+        throw new Error("This user does not have a role assigned. Please assign a role before logging in.")
+      }
   
       // 🔹 Step 3: Store user session data
       Cookies.setCookie('token', userData.jwt, 1);
-      Cookies.setCookie('role', userMeta.role.name, 1);
+      Cookies.setCookie('role', roleName, 1);
       Cookies.setCookie('email', userData.user.email, 1);
       Cookies.setCookie('id', userData.user.id, 1);
   
-      return { success: true, user: userMeta };
+      return { success: true, user: userWithRole };
     } catch (error: any) {
       return { success: false, error: error.message };
     }

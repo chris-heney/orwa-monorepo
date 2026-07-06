@@ -86,8 +86,10 @@ const ScheduleControls: React.FC = () => {
         
         // Add data grouped by date
         Object.entries(groupedRecords).forEach(([date, items]) => {
-          // Add date as a header row
-          const formattedDate = new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+          // Add date as a header row (add 1 day to fix timezone off-by-one)
+          const d = new Date(date);
+          d.setDate(d.getDate() + 1);
+          const formattedDate = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
           csvContent += `"${formattedDate}"${','.repeat(headers.length - 1)}\n`;
           
           // Add items for this date

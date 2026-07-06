@@ -1,0 +1,39 @@
+{
+    "name": "@react-admin/ra-editable-datagrid",
+    "version": "4.6.4",
+    "description": "Editable Datagrid for React",
+    "files": [
+        "*.md",
+        "lib",
+        "esm",
+        "src"
+    ],
+    "author": "Marmelab <contact@marmelab.com> (https://marmelab.com/)",
+    "main": "lib/src/index",
+    "module": "esm/src/index.js",
+    "types": "esm/src/index.d.ts",
+    "scripts": {
+        "build": "yarn run build-cjs && yarn run build-esm",
+        "build-cjs": "rimraf ./lib && tsc",
+        "build-esm": "rimraf ./esm && tsc --outDir esm --module es2020"
+    },
+    "devDependencies": {
+        "@types/react": "^17.0.20",
+        "@types/react-dom": "^17.0.9",
+        "ra-data-fakerest": "^4.14.0",
+        "react": "^17.0.2",
+        "react-admin": "^4.15.1",
+        "react-dom": "^17.0.2",
+        "rimraf": "^3.0.2",
+        "typescript": "^5.1.3"
+    },
+    "peerDependencies": {
+        "react": "^16.9.0 || ^17.0.0 || ^18.0.0",
+        "react-admin": "^4.15.1",
+        "react-dom": "^16.9.0 || ^17.0.0 || ^18.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/react-admin/ra-enterprise.git"
+    }
+}

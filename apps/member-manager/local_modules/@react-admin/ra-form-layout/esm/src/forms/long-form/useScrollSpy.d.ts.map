@@ -1,0 +1,1 @@
+{"version":3,"file":"useScrollSpy.d.ts","sourceRoot":"","sources":["../../../../src/forms/long-form/useScrollSpy.ts"],"names":[],"mappings":"AAGA,MAAM,WAAW,kBAAkB;IAC/B,oBAAoB,CAAC,EAAE,MAAM,CAAC;IAC9B,QAAQ,CAAC,EAAE,MAAM,CAAC;IAClB,eAAe,EAAE,WAAW,EAAE,CAAC;IAC/B,UAAU,CAAC,EAAE,MAAM,CAAC;CACvB;AACD,eAAO,MAAM,YAAY,qEAKtB,kBAAkB,WAoCpB,CAAC"}

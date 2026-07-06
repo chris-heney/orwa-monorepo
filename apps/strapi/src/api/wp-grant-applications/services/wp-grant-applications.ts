@@ -2,6 +2,8 @@
  * wp-grant-applications service
  */
 
+import { updateById } from "../../../utils/document-compat";
+
 export default ({strapi}) => ( {
     createGrantApplication: async (ctx) => {
 
@@ -40,7 +42,7 @@ export default ({strapi}) => ( {
             // set the application to change order
     
             await strapi.documents('api::grant-application-final.grant-application-final').update({
-              documentId: "__TODO__",
+              documentId: fetchedApplication[0].documentId,
 
               data: {
                 status: statusId
@@ -93,9 +95,6 @@ export default ({strapi}) => ( {
     
     
               const payload = {
-                documentId: "__TODO__",
-                "id": entity === 'contact' ? contactId : engineerId,
-
                 data: {
                   "first": first,
                   "last": last,
@@ -105,7 +104,7 @@ export default ({strapi}) => ( {
                 }
               }
     
-              await strapi.documents('api::contact.contact').update(payload)
+              await updateById('api::contact.contact', entity === 'contact' ? contactId : engineerId, payload)
     
               // Perform any additional actions with the existing contact if needed
             } else {

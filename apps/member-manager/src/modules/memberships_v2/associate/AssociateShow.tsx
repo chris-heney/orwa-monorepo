@@ -19,11 +19,13 @@ import {
 import { Theme } from "@mui/material/styles";
 import AssociateLogo from "./fields/Logo";
 import { YearMonthDay } from "../../../helpers/Data";
-import getExpirationDate from "../../_helpers/getExpirationDate";
+import getExpirationDate, {
+  isMembershipActiveByExpiration,
+} from "../../_helpers/getExpirationDate";
 import SimpleInvoicesList from "../../invoices/SimpleInvoiceList";
 import { IAssociate } from "./AssociateInterface";
 import CustomShowHeader from "../componenets/CustomShowHeader";
-import { oneYearAgoFormatted } from "../helpers/activeOrInactiveMembership";
+import useCurrentUser from "../../_helpers/useCurrentUser";
 
 const labelStyle: React.CSSProperties = {
   fontWeight: "bold",
@@ -61,6 +63,7 @@ const ResponsiveListItem: React.FC<ResponsiveListItemProps> = ({
 
 const AssociateShow: React.FC = () => {
   const { record } = useShowController<IAssociate>();
+  const { role } = useCurrentUser();
 
   if (!record) return null;
 
@@ -127,9 +130,12 @@ const AssociateShow: React.FC = () => {
                   divider
                 />
                 <ResponsiveListItem
-                  label="Level:"
+                  label="Active Status:"
                   value={
-                    record.payment_last_date > oneYearAgoFormatted
+                    isMembershipActiveByExpiration(
+                      record.payment_previous_date,
+                      record.payment_last_date
+                    )
                       ? "Active"
                       : "Inactive"
                   }
@@ -238,23 +244,25 @@ const AssociateShow: React.FC = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={7}>
-            <Card sx={{ overflow: "auto", borderRadius: 1 }}>
-              <Typography
-                variant="h5"
-                sx={{
-                  backgroundColor: "#262626",
-                  color: "white",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  mb: 2,
-                }}
-              >
-                Transactions
-              </Typography>
-              <SimpleInvoicesList filters={{ entity_id: record.id }} />
-            </Card>
-          </Grid>
+          {role !== "Staff" && (
+            <Grid item xs={12} md={7}>
+              <Card sx={{ overflow: "auto", borderRadius: 1 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    backgroundColor: "#262626",
+                    color: "white",
+                    fontWeight: "bold",
+                    textAlign: "center",
+                    mb: 2,
+                  }}
+                >
+                  Transactions
+                </Typography>
+                <SimpleInvoicesList filters={{ entity_id: record.id }} />
+              </Card>
+            </Grid>
+          )}
         </Grid>
       </SimpleShowLayout>
     </ShowBase>

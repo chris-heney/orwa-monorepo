@@ -48,7 +48,7 @@ const BarChartStatistics = ({
                 "Authorized by ORWA",
                 "Committee Approved",
                 "Award Letter Sent",
-              ].includes(currentApplication.status.data.name);
+              ].includes(currentApplication.status.name);
         })
         .forEach((currentApplication) => {
           const county = currentApplication.county || 'Unknown';
@@ -91,8 +91,8 @@ const BarChartStatistics = ({
       applications.forEach((currentApplication) => {
         const relevantProjects =
           fundType === 'awarded'
-            ? currentApplication.approved_projects?.data
-            : currentApplication.selected_projects?.data;
+            ? currentApplication.approved_projects
+            : currentApplication.selected_projects;
   
         if (!relevantProjects) return;
   
@@ -173,7 +173,7 @@ const BarChartStatistics = ({
               extraInfo = `Number of Applications: ${numApplications}`;
             } else {
               const relatedApplications = applications.filter((application) =>
-                application.approved_projects?.data.some(
+                application.approved_projects?.some(
                   (project) => project.name === labelName
                 )
               );

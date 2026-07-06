@@ -4,19 +4,13 @@
   "license": "MIT",
   "scripts": {
     "dev": "node ./scripts/interactive-dev.js",
-    "dev:all": "echo '🚀 Starting ORWA development environment...' && docker-compose up -d && nx run-many -t serve --all",
-    "dev:detached": "echo '🚀 Starting ORWA development environment in background...' && docker-compose up --build -d && echo '✅ All services started! Check docker-compose ps for status'",
     "dc:up": "docker compose up -d",
     "dc:down": "docker compose down",
-    "db:seed": "cd apps/strapi && npx strapi import -f ./data/export_20250909014228.tar.gz",
+    "build": "nx run-many --target=build --all",
     "test": "nx run-many --target=test --all --passWithNoTests",
-    "test:watch": "nx run-many --target=test --all --watch --passWithNoTests",
-    "build": "nx run-many --target=build --all --skip-nx-cache",
-    "build:docker": "nx run-many --target=docker:build --all",
-    "deploy": "nx run-many --target=deploy --all",
-    "deploy:docker": "docker compose -f docker-compose.prod.yml up --build -d",
-    "deploy:stop": "docker compose -f docker-compose.prod.yml down",
     "lint": "nx run-many --target=lint --all",
+    "docker:build": "nx run-many --target=docker-build --all",
+    "docker:push": "nx run-many --target=docker-push --all",
     "start:strapi": "nx serve strapi",
     "start:grant-app": "nx serve grant-application",
     "start:membership": "nx serve membership-application",
@@ -25,8 +19,7 @@
     "start:scoring": "nx serve grant-scoring",
     "start:directory": "nx serve associate-directory",
     "start:member-manager": "nx serve member-manager",
-    "start:scholarship": "nx serve scholarship-application",
-    "start:mcp-server": "nx serve custom-mcp-server"
+    "start:scholarship": "nx serve scholarship-application"
   },
   "private": true,
   "devDependencies": {
@@ -120,10 +113,10 @@
     "@mui/material": "^7.3.2",
     "@mui/x-data-grid": "^8.11.1",
     "@mui/x-date-pickers": "^8.11.1",
-    "@react-admin/ra-ai": "^5.3.0",
-    "@react-admin/ra-editable-datagrid": "^5.2.2",
-    "@react-admin/ra-form-layout": "^5.16.0",
-    "@react-admin/ra-navigation": "^6.1.0",
+    "@react-admin/ra-ai": "file:vendor-tarballs/ra-ai-5.3.4.tgz",
+    "@react-admin/ra-editable-datagrid": "file:vendor-tarballs/ra-editable-datagrid-5.2.2.tgz",
+    "@react-admin/ra-form-layout": "file:vendor-tarballs/ra-form-layout-5.17.0.tgz",
+    "@react-admin/ra-navigation": "file:vendor-tarballs/ra-navigation-6.1.0.tgz",
     "@react-pdf/renderer": "^4.3.0",
     "@tanstack/react-query": "^5.87.4",
     "@tinymce/tinymce-react": "^6.3.0",
@@ -190,6 +183,7 @@
   },
   "overrides": {
     "react-router": "^7.1.1",
-    "react-router-dom": "^7.1.1"
+    "react-router-dom": "^7.1.1",
+    "@react-admin/ra-core-ee": "file:vendor-tarballs/ra-core-ee-1.10.0.tgz"
   }
 }

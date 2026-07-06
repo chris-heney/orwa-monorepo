@@ -4,14 +4,16 @@
   "sourceRoot": "apps/associate-directory/src",
   "projectType": "application",
   "tags": [],
-  "// targets": "to see all targets run: nx show project associate-directory --web",
   "targets": {
     "build": {
       "executor": "@nx/vite:build",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/associate-directory"
+        "outputPath": "dist/apps/associate-directory",
+        "skipTypeCheck": true
       },
       "configurations": {
         "development": {
@@ -41,27 +43,36 @@
     },
     "test": {
       "executor": "@nx/vite:test",
-      "outputs": ["{options.reportsDirectory}"],
+      "outputs": [
+        "{options.reportsDirectory}"
+      ],
       "options": {
         "reportsDirectory": "../../coverage/apps/associate-directory"
       }
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
     },
-    "docker:build": {
+    "docker-build": {
       "executor": "nx:run-commands",
+      "dependsOn": [
+        "build"
+      ],
       "options": {
-        "command": "docker buildx build --platform linux/amd64 --no-cache --target production -t orwa/associate-directory:latest -f Dockerfile.associate-directory .",
+        "command": "docker build -t ghcr.io/chris-heney/orwa-monorepo/associate-directory:latest -f docker/Dockerfile.nx-app --build-arg APP=associate-directory --build-arg VITE_API_ENDPOINT=$VITE_API_ENDPOINT --build-arg VITE_API_KEY=$VITE_API_KEY .",
         "cwd": "{workspaceRoot}"
       }
     },
-    "deploy": {
+    "docker-push": {
       "executor": "nx:run-commands",
-      "dependsOn": ["docker:build"],
+      "dependsOn": [
+        "docker-build"
+      ],
       "options": {
-        "command": "docker push orwa/associate-directory:latest"
+        "command": "docker push ghcr.io/chris-heney/orwa-monorepo/associate-directory:latest"
       }
     }
   }

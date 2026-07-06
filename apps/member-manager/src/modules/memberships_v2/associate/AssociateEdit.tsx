@@ -8,7 +8,12 @@ const EditAssociateForm = () => {
   return (
     <MembershipsContextProvider>
       <Box sx={{ py: 2 }}>
-      <EditBase hasShow={false} title="Associates" redirect={false}>
+      <EditBase
+        hasShow={false}
+        title="Associates"
+        redirect={false}
+        mutationMode="pessimistic"
+      >
         <Title title="Memberships" />
         <AssociateForm />
       </EditBase>

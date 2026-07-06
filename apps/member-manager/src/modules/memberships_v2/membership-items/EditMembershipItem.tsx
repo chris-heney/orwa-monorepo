@@ -5,7 +5,11 @@ import { Box, Card } from "@mui/material";
 
 const EditMembershipItem = () => {
   return (
-    <EditBase hasShow={false} redirect={() => "membership-management"}>
+    <EditBase
+      hasShow={false}
+      redirect={() => "membership-management"}
+      mutationMode="pessimistic"
+    >
       <Title title="Edit Membership Item" />
       <Box py={2}>
         <Card>

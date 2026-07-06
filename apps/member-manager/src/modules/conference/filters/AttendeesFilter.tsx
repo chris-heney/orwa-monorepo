@@ -6,6 +6,7 @@ import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { toggleFilter } from "../helpers/selectFilters";
 import { isSelected } from "../helpers/selectFilters";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface AttendeesFilterProps {
   filterValues: any;
@@ -23,11 +24,10 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
   // Check if we're in the edit tab where deselection should be disabled
   const disableDeselect = selectedTab === "edit";
 
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   const { data: extras } = useGetList<IConferenceTicket>("conference-extras", {
-    filter: filterValues.conference  ? {
-      conferences: filterValues.conference,
-    } : {},
+    filter: filterConferenceId != null ? { conferences: [filterConferenceId] } : {},
     meta: {
       populate: true,
     },
@@ -47,9 +47,9 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
       <FilterList label="Ticket Type" icon={<GroupIcon />}>
         {tickets
           ?.filter((ticket) =>
-            filterValues?.conference
+            filterConferenceId != null
               ? (ticket.conferences as IConference[]).some(
-                  (c) => c.id === filterValues.conference
+                  (c) => c.id === filterConferenceId
                 ) &&
                 ticket.name !== "Golfer" &&
                 ticket.name !== "Fisher"
@@ -60,7 +60,7 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
               <FilterListItem
                 key={`ticket-${ticket.id}`}
                 label={`${ticket.name} ${
-                  !filterValues?.conference
+                  filterConferenceId == null
                     ? (ticket.conferences[0] as IConference).name
                     : ""
                 }`}

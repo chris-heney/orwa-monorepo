@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { Card, Box, Typography } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import { Loading, useGetList } from "react-admin";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { oneYearAgoFormatted } from "../helpers/activeOrInactiveMembership";
+import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { Chart } from "chart.js/dist";
 
 // Register Chart.js components (required for react-chartjs-2 v4+)
@@ -19,15 +19,8 @@ const MembershipReportCard = () => {
       meta: {
         raw: true,
       },
-      filter: {
-        payment_last_date: {
-          value: oneYearAgoFormatted,
-          operator: "$lt",
-          checkForNull: true,
-          fieldToCheck: "payment_last_date",
-        },
-      },
-      pagination: { page: 1, perPage: 1000 },
+      filter: {},
+      pagination: { page: 1, perPage: 10000 },
     }
   );
 
@@ -37,16 +30,33 @@ const MembershipReportCard = () => {
       meta: {
         raw: true,
       },
-      filter: {
-        payment_last_date: {
-          value: oneYearAgoFormatted,
-          operator: "$lt",
-          checkForNull: true,
-          fieldToCheck: "payment_last_date",
-        },
-      },
-      pagination: { page: 1, perPage: 1000 },
+      filter: {},
+      pagination: { page: 1, perPage: 10000 },
     }
+  );
+
+  const inactiveAssociatesCount = useMemo(
+    () =>
+      associates?.filter(
+        (r: { payment_previous_date?: string; payment_last_date?: string }) =>
+          !isMembershipActiveByExpiration(
+            r.payment_previous_date,
+            r.payment_last_date
+          )
+      ).length ?? 0,
+    [associates]
+  );
+
+  const inactiveWatersystemsCount = useMemo(
+    () =>
+      watersystems?.filter(
+        (r: { payment_previous_date?: string; payment_last_date?: string }) =>
+          !isMembershipActiveByExpiration(
+            r.payment_previous_date,
+            r.payment_last_date
+          )
+      ).length ?? 0,
+    [watersystems]
   );
 
   const membershipData = {
@@ -54,8 +64,8 @@ const MembershipReportCard = () => {
     2022: { systems: 380, associates: 96 },
     2023: { systems: 458, associates: 104 },
     2024: {
-      systems: watersystems?.length || 0,
-      associates: associates?.length || 0,
+      systems: inactiveWatersystemsCount,
+      associates: inactiveAssociatesCount,
     },
   };
 

@@ -1,8 +1,10 @@
-import React, { useCallback, useMemo } from "react";
+import React from "react";
 import { Route } from "react-router-dom";
-import { AuthProvider, CookieStore } from "./helpers/ra-strapi-data-provider";
-import { strapiDataProvider } from "ra-strapi";
-import { Admin, CustomRoutes, Resource, fetchUtils } from "react-admin";
+import {
+  AuthProvider,
+  StrapiRestDataProviderFactory,
+} from "./helpers/ra-strapi-data-provider";
+import { Admin, CustomRoutes, Resource } from "react-admin";
 import { AdminLayout } from "./layouts";
 import {
   Asset,
@@ -43,6 +45,7 @@ import {
   Conferences,
   EmailManagement,
   SettingsDashboard,
+  MediaLibraryPage,
 } from "./modules/dashboards";
 import { LoginPage } from "./pages";
 import EventSettings from "./modules/training/settings/EventSettings";
@@ -57,28 +60,43 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-export const App = () => {
-  // Create a memoized httpClient that includes the authorization token
-  const httpClient = useCallback((url: string, options: any = {}) => {
-    const token = CookieStore.getCookie('token');
-    
-    if (!options.headers) {
-      options.headers = new Headers({ Accept: 'application/json' });
-    }
-    
-    // Add authorization header if token exists
-    if (token) {
-      options.headers.set('Authorization', `Bearer ${token}`);
-    }
-    
-    return fetchUtils.fetchJson(url, options);
-  }, []);
+const makeReadOnlyResource = <T extends Record<string, any>>(resource: T): T => {
+  const { create, edit, ...readOnlyResource } = resource;
 
-  // Memoize the dataProvider to prevent recreation on every render
-  const dataProvider = useMemo(() => strapiDataProvider({
-    baseURL: `${import.meta.env.VITE_API_ENDPOINT}`,
-    httpClient: httpClient,
-  }), [httpClient]);
+  return readOnlyResource as T;
+};
+
+type ResourcePermission = {
+  resource?: string;
+  action?: string | string[];
+};
+
+const permissionActions = (permission: ResourcePermission) =>
+  Array.isArray(permission.action) ? permission.action : [permission.action];
+
+const hasPermission = (
+  permissions: ResourcePermission[] | undefined,
+  resource: string,
+  action: string
+) =>
+  permissions?.some(
+    (permission) =>
+      permission.resource === resource && permissionActions(permission).includes(action)
+  ) ?? false;
+
+const isStaffPermissionSet = (permissions: ResourcePermission[] | undefined) =>
+  hasPermission(permissions, "watersystems", "export") &&
+  !hasPermission(permissions, "*", "*");
+
+const getResourceProps = (isStaff: boolean) =>
+  isStaff ? makeReadOnlyResource : (resource: Record<string, any>) => resource;
+
+
+export const App = () => {
+  const dataProvider = new StrapiRestDataProviderFactory({
+    endpoint: `${import.meta.env.VITE_API_ENDPOINT}/api`,
+    type: "rest",
+  }).init();
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="EN/en-us">
@@ -91,6 +109,12 @@ export const App = () => {
         dashboard={AdminDashboard}
         requireAuth
       >
+        {(permissions: ResourcePermission[]) => {
+          const isStaff = isStaffPermissionSet(permissions);
+          const resourceProps = getResourceProps(isStaff);
+
+          return (
+            <>
           {/* --- Main Entities --- */}
           <Route path="/login" />
 
@@ -110,11 +134,11 @@ export const App = () => {
           <Resource name="users" {...Users} />
 
           {/* MEMBERSHIP */}
-          <Resource name="associates" {...Associate} />
-          <Resource name="watersystems" {...Watersystem} />
-          <Resource name="membership-items" {...MembershipItems} />
-          <Resource name="memberships" {...Memberships} />
-          <Resource name="invoices" {...Transactions}/>
+          <Resource name="associates" {...resourceProps(Associate)} />
+          <Resource name="watersystems" {...resourceProps(Watersystem)} />
+          <Resource name="membership-items" {...resourceProps(MembershipItems)} />
+          <Resource name="memberships" {...resourceProps(Memberships)} />
+          <Resource name="invoices" {...resourceProps(Transactions)} />
 
           {/* TRAINING */}
           <Resource name="training-events" {...TrainingEvent} />
@@ -203,6 +227,7 @@ export const App = () => {
               path="email-management"
               element={<EmailManagement />}
             />
+            <Route path="media-library" element={<MediaLibraryPage />} />
 
             {/* --- Other Pages --- */}
             <Route
@@ -218,6 +243,9 @@ export const App = () => {
           </CustomRoutes>
 
           <Resource name="upload" />
+            </>
+          );
+        }}
       </Admin>
     </LocalizationProvider>
   );

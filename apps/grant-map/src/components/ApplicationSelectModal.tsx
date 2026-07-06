@@ -44,7 +44,7 @@ const GappApplicationList = ({ applications, onClose }: GappApplicationListProps
         ${applications
           .map(
             (app) => `
-            <li style="background-color:${app.status.data.color}; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;" data-id="${app.id}">
+            <li style="background-color:${app.status.color}; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;" data-id="${app.id}">
               <div style="font-size: 14px; font-weight: bold;">${app.legal_entity_name}</div>
               <div style="font-size: 12px; color: #666;">${formatCurrency(app.award_amount)}</div>
             </li>

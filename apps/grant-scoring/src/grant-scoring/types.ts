@@ -2,32 +2,25 @@ import { Dispatch, SetStateAction } from "react"
 
 
 interface IStatus {
-  data: {
-    id: number
-    name: string
-  }
+  id: number
+  name: string
 }
 
-export interface StrapiFiles {
-  data: {
-    id: number
-    name: string;
-    url: string;
-  }[]
+// Strapi v5 media: flat objects, null when empty
+export interface StrapiMediaFile {
+  id: number
+  documentId?: string
+  name: string
+  url: string
 }
 
-export interface StrapiFile {
-  data: {
-    length: number;
-    map: any;
-    id: number
-    name: string
-    url: string
-  }
-}
+export type StrapiFiles = StrapiMediaFile[] | null
+
+export type StrapiFile = StrapiMediaFile | null
 
 export interface IGrantApplication {
   id: number;
+  documentId?: string;
   legal_entity_name: string;
   facility_id: string;
   population_served: number
@@ -43,11 +36,11 @@ export interface IGrantApplication {
   mailing_address_city: string;
   mailing_address_state: string;
   mailing_address_zip: string;
-  point_of_contact: IContact;
-  chairman: IContact;
+  point_of_contact: IContact | null;
+  chairman: IContact | null;
   chairman_also_mayer_of_municipal_city: boolean;
   has_engineer: boolean;
-  engineer: IContact;
+  engineer: IContact | null;
   drinking_or_wastewater: "Drinking Water" | "Wastewater";
   drinking_water_projects_selected?: string;
   wastewater_projects_selected?: string;
@@ -79,8 +72,8 @@ export interface IGrantApplication {
   grant: Identifier | IGrant;
   committee_date: Date;
   application_date: Date | string;
-  status: Identifier | IStatus;
-  selected_projects: {data: IProject[]};
+  status: Identifier | IStatus | null;
+  selected_projects: IProject[];
   proposals: StrapiFiles
   uploaded_engineering_report: StrapiFiles;
   uploaded_notice_of_violation:  StrapiFiles;
@@ -94,26 +87,27 @@ export interface IGrantApplication {
   lrsp_plan: boolean;
   more_info_lrsp: boolean;
   project_proposal_birds: string;
-  approved_projects: {data : IProject[]};
+  approved_projects: IProject[];
   application_id: number;
   createdAt: Date;
   // Files
   award_letter?: StrapiFile;
   applicant_pdf?: StrapiFile;
-  grant_application_score: {
-    data: {
-      id: number
-      score: number
-      approved: boolean
-      other_describe: string
-      other_describe_2: string
-      orwa_signature: string
-      orwa_member_name: string
-      deq_signature: string
-      deq_member_name: string
-      createdAt: Date
-    }
-  }
+  grant_application_score: IGrantApplicationScore | null;
+}
+
+export interface IGrantApplicationScore {
+  id: number
+  documentId?: string
+  score: number
+  approved: boolean
+  other_describe: string
+  other_describe_2: string
+  orwa_signature: string
+  orwa_member_name: string
+  deq_signature: string
+  deq_member_name: string
+  createdAt: Date
 }
 
 export type Identifier = number
@@ -151,16 +145,14 @@ export interface IGrantType {
 
 export default interface IContact {
   id: Identifier
-  data: {
-    avatar: IAvatar[]
-    id: number
-    first: string
-    last: string
-    email: string
-    phone: string
-    title: string
-    contact_type: string
-  }
+  documentId?: string
+  avatar: IAvatar[]
+  first: string
+  last: string
+  email: string
+  phone: string
+  title: string
+  contact_type: string
 }
 
 export interface IScoringCriteria {
@@ -168,7 +160,7 @@ export interface IScoringCriteria {
   order: string;
   label: string;
   score: number;
-  project_type:  {data : IProject}
+  project_type: IProject | null
 }
 
 interface IAvatar {

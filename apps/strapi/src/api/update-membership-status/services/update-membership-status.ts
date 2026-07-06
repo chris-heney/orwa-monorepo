@@ -4,6 +4,8 @@
 
 import dayjs from 'dayjs'
 
+import { updateById } from '../../../utils/document-compat'
+
 export default ({ strapi }) => ({
 
     getExpirationDate: (previousPayment: string, lastPayment: string) => {
@@ -34,8 +36,7 @@ export default ({ strapi }) => ({
 
         try {
             for (const watersystem of watersystems) {
-                const response = await strapi.documents('api::watersystem.watersystem').update({
-                    documentId: "__TODO__",
+                const response = await updateById('api::watersystem.watersystem', watersystem.id, {
                     previousData: { ...watersystem },
 
                     data: {
@@ -56,8 +57,7 @@ export default ({ strapi }) => ({
 
         try {
             for (const associate of associates) {
-                const response = await strapi.documents('api::associate.associate').update({
-                    documentId: "__TODO__",
+                const response = await updateById('api::associate.associate', associate.id, {
                     previousData: { ...associate },
 
                     data: {

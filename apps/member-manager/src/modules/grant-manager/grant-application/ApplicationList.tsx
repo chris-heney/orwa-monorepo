@@ -14,6 +14,7 @@ import {
   ChipField,
   FilterLiveSearch,
   useNotify,
+  useListContext,
 } from "react-admin";
 import { CurrencyOptions } from "../../../config/Settings";
 import GrantApplicationCreateForm from "./CreateGrantApplication";
@@ -27,13 +28,28 @@ import { customDatagridStyle } from "../../../css";
 import { IProject } from "../types";
 import getContrastColor from "../../_helpers/getContrastColor";
 
+const PersistentFilterLiveSearch = () => {
+  const { applicationSearchFilter, setApplicationSearchFilter } =
+    useGrantContext();
+  const { filterValues } = useListContext();
+
+  useEffect(() => {
+    if (filterValues.q !== applicationSearchFilter) {
+      setApplicationSearchFilter(filterValues.q || "");
+    }
+  }, [filterValues.q]);
+
+  return <FilterLiveSearch />;
+};
+
 const GrantApplicationList = () => {
   const refresh = useRefresh();
   const notify = useNotify();
   const [isCreating, setIsCreating] = React.useState(false);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const { grantId, applicationStatuses } = useGrantContext();
+  const { grantId, applicationStatuses, applicationSearchFilter } =
+    useGrantContext();
   const dataProvider = useDataProvider();
   // useEffect(() => {
   //   refresh();
@@ -128,6 +144,7 @@ const GrantApplicationList = () => {
       <List
         disableSyncWithLocation
         component="div"
+        filterDefaultValues={applicationSearchFilter.length > 0 ? { q: applicationSearchFilter } : {}}
         filter={
           applicationStatuses.length > 0
             ? { grant: grantId, status: applicationStatuses }
@@ -135,7 +152,7 @@ const GrantApplicationList = () => {
         }
         title={" "}
         resource="grant-application-finals"
-        actions={<FilterLiveSearch />}
+        actions={<PersistentFilterLiveSearch />}
         queryOptions={{
           meta: {
             raw: true,
@@ -240,7 +257,7 @@ const GrantApplicationList = () => {
             label="Email"
             sortBy="point_of_contact.email"
             render={(record: RaRecord) => {
-              return record.email ? record.email : record.point_of_contact.email
+              return record.email ? record.email : record.point_of_contact?.email
             }}
             noWrap
             />
@@ -314,6 +331,7 @@ const GrantApplicationList = () => {
           <TextField source="physical_address_state" label="State" noWrap />
           <TextField source="physical_address_zip" label="Zip" noWrap />
           <NumberField source="population_served" label="Population" noWrap />
+          <TextField source="facility_id" label="Facility ID" noWrap />
           <FunctionField
             label="Selected Projects"
             noWrap

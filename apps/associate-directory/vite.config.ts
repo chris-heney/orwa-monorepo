@@ -8,11 +8,15 @@ export default defineConfig(() => ({
   root: __dirname,
   cacheDir: '../../node_modules/.vite/apps/associate-directory',
   server: {
-    port: 4205,
+    port: 4207,
     host: 'localhost',
+    fs: {
+      // Nx dev-server executor computes an incorrect allow list; permit the workspace root
+      allow: ['../..'],
+    },
   },
   preview: {
-    port: 4205,
+    port: 4207,
     host: 'localhost',
   },
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],

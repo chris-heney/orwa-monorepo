@@ -1,0 +1,68 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.useAppLocationMatcher = void 0;
+var react_1 = require("react");
+var useAppLocationState_1 = require("./useAppLocationState");
+/**
+ * Hook returning a function that checks if the path argument matches the current location in the context
+ * The app must be inside a AppLocationContext.
+ *
+ * @see AppLocationContext
+ *
+ * @example
+ *
+ *  import { AppLocationContext, useAppLocationMatcher } from '@react-admin/ra-navigation';
+ *  import { Admin, Resource, Layout } from 'react-admin';
+ *
+ *  const MatchAdvertiser = () => {
+ *    const match = useAppLocationMatcher();
+ *
+ *    return (
+ *      <>
+ *        {match('posts') && <h1>You're on the Posts...</h1>}
+ *        {match('posts.list) && <h2>Moreover it's the Posts List!</h2>}
+ *      </>
+ *    );
+ *  };
+ *
+ *  const MyLayout = ({ children, ...props }) =>  (
+ *    <AppLocationContext>
+ *      <Layout {...props}>
+ *        <MatchAdvertiser />
+ *        {children}
+ *      </Layout>
+ *    </AppLocationContext>
+ *  );
+ *
+ *  const App = () => (
+ *    <Admin dataProvider={dataProvider} layout={MyLayout}>
+ *      <Resource
+ *        name="posts"
+ *        list={PostList}
+ *        edit={PostEdit}
+ *      />
+ *    </Admin>
+ *  );
+ *
+ * The page title will only show "You're on the Posts..." on Post Edit page.
+ * It'll show both "You're on the Posts..." and "Moreover it's the Posts List!" on Post List page.
+ */
+var useAppLocationMatcher = function () {
+    var location = (0, useAppLocationState_1.useAppLocationState)()[0];
+    return (0, react_1.useCallback)(function (path) {
+        // Should always match the empty path which is the dashboard
+        if (path === '') {
+            return location;
+        }
+        var pathToMatchParts = (location.path || '').split('.');
+        var pathParts = path.split('.');
+        var isMatch = pathParts.reduce(function (isMatch, part, index) {
+            if (pathToMatchParts.length - 1 < index) {
+                return false;
+            }
+            return isMatch && part === pathToMatchParts[index];
+        }, true);
+        return isMatch ? location : null;
+    }, [location]);
+};
+exports.useAppLocationMatcher = useAppLocationMatcher;

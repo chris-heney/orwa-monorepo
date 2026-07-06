@@ -122,7 +122,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
       .filter((extra: number) => extra) // Ensure the extra exists
       .filter((extra: IExtraOption) => {
         // Check if the extra is included
-        return !extra?.included.data.some(
+        return !extra?.included.some(
           (includedTicket: ITicketOption) =>
             includedTicket.id === ticket.ticket_type?.id
         );
@@ -143,7 +143,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     const ticketType = TicketOptions.find((t) => t.name === value) || null;
 
     const includedExtras = ExtraOptions.filter((extra) => {
-      return extra.included.data.find((includedTicket: ITicketOption) => {
+      return extra.included.find((includedTicket: ITicketOption) => {
         return includedTicket.id === ticketType?.id;
       });
     }).map((extra) => extra.id); // Only store the IDs

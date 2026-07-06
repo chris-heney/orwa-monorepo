@@ -1,4 +1,4 @@
-import {Box, Card, Grid, SvgIconTypeMap, Typography} from "@mui/material"
+import { Box, Card, Grid, SvgIconTypeMap, Typography } from '@mui/material'
 import { OverridableComponent } from '@mui/material/OverridableComponent'
 import React from 'react'
 
@@ -11,7 +11,7 @@ interface StatWidgetProps {
 
 const StatWidget = ({ heading, subheading, WidgetIcon }: StatWidgetProps) => {
   return (
-    <Grid xs={12} sm={6}>
+    <Grid item xs={12} sm={6}>
       <Card sx={{
         height: 100,
         background: 'linear-gradient(-39deg, #4991f8 0%, #4bc1ff 100%)',

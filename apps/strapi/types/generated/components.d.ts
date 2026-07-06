@@ -123,10 +123,10 @@ export interface LocationCoordinates extends Struct.ComponentSchema {
     altitude: Schema.Attribute.Float;
     latitude: Schema.Attribute.Float &
       Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'35.4828466'>;
+      Schema.Attribute.DefaultTo<35.4828466>;
     longitude: Schema.Attribute.Float &
       Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'-97.6192809'>;
+      Schema.Attribute.DefaultTo<-97.6192809>;
   };
 }
 

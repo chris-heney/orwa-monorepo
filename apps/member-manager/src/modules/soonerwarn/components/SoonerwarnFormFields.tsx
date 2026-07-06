@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Card, Divider, Grid, Typography} from "@mui/material";
+import { Box, Card, Divider, Grid, Typography } from "@mui/material";
 import {
   AutocompleteArrayInput,
   AutocompleteInput,
@@ -17,23 +17,23 @@ const SoonerwarnFormFields = () => {
     <Box>
       <Grid container spacing={2}>
         {/* Basic Information Section */}
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Basic Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <TextInput source="system_name" label="System Name" fullWidth />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <TextInput source="email" label="Email" fullWidth />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <CustomPhoneInput source="phone" label="Phone" fullWidth />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <DateInput
                   source="application_date"
                   label="Application Date"
@@ -45,28 +45,28 @@ const SoonerwarnFormFields = () => {
         </Grid>
 
         {/* Address Section */}
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Address Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <TextInput
                   source="physical_address_street"
                   label="Street"
                   fullWidth
                 />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <TextInput
                   source="physical_address_city"
                   label="City"
                   fullWidth
                 />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <SelectInput
                   source="physical_address_state"
                   label="State"
@@ -74,7 +74,7 @@ const SoonerwarnFormFields = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <TextInput
                   source="physical_address_zip"
                   label="Zip"
@@ -86,14 +86,14 @@ const SoonerwarnFormFields = () => {
         </Grid>
 
         {/* County and Status Section */}
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Additional Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <SelectInput
                   source="county"
                   label="County"
@@ -102,7 +102,7 @@ const SoonerwarnFormFields = () => {
                 />
               </Grid>
               {/* Status field (add choices based on available statuses) */}
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <ReferenceInput
                   source="primary_contact"
                   label="Primary Contact"
@@ -118,7 +118,7 @@ const SoonerwarnFormFields = () => {
                 </ReferenceInput>
                
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <ReferenceInput
                   source="secondary_contact"
                   label="Secondary Contact"
@@ -134,7 +134,7 @@ const SoonerwarnFormFields = () => {
                 </ReferenceInput>
                
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <ReferenceArrayInput
                   source="contacts"
                   label="Additional Contacts"
@@ -150,14 +150,14 @@ const SoonerwarnFormFields = () => {
                 </ReferenceArrayInput>
                
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <DateInput
                   source="member_since"
                   label="Application Date"
                   fullWidth
                 />
               </Grid>
-              <Grid xs={12} sm={6}>
+              <Grid item xs={12} sm={6}>
                 <ReferenceInput
                   source="status"
                   label="Status"

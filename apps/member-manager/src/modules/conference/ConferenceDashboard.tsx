@@ -24,12 +24,12 @@ import exportBooths from "./helpers/exportBooths";
 import ConferenceTabs from "./components/ConferenceTabs";
 import exportSponsors from "./helpers/exportSponsors";
 import exportAttendees from "./helpers/exportAttendes";
+import { getPrimaryConferenceId } from "./helpers/mergeConferenceAcrossTabFilters";
+import { omitYearForListQuery } from "./helpers/listQueryFilters";
 
 const ConferenceDashboard = () => {
   const {
-    year,
     selectedTab,
-    tickets,
     conferences,
     resource,
     isFilterSidebarOpen,
@@ -42,7 +42,7 @@ const ConferenceDashboard = () => {
     conferenceYears.push(year);
   }
 
- 
+
 
   const dataProvider = useDataProvider();
   const formattedTitle =
@@ -60,14 +60,17 @@ const ConferenceDashboard = () => {
     []
   );
 
+  const activeConferenceName =
+    conferences.find(
+      (c) => c.id === getPrimaryConferenceId(tabFilters[selectedTab])
+    )?.name || "";
+
   const exporter = (records: RaRecord[]) => {
     CustomExportFunction(
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`
     );
   };
 
@@ -77,9 +80,7 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
       dataProvider
     );
   };
@@ -89,9 +90,7 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
       dataProvider
     );
   };
@@ -101,10 +100,8 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`,
-      dataProvider  
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      dataProvider
     );
   };
 
@@ -113,9 +110,7 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
       dataProvider
     );
 
@@ -124,9 +119,7 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
       dataProvider
     );
   };
@@ -136,14 +129,19 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${
-        conferences.find((conference) => conference.id === tabFilters[selectedTab]?.conference)?.name || ""
-      } ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
       dataProvider
     );
   };
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+
+  const listResource =
+    resource.length > 0 ? resource : "conference-attendees";
+  const listFilterDefaults = omitYearForListQuery(
+    listResource,
+    tabFilters[selectedTab]
+  );
 
   // Determine which exporter to use based on the current resource
   const getCurrentExporter = () => {
@@ -172,11 +170,8 @@ const ConferenceDashboard = () => {
       <Loading />
     };
   }, [selectedTab]);
- 
 
-  return conferences.length === 0 || !tickets || !ConferenceContext || !year ? (
-    <Loading />
-  ) : (
+  return (
     <Box sx={{ mt: 2 }}>
       <Title title="Conference Manager" />
 
@@ -192,41 +187,38 @@ const ConferenceDashboard = () => {
       >
         <ListBase
           storeKey={`${selectedTab}-${JSON.stringify(tabFilters[selectedTab])}`}
-          filterDefaultValues={{
-            conference: 2,
-            year: 2025,
-          }}
           perPage={100}
-          resource={resource.length > 0 ? resource : 'conference-attendees'}
+          filterDefaultValues={listFilterDefaults}
+          resource={listResource}
           disableSyncWithLocation
           exporter={getCurrentExporter()}
         >
           {/* MAIN */}
-         
-            <Box
-              sx={{
-                pb: 2,
-                overflow: "hidden",
-                flexGrow: "1",
-                backgroundColor: "transparent",
-                maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
-              }}
-            >
-              {/* Header */}
 
-              {isSmall && (
-                <ConferenceAccordionFilter conferenceYears={conferenceYears} />
-              )}
+          <Box
+            sx={{
+              pb: 2,
+              overflow: "hidden",
+              flexGrow: "1",
+              backgroundColor: "transparent",
+              maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
+            }}
+          >
+            {/* Header */}
 
-              <ConferenceHeader />
+            {isSmall && (
+              <ConferenceAccordionFilter conferenceYears={conferenceYears} />
+            )}
 
-              <ConferenceTabs />
-            </Box>
+            <ConferenceHeader />
+
+            <ConferenceTabs />
+          </Box>
 
 
           {/* ASIDE MOBILE Flex-Column DESKTOP FLEX-ROW make select buttons a dropdown */}
           {!isSmall && (
-            <ConferenceFilters/>
+            <ConferenceFilters />
           )}
         </ListBase>
       </Box>

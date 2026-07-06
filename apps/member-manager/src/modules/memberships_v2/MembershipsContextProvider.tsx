@@ -4,12 +4,13 @@ import React, {
   useContext,
   useState,
 } from "react";
-import { useStore } from "react-admin";
+import { Identifier, useStore } from "react-admin";
 import {
   IMembershipContextProvider,
   TabValue,
 } from "./types/IMembershipContextProvider";
 import ContactsCreateModal from "../grant-manager/grant-application/components/ContactsCreateModal";
+import ContactsEditModal from "../grant-manager/grant-application/components/ContactsEditModal";
 
 export const MembershipContext = createContext<IMembershipContextProvider>({
   selectedTab: "summary",
@@ -24,6 +25,12 @@ export const MembershipContext = createContext<IMembershipContextProvider>({
   setIsLoading: () => {},
   isContactModalOpen: false,
   setIsContactModalOpen: () => {},
+  contactCreateDefaultValues: {},
+  setContactCreateDefaultValues: () => {},
+  contactEditId: null,
+  setContactEditId: () => {},
+  linkNewContactToWatersystemId: null,
+  setLinkNewContactToWatersystemId: () => {},
   invoicesFilters: [],
   setInvoicesFilters: () => {},
   membershipExtraFilters: [],
@@ -65,6 +72,14 @@ const MembershipsContextProvider = ({ children }: PropsWithChildren) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
+  const [contactCreateDefaultValues, setContactCreateDefaultValues] =
+    useState<Record<string, unknown>>({});
+  const [contactEditId, setContactEditId] =
+    useState<IMembershipContextProvider["contactEditId"]>(null);
+  const [
+    linkNewContactToWatersystemId,
+    setLinkNewContactToWatersystemId,
+  ] = useState<Identifier | null>(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -87,6 +102,12 @@ const MembershipsContextProvider = ({ children }: PropsWithChildren) => {
         setIsLoading,
         isContactModalOpen,
         setIsContactModalOpen,
+        contactCreateDefaultValues,
+        setContactCreateDefaultValues,
+        contactEditId,
+        setContactEditId,
+        linkNewContactToWatersystemId,
+        setLinkNewContactToWatersystemId,
         invoicesFilters,
         setInvoicesFilters,
         membershipExtraFilters,
@@ -105,6 +126,16 @@ const MembershipsContextProvider = ({ children }: PropsWithChildren) => {
       <ContactsCreateModal
         createContact={isContactModalOpen}
         setCreateContact={setIsContactModalOpen}
+        defaultValues={contactCreateDefaultValues}
+        linkToWatersystemId={linkNewContactToWatersystemId}
+        onCloseComplete={() => {
+          setContactCreateDefaultValues({});
+          setLinkNewContactToWatersystemId(null);
+        }}
+      />
+      <ContactsEditModal
+        contactId={contactEditId}
+        onClose={() => setContactEditId(null)}
       />
     </MembershipContext.Provider>
   );

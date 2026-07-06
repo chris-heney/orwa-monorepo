@@ -2,6 +2,8 @@
  * conference-summary service
  */
 
+import { findOneById } from "../../../utils/document-compat";
+
 interface IItemCount {
   name: string;
   key: string;
@@ -28,6 +30,7 @@ interface IMetric {
 export default ({ strapi}) => ({
   // loop thought all the attendees and count the number of each item they have and return the count of each item for all attendees
   getItemsSummary: async (id: string, year: string) => {
+    console.log("getItemsSummary", id, year);
     const filter =
       id === "-1" && year === "-1"
         ? {}
@@ -125,6 +128,9 @@ export default ({ strapi}) => ({
       // Process registrations
       for (const registration of registrations) {
         for (const item of registration.items) {
+          
+          if (!item.item?.counted) continue;
+
           const extra = item.item;
           const existing = countsMap.get(extra.id);
 
@@ -144,8 +150,7 @@ export default ({ strapi}) => ({
       await Promise.all(
         Array.from(countsMap.values()).map(async (value) => {
           try {
-            const extra = await strapi.documents("api::conference-extra.conference-extra").findOne({
-              documentId: "__TODO__",
+            const extra = await findOneById("api::conference-extra.conference-extra", value.id, {
               populate: ["icon"]
             });
 

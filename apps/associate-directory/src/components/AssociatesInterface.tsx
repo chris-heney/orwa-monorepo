@@ -1,4 +1,6 @@
 export interface IAssociates {
+  id: number;
+  documentId: string;
   address_city: string;
   address_state: string;
   address_street: string;
@@ -26,16 +28,15 @@ export interface IAssociates {
   website: string;
   wp_eid: number | null;
   wp_uid: number | null;
-  logo: { data: ILogo[] };
+  logo: ILogo[] | null;
   contacts: IContact[] | null;
-  contact_primary: {
-    data: IContact;
-  };
-  contact_secondary: IContact;
+  contact_primary: IContact | null;
+  contact_secondary: IContact | null;
 }
 
 interface ILogo {
   id: number;
+  documentId: string;
   name: string;
   alternativeText: string | null;
   caption: string | null;
@@ -43,11 +44,11 @@ interface ILogo {
   createdAt: string;
   ext: string;
   formats: {
-    large: {
+    [key: string]: {
       ext: string;
       url: string;
     };
-  };
+  } | null;
   hash: string;
   height: number;
   mime: string;

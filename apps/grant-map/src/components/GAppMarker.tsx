@@ -45,9 +45,9 @@ const GAppMarker = ({ position, currentApplication}: GAppMarkerProps) => {
     priceTag.style.fontSize = "12px";
     priceTag.style.padding = "5px 10px";
     priceTag.style.backgroundColor =
-      currentApplication.status.data.color;
+      currentApplication.status.color;
     priceTag.style.color =
-      currentApplication.status.data.color === "#FFFFFF"
+      currentApplication.status.color === "#FFFFFF"
         ? "black"
         : "white";
     priceTag.style.userSelect = "none";
@@ -64,7 +64,7 @@ const GAppMarker = ({ position, currentApplication}: GAppMarkerProps) => {
     arrow.style.height = "0";
     arrow.style.borderLeft = "8px solid transparent";
     arrow.style.borderRight = "8px solid transparent";
-    arrow.style.borderTop = `8px solid ${currentApplication.status.data.color}`;
+    arrow.style.borderTop = `8px solid ${currentApplication.status.color}`;
     markerElement.appendChild(arrow);
 
     // Initialize marker

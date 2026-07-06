@@ -22,14 +22,14 @@ import CustomPagination from "../../_components/CustomPagination";
 import { createRecord } from "../../_helpers/createRecord";
 import { ISharedMeta } from "../types/IConference";
 import { ConferenceAttendeeFields } from "./AttendeeFormFields";
-
-
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 const AttendeeList = () => {
   const { isCreating, setIsCreating } = useContext(ConferenceContext);
 
   // Use the list context from the parent ListBase
   const { resource, filterValues } = useListContext();
+  const listConferenceId = getPrimaryConferenceId(filterValues);
 
   const [create] = useCreate();
   const notify = useNotify();
@@ -97,12 +97,12 @@ const AttendeeList = () => {
         <TextField source="email" label="Email" noWrap />
         <TextField source="phone" label="Phone" noWrap />
         <TextField source="organization" label="Organization" noWrap />
-        {filterValues.conference === 1 && <TextField
+        {listConferenceId === 1 && <TextField
           source="orwa_voting_status"
           label="ORWA Voting Status"
           noWrap
         />}
-        {filterValues.conference === 1 && <TextField
+        {listConferenceId === 1 && <TextField
           source="orwaag_voting_status"
           label="ORWAAG Voting Status"
           noWrap

@@ -2,6 +2,7 @@ import React from "react";
 import { FilterList, FilterListItem, FilterLiveSearch } from "react-admin";
 import EventIcon from "@mui/icons-material/Event";
 import { IConference } from "../types";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface SponsorshipFilterProps {
   filterValues: any;
@@ -16,6 +17,7 @@ const SponsorshipFilter: React.FC<SponsorshipFilterProps> = ({
 }) => {
   // Helper to normalize IDs to numbers
   const normalizeId = (id: any) => typeof id === 'string' ? parseInt(id, 10) : id;
+  const currentConferenceId = getPrimaryConferenceId(filterValues);
 
   return (
     <>
@@ -32,7 +34,7 @@ const SponsorshipFilter: React.FC<SponsorshipFilterProps> = ({
               label={conference.name}
               value={{
                 ...filterValues,
-                conference: filterValues.conference === conferenceId ? undefined : conferenceId
+                conference: currentConferenceId === conferenceId ? undefined : conferenceId
               }}
             />
           );

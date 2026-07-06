@@ -1,0 +1,128 @@
+"use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.EditableDatagridConfigurable = void 0;
+var React = __importStar(require("react"));
+var react_admin_1 = require("react-admin");
+var EditableDatagrid_1 = __importDefault(require("./EditableDatagrid"));
+var EditableDatagridEditor_1 = require("./EditableDatagridEditor");
+/**
+ * An EditableDatagrid that users can customize in configuration mode
+ *
+ * @example
+ * import { List, TextField } from 'react-admin';
+ * import { EditableDatagridConfigurable } from '@react-admin/ra-editable-datagrid';
+ *
+ * export const PostList = () => (
+ *     <List>
+ *         <EditableDatagridConfigurable>
+ *             <TextField source="id" />
+ *             <TextField source="title" />
+ *             <TextField source="author" />
+ *             <TextField source="year" />
+ *         </EditableDatagridConfigurable>
+ *     </List>
+ * );
+ */
+var EditableDatagridConfigurable = function (_a) {
+    var preferenceKey = _a.preferenceKey, omit = _a.omit, props = __rest(_a, ["preferenceKey", "omit"]);
+    // For JS users
+    if (props['optimized']) {
+        throw new Error('EditableDatagridConfigurable does not support the optimized prop');
+    }
+    var translate = (0, react_admin_1.useTranslate)();
+    var resource = (0, react_admin_1.useResourceContext)(props);
+    var finalPreferenceKey = preferenceKey || "".concat(resource, ".datagrid");
+    var _b = (0, react_admin_1.useStore)("preferences.".concat(finalPreferenceKey, ".availableColumns"), []), availableColumns = _b[0], setAvailableColumns = _b[1];
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    var _c = (0, react_admin_1.useStore)("preferences.".concat(finalPreferenceKey, ".omit"), omit), _ = _c[0], setOmit = _c[1];
+    React.useEffect(function () {
+        // first render, or the preference have been cleared
+        var columns = React.Children.toArray(props.children)
+            .filter(function (child) { return React.isValidElement(child); })
+            .map(function (child, index) { return ({
+            index: String(index),
+            source: child.props.source,
+            label: child.props.label && typeof child.props.label === 'string' // this list is serializable, so we can't store ReactElement in it
+                ? child.props.label
+                : child.props.source
+                    ? //  force the label to be the source
+                        undefined
+                    : // no source or label, generate a label
+                        translate('ra.configurable.Datagrid.unlabeled', {
+                            column: index,
+                            _: "Unlabeled column #%{column}",
+                        }),
+        }); });
+        if (columns.length !== availableColumns.length) {
+            setAvailableColumns(columns);
+            setOmit(omit);
+        }
+    }, [availableColumns]); // eslint-disable-line react-hooks/exhaustive-deps
+    return (React.createElement(react_admin_1.Configurable, { editor: React.createElement(EditableDatagridEditor_1.EditableDatagridEditor, null), preferenceKey: finalPreferenceKey, sx: { display: 'block', minHeight: 2 } },
+        React.createElement(EditableDatagridWithPreferences, __assign({}, props))));
+};
+exports.EditableDatagridConfigurable = EditableDatagridConfigurable;
+exports.EditableDatagridConfigurable.propTypes = EditableDatagrid_1.default.propTypes;
+/**
+ * This EditableDatagrid filters its children depending on preferences
+ */
+var EditableDatagridWithPreferences = function (_a) {
+    var children = _a.children, props = __rest(_a, ["children"]);
+    var availableColumns = (0, react_admin_1.usePreference)('availableColumns', [])[0];
+    var omit = (0, react_admin_1.usePreference)('omit', [])[0];
+    var columns = (0, react_admin_1.usePreference)('columns', availableColumns
+        .filter(function (column) { return !(omit === null || omit === void 0 ? void 0 : omit.includes(column.source)); })
+        .map(function (column) { return column.index; }))[0];
+    var childrenArray = React.Children.toArray(children);
+    return (React.createElement(EditableDatagrid_1.default, __assign({}, props), columns === undefined
+        ? children
+        : columns.map(function (index) { return childrenArray[index]; })));
+};

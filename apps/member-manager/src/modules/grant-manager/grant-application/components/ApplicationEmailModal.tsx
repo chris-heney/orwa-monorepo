@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Edit, Identifier, Loading, RaRecord, SimpleForm, TextInput, useDataProvider, useNotify, useRefresh, useUpdate } from 'react-admin'
-import {Box, Button, Checkbox, Divider, Grid, Typography} from "@mui/material"
+import { Box, Button, Checkbox, Divider, Grid, Typography } from '@mui/material'
 import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { FieldValues } from 'react-hook-form'
 import authProvider from '../../../../authProvider'
@@ -204,7 +204,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
                   {fields.map((field, index) => {
                     return (
                       payloadVariables[field] === undefined && (
-                        <Grid key={field + index} xs={12} md={6}>
+                        <Grid key={field + index} item xs={12} md={6}>
                           {/* Render an input field if the value is missing */}
                           <TextInput
                             source={field}
@@ -215,7 +215,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
                       )
                     )
                   })}
-                  {(selectedApplication?.point_of_contact === undefined  || selectedApplication.email) && <Grid xs={12} md={6}>
+                  {(selectedApplication?.point_of_contact === undefined  || selectedApplication.email) && <Grid item xs={12} md={6}>
                     {/* Render an input field if the value is missing */}
                     <TextInput
                       source='email'

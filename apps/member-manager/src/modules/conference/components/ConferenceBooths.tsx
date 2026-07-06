@@ -19,7 +19,7 @@ import {
   useRemoveFromStore,
   useListContext,
 } from "react-admin";
-import {Box, Button, Grid, Chip} from "@mui/material";
+import { Box, Button, Grid, Chip } from "@mui/material";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
 import { CurrencyOptions } from "../../../config/Settings";
@@ -31,6 +31,7 @@ import { updateRecord } from "../../_helpers/updateRecord";
 import { createRecord } from "../../_helpers/createRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface AddBoothFormProps {
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>;
@@ -39,6 +40,7 @@ interface AddBoothFormProps {
 
 const AddBoothForm = ({ context }: AddBoothFormProps) => {
   const { filterValues } = useListContext();
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
   const [updated, setUpdated] = React.useState(false);
   const refresh = useRefresh();
 
@@ -53,27 +55,27 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
 
   return (
     <Grid container spacing={2}>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <SelectInputRegistration type="Vendor" />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <TextInput source="organization" label="Organization" fullWidth />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <TextInput source="secondary_email" label="Secondary Email" fullWidth />
       </Grid>
-      <Grid xs={12} md={3}>
+      <Grid item xs={12} md={3}>
         <NumberInput source="subtotal" label="Subtotal" fullWidth />
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid item xs={12} md={6}>
         <NumberInput
           source="conference"
-          defaultValue={filterValues.conference}
+          defaultValue={filterConferenceId}
           sx={{ display: "none" }}
           fullWidth
         />
       </Grid>
-      <Grid xs={12} md={6}>
+      <Grid item xs={12} md={6}>
         <NumberInput
           source="year"
           defaultValue={filterValues.year}
@@ -87,6 +89,7 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
             setUpdated={setUpdated}
             context="Booth"
             resource="conference-booths"
+            conferenceId={filterConferenceId}
           />
         </Box>
       )}

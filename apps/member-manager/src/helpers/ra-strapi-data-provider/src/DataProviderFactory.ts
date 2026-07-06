@@ -167,6 +167,37 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    * @returns RaRecord
    */
   formatResponseRA = (record: IStrapiRecord): RaRecord => {
+    // Strapi 5: records are flat ({ id, documentId, ...fields }), relations are
+    // flat objects/arrays with their own numeric id (no .data / .attributes nesting).
+    if (record && !record.attributes) {
+      const raRecord: RaRecord = { ...(record as unknown as RaRecord) };
+
+      for (const key in raRecord) {
+        const value = raRecord[key];
+        if (value && typeof value === "object") {
+          // Single relation / media object -> numeric id
+          if (!Array.isArray(value) && value.id !== undefined && value.id !== null) {
+            raRecord[key] = typeof value.id === "number" ? value.id : parseInt(value.id, 10);
+            continue;
+          }
+          // Has-many relation / multi-media -> array of numeric ids
+          if (
+            Array.isArray(value) &&
+            value.length > 0 &&
+            value.every((item: any) => item && typeof item === "object" && item.id !== undefined)
+          ) {
+            raRecord[key] = value.map((item: { id: Identifier }) =>
+              typeof item.id === "number" ? item.id : parseInt(item.id as string, 10)
+            );
+            continue;
+          }
+        }
+      }
+
+      return raRecord;
+    }
+
+    // Strapi 4 fallback: { id, attributes: { field, relation: { data: {...} } } }
     const raRecord: RaRecord = { id: record.id };
 
     for (const key in record.attributes) {
@@ -215,7 +246,23 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    * @param record IStrapiRecord Raw Strapi Data Response Object
    * @returns
    */
-  formatResponseRaw = (record: IStrapiRecord) => {
+  formatResponseRaw = (record: IStrapiRecord): RaRecord => {
+    // Strapi 5: records are already flat and populated relations are flat
+    // objects/arrays. Return as-is (recursively copied) with id preserved.
+    if (record && !record.attributes) {
+      const copyDeep = (value: any): any => {
+        if (Array.isArray(value)) return value.map(copyDeep);
+        if (value && typeof value === "object") {
+          const copy: Record<string, any> = {};
+          for (const key in value) copy[key] = copyDeep(value[key]);
+          return copy;
+        }
+        return value;
+      };
+      return copyDeep(record) as RaRecord;
+    }
+
+    // Strapi 4 fallback
     const { id } = record;
 
     // Flatten the record
@@ -317,7 +364,21 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     const newObject: Partial<RaRecord> = {};
     const components: string[] = ["stages"];
 
+    // Strapi 5 rejects unknown/system keys on create/update with a ValidationError
+    const systemFields = [
+      "id",
+      "documentId",
+      "createdAt",
+      "updatedAt",
+      "publishedAt",
+      "createdBy",
+      "updatedBy",
+      "locale",
+    ];
+
     Object.keys(object).forEach((key) => {
+      if (systemFields.includes(key)) return;
+
       const newValue = object[key] === "" ? null : object[key];
 
       if (components.includes(key)) {
@@ -342,7 +403,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     // 🔹 Handle SORTING
     const sort = s?.field
       ? `sort=${encodeURIComponent(s.field)}:${s.order.toLowerCase()}`
-      : "sort=updated_at:desc";
+      : "sort=updatedAt:desc";
   
     // 🔹 Handle FILTERING
     const filters: string[] = [];
@@ -875,7 +936,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         this.cache.invalidate(new RegExp(`^(getList|getMany|getManyReference):.*${resource}`));
 
         return this.executeRequest(requestKey, async () => {
-          const paramsData = { ...params.data };
+          const paramsData = this.sanitizeRaRecordForStrapi({
+            ...params.data,
+          } as RaRecord);
           const uploadFieldNames = this.getUploadFieldNames(params.data);
           const formData = new FormData();
           
@@ -916,14 +979,15 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         this.cache.invalidate(new RegExp(`^(getOne|getList|getMany|getManyReference):.*${resource}`));
 
         return this.executeRequest(requestKey, async () => {
-          const { json } = await httpClient(url, {
+          // Strapi 5 DELETE returns 204 with an empty body
+          await httpClient(url, {
             method: "DELETE",
             headers: new Headers({
               "Content-Type": "text/plain",
             }),
           });
-          
-          return { data: json };
+
+          return { data: { id: params.id } };
         });
       },
 
@@ -943,14 +1007,15 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
               const requestKey = `deleteMany:${resource}:${id}`;
               
               return this.executeRequest(requestKey, async () => {
-                const { json } = await httpClient(url, {
+                // Strapi 5 DELETE returns 204 with an empty body
+                await httpClient(url, {
                   method: "DELETE",
                   headers: new Headers({
                     "Content-Type": "text/plain",
                   }),
                 });
-                
-                return (json.data as IStrapiRecord).id;
+
+                return id;
               });
             })
           );

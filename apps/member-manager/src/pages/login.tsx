@@ -51,7 +51,7 @@ const LoginPage = () => {
           notify("Logged in successfully", {
             type: "success",
           });
-          redirect("/");
+          redirect(res?.user?.role?.name === "Staff" ? "/membership-management" : "/");
         }
       });
   };
@@ -108,12 +108,12 @@ const LoginPage = () => {
             Sign In
           </Button>
           <Grid container>
-            <Grid xs>
+            <Grid item xs>
               <Link href="#/forgot-password" variant="body2">
                 Forgot password?
               </Link>
             </Grid>
-            <Grid>
+            <Grid item>
               {/* <Link href="#/signup" variant="body2">
                 {'Don\'t have an account? Sign Up'}
               </Link> */}

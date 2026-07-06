@@ -29,7 +29,7 @@ import { useHumanResourcesContext } from "../HumanResourcesContext";
 const UserList: React.FC = () => {
   const dataProvider = useDataProvider();
   const notify = useNotify();
-  const { userFilters } = useHumanResourcesContext();
+  const { userFilters, userListVersion } = useHumanResourcesContext();
 
   const [filteredUsers, setFilteredUsers] = useState<IUser[]>([]); // Users matching the search criteria
   const [users, setUsers] = useState<IUser[]>([]); // Holds the current page users
@@ -62,7 +62,7 @@ const UserList: React.FC = () => {
         setFilteredUsers([]);
         setLoading(false);
       });
-  }, [dataProvider, sortField, sortOrder, userFilters]);
+  }, [dataProvider, sortField, sortOrder, userFilters, userListVersion]);
 
   // Update displayed users based on pagination and search filter
   useEffect(() => {

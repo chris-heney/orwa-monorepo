@@ -16,7 +16,9 @@ import {
 import { CurrencyOptions } from "../../../config/Settings";
 import { Box, Button, useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
-import getExpirationDate from "../../_helpers/getExpirationDate";
+import getExpirationDate, {
+  isMembershipActiveByExpiration,
+} from "../../_helpers/getExpirationDate";
 import getExpiryBackground from "../../_helpers/getExpiryBackground";
 import AssociateBulkUpdateButton from "./components/AssociateBulkUpdateButton";
 import AssociateGrid from "./components/AssociateGrid";
@@ -58,7 +60,14 @@ const AssociateList = () => {
           linkType="show"
           primaryText={(record) => record.name}
           secondaryText={(record) =>
-            `${record.active ? "Active" : "Not Active"} | ${record.email}`
+            `${
+              isMembershipActiveByExpiration(
+                record.payment_previous_date,
+                record.payment_last_date
+              )
+                ? "Active"
+                : "Not Active"
+            } | ${record.email}`
           }
           tertiaryText={(record) => record.member_level}
         />
@@ -84,10 +93,10 @@ const AssociateList = () => {
               const backgroundColor = expirationDate.isValid()
                 ? getExpiryBackground(expirationDate)
                 : "orange"; // Set background color to orange if date is invalid (N/A)
-              const active = getExpirationDate(
+              const active = isMembershipActiveByExpiration(
                 record.payment_previous_date,
                 record.payment_last_date
-              ).isAfter(new Date());
+              );
               return (
                 <Box
                   sx={{

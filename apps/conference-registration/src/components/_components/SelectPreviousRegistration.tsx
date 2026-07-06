@@ -56,7 +56,7 @@ const SelectPreviousRegistration = () => {
             validate: (value) => {
               if (!registrations
                 ?.filter((organization) => {
-                  return organization.type === "Vendor" && (organization.booths as any).data.length > 0;
+                  return organization.type === "Vendor" && ((organization.booths as any)?.length ?? 0) > 0;
                 })
                 ?.filter((reg) => {
                   return reg.organization
@@ -88,7 +88,7 @@ const SelectPreviousRegistration = () => {
           <ul className="absolute z-10 bg-white border border-gray-300 rounded-md w-full max-h-40 overflow-y-auto mt-1 shadow-lg">
             {registrations
               ?.filter((organization) => {
-                return organization.type === "Vendor" && (organization.booths as any).data.length > 0;
+                return organization.type === "Vendor" && ((organization.booths as any)?.length ?? 0) > 0;
               })
               ?.filter((reg) => {
                 return reg.organization

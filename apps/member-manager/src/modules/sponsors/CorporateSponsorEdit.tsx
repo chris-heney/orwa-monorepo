@@ -8,7 +8,7 @@ import {
 } from 'react-admin'
 import CustomFormHeader from '../_components/CustomFormHeader'
 import FileUploadField from '../_components/FileUploadField'
-import {Grid} from "@mui/material"
+import { Grid } from '@mui/material'
 
 const CorporateSponsorEdit = () => {
   return (

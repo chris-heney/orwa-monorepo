@@ -22,7 +22,7 @@ import {
   required,
   useListContext,
 } from "react-admin";
-import {Button, Divider, Grid, Typography} from "@mui/material";
+import { Button, Divider, Grid, Typography } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
 import { ConferenceContext } from "../ConferenceContext";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
@@ -30,17 +30,19 @@ import { createRecord } from "../../_helpers/createRecord";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import { ISharedMeta } from "../types/IConference";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 
 const ContestantFormFields = () => {
 
   const { filterValues } = useListContext();
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   return (
-    <Grid xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
+    <Grid item xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
       <Typography variant="h6">Contestant Info.</Typography>
       <Divider />
-      <Grid display={"none"} xs={12} md={6} lg={4}>
+      <Grid display={"none"} item xs={12} md={6} lg={4}>
         <ReferenceInput
           source="conference"
           reference="conferences"
@@ -49,12 +51,12 @@ const ContestantFormFields = () => {
           <AutocompleteInput
             optionText="name"
             fullWidth
-            defaultValue={{conference: filterValues.conference}}
+            defaultValue={{ conference: filterConferenceId }}
             helperText={false}
           />
         </ReferenceInput>
       </Grid>
-      <Grid display={"none"} xs={12} md={6} lg={4}>
+      <Grid display={"none"} item xs={12} md={6} lg={4}>
         <NumberInput
           source="year"
           label="Year"
@@ -65,7 +67,7 @@ const ContestantFormFields = () => {
       </Grid>
       <Grid container spacing={2}>
         {/* first,last email,phoen */}
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="first"
             label="First Name"
@@ -73,7 +75,7 @@ const ContestantFormFields = () => {
             validate={required("First name is Required")}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="last"
             label="Last Name"
@@ -81,14 +83,14 @@ const ContestantFormFields = () => {
             validate={required("Last name is Required")}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="email" label="Email" fullWidth />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput source="phone" label="Phone" fullWidth />
         </Grid>
 
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
             source="team"
             reference="conference-teams"
@@ -98,7 +100,7 @@ const ContestantFormFields = () => {
             <AutocompleteInput optionText="name" />
           </ReferenceInput>
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <TextInput
             source="organization"
             label="Organization"
@@ -106,9 +108,13 @@ const ContestantFormFields = () => {
             validate={required("Organization is Required")}
           />
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <ReferenceInput
-            filter={{ conferences: [filterValues.conference] }}
+            filter={
+              filterConferenceId != null
+                ? { conferences: [filterConferenceId] }
+                : {}
+            }
             source="conference_ticket"
             reference="conference-tickets"
             label="Title"
@@ -126,7 +132,7 @@ const ContestantFormFields = () => {
             {id: 'Fisher', name: 'Fisher'},
           ]} /> */}
         </Grid>
-        <Grid xs={12} md={6} lg={4}>
+        <Grid item xs={12} md={6} lg={4}>
           <NumberInput source="fee" label="Fee" fullWidth />
         </Grid>
       </Grid>

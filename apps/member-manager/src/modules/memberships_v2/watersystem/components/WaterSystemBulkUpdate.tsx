@@ -1,4 +1,4 @@
-import {Box, Button, Grid, MenuItem, Modal, Select, Typography} from "@mui/material"
+import { Box, Button, Grid, MenuItem, Modal, Select, Typography } from '@mui/material'
 import React, { useState } from 'react'
 import { AutocompleteArrayInput, BooleanInput, ConfigurableDatagridColumn, DateInput, List, NumberInput, ReferenceArrayInput, SelectInput, SimpleForm, SimpleList, TextInput, useNotify, useStore, useUpdateMany } from 'react-admin'
 import { FieldValues } from 'react-hook-form'
@@ -6,6 +6,7 @@ import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { StateChoices, WatersystemMemberTypeChoices, countyOptions, paymentOptions, regionOptions, reportType } from '../../../../helpers/Data'
 import UpdateIcon from '@mui/icons-material/Update'
 import CustomToolBar from '../../../_components/CustomToolbar'
+import { isMembershipActiveByExpiration } from '../../../_helpers/getExpirationDate'
 
 const WaterSystemBulkUpdateButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -56,7 +57,7 @@ const WaterSystemBulkUpdateButton = () => {
           <CustomSecondaryHeader title='Bulk Update Watersystems' />
           {/* left side field to update right side is list of water systems being updated */}
           <Grid container spacing={2}>
-            <Grid xs={6}>
+            <Grid item xs={6}>
               <Typography textAlign={'center'} variant='h6'>Selected Field</Typography>
               <Box sx={{ p: 1, display: 'flex' , mt: 2.5}}>
                 <Select
@@ -159,7 +160,7 @@ const WaterSystemBulkUpdateButton = () => {
                 </SimpleForm>
               </Box>
             </Grid>
-            <Grid xs={6}>
+            <Grid item xs={6} >
               <Typography textAlign={'center'} variant='h6'>Selected Watersystems</Typography>
               <List
                 title={' '}
@@ -173,7 +174,15 @@ const WaterSystemBulkUpdateButton = () => {
                 <SimpleList
                   sx={{ overflowY: 'scroll', maxHeight: 400 }}
                   primaryText={(record) => record.name}
-                  secondaryText={(record) => (record.region === null ? 'No Region' : record.region) + ' | ' + (record.active ? 'Active' : 'Inactive')}
+                  secondaryText={(record) =>
+                    (record.region === null ? 'No Region' : record.region) +
+                    ' | ' +
+                    (isMembershipActiveByExpiration(
+                      record.payment_previous_date,
+                      record.payment_last_date
+                    )
+                      ? 'Active'
+                      : 'Inactive')}
                   tertiaryText={record => record.county} />
               </List>
             </Grid>

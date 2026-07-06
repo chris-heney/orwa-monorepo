@@ -1,4 +1,4 @@
-import {Box, Card, Grid} from "@mui/material";
+import { Box, Card, Grid } from "@mui/material";
 import React from "react";
 import EmailInterface from "../emails-magement/emails-templates/EmailInterface";
 import GrantStatusesInterface from "../grant-manager/_components/StatusesInterface";
@@ -7,25 +7,25 @@ const SoonerwarnManagementSettings = () => {
   return (
     <Box>
       <Grid container spacing={2}>
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <GrantStatusesInterface context="soonerwarn-statuses" />
           </Card>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <EmailInterface module="Soonerwarn Managment" />
           </Card>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid item xs={12} md={6}>
           <Card>
             <GrantStatusesInterface context="request-statuses" />
           </Card>
         </Grid>
 
-        {/* <Grid xs={12} md={6}>
+        {/* <Grid item xs={12} md={6}>
           <Card>
             <CustomInterface
               rows={[

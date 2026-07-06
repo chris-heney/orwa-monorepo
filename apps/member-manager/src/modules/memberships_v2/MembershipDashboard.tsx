@@ -1,5 +1,5 @@
-import React from "react";
-import {Box, Tab, Divider, useMediaQuery, Grid} from "@mui/material";
+import React, { useEffect } from "react";
+import { Box, Tab, Divider, useMediaQuery, Grid } from "@mui/material";
 import { TabContext, TabPanel, TabList } from "@mui/lab";
 import { Title } from "react-admin";
 import { Theme } from "@mui/material/styles";
@@ -23,10 +23,14 @@ import MembershiphHeader from "./componenets/MembershipsHeader";
 import { TabValue } from "./types/IMembershipContextProvider";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
 import MembershipSettings from "./componenets/MembershipSettings";
+import useCurrentUser from "../_helpers/useCurrentUser";
+
+const STAFF_TAB_VALUES = ["watersystems", "associates"];
 
 const MembershipDashboard = () => {
   const { selectedTab, setSelectedTab, isSettingsOpen, isFilterSidebarOpen} =
     useMembershipContext();
+  const { role } = useCurrentUser();
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
 
@@ -62,10 +66,20 @@ const MembershipDashboard = () => {
       icon: <PaidIcon />,
     },
   ];
+  const isStaff = role === "Staff";
+  const visibleTabs = isStaff
+    ? tabs.filter((tab) => STAFF_TAB_VALUES.includes(tab.value))
+    : tabs;
+
+  useEffect(() => {
+    if (isStaff && !STAFF_TAB_VALUES.includes(selectedTab)) {
+      setSelectedTab("watersystems");
+    }
+  }, [isStaff, selectedTab, setSelectedTab]);
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
-      <Grid xs={12} md={((isFilterSidebarOpen && !isSettingsOpen ) && selectedTab !== "summary") ? 10 : 12}>
+      <Grid item xs={12} md={((isFilterSidebarOpen && !isSettingsOpen ) && selectedTab !== "summary") ? 10 : 12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Memberships" />
           <MembershiphHeader />
@@ -85,7 +99,7 @@ const MembershipDashboard = () => {
                     setSelectedTab(tv as TabValue);
                   }}
                 >
-                  {tabs.map((tab, i) => (
+                  {visibleTabs.map((tab, i) => (
                     <Tab
                       key={`tab-${i}`}
                       label={tab.label}
@@ -119,27 +133,33 @@ const MembershipDashboard = () => {
               <Box sx={{ overflow: "scroll" }}>
                 <TabContext value={selectedTab}>
                   <Box sx={{ backgroundColor: "#fff" }}>
-                    <TabPanel value="summary" {...a11yTabPanelProps(0)}>
-                      <MembershipsSummary />
-                    </TabPanel>
+                    {!isStaff && (
+                      <TabPanel value="summary" {...a11yTabPanelProps(0)}>
+                        <MembershipsSummary />
+                      </TabPanel>
+                    )}
                     <TabPanel value="watersystems" {...a11yTabPanelProps(1)}>
                       <WaterSystemList />
                     </TabPanel>
                     <TabPanel value="associates" {...a11yTabPanelProps(2)}>
                       <AssociateList />
                     </TabPanel>
-                    <TabPanel value="memberships" {...a11yTabPanelProps(3)}>
-                      <MembershipList />
-                    </TabPanel>
-                    <TabPanel
-                      value="membership-items"
-                      {...a11yTabPanelProps(4)}
-                    >
-                      <MembershipItemsList />
-                    </TabPanel>
-                    <TabPanel value="invoices" {...a11yTabPanelProps(5)}>
-                      <InvoicesList filters={{ context: "membership-form" }} />
-                    </TabPanel>
+                    {!isStaff && (
+                      <>
+                        <TabPanel value="memberships" {...a11yTabPanelProps(3)}>
+                          <MembershipList />
+                        </TabPanel>
+                        <TabPanel
+                          value="membership-items"
+                          {...a11yTabPanelProps(4)}
+                        >
+                          <MembershipItemsList />
+                        </TabPanel>
+                        <TabPanel value="invoices" {...a11yTabPanelProps(5)}>
+                          <InvoicesList filters={{ context: "membership-form" }} />
+                        </TabPanel>
+                      </>
+                    )}
                     {/* {role === "Super Admin" && (
                       <TabPanel value="logs" {...a11yTabPanelProps(6)}>
                         <FormLogsList />

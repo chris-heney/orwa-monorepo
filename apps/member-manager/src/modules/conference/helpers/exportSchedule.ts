@@ -41,7 +41,9 @@ const exportSchedule = async (RecordList: RaRecord[], availableColumns: Configur
             value = formatTime(schedule.end)
         }
         if (column.label === 'Date' && schedule.date) {
-            value = new Date(schedule.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric'})
+            const d = new Date(schedule.date)
+            d.setDate(d.getDate() + 1)
+            value = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
         }
         filteredRecord[column.label as keyof typeof schedule] = value as string
       }

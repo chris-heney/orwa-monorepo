@@ -1,4 +1,4 @@
-import {Box, Grid, Typography} from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import React, { useEffect, useState, useMemo } from "react";
 import {
   TextInput,
@@ -241,7 +241,7 @@ const ScheduledEmailTaskFormFields = () => {
     <Box sx={{ width: "100%" }}>
       <Grid container spacing={2}>
         {/* 📛 Task Name */}
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <TextInput
             source="name"
             fullWidth
@@ -252,7 +252,7 @@ const ScheduledEmailTaskFormFields = () => {
         </Grid>
 
         {/* 📅 Cron Rule Selector */}
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <SelectInput
             label="When to Send"
             helperText="Select when you want the email to be sent"
@@ -267,7 +267,7 @@ const ScheduledEmailTaskFormFields = () => {
         </Grid>
 
         {/* ✉️ Email Template Selector (Relation) */}
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <ReferenceInput
             source="email_template"
             reference="email-templates"
@@ -284,7 +284,7 @@ const ScheduledEmailTaskFormFields = () => {
 
 
 
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <Typography>Active</Typography>
           <BooleanInput
             source="active"
@@ -296,7 +296,7 @@ const ScheduledEmailTaskFormFields = () => {
         
 
         {/* 🔍 JSON Condition Input */}
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
             <AutocompleteInput
             source="saved_query"
             label="Use Saved Query"
@@ -313,7 +313,7 @@ const ScheduledEmailTaskFormFields = () => {
         </Grid>
 
         {/* 🔄 Entity Selector */}
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <AutocompleteInput
             source="entity"
             label="Entity"
@@ -326,7 +326,7 @@ const ScheduledEmailTaskFormFields = () => {
         </Grid>
 
         {/* 📆 Last Sent (Read-only) */}
-        <Grid xs={12} sm={6}>
+        <Grid item xs={12} sm={6}>
           <Typography variant="subtitle1">Last Sent</Typography>
           <DateField
             source="last_sent"

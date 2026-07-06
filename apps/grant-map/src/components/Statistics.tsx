@@ -56,8 +56,8 @@ const Statistics = () => {
         if (fundType === "requested") {
           return (
             !["Not Approved", "Change Order"].includes(
-              app.status.data.name
-            ) && !app.status.data.name.includes("PFY") // Exclude any status with PFY
+              app.status.name
+            ) && !app.status.name.includes("PFY") // Exclude any status with PFY
           );
         } else {
           return [
@@ -68,7 +68,7 @@ const Statistics = () => {
             "Authorized by ORWA",
             "Committee Approved",
             "Award Letter Sent",
-          ].includes(app.status.data.name);
+          ].includes(app.status.name);
         }
       })
       .forEach((currentApplication) => {

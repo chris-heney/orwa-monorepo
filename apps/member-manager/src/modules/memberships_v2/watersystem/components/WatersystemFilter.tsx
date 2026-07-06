@@ -14,7 +14,10 @@ import ShieldIcon from "@mui/icons-material/GppGood";
 import RegionIcon from "@mui/icons-material/SouthAmerica";
 import WorkmansCompIcon from "@mui/icons-material/MedicalInformation";
 import { useMembershipContext } from "../../../memberships_v2/MembershipsContextProvider";
-import { formatDate } from "../../../memberships_v2/helpers/activeOrInactiveMembership";
+import {
+  formatDate,
+  getRollingOneYearAgoForFilters,
+} from "../../../memberships_v2/helpers/activeOrInactiveMembership";
 import DateRangeFilter from "./DateRangeFilter";
 import { DateRangeIcon } from "@mui/x-date-pickers";
 import SavedFilters from "../../../_components/SavedFilters";
@@ -34,15 +37,10 @@ const WaterSystemFilter = () => {
       setWatersystemFilters({  ...filterValues });
   }, [filterValues]);
 
-  const oneYearAgo = new Date();
-  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-  // Subtract one year from one month ago (for "Expires in 30 days" filter)
-  const oneYearAgoMinusOneMonth = new Date();
-  oneYearAgoMinusOneMonth.setFullYear(
-    oneYearAgoMinusOneMonth.getFullYear() - 1
-  );
-  oneYearAgoMinusOneMonth.setMonth(oneYearAgoMinusOneMonth.getMonth() + 1);
+  const rollingOneYearAgo = new Date();
+  rollingOneYearAgo.setFullYear(rollingOneYearAgo.getFullYear() - 1);
+  const oneYearAgoPlusOneMonth = new Date(rollingOneYearAgo);
+  oneYearAgoPlusOneMonth.setMonth(oneYearAgoPlusOneMonth.getMonth() + 1);
 
   return !filterValues ? (
     <Loading />
@@ -73,20 +71,30 @@ const WaterSystemFilter = () => {
             ]}
           />
         </FilterList>
+        {/* Align with list: active ≈ last payment within the past year + not null (simple model; overlap edge cases may still differ). */}
         <FilterList label="Member Status" icon={<BadgeIcon />}>
           <FilterListItem
             label="Member"
             value={{
-              payment_last_date: {
-                $gt: formatDate(oneYearAgo),
-              },
+              $and: [
+                { payment_last_date: { $notNull: true } },
+                {
+                  payment_last_date: {
+                    $gte: getRollingOneYearAgoForFilters(),
+                  },
+                },
+              ],
             }}
           />
           <FilterListItem
             label="Non Member"
             value={{
               $or: [
-                { payment_last_date: { $lt: formatDate(oneYearAgo) } },
+                {
+                  payment_last_date: {
+                    $lt: getRollingOneYearAgoForFilters(),
+                  },
+                },
                 { payment_last_date: { $null: true } },
               ],
             }}
@@ -96,8 +104,8 @@ const WaterSystemFilter = () => {
             value={{
               payment_last_date: {
                 $between: [
-                  formatDate(oneYearAgo),
-                  formatDate(oneYearAgoMinusOneMonth),
+                  formatDate(rollingOneYearAgo),
+                  formatDate(oneYearAgoPlusOneMonth),
                 ],
               },
             }}

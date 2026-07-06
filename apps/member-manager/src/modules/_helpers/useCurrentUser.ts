@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useLogoutIfAccessDenied } from "react-admin";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery } from "react-query";
 import authProvider from "../../authProvider";
 
 const emptyParams = {};
@@ -38,19 +38,21 @@ const useCurrentUser = <User = any, Error = any>(
 ) => {
   const logoutIfAccessDenied = useLogoutIfAccessDenied();
 
-  const result = useQuery<User, Error>({
-    queryKey: ["auth", "getIdentity", params],
-    queryFn: authProvider?.getIdentity
+  const result = useQuery<User, Error, User, (string | object)[]>(
+    ["auth", "getIdentity", params] as (string | object)[],
+    authProvider?.getIdentity
       ? async () => (await authProvider.getIdentity?.()) as User
       : async () => null as User,
-    onError: (error) => {
-      if (process.env.NODE_ENV === "development") {
-        console.error(error);
-      }
-      logoutIfAccessDenied(error);
-    },
-    ...queryParams,
-  });
+    {
+      onError: (error) => {
+        if (process.env.NODE_ENV === "development") {
+          console.error(error);
+        }
+        logoutIfAccessDenied(error);
+      },
+      ...queryParams,
+    }
+  );
 
   return useMemo(
     () => ({

@@ -75,6 +75,10 @@
     "non_member_fee": {
       "type": "boolean"
     },
+    "vendor_participation_acknowledgement": {
+      "type": "boolean",
+      "default": false
+    },
     "registration_source": {
       "type": "enumeration",
       "enum": [
