@@ -1,0 +1,16 @@
+/*
+ * Hide scrollbars everywhere while keeping scrollability.
+ * The app was designed on macOS (overlay scrollbars); on Windows/Linux the
+ * classic scrollbars break the layout aesthetics, so mimic overlay behavior.
+ */
+
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge / IE */
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none; /* Chrome, Edge, Safari */
+}
