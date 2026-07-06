@@ -2,7 +2,7 @@ import IGrantApplication from "../types/IGrantApplication"
 
 export const getBalance = (currentApplication: IGrantApplication) => {
   
-    const totalPaid = currentApplication.payouts.data.reduce((acc: number, payout) => acc + payout.amount, 0)
+    const totalPaid = (currentApplication.payouts ?? []).reduce((acc: number, payout) => acc + payout.amount, 0)
 
     let payoutBalance = currentApplication.award_amount - totalPaid
   
@@ -16,5 +16,5 @@ export const getBalance = (currentApplication: IGrantApplication) => {
 
 export const totalPaid = (currentApplication: IGrantApplication) => {
     if (!currentApplication.payouts) return 0
-    return currentApplication.payouts.data.reduce((acc: number, payout) => acc + payout.amount, 0)
+    return currentApplication.payouts.reduce((acc: number, payout) => acc + payout.amount, 0)
 }

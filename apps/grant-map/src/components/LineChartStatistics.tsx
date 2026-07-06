@@ -79,7 +79,7 @@ const LineChartStatistics = ({ viewBy }: { viewBy: "county" | "project" }) => {
       };
     } else {
       const projectData = applications.reduce((acc, currentApplication) => {
-        currentApplication.approved_projects?.data.forEach((project) => {
+        currentApplication.approved_projects?.forEach((project) => {
           if (project.classification !== "Both") {
             const projectName = project.name || "Unknown";
             const awardedAmount = currentApplication.award_amount || 0;
@@ -87,7 +87,7 @@ const LineChartStatistics = ({ viewBy }: { viewBy: "county" | "project" }) => {
               ? parseInt(currentApplication.requested_grant_amount.toString())
               : 0;
 
-            const numProjects = currentApplication.approved_projects?.data.length || 1;
+            const numProjects = currentApplication.approved_projects?.length || 1;
 
             if (!acc[projectName]) {
               acc[projectName] = { awarded: 0, requested: 0 };

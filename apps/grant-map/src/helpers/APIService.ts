@@ -78,7 +78,7 @@ export const useGetGrantApplications =
     const { data: response } = await axios.get(
       `${STRAPI_API_ENDPOINT}/grant-application-finals?pagination[limit]=${
         perPage ?? 10000
-      }&populate=*&sort=legal_entity_name:ASC${filterParams}&filters[regions][Congressional District][$eq]=Senate%20District%203`,
+      }&populate=*&sort=legal_entity_name:ASC${filterParams}`,
       {
         headers: {
           "Content-Type": "application/json",

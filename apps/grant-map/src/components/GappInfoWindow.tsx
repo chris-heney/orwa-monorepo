@@ -38,9 +38,9 @@ const GappInfoWindow = () => {
 
     popupContent.innerHTML = `
     <div style="pointer-events: auto; background-color: ${
-      currentApplication.status.data.color
+      currentApplication.status.color
     }; padding: 10px; border-top-left-radius: 8px; border-top-right-radius: 8px; color: ${
-      currentApplication.status.data.color === "#FFFFFF"
+      currentApplication.status.color === "#FFFFFF"
         ? "black"
         : "white"
     }; display: flex; justify-content: space-between; align-items: center;">
@@ -109,7 +109,7 @@ const GappInfoWindow = () => {
       }</span>
     </li>
     ${
-      currentApplication.status.data.name === "Change Order"
+      currentApplication.status.name === "Change Order"
         ? `
     <li style="display: flex; justify-content: space-between; padding: 10px; font-size: 14px; background-color: #ffffff; border-radius: 4px; margin-bottom: 5px;">
       <strong>Status:</strong> <span>Change Order Request</span>
@@ -118,12 +118,12 @@ const GappInfoWindow = () => {
         : ""
     }
     ${
-      currentApplication.status.data.name === "Not Approved"
+      currentApplication.status.name === "Not Approved"
         ? `
     <li style="display: flex; justify-content: space-between; padding: 10px; font-size: 14px; background-color: #f7f7f7; border-radius: 4px; margin-bottom: 5px;">
       <strong>Reason:</strong> <span>${
-        currentApplication.sub_status.data
-          ? currentApplication.sub_status.data.name
+        currentApplication.sub_status
+          ? currentApplication.sub_status.name
           : "Not Approved"
       }</span>
     </li>
@@ -131,14 +131,14 @@ const GappInfoWindow = () => {
         : ""
     }
     ${
-      currentApplication.status.data.name !== "Not Approved" &&
-      currentApplication.status.data.name !== "Change Order" &&
-      currentApplication.status.data.name !== "New Application"
+      currentApplication.status.name !== "Not Approved" &&
+      currentApplication.status.name !== "Change Order" &&
+      currentApplication.status.name !== "New Application"
         ? `
     <li style="display: flex; justify-content: space-between; padding: 10px; font-size: 14px; background-color: #ffffff; border-radius: 4px; margin-bottom: 5px;">
       <strong>Projects Approved:</strong>
       <div style="display: flex; flex-direction: column; text-align: right;">
-        ${currentApplication.approved_projects.data.filter((project) => {
+        ${(currentApplication.approved_projects ?? []).filter((project) => {
           return project.context !== "Project Status and Impact";
         })
           .map((project) => `<span>${project.name}</span>`)

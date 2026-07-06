@@ -86,7 +86,7 @@ const GAppLayer = () => {
           properties: {
             id: app.id,
             award_amount: app.award_amount,
-            color: app.status.data.color,
+            color: app.status.color,
           },
           geometry: {
             type: "Point",
