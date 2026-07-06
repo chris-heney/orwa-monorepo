@@ -1,5 +1,8 @@
 import { ConfigurableDatagridColumn, RaRecord, DataProvider } from "react-admin";
 import jsonExport from "jsonexport/dist";
+import getExpirationDate, {
+  isMembershipActiveByExpiration,
+} from "../../_helpers/getExpirationDate";
 
 export const defaultAssociateExport = async (
   records: RaRecord[],
@@ -61,29 +64,24 @@ export const defaultAssociateExport = async (
 
       // Member status
       else if (columnLabel === "Member") {
-        const expirationDate = record.payment_last_date ? new Date(record.payment_last_date) : null;
-        const now = new Date();
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(now.getFullYear() - 1);
-        
-        if (expirationDate && expirationDate > oneYearAgo) {
-          exportRecord[columnLabel] = "Active";
-        } else {
-          exportRecord[columnLabel] = "Not Active";
-        }
+        exportRecord[columnLabel] = isMembershipActiveByExpiration(
+          record.payment_previous_date,
+          record.payment_last_date
+        )
+          ? "Active"
+          : "Not Active";
       }
       
       // Renewal date
       else if (columnLabel === "Renewal") {
         if (record.payment_last_date) {
-          const paymentDate = new Date(record.payment_last_date);
-          const renewalDate = new Date(paymentDate);
-          renewalDate.setFullYear(renewalDate.getFullYear() + 1);
-          exportRecord[columnLabel] = renewalDate.toLocaleDateString('en-US', {
-            month: '2-digit',
-            day: '2-digit',
-            year: '2-digit'
-          });
+          const expirationDate = getExpirationDate(
+            record.payment_previous_date,
+            record.payment_last_date
+          );
+          exportRecord[columnLabel] = expirationDate.isValid()
+            ? expirationDate.format("MM/DD/YY")
+            : "N/A";
         } else {
           exportRecord[columnLabel] = "N/A";
         }

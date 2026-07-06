@@ -39,6 +39,7 @@ const SavedFilters = ({
   });
 
   const identity = useGetIdentity();
+  const isStaff = identity?.role === "Staff";
 
   // 🔹 Fetch all saved filters dynamically
   const {
@@ -222,7 +223,7 @@ const SavedFilters = ({
       ) : (
         <>
           <Box sx={{ flex: 1 }}>{filter.name}</Box>
-          {showActions && filter.user === parseInt(identity.id.toString()) && (
+          {showActions && !isStaff && filter.user === parseInt(identity.id.toString()) && (
             <Box sx={{ display: 'flex', gap: 0.5 }}>
               <Tooltip title="Edit name">
                 <IconButton
@@ -310,11 +311,13 @@ const SavedFilters = ({
             </MenuItem>
           ))}
       </TextField>
-      <SaveFilterModal
-        resource={resource}
-        savingQuery={savingQuery}
-        setSavingQuery={setSavingQuery}
-      />
+      {!isStaff && (
+        <SaveFilterModal
+          resource={resource}
+          savingQuery={savingQuery}
+          setSavingQuery={setSavingQuery}
+        />
+      )}
       
       {/* Delete Confirmation Dialog */}
       <Dialog

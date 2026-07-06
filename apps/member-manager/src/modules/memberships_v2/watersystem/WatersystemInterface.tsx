@@ -13,7 +13,7 @@ import { IContact } from '../../training/_types';
     funding?: boolean;
     orwaag?: boolean;
     workmans_comp?: boolean;
-    contacts?: IContact;
+    contacts?: IContact[];
     county?:
       | "Adair"
       | "Alfalfa"

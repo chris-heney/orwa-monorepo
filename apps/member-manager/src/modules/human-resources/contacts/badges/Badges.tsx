@@ -1,4 +1,4 @@
-import {Chip, Grid, Tooltip} from "@mui/material"
+import { Chip, Grid, Tooltip } from '@mui/material'
 import React from 'react'
 import { useGetList, useRecordContext } from 'react-admin'
 const Badges = () => {
@@ -18,7 +18,7 @@ const Badges = () => {
     <Grid container mt={-3} spacing={1} justifyContent="flex-start">
       {record.badges.length > 0 && badges.map((badge, index: number) => (
       
-        <Grid key={`${badge.title}-${index}`}>
+        <Grid item key={`${badge.title}-${index}`}>
 
           {badge.icon && badge.icon.url !== undefined && <Tooltip key={index} title={badge.title} arrow>
             <Chip label={

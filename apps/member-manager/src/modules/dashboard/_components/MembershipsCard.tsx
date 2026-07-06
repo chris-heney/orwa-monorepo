@@ -1,10 +1,10 @@
 import React from 'react'
-import {Card, Box, Typography, Grid} from "@mui/material"
+import { Card, Box, Typography, Grid} from '@mui/material'
 import { Doughnut } from 'react-chartjs-2'
 import MembersIcon from '@mui/icons-material/Diversity1'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, ChartOptions } from 'chart.js'
 import { Loading, useGetList } from 'react-admin'
-import { oneYearAgoFormatted } from '../../memberships_v2/helpers/activeOrInactiveMembership'
+import { getRollingOneYearAgoForFilters } from '../../memberships_v2/helpers/activeOrInactiveMembership'
 
 const MembershipsCard = () => {
 
@@ -15,7 +15,12 @@ const MembershipsCard = () => {
     pagination: { page: 1, perPage: 1000 },
   })  
 
-  const activeAssociates = associates?.filter(associate => associate.payment_last_date > oneYearAgoFormatted)
+  const paymentActiveAfter = getRollingOneYearAgoForFilters()
+  const activeAssociates = associates?.filter(
+    (associate) =>
+      associate.payment_last_date &&
+      associate.payment_last_date >= paymentActiveAfter
+  )
 
   const { data: watersystems, isLoading: isWaterSystemsLoading } = useGetList('watersystems', {
     meta: {
@@ -24,7 +29,11 @@ const MembershipsCard = () => {
     pagination: { page: 1, perPage: 1000 },
   })
 
-  const activeWaterSystems = watersystems?.filter(system => system.payment_last_date > oneYearAgoFormatted)
+  const activeWaterSystems = watersystems?.filter(
+    (system) =>
+      system.payment_last_date &&
+      system.payment_last_date >= paymentActiveAfter
+  )
 
   ChartJS.register(ArcElement, Tooltip, Legend)
 
@@ -114,14 +123,18 @@ const MembershipsCard = () => {
       >
         <Grid container spacing={1}>
           {donutChartData.map((item, index) => (
-            <Grid mt={3}
-              key={index} xs={3}
+            <Grid
+              mt={3}
+              key={index}
+              item
+              xs={3}
               style={{
                 ...gridItemStyles,
                 borderTop: `2px solid ${chartData.datasets[0].backgroundColor[index]}`,
                 backgroundColor: 'black',
                 padding: '10px',
-              }}>
+              }}
+            >
               <Box>
                 <Typography textAlign={'center'} fontSize={10} lineHeight={1.2} variant="h6">
                   {item.label}

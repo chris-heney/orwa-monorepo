@@ -1,0 +1,24 @@
+# Unified image for self-contained apps (own package.json inside apps/<APP>),
+# currently member-manager and membership-application.
+# Build from the monorepo root, e.g.:
+#   docker build -t ghcr.io/chris-heney/orwa-monorepo/member-manager \
+#     -f docker/Dockerfile.standalone-app --build-arg APP=member-manager .
+
+ARG APP
+
+FROM node:22-alpine AS build
+ARG APP
+ARG VITE_API_ENDPOINT
+ARG VITE_API_KEY
+ENV VITE_API_ENDPOINT=${VITE_API_ENDPOINT} \
+    VITE_API_KEY=${VITE_API_KEY}
+WORKDIR /app
+COPY apps/${APP} .
+RUN npm install --no-audit --no-fund && npm run build
+
+FROM nginx:alpine
+ARG APP
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY apps/${APP}/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

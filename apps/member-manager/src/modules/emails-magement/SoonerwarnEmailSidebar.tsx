@@ -4,7 +4,7 @@ import CustomHeader from '../_components/CustomHeader';
 import { useGetList, useNotify } from 'react-admin';
 import CustomTextInput from '../_components/CustomTextInput';
 import authProvider from '../../authProvider';
-import { createPayloadVariables, extractFieldsFromHTML } from './Helper';
+import { createPayloadVariables, extractFieldsFromHTML } from './helper';
 import { useSoonerwarnContext } from '../soonerwarn/SoonerwarnContextProvider';
 
 const SoonerwarnEmailSideBar = ({module} : {

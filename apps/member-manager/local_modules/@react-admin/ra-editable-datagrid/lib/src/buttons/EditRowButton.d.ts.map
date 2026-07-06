@@ -1,0 +1,1 @@
+{"version":3,"file":"EditRowButton.d.ts","sourceRoot":"","sources":["../../../src/buttons/EditRowButton.tsx"],"names":[],"mappings":"AAAA,OAAO,KAAK,KAAK,MAAM,OAAO,CAAC;AAC/B,OAAO,EAAuB,eAAe,EAAE,MAAM,eAAe,CAAC;AAMrE,eAAO,MAAM,aAAa,UAAW,aAAa,sBAwBjD,CAAC;AAGF,MAAM,MAAM,aAAa,GAAG,IAAI,CAAC,eAAe,EAAE,SAAS,CAAC,GAAG;IAC3D,KAAK,CAAC,EAAE,MAAM,CAAC;CAClB,CAAC"}

@@ -9,6 +9,7 @@ import { guestRole } from "./guestRole"
  */
 export type TRole = 
     'Admin'   // Relevant
+    | 'Staff'
     | 'Guest' // Relevant
 
 
@@ -44,6 +45,14 @@ export type TResource = '*'
   | 'training-logs'
   | 'users'
   | 'watersystems'
+  | 'membership-items'
+  | 'memberships'
+  | 'invoices'
+  | 'upload/files'
+  | 'shared.field-metas'
+  | 'components_shared_field_metas'
+  | 'upload'
+  | 'saved-queries'
 
 export interface IResourcePermission {
   resource: TResource
@@ -56,6 +65,16 @@ export type IResourcePermissionDb = {
 
 const ResourcePermissions: IResourcePermissionDb = {
   'Admin': [{ resource: '*', action: ['*'] }],
+  'Staff': [
+    { resource: 'watersystems', action: ['read', 'export'] },
+    { resource: 'associates', action: ['read', 'export'] },
+    { resource: 'memberships', action: ['read'] },
+    { resource: 'upload/files', action: ['read'] },
+    { resource: 'shared.field-metas', action: ['read'] },
+    { resource: 'components_shared_field_metas', action: ['read'] },
+    { resource: 'upload', action: ['read'] },
+    { resource: 'saved-queries', action: ['read'] },
+  ],
   ...guestRole
 }
 
@@ -83,7 +102,10 @@ export default class RoleController {
 
   public hasPermissionTo(action: TResourceAction, resource: TResource) {
     return this._permissions.some((c) => {
-      return c.action.includes('*') || c.action.includes(action) && c.resource === resource
+      const canPerformAction = c.action.includes('*') || c.action.includes(action)
+      const canAccessResource = c.resource === '*' || c.resource === resource
+
+      return canPerformAction && canAccessResource
     })
   }
 }

@@ -1,0 +1,163 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+import * as React from 'react';
+import { EditContextProvider, useEditController, useRedirect, useResourceContext, useNotify, useRecordContext, useEvent, } from 'react-admin';
+import { Dialog } from '@mui/material';
+import { FormDialogTitle } from './FormDialogTitle';
+import { useLocation, Routes, Route, useParams } from 'react-router-dom';
+import { useFormDialogContext } from './useFormDialogContext';
+/**
+ * A component which displays an edition form inside a dialog.
+ *
+ * By default, this components manages the open/close state of the dialog via the router.
+ * In case it is used inside a `<FormDialogContext>`, or if the `isOpen`, `open` and `close`
+ * props are provided directly, then the open/close state is managed by these values instead.
+ *
+ * @param {EditDialogProps} props
+ *
+ * @example
+ * const PostList = () => (
+ *     <>
+ *         <List>
+ *             <Datagrid>
+ *                 ...
+ *             </Datagrid>
+ *         </List>
+ *         <EditDialog>
+ *             <SimpleForm>
+ *                 <TextField source="id" />
+ *                 <TextInput source="first_name" validate={required()} />
+ *                 <TextInput source="last_name" validate={required()} />
+ *                 <DateInput source="dob" label="born" validate={required()} />
+ *                 <SelectInput source="sex" choices={sexChoices} />
+ *             </SimpleForm>
+ *         </EditDialog>
+ *     </>
+ * );
+ *
+ * @example with a managed state
+ * const CustomerEditForm = () => {
+ *     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+ *     const openEditDialog = useCallback(() => {
+ *         setIsEditDialogOpen(true);
+ *     }, []);
+ *     const closeEditDialog = useCallback(() => {
+ *         setIsEditDialogOpen(false);
+ *     }, []);
+ *
+ *     return (
+ *         <SimpleForm>
+ *             <Button
+ *                 label="Edit customer #1"
+ *                 onClick={() => openEditDialog()}
+ *             />
+ *             <EditDialog
+ *                 fullWidth
+ *                 maxWidth="md"
+ *                 isOpen={isEditDialogOpen}
+ *                 open={openEditDialog}
+ *                 close={closeEditDialog}
+ *                 resource="customers"
+ *                 record={{ id: 1 }}
+ *             >
+ *                 <CustomerForm />
+ *             </EditDialog>
+ *         </SimpleForm>
+ *     );
+ * };
+ */
+export var EditDialog = function (_a) {
+    var _b;
+    var close = _a.close, props = __rest(_a, ["close"]);
+    var resource = useResourceContext(props);
+    var context = useFormDialogContext(props);
+    var record = useRecordContext(props);
+    var closeEvent = useEvent((_b = context === null || context === void 0 ? void 0 : context.close) !== null && _b !== void 0 ? _b : close);
+    if (context) {
+        return (React.createElement(EditDialogView, __assign({ resource: resource, id: record === null || record === void 0 ? void 0 : record.id }, context, props, { close: closeEvent })));
+    }
+    return (React.createElement(Routes, null,
+        React.createElement(Route, { path: ":id/*", element: React.createElement(EditDialogView, __assign({ resource: resource }, props, { close: close != null ? closeEvent : undefined })) })));
+};
+var EditDialogView = function (props) {
+    var _a;
+    var redirect = useRedirect();
+    var params = useParams();
+    var location = useLocation();
+    var handleClose = function (event, reason) {
+        if (props.close) {
+            props.close(event, reason);
+        }
+        else {
+            redirect('list', props.resource, params.id, undefined, {
+                _scrollToTop: false,
+            });
+        }
+    };
+    var isMatch = params.id &&
+        params.id !== 'create' &&
+        location.pathname.indexOf('/show') === -1;
+    var open = (_a = props.isOpen) !== null && _a !== void 0 ? _a : isMatch;
+    return (React.createElement(Dialog, __assign({ open: open, "aria-labelledby": "edit-dialog-title", onClose: handleClose, "data-testid": "edit-dialog" }, sanitizeRestProps(props)), open ? (React.createElement(EditDialogContentView, __assign({}, props, { onClose: handleClose }))) : null));
+};
+var EditDialogContentView = function (_a) {
+    var children = _a.children, onClose = _a.onClose, title = _a.title, _b = _a.redirect, redirectTo = _b === void 0 ? 'list' : _b, props = __rest(_a, ["children", "onClose", "title", "redirect"]);
+    var notify = useNotify();
+    var redirect = useRedirect();
+    var _c = props.mutationMode, mutationMode = _c === void 0 ? 'undoable' : _c, _d = props.mutationOptions, mutationOptions = _d === void 0 ? {} : _d;
+    var onSuccess = mutationOptions.onSuccess, otherMutationOptions = __rest(mutationOptions, ["onSuccess"]);
+    var controllerProps = useEditController(__assign(__assign({}, props), { mutationOptions: __assign({ onSuccess: function (data, variables, context) {
+                if (onSuccess) {
+                    onSuccess(data, variables, context);
+                    if (props.close) {
+                        props.close();
+                    }
+                }
+                else {
+                    notify('ra.notification.updated', {
+                        type: 'info',
+                        messageArgs: { smart_count: 1 },
+                        undoable: mutationMode === 'undoable',
+                    });
+                    if (props.close) {
+                        props.close();
+                    }
+                    else {
+                        redirect(redirectTo, props.resource, data.id, data, {
+                            _scrollToTop: false,
+                        });
+                    }
+                }
+            } }, otherMutationOptions) }));
+    var defaultTitle = controllerProps.defaultTitle, record = controllerProps.record;
+    return (React.createElement(React.Fragment, null,
+        React.createElement(EditContextProvider, { value: controllerProps },
+            React.createElement(FormDialogTitle, { id: "edit-dialog-title", title: title, defaultTitle: defaultTitle, onClose: onClose, record: record }),
+            record && children)));
+};
+/* eslint-disable @typescript-eslint/no-unused-vars */
+var sanitizeRestProps = function (_a) {
+    var _b = _a.basePath, basePath = _b === void 0 ? null : _b, _c = _a.hasCreate, hasCreate = _c === void 0 ? null : _c, _d = _a.hasEdit, hasEdit = _d === void 0 ? null : _d, _e = _a.hasShow, hasShow = _e === void 0 ? null : _e, _f = _a.hasList, hasList = _f === void 0 ? null : _f, _g = _a.history, history = _g === void 0 ? null : _g, _h = _a.id, id = _h === void 0 ? null : _h, _j = _a.loaded, loaded = _j === void 0 ? null : _j, _k = _a.loading, loading = _k === void 0 ? null : _k, _l = _a.location, location = _l === void 0 ? null : _l, _m = _a.match, match = _m === void 0 ? null : _m, _o = _a.mutationOptions, mutationOptions = _o === void 0 ? null : _o, _p = _a.mutationMode, mutationMode = _p === void 0 ? null : _p, _q = _a.options, options = _q === void 0 ? null : _q, _r = _a.permissions, permissions = _r === void 0 ? null : _r, _s = _a.successMessage, successMessage = _s === void 0 ? null : _s, _t = _a.title, title = _t === void 0 ? null : _t, _u = _a.transform, transform = _u === void 0 ? null : _u, _v = _a.isOpen, isOpen = _v === void 0 ? null : _v, _w = _a.open, open = _w === void 0 ? null : _w, _x = _a.close, close = _x === void 0 ? null : _x, rest = __rest(_a, ["basePath", "hasCreate", "hasEdit", "hasShow", "hasList", "history", "id", "loaded", "loading", "location", "match", "mutationOptions", "mutationMode", "options", "permissions", "successMessage", "title", "transform", "isOpen", "open", "close"]);
+    return rest;
+};
+/* eslint-enable @typescript-eslint/no-unused-vars */

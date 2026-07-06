@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import DateStatusWidget from "../../grant-manager/_components/DateStatusWidget";
-import {Box, Grid, Typography} from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import BreakfastIcon from "@mui/icons-material/EggAlt";
 import LunchIcon from "@mui/icons-material/LunchDining";
 import DinnerIcon from "@mui/icons-material/Restaurant";
@@ -10,6 +10,7 @@ import httpClient from "../../../helpers/ra-strapi-data-provider/src/httpClient"
 import { Loading, RaRecord, useListContext } from "react-admin";
 import ucwords from "../../_helpers/ucwords";
 import ResponsiveListItem from "../../_components/ResponsiveListItem";
+import { getFilterYear, getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface IHeadCount {
   type: string;
@@ -53,18 +54,21 @@ const ConferenceSummary = () => {
   useEffect(() => {
     setTotalHeadCount(0);
 
+    const confId = getPrimaryConferenceId(filterValues);
+    const y = getFilterYear(filterValues);
+
     // Determine the API endpoint based on available filters
     let apiUrl = `${import.meta.env.VITE_API_ENDPOINT}/api/conference-summary`;
     
-    if (filterValues?.conference && filterValues?.year) {
+    if (confId != null && y != null) {
       // Both conference and year are provided
-      apiUrl += `/${filterValues.conference}/${filterValues.year}`;
-    } else if (filterValues?.conference) {
+      apiUrl += `/${confId}/${y}`;
+    } else if (confId != null) {
       // Only conference is provided
-      apiUrl += `/${filterValues.conference}/-1`;
-    } else if (filterValues?.year) {
+      apiUrl += `/${confId}/-1`;
+    } else if (y != null) {
       // Only year is provided
-      apiUrl += `/-1/${filterValues.year}`;
+      apiUrl += `/-1/${y}`;
     }
     // else - use the base endpoint with no parameters for unfiltered data
 
@@ -81,14 +85,12 @@ const ConferenceSummary = () => {
           });
       }
 
-      console.log("responseData", responseData);
-      
       setTotalHeadCount(newTotal);
       setConferenceSummary({
         ...(responseData as IConferenceSummary),
       });
     });
-  }, [filterValues?.conference, filterValues?.year]);
+  }, [filterValues]);
 
   const mealIcons = [LunchIcon, DinnerIcon, BuildCircleIcon];
 
@@ -99,7 +101,7 @@ const ConferenceSummary = () => {
         <Loading />
       ) : (
         <Grid container spacing={2}>
-          <Grid xs={12} sm={4}>
+          <Grid item xs={12} sm={4}>
             <Typography
               component="h3"
               sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}
@@ -165,7 +167,7 @@ const ConferenceSummary = () => {
             ))}
           </Grid>
 
-          <Grid xs={12} md={5}>
+          <Grid item xs={12} md={5}>
             {" "}
             {/* Updated grid sizing */}
             <Typography
@@ -176,7 +178,7 @@ const ConferenceSummary = () => {
             </Typography>
             <Grid container spacing={2}>
               {filterValues?.conference === 1 && filterValues?.year === 2024 && (
-                <Grid xs={12} sm={6}>
+                <Grid item xs={12} sm={6}>
                   {" "}
                   {/* Grid item for each widget */}
                   <DateStatusWidget
@@ -189,7 +191,7 @@ const ConferenceSummary = () => {
               )}
 
               {conferenceSummary.itemCounts.map(([index, metric]) => (
-                <Grid xs={12} sm={6} key={`grid-${index}-${metric.key}`}>
+                <Grid item xs={12} sm={6} key={`grid-${index}-${metric.key}`}>
                   {" "}
                   {/* Responsive grid items */}
                   <DateStatusWidget
@@ -205,7 +207,7 @@ const ConferenceSummary = () => {
               ))}
 
               {filterValues?.conference === 1 && filterValues?.year === 2024 && (
-                <Grid xs={12} sm={6}>
+                <Grid item xs={12} sm={6}>
                   <DateStatusWidget
                     WidgetIcon={BreakfastIcon}
                     heading={totalHeadCount.toString()}
@@ -216,7 +218,7 @@ const ConferenceSummary = () => {
               )}
             </Grid>
           </Grid>
-          <Grid xs={12} sm={3}>
+          <Grid item xs={12} sm={3}>
             <Typography
               component="h3"
               sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}

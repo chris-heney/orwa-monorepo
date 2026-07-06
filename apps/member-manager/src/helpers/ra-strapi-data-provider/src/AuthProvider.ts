@@ -7,6 +7,27 @@ export interface IUserIdentity extends UserIdentity {
   token: string;
 }
 
+const getRoleName = (user: any) => user?.role?.name ?? user?.role?.attributes?.name;
+
+const fetchUserWithRole = async (userId: string | number, token: string) => {
+  const response = await fetch(
+    `${import.meta.env.VITE_API_ENDPOINT}/api/users/${userId}?populate=role`,
+    {
+      method: "GET",
+      headers: new Headers({
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      }),
+    }
+  );
+
+  if (response.status < 200 || response.status >= 300) {
+    throw new Error(response.statusText);
+  }
+
+  return response.json();
+};
+
 const authProvider: AuthProvider = {
   getIdentity: async (): Promise<IUserIdentity> => {
     try {
@@ -57,11 +78,23 @@ const authProvider: AuthProvider = {
             }
             return response.json();
           })
-          .then((userMeta) => {
+          .then(async (userMeta) => {
+            const userWithRole = getRoleName(userMeta)
+              ? userMeta
+              : await fetchUserWithRole(userData.user.id, userData.jwt);
+            const roleName = getRoleName(userWithRole);
+
+            if (!roleName) {
+              throw new Error(
+                "This user does not have a role assigned. Please assign a role before logging in."
+              );
+            }
+
             CookieStore.setCookie("token", userData.jwt, 1);
-            CookieStore.setCookie("role", userMeta.role.name, 1);
+            CookieStore.setCookie("role", roleName, 1);
             CookieStore.setCookie("email", userData.user.email, 1);
             // CookieStore.setCookie('fullName', userData.user.email, 1)
+            return { success: true, user: userWithRole };
           });
       });
   },

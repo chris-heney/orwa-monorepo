@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { RaRecord, useRecordContext } from 'react-admin'
 import { ITrainingInstructor, ITrainingTopic, ITrainingBlock, ITrainingSession } from '../../_types'
-import {Accordion, AccordionDetails, AccordionSummary, Autocomplete, Box, Divider, Grid, IconButton, TextField, Typography, Button} from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, Box, Divider, Grid, IconButton, TextField, Typography, Button } from '@mui/material'
 import { LocalizationProvider, TimeField } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
@@ -203,7 +203,7 @@ const TrainingSyllabusAccordion = ({
                       <Button sx={{ ml: 2 }} onClick={() => setIsTopicOpen(true)}>New Topic</Button>
                       <AccordionDetails>
                         <Grid container spacing={2}>
-                          <Grid xs={12} sm={6} md={4} lg={3}>
+                          <Grid item xs={12} sm={6} md={4} lg={3}>
                             <Autocomplete
                               options={topicOptions || []}
                               getOptionLabel={(option) => option.name}
@@ -224,7 +224,7 @@ const TrainingSyllabusAccordion = ({
                             />
                           </Grid>
 
-                          <Grid xs={12} sm={6} md={4} lg={2}>
+                          <Grid item xs={12} sm={6} md={4} lg={2}>
                             <Autocomplete
                               options={instructorOptions || []}
                               getOptionLabel={(option) => (option.instructor ? option.instructor.first + ' ' + option.instructor.last : option.instructor)}
@@ -242,7 +242,7 @@ const TrainingSyllabusAccordion = ({
                             />
                           </Grid>
 
-                          <Grid xs={12} sm={6} md={4} lg={3}>
+                          <Grid item xs={12} sm={6} md={4} lg={3}>
                             <TextField
                               label={'Category'}
                               fullWidth
@@ -256,7 +256,7 @@ const TrainingSyllabusAccordion = ({
                           </Grid>
 
                           <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <Grid xs={6} sm={6} md={4} lg={2}>
+                            <Grid item xs={6} sm={6} md={4} lg={2}>
                               <TimeField
                                 fullWidth
                                 label="Start"
@@ -270,7 +270,7 @@ const TrainingSyllabusAccordion = ({
                                 onKeyDown={(e) => { e.key === 'Backspace' && e.preventDefault() }}
                               />
                             </Grid>
-                            <Grid xs={6} sm={6} md={4} lg={2}>
+                            <Grid item xs={6} sm={6} md={4} lg={2}>
                               <TimeField
                                 fullWidth
                                 label="End"
@@ -286,7 +286,7 @@ const TrainingSyllabusAccordion = ({
                             </Grid>
                           </LocalizationProvider>
 
-                          <Grid xs={12}>
+                          <Grid item xs={12} >
                             <TextField
                               label={'Description'}
                               fullWidth

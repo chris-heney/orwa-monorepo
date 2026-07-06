@@ -41,4 +41,6 @@ export interface IGrantContextProvider {
     setFiscalYearStart: React.Dispatch<React.SetStateAction<string | null>>
     fiscalYearEnd: string | null
     setFiscalYearEnd: React.Dispatch<React.SetStateAction<string | null>>
+    applicationSearchFilter: string
+    setApplicationSearchFilter: (value: string) => void
 }

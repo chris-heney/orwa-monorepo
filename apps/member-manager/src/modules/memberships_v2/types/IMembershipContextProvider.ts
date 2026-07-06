@@ -1,4 +1,5 @@
 import React, { ReactElement } from 'react'
+import { Identifier } from 'react-admin'
 
 export type TabValue = 'summary' | 'watersystems' | 'associates' | 'memberships' | 'membership-items' | 'invoices'
 
@@ -15,6 +16,18 @@ export interface IMembershipContextProvider {
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
     isContactModalOpen: boolean
     setIsContactModalOpen: React.Dispatch<React.SetStateAction<boolean>>
+    /** Merged into the create-contact form when opening “Add Contact” from membership flows. */
+    contactCreateDefaultValues: Record<string, unknown>
+    setContactCreateDefaultValues: React.Dispatch<
+        React.SetStateAction<Record<string, unknown>>
+    >
+    contactEditId: Identifier | null
+    setContactEditId: React.Dispatch<React.SetStateAction<Identifier | null>>
+    /** When set, saving a new contact from the modal also attaches it to this water system (show view "+"). */
+    linkNewContactToWatersystemId: Identifier | null
+    setLinkNewContactToWatersystemId: React.Dispatch<
+        React.SetStateAction<Identifier | null>
+    >
     invoicesFilters: ReactElement | ReactElement[]
     setInvoicesFilters: React.Dispatch<React.SetStateAction<ReactElement | ReactElement[]>>
     membershipExtraFilters: ReactElement | ReactElement[]

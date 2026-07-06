@@ -116,6 +116,7 @@ const ApplicationPayoutList = () => {
                 <TableCell align="right">
                   {formatDate(payout?.transaction_date)}
                 </TableCell>
+   
                 {/* Payout Status */}
                 <TableCell align="right">
                   {payout?.payout_status?.name || "N/A"}
@@ -138,7 +139,7 @@ const ApplicationPayoutList = () => {
                 {/* Balance */}
                 <TableCell align="right">
                   {new Intl.NumberFormat("en-US", CurrencyOptions).format(
-                    payout?.balance
+                    payoutBalance
                   )}
                 </TableCell>
               </TableRow>

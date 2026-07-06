@@ -30,7 +30,7 @@ import {
   useGetOne,
 } from "react-admin";
 import { Person, Email, Send } from "@mui/icons-material";
-import { getRecipientDisplayInfo, createPayloadVariables, extractFieldsFromHTML } from "../../Helper";
+import { getRecipientDisplayInfo, createPayloadVariables, extractFieldsFromHTML } from "../../helper";
 import authProvider from "../../../../authProvider";
 import { formatNumber } from "../../../../helpers/Formators";
 

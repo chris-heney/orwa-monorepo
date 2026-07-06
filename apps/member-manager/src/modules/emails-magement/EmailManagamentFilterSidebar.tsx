@@ -1,6 +1,6 @@
 import React from "react";
 import { ListBase } from "react-admin";
-import {Grid, IconButton, Paper, Tooltip} from "@mui/material";
+import { Grid, IconButton, Paper, Tooltip } from "@mui/material";
 import { Favorite } from "@mui/icons-material";
 import { useEmailManagementContext } from "./EmailManagementContextProvider";
 import CustomHeader from "../_components/CustomHeader";
@@ -22,12 +22,15 @@ const EmailManagementFilterSidebar = () => {
   return !isFilterSidebarOpen || isLoading ? (
     <></>
   ) : (
-    <Grid xs={12}
+    <Grid
+      item
+      xs={12}
       md={2}
       sx={{
         flexGrow: 1,
         position: "relative",
-      }}>
+      }}
+    >
       <Paper
         component={"aside"}
         sx={{

@@ -3,10 +3,11 @@ import { useMembershipContext } from "../MembershipsContextProvider";
 import { ListBase } from "react-admin";
 import WaterSystemFilter from "../watersystem/components/WatersystemFilter";
 import AssociateListFilterSidebar from "../associate/components/AssociateListFilterSidebar";
-import {Grid, IconButton, Paper, Tooltip} from "@mui/material";
+import { Grid, IconButton, Paper, Tooltip } from "@mui/material";
 import CustomHeader from "../../_components/CustomHeader";
 import InvoicesFilters from "./InvoicesFilters";
 import { Favorite } from "@mui/icons-material";
+import useCurrentUser from "../../_helpers/useCurrentUser";
 
 const MembershipFilters = () => {
   const {
@@ -20,16 +21,20 @@ const MembershipFilters = () => {
     membershipFilters,
     setSavingQuery,
   } = useMembershipContext();
+  const { role } = useCurrentUser();
 
   return selectedTab === "summary" || !isFilterSidebarOpen || isLoading ? (
     <></>
   ) : (
-    <Grid xs={12}
+    <Grid
+      item
+      xs={12}
       md={2}
       sx={{
         flexGrow: 1,
         position: "relative",
-      }}>
+      }}
+    >
       <Paper
         component={"aside"}
         sx={{
@@ -42,7 +47,7 @@ const MembershipFilters = () => {
       >
         <CustomHeader
           title="Filters"
-          Component={() => {
+          Component={role === "Staff" ? undefined : () => {
             return (
               <Tooltip title="Save Current Filter">
                 <IconButton onClick={() => setSavingQuery((prev) => !prev)} color="primary">

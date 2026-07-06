@@ -17,8 +17,9 @@ import { useDataProvider, useNotify } from "react-admin";
 import IContact from "../contacts/types/IContact";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import { Add } from "@mui/icons-material";
-import { useUserContext } from "../../../context/UserContextProvider";
 import { useRolesContext } from "../../../context/RolesContextProvider";
+import { useGetIdentity } from "../../../helpers/useGetIdentity";
+import { useHumanResourcesContext } from "../HumanResourcesContext";
 
 const CreateUserModal = ({
   contact,
@@ -38,7 +39,8 @@ const CreateUserModal = ({
   });
   const notify = useNotify();
   const { roles } = useRolesContext();
-  const { user } = useUserContext();
+  const identity = useGetIdentity();
+  const { refreshUserList } = useHumanResourcesContext();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
@@ -70,6 +72,10 @@ const CreateUserModal = ({
     }
 
     try {
+      if (!identity?.token) {
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
       // Create the user
       const userResponse = await fetch(
         `${import.meta.env.VITE_API_ENDPOINT}/api/users`,
@@ -77,7 +83,7 @@ const CreateUserModal = ({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user.token}`,
+            Authorization: `Bearer ${identity.token}`,
           },
           body: JSON.stringify({
             username: formData.username,
@@ -96,6 +102,7 @@ const CreateUserModal = ({
 
       if (!contact) {
         setOpen(false);
+        refreshUserList();
         return notify("User created successfully", { type: "success" });
       }
 
@@ -110,6 +117,7 @@ const CreateUserModal = ({
       notify(`User created and attached to contact successfully`, {
         type: "success",
       });
+      refreshUserList();
       setFormData({
         username: "",
         email: "",
@@ -151,11 +159,13 @@ const CreateUserModal = ({
         <DialogContent>
           <Box
             component="form"
+            autoComplete="off"
             sx={{ mt: 2, display: "flex", flexDirection: "column", gap: 2 }}
           >
             <TextField
               label="Username"
               name="username"
+              autoComplete="new-username"
               value={formData.username}
               onChange={handleInputChange}
               required
@@ -166,6 +176,7 @@ const CreateUserModal = ({
               label="Email"
               name="email"
               type="email"
+              autoComplete="new-email"
               value={formData.email}
               onChange={handleInputChange}
               required
@@ -176,6 +187,7 @@ const CreateUserModal = ({
               label="Password"
               name="password"
               type="password"
+              autoComplete="new-password"
               value={formData.password}
               onChange={handleInputChange}
               required

@@ -5,6 +5,7 @@ import BaseFilter from "./BaseFilter";
 import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { isSelected } from "../helpers/selectFilters";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface ContestantsFilterProps {
   filterValues: any;
@@ -21,6 +22,7 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
 }) => {
   // Check if we're in the edit tab where deselection should be disabled
   const disableDeselect = selectedTab === 'edit';
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   // Custom toggle function that enforces single selection
   const singleSelectionToggle = (value: any, filters: any) => {
@@ -53,13 +55,13 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
       />
       
       {/* Contestant Type Filter - only for Fall Conference (ID 3) */}
-      {filterValues.conference === 3 && (
+      {filterConferenceId === 3 && (
         <FilterList label="Contestant Type" icon={<GroupIcon />}>
           {tickets
             ?.filter((ticket) =>
-              filterValues.conference
+              filterConferenceId != null
                 ? (ticket.conferences as IConference[]).some(
-                    (c) => c.id === filterValues.conference
+                    (c) => c.id === filterConferenceId
                   ) &&
                   (ticket.name === "Golfer" || ticket.name === "Fisher")
                 : true

@@ -77,7 +77,10 @@ export interface IScoringCriteria {
   order: string;
   label: string;
   project_type: {
-    data : IProject
+    data : {
+      id: number;
+      attributes: IProject
+    }
   };
 }
 

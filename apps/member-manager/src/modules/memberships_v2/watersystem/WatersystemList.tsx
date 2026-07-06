@@ -15,14 +15,16 @@ import {
 import { Box, Button, useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import { CurrencyOptions } from "../../../config/Settings";
-import getExpirationDate from "../../_helpers/getExpirationDate";
+import getExpirationDate, {
+  isMembershipActiveByExpiration,
+} from "../../_helpers/getExpirationDate";
 import getExpiryBackground from "../../_helpers/getExpiryBackground";
 import WaterSystemBulkUpdateButton from "./components/WaterSystemBulkUpdate";
 import { useMembershipContext } from "../../memberships_v2/MembershipsContextProvider";
 import { customDatagridStyle } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
-import { oneYearAgoFormatted } from "../../memberships_v2/helpers/activeOrInactiveMembership";
 import useCurrentUser from "../../_helpers/useCurrentUser";
+import { getDirectoryContactField } from "./directoryContacts";
 
 
 const WaterSystemList = () => {
@@ -48,6 +50,9 @@ const WaterSystemList = () => {
       }}
       disableSyncWithLocation
       pagination={<CustomPagination />}
+      queryOptions={{
+        meta: { raw: true, populate: ["contacts"] },
+      }}
     >
       {isSmall && (
         <Button onClick={() => setFilterListOpen(!filterListOpen)}>
@@ -57,11 +62,16 @@ const WaterSystemList = () => {
       {isSmall ? (
         <Box style={{ whiteSpace: "nowrap" }}>
           <SimpleList
-            linkType="edit"
+            linkType={role === "Admin" ? "edit" : "show"}
             primaryText={(record) => record.name}
             secondaryText={(record) =>
               `${record.region === null ? "No Region" : record.region} | ${
-                record.active ? "Active" : "Inactive"
+                isMembershipActiveByExpiration(
+                  record.payment_previous_date,
+                  record.payment_last_date
+                )
+                  ? "Active"
+                  : "Inactive"
               }`
             }
             tertiaryText={(record) => record.county}
@@ -83,10 +93,11 @@ const WaterSystemList = () => {
                 record.payment_last_date
               );
               const backgroundColor = getExpiryBackground(expirationDate);
-              const active = getExpirationDate(
+              const active = isMembershipActiveByExpiration(
                 record.payment_previous_date,
                 record.payment_last_date
-              ).isAfter(new Date());
+              );
+
               return (
                 <Box
                   sx={{
@@ -96,9 +107,7 @@ const WaterSystemList = () => {
                     px: 1,
                   }}
                 >
-                  {record.payment_last_date > oneYearAgoFormatted
-                    ? "Active"
-                    : "Inactive"}
+                  {active ? "Active" : "Inactive"}
                 </Box>
               );
             }}
@@ -260,6 +269,92 @@ const WaterSystemList = () => {
           <TextField source="legal_entity_name" label="Entity Name" noWrap />
           <DateField source="directory_sent_date" label="Sent Date" noWrap />
           <TextField source="url" label="URL" />
+          {[1, 2, 3].flatMap((n) => [
+            <FunctionField
+              key={`dir-${n}-first`}
+              source={`dir_contact_${n}_first`}
+              label={`Contact ${n}: First Name`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "first")
+              }
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-last`}
+              source={`dir_contact_${n}_last`}
+              label={`Contact ${n}: Last Name`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "last")
+              }
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-title`}
+              source={`dir_contact_${n}_title`}
+              label={`Contact ${n}: Title`}
+              render={(record: RaRecord) => getDirectoryContactField(record, n, "title")}
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-email`}
+              source={`dir_contact_${n}_email`}
+              label={`Contact ${n}: Email`}
+              render={(record: RaRecord) => getDirectoryContactField(record, n, "email")}
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-phone`}
+              source={`dir_contact_${n}_phone`}
+              label={`Contact ${n}: Phone`}
+              render={(record: RaRecord) => getDirectoryContactField(record, n, "phone")}
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-mail-line1`}
+              source={`dir_contact_${n}_mail_line1`}
+              label={`Contact ${n}: Mailing line 1`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "address_mailing_line1")
+              }
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-mail-line2`}
+              source={`dir_contact_${n}_mail_line2`}
+              label={`Contact ${n}: Mailing line 2`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "address_mailing_line2")
+              }
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-city`}
+              source={`dir_contact_${n}_mail_city`}
+              label={`Contact ${n}: Mail city`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "address_mailing_city")
+              }
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-mail-state`}
+              source={`dir_contact_${n}_mail_state`}
+              label={`Contact ${n}: Mail state`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "address_mailing_state")
+              }
+              noWrap
+            />,
+            <FunctionField
+              key={`dir-${n}-mail-zip`}
+              source={`dir_contact_${n}_mail_zip`}
+              label={`Contact ${n}: Mail ZIP`}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, "address_mailing_zip")
+              }
+              noWrap
+            />,
+          ])}
         </DatagridConfigurable>
       )}
     </List>

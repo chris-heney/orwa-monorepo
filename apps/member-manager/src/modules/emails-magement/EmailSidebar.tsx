@@ -14,7 +14,7 @@ import { RaRecord, useGetList, useNotify, useRecordContext } from "react-admin";
 import CustomTextInput from "../_components/CustomTextInput";
 import authProvider from "../../authProvider";
 import { formatNumber } from "../../helpers/Formators";
-import { createPayloadVariables, extractFieldsFromHTML } from "./Helper";
+import { createPayloadVariables, extractFieldsFromHTML } from "./helper";
 
 const EmailSidebar = ({ module }: { module: string }) => {
   const [overrideTo, setOverrideTo] = React.useState("");
@@ -179,6 +179,24 @@ const EmailSidebar = ({ module }: { module: string }) => {
               name: "Awards-Letter.pdf",
               url: `${import.meta.env.VITE_API_ENDPOINT}${
                 application.award_letter.url
+              }`,
+              // url: "https://admin.orwa.org/uploads/riggrant02032025_01bccd2af1.pdf"
+            },
+          ]
+        : null;
+    }
+
+    if (
+      emails &&
+      emails[emailIndex]?.email_name === "Application Receipt" &&
+      application.applicant_pdf
+    ) {
+      attachments = application.applicant_pdf
+        ? [
+            {
+              name: `${application.legal_entity_name}.pdf`,
+              url: `${import.meta.env.VITE_API_ENDPOINT}${
+                application.applicant_pdf.url
               }`,
               // url: "https://admin.orwa.org/uploads/riggrant02032025_01bccd2af1.pdf"
             },

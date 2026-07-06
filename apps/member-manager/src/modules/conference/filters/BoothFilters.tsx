@@ -6,6 +6,7 @@ import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { toggleFilter } from "../helpers/selectFilters";
 import { isSelected } from "../helpers/selectFilters";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface AttendeesFilterProps {
   filterValues: any;
@@ -20,11 +21,10 @@ const BoothFilter: React.FC<AttendeesFilterProps> = ({
 }) => {
   // Check if we're in the edit tab where deselection should be disabled
   const disableDeselect = selectedTab === "edit";
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   const { data: extras } = useGetList<IConferenceTicket>("conference-extras", {
-    filter: filterValues.conference ? {
-      conferences: filterValues.conference,
-    } : {},
+    filter: filterConferenceId != null ? { conferences: [filterConferenceId] } : {},
     meta: {
       populate: true,
     },

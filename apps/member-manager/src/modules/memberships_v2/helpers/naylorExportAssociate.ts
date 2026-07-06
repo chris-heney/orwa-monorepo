@@ -3,7 +3,7 @@ import {
   downloadCSV,
   DataProvider,
 } from "react-admin";
-import { oneYearAgoFormatted } from "./activeOrInactiveMembership";
+import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { IAssociate } from "../associate/AssociateInterface";
 
 export const NaylorExportAssociate = async (
@@ -31,9 +31,12 @@ export const NaylorExportAssociate = async (
 
   // Resolve all asynchronous operations and build the filtered data
   const data = await Promise.all(
-    RecordList.filter((associate) => {
-      return (associate.payment_last_date as any) > oneYearAgoFormatted 
-    }).map(async (record: any) => {
+    RecordList.filter((associate) =>
+      isMembershipActiveByExpiration(
+        associate.payment_previous_date,
+        associate.payment_last_date
+      )
+    ).map(async (record: any) => {
       const filteredRecord: Record<string, string> = {};
 
       const { data: primaryContact } =

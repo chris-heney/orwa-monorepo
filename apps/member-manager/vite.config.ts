@@ -1,44 +1,37 @@
-/// <reference types='vitest' />
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
-export default defineConfig(() => ({
-  root: __dirname,
-  cacheDir: '../../node_modules/.vite/apps/member-manager',
-  server: {
-    port: 4205,
-    host: 'localhost',
-  },
-  preview: {
-    port: 4205,
-    host: 'localhost',
-  },
-  plugins: [
-    react({
-      // Add this to improve Fast Refresh reliability
-      fastRefresh: true,
-    }),
-    nxViteTsPaths(),
-    nxCopyAssetsPlugin(['*.md'])
-  ],
+// https://vitejs.dev/config/
+export default defineConfig({
+  plugins: [react({
+    // Add this to improve Fast Refresh reliability
+    fastRefresh: true,
+  })],
   define: {
     'process.env': process.env,
   },
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [ nxViteTsPaths() ],
-  // },
-  build: {
-    outDir: '../../dist/apps/member-manager',
-    emptyOutDir: true,
-    reportCompressedSize: true,
-    chunkSizeWarningLimit: 100,
-    commonjsOptions: {
-      transformMixedEsModules: true,
+  server: {
+    host: '0.0.0.0',
+    port: 4205,
+    strictPort: true,
+    hmr: {
+      host: '0.0.0.0',
+      port: 4205,
+      protocol: 'ws',
+      clientPort: 4205,
+      overlay: true,
     },
+    watch: {
+      usePolling: true,
+      interval: 500,
+      binaryInterval: 1000,
+    },
+  },
+  build: {
+    chunkSizeWarningLimit: 100,
     rollupOptions: {
+      // external: "highchart",
+      // external: ["exceljs", "file-saver"],
       output: {
         globals: {
           exceljs: "ExcelJS",
@@ -54,4 +47,4 @@ export default defineConfig(() => ({
     }
   },
   base: './',
-}));
+})

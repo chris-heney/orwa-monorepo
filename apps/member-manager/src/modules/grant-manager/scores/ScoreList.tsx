@@ -47,11 +47,12 @@ const ScoreList = () => {
         <Box sx={{ display: "flex", gap: 2 }}>
           <FilterLiveSearch
             helperText="Search by application id"
-            source="grant_application][id][$contains"
+            // or application_id
+            source="grant_application][application_id][$contains"
           />
           <FilterLiveSearch
             helperText="Search by application name"
-            source="application][legal_entity_name][$contains"
+            source="grant_application][legal_entity_name][$contains"
           />
         </Box>
       }

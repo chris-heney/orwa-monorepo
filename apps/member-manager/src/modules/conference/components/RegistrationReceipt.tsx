@@ -10,7 +10,7 @@ import {
   FunctionField,
   RaRecord,
 } from "react-admin";
-import {Grid, Typography, Box, Chip} from "@mui/material";
+import { Grid, Typography, Box, Chip } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
 import { ISharedMeta } from "../types/IConference";
 import { formatNumber } from "../../../helpers/Formators";
@@ -70,42 +70,42 @@ const RegistrationReceipt = () => {
       <Box mb={4}>
         <Grid container spacing={2} alignItems="center">
           {record.id && (
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>ID:</strong> {record.id}
               </Typography>
             </Grid>
           )}
           {record.registration_date && (
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>Date:</strong> {record.registration_date}
               </Typography>
             </Grid>
           )}
           {record.total !== undefined && (
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>Total:</strong> ${record.total}
               </Typography>
             </Grid>
           )}
           {record.payment_method && (
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>Payment Method:</strong> {record.payment_method}
               </Typography>
             </Grid>
           )}
           {record.organization && (
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>Organization:</strong> {record.organization}
               </Typography>
             </Grid>
           )}
           {record.type && (
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>Type:</strong> {record.type}
               </Typography>
@@ -118,7 +118,7 @@ const RegistrationReceipt = () => {
       {record.registrant && (
         <Box mb={4}>
           <Grid container spacing={2}>
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <Typography>
                 <strong>Registrant: </strong>
                 <ReferenceField source="registrant" reference="contacts">
@@ -127,7 +127,7 @@ const RegistrationReceipt = () => {
               </Typography>
             </Grid>
 
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <ReferenceField
                 source="registrant"
                 reference="contacts"
@@ -138,7 +138,7 @@ const RegistrationReceipt = () => {
                 </Typography>
               </ReferenceField>
             </Grid>
-            <Grid xs={12} sm={6} md={4}>
+            <Grid item xs={12} sm={6} md={4}>
               <ReferenceField
                 source="registrant"
                 reference="contacts"

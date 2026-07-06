@@ -4,11 +4,12 @@ import { UseCreate, UseNotifyFunction } from '../conference/types/helpers'
 import { formatTitle } from '../../helpers/formatResourceTitle'
 
 export const createRecord = (
-  data: FieldValues, 
+  data: FieldValues,
   create: UseCreate,
   notify: UseNotifyFunction,
   setIsCreating: React.Dispatch<React.SetStateAction<boolean>>,
-  resource: string
+  resource: string,
+  onCreated?: () => void
 ) => {
   const title = resource
     .split('-')
@@ -22,6 +23,7 @@ export const createRecord = (
     create(`${resource}`, { data: recordData })
     notify(`${formatTitle(resource)} was Created`, { type: 'success' })
     setIsCreating(false)
+    onCreated?.()
   } catch (error) {
     console.error('Error creating conference attendee:', error)
     notify(`Error creating ${title}`, { type: 'error' })

@@ -1,6 +1,6 @@
 import React from 'react'
 import { Identifier, UpdateParams, useDataProvider, useGetList, useRecordContext, useRefresh } from 'react-admin'
-import {Box, Chip, Grid, IconButton, Tooltip} from "@mui/material"
+import { Box, Chip, Grid, IconButton, Tooltip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
 
 const AssignBadgesList = () => {
@@ -30,7 +30,7 @@ const AssignBadgesList = () => {
       {badges.map((badge, index: number) => (
         badge.icon !== undefined && (
 
-          <Grid key={`${badge.title}-${index}`} sx={{ position: 'relative', textAlign: 'center' }}>
+          <Grid item key={`${badge.title}-${index}`} sx={{ position: 'relative', textAlign: 'center' }}>
             <Box>
 
               <IconButton

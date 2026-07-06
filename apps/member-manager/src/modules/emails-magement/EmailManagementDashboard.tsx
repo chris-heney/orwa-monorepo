@@ -1,5 +1,5 @@
 import React from "react";
-import {Box, Tab, Divider, useMediaQuery, Grid} from "@mui/material";
+import { Box, Tab, Divider, useMediaQuery, Grid } from "@mui/material";
 import { TabContext, TabPanel, TabList } from "@mui/lab";
 import { Title } from "react-admin";
 import { Theme } from "@mui/material/styles";
@@ -40,7 +40,7 @@ const EmailManagementDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
-      <Grid xs={12} md={(isSettingsOpen || !isFilterSidebarOpen) ? 12 : 10}>
+      <Grid item xs={12} md={(isSettingsOpen || !isFilterSidebarOpen) ? 12 : 10}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Email Management" />
           <EmailManagemenHeader/>

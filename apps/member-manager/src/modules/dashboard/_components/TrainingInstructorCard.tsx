@@ -1,5 +1,5 @@
 import React from 'react'
-import {Card, Box, Typography, Avatar, Tooltip, Grid} from "@mui/material"
+import { Card, Box, Typography, Avatar, Tooltip, Grid } from '@mui/material'
 import { Loading, useGetList, useGetMany, useRedirect } from 'react-admin'
 import InstructorIcon from '@mui/icons-material/School'
 
@@ -13,10 +13,7 @@ const InstructorsCard = () => {
     pagination: { page: 1, perPage: 1000 },
   })
 
-  console.log(instructors)
-  const contactIds = instructors?.map((instructor) => instructor.id)
-
-  console.log(contactIds)
+  const contactIds = instructors?.map((instructor) => instructor.instructor.id)
 
   const { data: contacts, isLoading: isLoadingContacts } = useGetMany('contacts', {
     ids: contactIds,
@@ -81,7 +78,7 @@ const InstructorsCard = () => {
       <Grid container spacing={1} maxWidth={'90%'} overflow={'scroll'} mt={6}>
         {contacts?.map((contact, index) => (
           console.log(contact),
-          <Grid key={index} lg={2.3} xs={3} sm={2} md={3}>
+          <Grid key={index} item lg={2.3} xs={3} sm={2} md={3}>
             <Box
               sx={{
                 display: 'flex',

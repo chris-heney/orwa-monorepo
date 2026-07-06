@@ -12,6 +12,11 @@ export default interface IContact {
   license: string
   user: number | IUser
   avatar: IAvatar[]
+  address_mailing_line1?: string
+  address_mailing_line2?: string
+  address_mailing_city?: string
+  address_mailing_state?: string
+  address_mailing_zip?: string
 }
 
 

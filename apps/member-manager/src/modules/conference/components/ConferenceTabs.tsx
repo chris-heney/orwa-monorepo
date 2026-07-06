@@ -6,6 +6,7 @@ import { Box } from "@mui/material";
 import React from "react";
 import { useListFilterContext } from "react-admin";
 import { useConferenceContext } from "../ConferenceContext";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 import ConferenceSummary from "./ConferenceSummary";
 import ConferenceTools from "./ConferenceTools";
 import ConferenceRegistrations from "./ConferenceRegistrations";
@@ -83,6 +84,7 @@ const ConferenceTabs = () => {
   const { selectedTab, setSelectedTab, setResource, isFilterSidebarOpen } =
     useConferenceContext();
   const { filterValues } = useListFilterContext();
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   const tabs = [
     {
@@ -202,19 +204,19 @@ const ConferenceTabs = () => {
               .filter((tab) => {
                 if (!filterValues) return true;
 
-                if (!filterValues.conference) {
+                if (filterConferenceId == null) {
                     return tab.label !== "Edit"
                 }
-                if (filterValues.conference === 1) {
+                if (filterConferenceId === 1) {
                   return tab.label !== "Contestants" && tab.label !== "Teams";
-                } else if (filterValues.conference === 2) {
+                } else if (filterConferenceId === 2) {
                   // Expo: Hide Contestants, Taste Test, and Teams
                   return (
                     tab.label !== "Contestants" &&
                     tab.label !== "Taste Test" &&
                     tab.label !== "Teams"
                   );
-                } else if (filterValues.conference === 3) {
+                } else if (filterConferenceId === 3) {
                   // Fall: Hide Water Taste Test
                   return tab.label !== "Taste Test";
                 }

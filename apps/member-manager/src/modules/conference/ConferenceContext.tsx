@@ -12,9 +12,25 @@ import {
 import { Loading, useGetList, useStore } from "react-admin";
 import { IConference } from "./types";
 import IConferenceTicket from "./types/IConferenceTicket";
+import { MULTI_CONFERENCE_TABS } from "./helpers/mergeConferenceAcrossTabFilters";
+
+/** Default conference for filters and fallbacks (Annual). */
+export const DEFAULT_CONFERENCE_ID = 1;
+
+function defaultFilterForTab(tab: string, year: number): Record<string, any> {
+  if (MULTI_CONFERENCE_TABS.has(tab)) {
+    return { conferences: [DEFAULT_CONFERENCE_ID] };
+  }
+  if (tab === "edit") {
+    return { conference: DEFAULT_CONFERENCE_ID };
+  }
+  return { conference: DEFAULT_CONFERENCE_ID, year };
+}
+
+const yearNow = new Date().getFullYear();
 
 export const ConferenceContext = createContext<IConferenceContextProvider>({
-  year: new Date().getFullYear(),
+  year: yearNow,
   selectedTab: "summary",
   setYear: () => {},
   setSelectedTab: () => {},
@@ -34,7 +50,7 @@ export const ConferenceContext = createContext<IConferenceContextProvider>({
   setTabFilters: () => {},
   tabSorts: {},
   setTabSorts: () => {},
-  currentFilter: {},
+  currentFilter: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
 });
 
 export const useConferenceContext = () => useContext(ConferenceContext);
@@ -61,18 +77,25 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
   const [tabFilters, setTabFilters] = useStore<Record<string, any>>(
     "conferenceTabFilters",
     {
-      summary: { year: new Date().getFullYear(), conference: 2 },
-      registrations: { conference: 2, year: new Date().getFullYear() },
-      attendees: { conference: 2, year: new Date().getFullYear() },
-      booths: { conference: 2, year: new Date().getFullYear() },
-      sponsors: { conference: 2, year: new Date().getFullYear() },
-      edit: { conference: 2 },
-      schedule: { conference: 2, year: new Date().getFullYear() },
-      tickets: { conferences: [2] },
-      extras: { conferences: [2] },
-      addons: { conferences: [2] },
-      sponsorships: { conference: 2 },
-      feedback: { conference: 2, year: new Date().getFullYear() },
+      summary: { year: yearNow, conference: DEFAULT_CONFERENCE_ID },
+      registrations: {
+        conference: DEFAULT_CONFERENCE_ID,
+        year: yearNow,
+      },
+      attendees: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      booths: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      tools: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      contestants: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      teams: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      "taste test": { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      sponsors: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      edit: { conference: DEFAULT_CONFERENCE_ID },
+      schedule: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+      tickets: { conferences: [DEFAULT_CONFERENCE_ID] },
+      extras: { conferences: [DEFAULT_CONFERENCE_ID] },
+      addons: { conferences: [DEFAULT_CONFERENCE_ID] },
+      sponsorships: { conference: DEFAULT_CONFERENCE_ID },
+      feedback: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
     }
   );
   const [tabSorts, setTabSorts] = useStore<Record<string, any>>(
@@ -101,12 +124,15 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
       pagination: { page: 1, perPage: 1000 },
     });
 
-  // reset search filter when tab changes
-
   useEffect(() => {
     setIsCreating(false);
     setSearchFilter([]);
   }, [selectedTab]);
+
+  const currentFilter = {
+    ...defaultFilterForTab(selectedTab, year),
+    ...tabFilters[selectedTab],
+  };
 
   return !tickets || !conferences || conferencesLoading || ticketsLoading ? (
     <Loading />
@@ -133,7 +159,7 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
         setTabFilters,
         tabSorts,
         setTabSorts,
-        currentFilter: tabFilters[selectedTab],
+        currentFilter,
       }}
     >
       {children}

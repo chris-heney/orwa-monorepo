@@ -39,19 +39,20 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
 
   const [loading, setLoading] = useState<boolean>(false);
   const [formData, setFormData] = useState({
-    username: user?.username || "",
-    email: user?.email || "",
-    role: user?.role.id || "",
+    username: "",
+    email: "",
+    role: "" as string | number,
   });
 
   useEffect(() => {
-    if (user) {
-      setFormData({
-        username: user.username,
-        email: user.email,
-        role: user.role.id,
-      });
+    if (user?.id == null) {
+      return;
     }
+    setFormData({
+      username: user.username || "",
+      email: user.email || "",
+      role: user.role?.id ?? "",
+    });
   }, [user]);
 
   const handleInputChange = (e: any) => {
@@ -99,7 +100,9 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
     }
   };
 
-  if (!user) return null;
+  if (user?.id == null) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">

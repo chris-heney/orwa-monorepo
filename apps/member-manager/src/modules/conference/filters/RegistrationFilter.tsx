@@ -5,14 +5,15 @@ import BaseFilter from "./BaseFilter";
 import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { isSelected, toggleFilter } from "../helpers/selectFilters";
+import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
-interface ContestantsFilterProps {
+interface RegistrationFilterProps {
   filterValues: any;
   conferences: IConference[];
   selectedTab: string;
 }
 
-const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
+const RegistrationFilter: React.FC<RegistrationFilterProps> = ({
   filterValues,
   conferences,
   selectedTab,
@@ -20,12 +21,10 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
   // Check if we're in the edit tab where deselection should be disabled
   const disableDeselect = selectedTab === 'edit';
 
-  // Custom toggle function that enforces single selection
+  const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   const { data: extras } = useGetList<IConferenceTicket>("conference-extras", {
-    filter: filterValues.conference ? {
-        conferences: filterValues.conference,
-    } : {},
+    filter: filterConferenceId != null ? { conferences: [filterConferenceId] } : {},
     meta: {
       populate: true,
     },
@@ -67,4 +66,4 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
   );
 };
 
-export default ContestantsFilter; 
+export default RegistrationFilter; 

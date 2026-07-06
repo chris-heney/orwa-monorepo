@@ -1,6 +1,6 @@
 import React from 'react'
 import { Identifier, UpdateParams, useDataProvider, useGetList, useRecordContext, useRefresh } from 'react-admin'
-import {Box, Chip, Grid, IconButton, Tooltip} from "@mui/material"
+import { Box, Chip, Grid, IconButton, Tooltip } from '@mui/material'
 import { useLocation } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete'
 interface BadgeGridProps {
@@ -56,7 +56,7 @@ const BadgeGrid = ({ filter, filterGrid = false }: BadgeGridProps) => {
     <Grid container mx={1} my={1} spacing={1} sx={{ position: 'relative', textAlign: 'center' }}>
       {badges.map((badge, index: number) => (
         badge.icon !== undefined && (
-          <Grid key={`${badge.title}-${index}`}>
+          <Grid item key={`${badge.title}-${index}`}>
             <Box
             >
 

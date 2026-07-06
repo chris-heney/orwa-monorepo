@@ -46,7 +46,7 @@ const MembershipItemsList = () => {
 
         <Box style={{ whiteSpace: 'nowrap' }}>
           <SimpleList
-            linkType='edit'
+            linkType={role === 'Admin' ? 'edit' : 'show'}
             primaryText={(record) => record.name}
             secondaryText={(record) => (record.price)}
           />
@@ -54,7 +54,7 @@ const MembershipItemsList = () => {
       ) : (
         <DatagridConfigurable
           sx={customDatagridStyle}
-          rowClick={role === 'Admin' ? 'edit' : false}
+          rowClick={role === 'Admin' ? 'edit' : 'show'}
           bulkActionButtons={false}
         >
           <TextField  source="name" label='Name' noWrap/>
