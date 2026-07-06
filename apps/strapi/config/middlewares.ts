@@ -5,6 +5,7 @@ export default [
   'strapi::cors',
   'strapi::poweredBy',
   'strapi::query',
+  'global::numeric-id-compat',
 //  'strapi::body',
 	{
     name: "strapi::body",
