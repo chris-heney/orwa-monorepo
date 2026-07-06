@@ -114,10 +114,10 @@ export async function generatePDF(
       `System Name: ${sanitizeText(payload.legal_entity_name)}`,
       `Facility ID #: ${sanitizeText(payload.facility_id)}`,
       `County: ${sanitizeText(payload.county)}`,
-      `Legal Contact Name: ${sanitizeText(payload.point_of_contact.data.first)} ${sanitizeText(payload.point_of_contact.data.last)}`,
+      `Legal Contact Name: ${sanitizeText(payload.point_of_contact?.first)} ${sanitizeText(payload.point_of_contact?.last)}`,
       `Title: ${sanitizeText(payload.signatory_title)}`,
-      `Phone #: ${sanitizeText(payload.point_of_contact.data.phone)}`,
-      `Email Address: ${sanitizeText(payload.point_of_contact.data.email)}`,
+      `Phone #: ${sanitizeText(payload.point_of_contact?.phone)}`,
+      `Email Address: ${sanitizeText(payload.point_of_contact?.email)}`,
       `Street Address: ${sanitizeText(payload.physical_address_street)}, ${sanitizeText(payload.physical_address_city)}, ${sanitizeText(payload.physical_address_state)} ${sanitizeText(payload.physical_address_zip)}`,
       `Population Served: ${String(payload.population_served)}`,
     ];
@@ -375,8 +375,10 @@ export async function generatePDF(
 
     yPosition -= lineHeight;
 
+    const appScore = payload.grant_application_score;
+
     page.drawText(
-      `Overall Project Score: ${payload.grant_application_score.data.score}`,
+      `Overall Project Score: ${appScore?.score ?? ""}`,
       {
         x: width - margin - 150,
         y: yPosition,
@@ -410,9 +412,9 @@ export async function generatePDF(
     yPosition -= lineHeight * 1.5;
 
     // Draw the ORWA signature image (if any)
-    if (payload.grant_application_score.data.orwa_signature) {
+    if (appScore?.orwa_signature) {
       const orwaSignatureImage = await pdfDoc.embedPng(
-        payload.grant_application_score.data.orwa_signature
+        appScore.orwa_signature
       );
       const orwaSignatureDims = orwaSignatureImage.scale(0.15); // Scale as needed
       page.drawImage(orwaSignatureImage, {
@@ -443,7 +445,7 @@ export async function generatePDF(
 
     // ORWA Printed Name (above the line)
     page.drawText(
-      sanitizeText(payload.grant_application_score.data.orwa_member_name),
+      sanitizeText(appScore?.orwa_member_name),
       {
         x: orwaXPosition,
         y: yPosition,
@@ -472,13 +474,13 @@ export async function generatePDF(
 
     // ORWA Date (above the line)
     page.drawText(
-      new Date(
-        payload.grant_application_score.data.createdAt
-      ).toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
+      appScore
+        ? new Date(appScore.createdAt).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : "",
       {
         x: orwaXPosition,
         y: yPosition,
@@ -516,17 +518,19 @@ export async function generatePDF(
     // Adjust Y position for the signature to appear directly under the approval label
     yPosition -= lineHeight * 1.5;
 
-    // Draw the DEQ signature image
-    const deqSignatureImage = await pdfDoc.embedPng(
-      payload.grant_application_score.data.deq_signature
-    );
-    const deqSignatureDims = deqSignatureImage.scale(0.15); // Scale as needed
-    page.drawImage(deqSignatureImage, {
-      x: deqXPosition,
-      y: yPosition - 50,
-      width: deqSignatureDims.width,
-      height: deqSignatureDims.height,
-    });
+    // Draw the DEQ signature image (if any)
+    if (appScore?.deq_signature) {
+      const deqSignatureImage = await pdfDoc.embedPng(
+        appScore.deq_signature
+      );
+      const deqSignatureDims = deqSignatureImage.scale(0.15); // Scale as needed
+      page.drawImage(deqSignatureImage, {
+        x: deqXPosition,
+        y: yPosition - 50,
+        width: deqSignatureDims.width,
+        height: deqSignatureDims.height,
+      });
+    }
 
     // Draw a line for the DEQ signature
     page.drawLine({
@@ -548,7 +552,7 @@ export async function generatePDF(
 
     // DEQ Printed Name (above the line)
     page.drawText(
-      sanitizeText(payload.grant_application_score.data.deq_member_name),
+      sanitizeText(appScore?.deq_member_name),
       {
         x: deqXPosition,
         y: yPosition,
@@ -577,13 +581,13 @@ export async function generatePDF(
 
     // DEQ Date (above the line)
     page.drawText(
-      new Date(
-        payload.grant_application_score.data.createdAt
-      ).toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }),
+      appScore
+        ? new Date(appScore.createdAt).toLocaleDateString("en-US", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })
+        : "",
       {
         x: deqXPosition,
         y: yPosition,

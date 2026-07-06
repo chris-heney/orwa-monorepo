@@ -20,8 +20,8 @@ const GrantApplicationScoring = () => {
     return scoringCriterias
       .filter((criteria) => {
         return (
-          criteria.project_type.data &&  selectedProjects.includes(
-            criteria.project_type.data.id.toString()
+          criteria.project_type && selectedProjects.includes(
+            criteria.project_type.id.toString()
           )
         );
       })
@@ -38,7 +38,7 @@ const GrantApplicationScoring = () => {
     try {
       const pdfBytes = await generatePDF(
         applications[applicationIndex], 
-        getApprovedCriterias(applications[applicationIndex].approved_projects.data.map((project) => project.id.toString()))
+        getApprovedCriterias((applications[applicationIndex].approved_projects ?? []).map((project) => project.id.toString()))
       )
     
       const generatedFile = new File([pdfBytes], `${applications[applicationIndex].legal_entity_name}.pdf`, {

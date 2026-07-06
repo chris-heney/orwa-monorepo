@@ -141,7 +141,7 @@ const ApplicationInformation = () => {
             component={"ul"}
             sx={{ display: "flex", flexDirection: "column" }}
           >
-            {applications[applicationIndex]?.selected_projects.data.map(
+            {applications[applicationIndex]?.selected_projects?.map(
               (project, index) => (
                 <Typography sx={{ textAlign: "right" }} key={index}>
                   {project.name}
@@ -160,7 +160,7 @@ const ApplicationInformation = () => {
             component={"ul"}
             sx={{ display: "flex", flexDirection: "column" }}
           >
-            {applications[applicationIndex]?.approved_projects.data.map(
+            {applications[applicationIndex]?.approved_projects?.map(
               (project, index) => (
                 <Typography sx={{ textAlign: "right" }} key={index}>
                   {project.name}
@@ -215,7 +215,7 @@ const ApplicationInformation = () => {
         value={applications[applicationIndex]?.consent_order_number}
         divider
       />
-      {applications[applicationIndex]?.consent_order.data && (
+      {applications[applicationIndex]?.consent_order && (
         <DisplayStrapiFiles
           strapiFiles={applications[applicationIndex]?.consent_order}
           title="Consent Order"
@@ -322,7 +322,7 @@ const ApplicationInformation = () => {
           title="Project Proposal Bids"
         />
       )}
-      {applications[applicationIndex]?.proposals.data && (
+      {!!applications[applicationIndex]?.proposals?.length && (
         <DisplayStrapiFiles
           strapiFiles={applications[applicationIndex]?.proposals}
           title="Project Proposal Bids"
@@ -336,7 +336,7 @@ const ApplicationInformation = () => {
           title="Additional Files"
         />
       )}
-      {applications[applicationIndex]?.uploaded_additional_files.data && (
+      {!!applications[applicationIndex]?.uploaded_additional_files?.length && (
         <DisplayStrapiFiles
           strapiFiles={
             applications[applicationIndex]?.uploaded_additional_files
@@ -348,27 +348,27 @@ const ApplicationInformation = () => {
       {/* Engineer */}
       {applications[applicationIndex]?.has_engineer && (
         <Box>
-          {applications[applicationIndex]?.engineer.data && (
+          {applications[applicationIndex]?.engineer && (
             <ResponsiveListItem
               label="Engineer"
-              value={`${applications[applicationIndex]?.engineer.data.first} ${applications[applicationIndex]?.engineer.data.last}`}
+              value={`${applications[applicationIndex]?.engineer?.first} ${applications[applicationIndex]?.engineer?.last}`}
               divider
             />
           )}
-          {applications[applicationIndex]?.engineer.data && (
+          {applications[applicationIndex]?.engineer && (
             <ResponsiveListItem
               label="Engineer Email"
               value={
-                applications[applicationIndex]?.engineer.data.email
+                applications[applicationIndex]?.engineer?.email
               }
               divider
             />
           )}
-          {applications[applicationIndex]?.engineer.data && (
+          {applications[applicationIndex]?.engineer && (
             <ResponsiveListItem
               label="Engineer Phone"
               value={
-                applications[applicationIndex]?.engineer.data.phone
+                applications[applicationIndex]?.engineer?.phone
               }
               divider
             />
@@ -385,7 +385,7 @@ const ApplicationInformation = () => {
               title="Engineering Report"
             />
           )}
-          {applications[applicationIndex]?.uploaded_engineering_report.data && (
+          {!!applications[applicationIndex]?.uploaded_engineering_report?.length && (
             <DisplayStrapiFiles
               strapiFiles={
                 applications[applicationIndex]?.uploaded_engineering_report
@@ -403,7 +403,7 @@ const ApplicationInformation = () => {
           title="Notice of Violation"
         />
       )}
-      {applications[applicationIndex]?.uploaded_notice_of_violation.data && (
+      {!!applications[applicationIndex]?.uploaded_notice_of_violation?.length && (
         <DisplayStrapiFiles
           strapiFiles={
             applications[applicationIndex]?.uploaded_notice_of_violation

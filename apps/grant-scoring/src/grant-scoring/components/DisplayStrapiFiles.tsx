@@ -7,10 +7,10 @@ interface DisplayStrapiFilesProps {
 }
 
 const DisplayStrapiFiles = ({ strapiFiles, title }: DisplayStrapiFilesProps) => {
-  if (!strapiFiles || strapiFiles === null) return null;
+  if (!strapiFiles) return null;
 
-  // Handle single file scenario
-  const filesArray = Array.isArray(strapiFiles.data) ? strapiFiles.data : [strapiFiles.data];
+  // Strapi v5: media is flat — either a single file object or an array of files
+  const filesArray = Array.isArray(strapiFiles) ? strapiFiles : [strapiFiles];
 
   const linkElements = filesArray.map((file: any, index: number) => {
     const { url, name } = file;

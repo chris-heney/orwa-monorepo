@@ -32,9 +32,11 @@ const ScoringComponent = () => {
 
   console.log(applications[applicationIndex].approved_projects);
 
-  const approvedProjectIds = applications[
-    applicationIndex
-  ].approved_projects.data.map((project: any) => project.id) as number[];
+  const approvedProjectIds = (
+    applications[applicationIndex].approved_projects ?? []
+  ).map((project: any) => project.id) as number[];
+
+  const appScore = applications[applicationIndex].grant_application_score;
   // each time order change from 1.1 to 2.1 or 3.1 display a new section with a new label
   return !applications || !score ? (
     <>Loading</>
@@ -45,7 +47,7 @@ const ScoringComponent = () => {
       {scoringCriterias
         .filter((criteria: any) => {
           return approvedProjectIds.includes(
-            criteria.project_type.data ? criteria.project_type.data.id : null
+            criteria.project_type ? criteria.project_type.id : null
           );
         })
         .filter((criteria: any) => {
@@ -59,8 +61,8 @@ const ScoringComponent = () => {
             {scoringCriterias
               .filter((criteria: any) => {
                 return approvedProjectIds.includes(
-                  criteria.project_type.data
-                    ? criteria.project_type.data.id
+                  criteria.project_type
+                    ? criteria.project_type.id
                     : null
                 );
               })
@@ -119,7 +121,7 @@ const ScoringComponent = () => {
       {scoringCriterias
         .filter((criteria: any) => {
           return approvedProjectIds.includes(
-            criteria.project_type.data ? criteria.project_type.data.id : null
+            criteria.project_type ? criteria.project_type.id : null
           );
         })
         .filter((criteria: any) => {
@@ -133,8 +135,8 @@ const ScoringComponent = () => {
             {scoringCriterias
               .filter((criteria: any) => {
                 return approvedProjectIds.includes(
-                  criteria.project_type.data
-                    ? criteria.project_type.data.id
+                  criteria.project_type
+                    ? criteria.project_type.id
                     : null
                 );
               })
@@ -189,81 +191,65 @@ const ScoringComponent = () => {
 
       {/* Comments */}
       <div className="p-3" />
-      {applications[applicationIndex].grant_application_score.data && (
+      {appScore && (
         <div>
           <Typography variant="h5" textAlign={"left"}>
             Comments
           </Typography>
           <Divider />
-          {applications[applicationIndex].grant_application_score.data
-            .other_describe && (
+          {appScore.other_describe && (
             <ResponsiveListItem
               label=""
               sx={{ textAlign: "left" }}
-              value={
-                applications[applicationIndex].grant_application_score.data
-                  .other_describe
-              }
+              value={appScore.other_describe}
               divider
             />
           )}
-          {applications[applicationIndex].grant_application_score.data
-            .other_describe_2 && (
+          {appScore.other_describe_2 && (
             <ResponsiveListItem
               label=""
               sx={{ textAlign: "left" }}
-              value={
-                applications[applicationIndex].grant_application_score.data
-                  .other_describe_2
-              }
+              value={appScore.other_describe_2}
               divider
             />
           )}
         </div>
       )}
       {/* section that displays orwa and deq signature, name, date signed */}
-      {applications[applicationIndex].grant_application_score.data && (
+      {appScore && (
         <div className="flex flex-row justify-between mt-3 mx-auto space-y-4 md:space-y-0 md:space-x-4 items-center">
           <div className="flex flex-col">
             <p className="text-base md:text-lg underline">ORWA Approval</p>
             <img
-              src={`${applications[applicationIndex].grant_application_score.data.orwa_signature}`}
+              src={`${appScore.orwa_signature}`}
               alt="ORWA Signature"
               className="w-48 sm:w-32 md:w-40 lg:w-48 xl:w-96 max-w-full h-auto"
             />
             <p className="text-base md:text-lg mt-5">
-              {
-                applications[applicationIndex].grant_application_score.data
-                  .orwa_member_name
-              }
+              {appScore.orwa_member_name}
             </p>
             <p className="text-base md:text-lg">
-              {new Date(
-                applications[
-                  applicationIndex
-                ].grant_application_score.data.createdAt
-              ).toLocaleString("en-US", YearMonthDayMinute)}
+              {new Date(appScore.createdAt).toLocaleString(
+                "en-US",
+                YearMonthDayMinute
+              )}
             </p>
           </div>
           <div className="flex flex-col items-center">
             <p className="text-base md:text-lg underline">DEQ Approval</p>
             <img
-              src={`${applications[applicationIndex].grant_application_score.data.deq_signature}`}
+              src={`${appScore.deq_signature}`}
               alt="DEQ Signature"
               className="w-48 sm:w-32 md:w-40 lg:w-48 xl:w-96 max-w-full h-auto"
             />
             <p className="text-base md:text-lg mt-5">
-              {
-                applications[applicationIndex].grant_application_score.data
-                  .deq_member_name
-              }
+              {appScore.deq_member_name}
             </p>
             <p className="text-base md:text-lg">
-              {new Date(
-                applications[
-                  applicationIndex
-                ].grant_application_score.data.createdAt
-              ).toLocaleString("en-US", YearMonthDayMinute)}
+              {new Date(appScore.createdAt).toLocaleString(
+                "en-US",
+                YearMonthDayMinute
+              )}
             </p>
           </div>
         </div>
