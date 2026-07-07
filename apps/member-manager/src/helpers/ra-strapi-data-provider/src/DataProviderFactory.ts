@@ -169,14 +169,26 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
   formatResponseRA = (record: IStrapiRecord): RaRecord => {
     // Strapi 5: records are flat ({ id, documentId, ...fields }), relations are
     // flat objects/arrays with their own numeric id (no .data / .attributes nesting).
+    //
+    // IMPORTANT: relations and media entries carry a `documentId`; component
+    // (repeater) fields do NOT. Only collapse relations/media to numeric ids —
+    // components must stay flat objects, matching Strapi 4 behavior where
+    // components had no `.data` wrapper and passed through untouched.
     if (record && !record.attributes) {
       const raRecord: RaRecord = { ...(record as unknown as RaRecord) };
+
+      const isRelationOrMedia = (item: any) =>
+        item &&
+        typeof item === "object" &&
+        item.id !== undefined &&
+        item.id !== null &&
+        item.documentId !== undefined;
 
       for (const key in raRecord) {
         const value = raRecord[key];
         if (value && typeof value === "object") {
           // Single relation / media object -> numeric id
-          if (!Array.isArray(value) && value.id !== undefined && value.id !== null) {
+          if (!Array.isArray(value) && isRelationOrMedia(value)) {
             raRecord[key] = typeof value.id === "number" ? value.id : parseInt(value.id, 10);
             continue;
           }
@@ -184,7 +196,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
           if (
             Array.isArray(value) &&
             value.length > 0 &&
-            value.every((item: any) => item && typeof item === "object" && item.id !== undefined)
+            value.every(isRelationOrMedia)
           ) {
             raRecord[key] = value.map((item: { id: Identifier }) =>
               typeof item.id === "number" ? item.id : parseInt(item.id as string, 10)
