@@ -80,7 +80,25 @@ export default {
    *
    * This gives you an opportunity to extend code.
    */
-  register(/*{ strapi }*/) {},
+  register({ strapi }) {
+    // Strapi 4 coerced write-payload primitive types; Strapi 5 validates
+    // strictly. Restore v4-compatible coercion (and strip system fields)
+    // for every api:: create/update so legacy clients and intake forms
+    // keep working. See src/utils/coerce-to-schema.ts.
+    const { coerceToSchema } = require('./utils/coerce-to-schema');
+
+    strapi.documents.use((context, next) => {
+      if (
+        (context.action === 'create' || context.action === 'update') &&
+        typeof context.uid === 'string' &&
+        context.uid.startsWith('api::') &&
+        context.params?.data
+      ) {
+        coerceToSchema(context.uid, context.params.data);
+      }
+      return next();
+    });
+  },
 
   /**
    * An asynchronous bootstrap function that runs before

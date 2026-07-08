@@ -250,21 +250,16 @@ const DynamicRecipientList: React.FC<DynamicRecipientListProps> = ({
           if (response.status === 200) {
             successCount++;
             
-            // Log success in the email_logs collection
+            // Log success in the email_logs collection.
+            // Strapi 5 rejects keys not in the email-log schema (Invalid key),
+            // so only send html/to/from/template.
             try {
               await dataProvider.create("email-logs", {
                 data: {
                   html: emailBody,
                   to: toEmail,
                   from: finalEmailTemplate.from_name + `<${finalEmailTemplate.from_email}>`,
-                  subject: subject,
                   template: finalEmailTemplate.id,
-                  sent_at: new Date().toISOString(),
-                  status: "success",
-                  recipient_name: recipient.name || "Unknown",
-                  task_name: taskName || "Manual Send",
-                  entity_id: recipient.id,
-                  cron_rule: null, // Manual send, not cron
                 },
               });
             } catch (logError) {
@@ -274,22 +269,14 @@ const DynamicRecipientList: React.FC<DynamicRecipientListProps> = ({
             failureCount++;
             console.error(`Failed to send email to: ${toEmail}`);
             
-            // Log failure in the email_logs collection
+            // Log failure in the email_logs collection (schema fields only, see above)
             try {
               await dataProvider.create("email-logs", {
                 data: {
                   html: emailBody,
                   to: toEmail,
                   from: finalEmailTemplate.from_name + `<${finalEmailTemplate.from_email}>`,
-                  subject: subject,
                   template: finalEmailTemplate.id,
-                  sent_at: new Date().toISOString(),
-                  status: "failure",
-                  error_message: `HTTP ${response.status}: ${response.statusText}`,
-                  recipient_name: recipient.name || "Unknown",
-                  task_name: taskName || "Manual Send",
-                  entity_id: recipient.id,
-                  cron_rule: null, // Manual send, not cron
                 },
               });
             } catch (logError) {
@@ -305,22 +292,13 @@ const DynamicRecipientList: React.FC<DynamicRecipientListProps> = ({
             const missingVariablesForError: string[] = [];
             const safeEmailBody = replaceVariables(finalEmailTemplate.body || "", recipient, missingVariablesForError);
             const safeToEmail = replaceVariables(finalEmailTemplate.to || "", recipient, missingVariablesForError);
-            const safeSubject = replaceVariables(finalEmailTemplate.subject || "", recipient, missingVariablesForError);
             
             await dataProvider.create("email-logs", {
               data: {
                 html: safeEmailBody,
                 to: safeToEmail || "Unknown",
                 from: finalEmailTemplate.from_name + `<${finalEmailTemplate.from_email}>`,
-                subject: safeSubject,
                 template: finalEmailTemplate.id,
-                sent_at: new Date().toISOString(),
-                status: "failure",
-                error_message: error instanceof Error ? error.message : String(error),
-                recipient_name: recipient.name || "Unknown",
-                task_name: taskName || "Manual Send",
-                entity_id: recipient.id,
-                cron_rule: null, // Manual send, not cron
               },
             });
           } catch (logError) {

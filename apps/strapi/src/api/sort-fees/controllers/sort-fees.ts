@@ -59,14 +59,16 @@ export default ({ strapi }) => ({
         paymentUpdates.push({
           id,
           documentId,
+          // "system" is not a watersystem attribute; Strapi 5 rejects unknown
+          // keys in data, so keep the name in debug only.
           data: {
-            system: name,
             fee_connections: connectionFee > 4000 ? 4000 : connectionFee,
             fee_membership: 90,
             fee_scholarship,
             fee_apprenticeship,
           },
           debug: {
+            system: name,
             apprenticeshipLine,
             scholarshipLine,
           },
@@ -75,7 +77,7 @@ export default ({ strapi }) => ({
 
       const results: Record<any, any>[] = [];
       paymentUpdates.forEach(async (paymentUpdates) => {
-        console.log("Updating", paymentUpdates.data.system);
+        console.log("Updating", paymentUpdates.debug.system);
         console.log("Debug", paymentUpdates.debug);
         const response = await strapi.documents("api::watersystem.watersystem").update({
           documentId: paymentUpdates.documentId,
@@ -148,14 +150,16 @@ export default ({ strapi }) => ({
         paymentUpdates.push({
           id,
           documentId,
+          // "associate" is not an associate attribute; Strapi 5 rejects unknown
+          // keys in data, so keep the name in debug only.
           data: {
-            associate: name,
             // fee_connections: connectionFee > 4000 ? 4000 : connectionFee,
             fee_membership: membershipFee,
             fee_scholarship,
             fee_apprenticeship,
           },
           debug: {
+            associate: name,
             // apprenticeshipLine,
             // scholarshipLine,
             membershipLine,

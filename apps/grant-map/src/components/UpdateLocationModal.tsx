@@ -15,8 +15,10 @@ const UpdateLocationModal = () => {
 
   const handleConfirm = () => {
     if (currentApplication && newLocation) {
+      // Only send the changed field: spreading the fetched record back into the
+      // PUT would include system fields (documentId, createdAt, ...) and
+      // populated relation objects, which Strapi 5 rejects ("Invalid key").
       updateGrantApplication(currentApplication.id, {
-        ...currentApplication,
         location: { ...newLocation },
       });
       setNewLocation(null);

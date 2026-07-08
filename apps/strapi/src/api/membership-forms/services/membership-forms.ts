@@ -10,6 +10,7 @@ import {
 } from "../types";
 
 import { findOneById, updateById } from "../../../utils/document-compat";
+import { coerceToSchema } from "../../../utils/coerce-to-schema";
 
 /**
  * membership-forms service
@@ -859,7 +860,7 @@ export default ({ strapi }) => {
           }
 
           const response = await strapi.documents("api::watersystem.watersystem").create({
-            data: {
+            data: coerceToSchema("api::watersystem.watersystem", {
               ...pickWatersystemEntityData(data),
               system_type_dirty: system_type_dirty,
               total_years: data.payment_method === "Card" ? 1 : 0,
@@ -868,7 +869,7 @@ export default ({ strapi }) => {
                 data.payment_method === "Card"
                   ? new Date().toISOString()
                   : null,
-            },
+            }),
           });
 
           if (data.contacts !== undefined && Array.isArray(data.contacts)) {
@@ -882,7 +883,7 @@ export default ({ strapi }) => {
           // Submit transaction
           try {
             await strapi.documents("api::invoice.invoice").create({
-              data: {
+              data: coerceToSchema("api::invoice.invoice", {
                 ...payment,
                 amount: data.payment_amount,
                 context: "membership-form",
@@ -898,7 +899,7 @@ export default ({ strapi }) => {
                   data.payment_method === "Card"
                     ? new Date().toISOString()
                     : null,
-              },
+              }),
             });
           } catch (error) {
             return {
@@ -1019,8 +1020,10 @@ export default ({ strapi }) => {
             }
           }
 
+          // coerceToSchema strips form-only keys (adminOptions, payment_information,
+          // billing_*, user_agent, ...) that Strapi 5 rejects as "Invalid key".
           const response = await strapi.documents("api::associate.associate").create({
-            data: {
+            data: coerceToSchema("api::associate.associate", {
               ...data,
               total_years: data.payment_method === "Card" ? 1 : 0,
               contact_primary: contact_primary,
@@ -1030,12 +1033,12 @@ export default ({ strapi }) => {
                 data.payment_method === "Card"
                   ? new Date().toISOString()
                   : null,
-            },
+            }),
           });
 
           try {
             await strapi.documents("api::invoice.invoice").create({
-              data: {
+              data: coerceToSchema("api::invoice.invoice", {
                 ...payment,
                 amount: data.payment_amount,
                 context: "membership-form",
@@ -1051,7 +1054,7 @@ export default ({ strapi }) => {
                   data.payment_method === "Card"
                     ? new Date().toISOString()
                     : null,
-              },
+              }),
             });
           } catch (error) {
             return {
@@ -1160,12 +1163,12 @@ export default ({ strapi }) => {
           }
 
           const response = await updateById("api::watersystem.watersystem", watersystemId, {
-            data: renewalData,
+            data: coerceToSchema("api::watersystem.watersystem", renewalData),
           });
 
           try {
             await strapi.documents("api::invoice.invoice").create({
-              data: {
+              data: coerceToSchema("api::invoice.invoice", {
                 ...payment,
                 amount: data.payment_amount,
                 context: "membership-form",
@@ -1181,7 +1184,7 @@ export default ({ strapi }) => {
                   data.payment_method === "Card"
                     ? new Date().toISOString()
                     : null,
-              },
+              }),
             });
           } catch (error) {
             return {
@@ -1304,8 +1307,10 @@ export default ({ strapi }) => {
             }
           }
 
+          // coerceToSchema strips form-only keys (adminOptions, payment_information,
+          // billing_*, associate, user_agent, ...) that Strapi 5 rejects as "Invalid key".
           const response = await updateById("api::associate.associate", parseInt(data.associate), {
-            data: {
+            data: coerceToSchema("api::associate.associate", {
               ...data,
               contact_primary: contact_primary,
               contact_secondary: contact_secondary,
@@ -1319,12 +1324,12 @@ export default ({ strapi }) => {
                 data.payment_method === "Card"
                   ? new Date().toISOString()
                   : null,
-            }
+            })
           });
 
           try {
             await strapi.documents("api::invoice.invoice").create({
-              data: {
+              data: coerceToSchema("api::invoice.invoice", {
                 ...payment,
                 amount: data.payment_amount,
                 context: "membership-form",
@@ -1340,7 +1345,7 @@ export default ({ strapi }) => {
                   data.payment_method === "Card"
                     ? new Date().toISOString()
                     : null,
-              },
+              }),
             });
           } catch (error) {
             return {

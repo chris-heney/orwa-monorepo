@@ -639,6 +639,44 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
   }
   */
 
+  /**
+   * Strapi 5 removed entry-embedded uploads (multipart `files.<field>` on
+   * content endpoints). Upload raw files to /api/upload first and merge the
+   * returned file ids into the JSON payload, preserving already-stored files.
+   */
+  private prepareWritePayload = async (rawData: Record<string, any>) => {
+    const uploadFieldNames = this.getUploadFieldNames(rawData);
+    const data: Record<string, any> = { ...rawData };
+
+    for (const fieldName of uploadFieldNames) {
+      const isArrayField = Array.isArray(rawData[fieldName]);
+      const items = isArrayField ? rawData[fieldName] : [rawData[fieldName]];
+      const fileIds: number[] = [];
+
+      for (const item of items) {
+        if (item && item.rawFile instanceof File) {
+          const formData = new FormData();
+          formData.append("files", item.rawFile, item.title || item.name);
+          const { json } = await httpClient(
+            `${this.endpoint.replace(/\/api$/, "")}/api/upload`,
+            { method: "POST", body: formData } as any
+          );
+          const uploaded = Array.isArray(json) ? json : [json];
+          uploaded.forEach((file: { id: number }) => fileIds.push(file.id));
+        } else if (item && typeof item === "object" && item.id !== undefined) {
+          // Already-stored file kept in the input
+          fileIds.push(item.id);
+        } else if (typeof item === "number") {
+          fileIds.push(item);
+        }
+      }
+
+      data[fieldName] = isArrayField ? fileIds : fileIds[0] ?? null;
+    }
+
+    return this.sanitizeRaRecordForStrapi(data as RaRecord);
+  };
+
   // Add method to handle simultaneous identical requests
   private async executeRequest(key: string, requestFn: () => Promise<any>): Promise<any> {
     // Check if this exact request is already in progress
@@ -869,39 +907,16 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
 
         // Process and optimize the update request
         return this.executeRequest(requestKey, async () => {
-          // Separate the file fields from other data
-          const uploadFieldNames = this.getUploadFieldNames(params.data);
-          const formData = new FormData();
-          const sanitizedData = this.sanitizeRaRecordForStrapi(
-            params.data as RaRecord
+          // Strapi 5 rejects multipart writes ("Missing data payload"):
+          // upload new files first, then send a plain JSON body.
+          const payload = await this.prepareWritePayload(
+            params.data as Record<string, any>
           );
 
-          // Append non-file data to formData
-          formData.append("data", JSON.stringify(sanitizedData));
-
-          // Optimize file handling - only process actual files
-          uploadFieldNames.forEach((fieldName) => {
-            const fieldData = Array.isArray(params.data[fieldName])
-              ? params.data[fieldName]
-              : [params.data[fieldName]];
-
-            fieldData.forEach((file: StrapiFormattedFile) => {
-              if (file && file.rawFile instanceof File) {
-                formData.append(
-                  `files.${fieldName}`,
-                  file.rawFile,
-                  file.title || file.name
-                );
-              }
-            });
-          });
-
-          const options = {
+          const { json } = await httpClient(url, {
             method: "PUT",
-            body: formData,
-          };
-
-          const { json } = await httpClient(url, options as any);
+            body: JSON.stringify({ data: payload }),
+          });
 
           // Format response
           const data = this.formatResponseRA(json.data as IStrapiRecord);
@@ -948,35 +963,16 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         this.cache.invalidate(new RegExp(`^(getList|getMany|getManyReference):.*${resource}`));
 
         return this.executeRequest(requestKey, async () => {
-          const paramsData = this.sanitizeRaRecordForStrapi({
-            ...params.data,
-          } as RaRecord);
-          const uploadFieldNames = this.getUploadFieldNames(params.data);
-          const formData = new FormData();
-          
-          // Optimize file handling
-          if (uploadFieldNames.length > 0) {
-            uploadFieldNames.forEach((fieldName) => {
-              const fieldData = Array.isArray(params.data[fieldName])
-                ? params.data[fieldName]
-                : [params.data[fieldName]];
-                
-              fieldData.forEach((item: any) => {
-                if (item && item.rawFile instanceof File) {
-                  formData.append(`files.${fieldName}`, item.rawFile, item.title || item.name);
-                }
-              });
-            });
-          }
+          // Strapi 5 rejects multipart writes: upload files first, send JSON.
+          const payload = await this.prepareWritePayload(
+            params.data as Record<string, any>
+          );
 
-          formData.append("data", JSON.stringify(paramsData));
-
-          const options = {
+          const { json } = await httpClient(url, {
             method: "POST",
-            body: formData,
-          };
+            body: JSON.stringify({ data: payload }),
+          });
 
-          const { json } = await httpClient(url, options as any);
           const data = this.formatResponseRA(json.data as IStrapiRecord);
 
           return { data };

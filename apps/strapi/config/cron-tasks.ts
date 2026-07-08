@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { CronExpressionParser } from "cron-parser";
+import { coerceToSchema } from "../src/utils/coerce-to-schema";
 
 // Helper function to update dates in query conditions
 const updateQueryDates = (condition: any, cronRule: string): any => {
@@ -172,9 +173,13 @@ export default {
 
             emailsSent++;
 
-            // Log success in the email_logs collection
+            // Log success in the email_logs collection.
+            // coerceToSchema drops keys that are not email-log attributes
+            // (subject, sent_at, status, ...); Strapi 5 throws "Invalid key"
+            // for them, which would abort the task loop before last_sent is
+            // updated and cause the emails to be re-sent every minute.
             await strapi.documents("api::email-log.email-log").create({
-              data: {
+              data: coerceToSchema("api::email-log.email-log", {
                 html: emailBody,
                 to: toEmail,
                 from: email_template.from_name + `<${email_template.from_email}>`,
@@ -186,14 +191,15 @@ export default {
                 task_name: name,
                 entity_id: entity.id,
                 cron_rule: cron_rule,
-              },
+              }),
             });
           } catch (error) {
             console.error(`❌ Error sending email to: ${toEmail}`, error);
 
-            // Log failure in the email_logs collection
+            // Log failure in the email_logs collection (see note above on
+            // coerceToSchema stripping non-schema keys).
             await strapi.documents("api::email-log.email-log").create({
-              data: {
+              data: coerceToSchema("api::email-log.email-log", {
                 html: emailBody,
                 to: toEmail,
                 from: "office@orwa.org",
@@ -206,7 +212,7 @@ export default {
                 task_name: name,
                 entity_id: entity.id,
                 cron_rule: cron_rule,
-              },
+              }),
             });
           }
         }

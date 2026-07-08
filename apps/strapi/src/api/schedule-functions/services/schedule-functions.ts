@@ -97,9 +97,11 @@ export default ({ strapi }) => ({
                             await updateById('api::training-session.training-session', updatedSession.id, {
                                 previousData: { ...updatedSession },
 
-                                // depends on dataProvider either topic or topic.id
+                                // depends on dataProvider either topic or topic.id;
+                                // normalize to an id — Strapi 5 rejects full entity
+                                // objects (with createdAt etc.) as relation values
                                 data: {
-                                    topic: updatedSession.topic != null ? updatedSession.topic : null,
+                                    topic: updatedSession.topic?.id ?? updatedSession.topic ?? null,
                                     training_instructor: updatedSession.training_instructor?.id ? updatedSession.training_instructor.id : null,
                                     summary: updatedSession.summary,
                                     category: updatedSession.category,

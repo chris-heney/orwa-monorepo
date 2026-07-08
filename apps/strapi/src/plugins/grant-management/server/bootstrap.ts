@@ -41,9 +41,11 @@ export default async ({ strapi }: { strapi: any }) => {
           populate: "*"
         });
 
+        // point_of_contact / applicant_pdf can be null (e.g. WP-form intake);
+        // an uncaught throw here aborts the whole create request.
         const variables = {
-          point_of_contact_first: application.point_of_contact.first,
-          point_of_contact_last: application.point_of_contact.last,
+          point_of_contact_first: application.point_of_contact?.first ?? "",
+          point_of_contact_last: application.point_of_contact?.last ?? "",
           legal_entity_name: application.legal_entity_name,
           application_id: event.result.id,
         };
@@ -66,20 +68,24 @@ export default async ({ strapi }: { strapi: any }) => {
           }
         );
         try {
-   
+          // applicant_pdf is optional (WP-form intake has none); reading .url
+          // of null threw and aborted the whole application create.
+          const attachment = application.applicant_pdf?.url
+            ? [
+                {
+                  name: `${application.legal_entity_name}.pdf`,
+                  url: `https://admin.orwa.org${application.applicant_pdf.url}`,
+                },
+              ]
+            : undefined;
+
           const payload = {
             // to: application.point_of_contact ? application.point_of_contact.email : application.email ? application.email : null,
             to: "marcosje2005@gmail.com",
             from: emailTemplate.from_name + `<${emailTemplate.from_email}>`,
             subject: subject,
             html: html,
-            attachment: [
-              {
-                name: `${application.legal_entity_name}.pdf`,
-                url: `https://admin.orwa.org${application.applicant_pdf.url}`,
-                // url: `https://admin.orwa.org/uploads/Chelsea_Economic_Development_Authority_application_a7fd2c930c.pdf`,
-              },
-            ],
+            attachment,
           };     
           const payload2 = {
             to: application.point_of_contact ? application.point_of_contact.email : application.email ? application.email : null,
@@ -88,13 +94,7 @@ export default async ({ strapi }: { strapi: any }) => {
             from: emailTemplate.from_name + `<${emailTemplate.from_email}>`,
             subject: subject,
             html: html,
-            attachment: [
-              {
-                name: `${application.legal_entity_name}.pdf`,
-                url: `https://admin.orwa.org${application.applicant_pdf.url}`,
-                // url: `https://admin.orwa.org/uploads/Chelsea_Economic_Development_Authority_application_a7fd2c930c.pdf`,
-              },
-            ],
+            attachment,
           }; 
 
           const payload3 = {
@@ -103,13 +103,7 @@ export default async ({ strapi }: { strapi: any }) => {
             from: emailTemplate.from_name + `<${emailTemplate.from_email}>`,
             subject: subject,
             html: html,
-            attachment: [
-              {
-                name: `${application.legal_entity_name}.pdf`,
-                url: `https://admin.orwa.org${application.applicant_pdf.url}`,
-                // url: `https://admin.orwa.org/uploads/Chelsea_Economic_Development_Authority_application_a7fd2c930c.pdf`,
-              },
-            ],
+            attachment,
           }; 
                     
           await strapi.plugins["email"].services.email.send(payload);

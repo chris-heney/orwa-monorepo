@@ -5,6 +5,7 @@
 import { AdminOptions } from "../../membership-forms/types";
 import { IContactEntity, IGrantApplicationFormPayload } from "../types";
 import { findOneById, updateById } from "../../../utils/document-compat";
+import { coerceToSchema } from "../../../utils/coerce-to-schema";
 
 // get the contact
 // create or update contact
@@ -361,8 +362,15 @@ export default ({ strapi }) => {
             lrsp_plan,
           };
 
+          // Strapi 5 validates payload types strictly (v4 silently coerced).
+          // The public form sends booleans/numbers for several schema string
+          // fields and vice versa; coerceToSchema coerces primitives to the
+          // schema types and strips keys that are not schema attributes.
           const grantApplication = await strapi.documents("api::grant-application-final.grant-application-final").create({
-            data: data,
+            data: coerceToSchema(
+              "api::grant-application-final.grant-application-final",
+              data
+            ),
           });
 
           ctx.status = 200;
@@ -475,6 +483,7 @@ export default ({ strapi }) => {
         }
       } catch (err) {
         console.error("Error:", err.message);
+        console.error(require("util").inspect(err, { depth: 4 }));
         ctx.status = 500;
         ctx.body = {
           message: "error",

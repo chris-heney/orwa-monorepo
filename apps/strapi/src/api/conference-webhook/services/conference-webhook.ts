@@ -187,13 +187,15 @@ export default ({ strapi }) => {
     },
 
     // Data Fetching
+    // NOTE: conference-extra has no `conference`/`year` attributes (it has a
+    // `conferences` manyToMany). Strapi 5 validates filter keys and throws
+    // "Invalid key conference" (v4 silently ignored the invalid filters, so
+    // the effective v4 behavior was filtering by id only — preserved here).
     fetchExtrasData: async (conference: number, extraIds: number[] = []) => {
       if (!extraIds || extraIds.length === 0) return [];
       
       return await strapi.documents("api::conference-extra.conference-extra").findMany({
         filters: {
-          conference,
-          year: currentYear,
           id: {
             $in: extraIds,
           },
@@ -202,13 +204,12 @@ export default ({ strapi }) => {
       });
     },
 
+    // Same as fetchExtrasData: registration-addon has no `conference`/`year`.
     fetchRegistrationAddonData: async (conference: number, addonIds: number[] = []) => {
       if (!addonIds || addonIds.length === 0) return [];
       
       return await strapi.documents("api::registration-addon.registration-addon").findMany({
         filters: {
-          conference,
-          year: currentYear,
           id: {
             $in: addonIds,
           },

@@ -109,12 +109,14 @@ const StepNavigation = () => {
           processedPayload[key] = processedPayload[key].id;
         } else {
           try {
-            const uploadedFile = await uploadService.uploadFile(
+            // uploadService.uploadFile resolves to the numeric file id;
+            // link it directly (Strapi 5 media fields accept file ids in JSON writes)
+            const uploadedFileId = await uploadService.uploadFile(
               processedPayload[key].rawFile,
               import.meta.env.VITE_API_ENDPOINT,
               import.meta.env.VITE_API_KEY
             );
-            processedPayload[key] = uploadedFile[0]; // Replace with uploaded file metadata
+            processedPayload[key] = uploadedFileId;
           } catch (error) {
             console.error(`Error uploading file for ${key}:`, error);
             notify(

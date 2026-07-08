@@ -3,6 +3,7 @@
  */
 
 import { updateById } from "../../../utils/document-compat";
+import { coerceToSchema } from "../../../utils/coerce-to-schema";
 
 export default ({strapi}) => ( {
     createGrantApplication: async (ctx) => {
@@ -161,8 +162,8 @@ export default ({strapi}) => ( {
           // create contact
           if ((ctx.request.body.data.contact_first && ctx.request.body.data.contact_last)) {
             try {
-    
-              createOrUpdateContact(ctx.request.body.data.contact_first, ctx.request.body.data.contact_last, ctx.request.body.data.contact_email, 'contact')
+              // must be awaited so contactId is set before the application create
+              await createOrUpdateContact(ctx.request.body.data.contact_first, ctx.request.body.data.contact_last, ctx.request.body.data.contact_email, 'contact')
     
             } catch (error) {
               console.log('Error in creating contact:', error.message);
@@ -189,7 +190,7 @@ export default ({strapi}) => ( {
           // engineer contact
           if (ctx.request.body.data.engineer_first && ctx.request.body.data.engineer_last) {
             try {
-              createOrUpdateContact(ctx.request.body.data.contact_first, ctx.request.body.data.contact_last, ctx.request.body.data.contact_email, 'contact')
+              await createOrUpdateContact(ctx.request.body.data.engineer_first, ctx.request.body.data.engineer_last, ctx.request.body.data.engineer_email, 'engineer')
             } catch (error) {
               console.log('Error in creating contact:', error.message);
               console.log('Error in creating contact:', error.details);
@@ -214,8 +215,12 @@ export default ({strapi}) => ( {
                 project = 'Master / Inline Meters'
               }
               try {
-    
+                // project-type is draft-and-publish: without an explicit status
+                // the Document Service returns DRAFT rows, whose numeric ids
+                // differ from the published rows — the relation would silently
+                // point at drafts that published reads can't see.
                 const projectData = await strapi.documents('api::project-type.project-type').findMany({
+                  status: 'published',
                   filters: {
                     name: project,
                     classification: classification
@@ -279,8 +284,12 @@ export default ({strapi}) => ( {
           console.log(ctx.request.body.data)
 
           try {
+            // coerceToSchema drops keys that are not grant-application-final
+            // attributes (remaining_grant_funds, classification) which Strapi 5
+            // rejects as "Invalid key", and coerces WP string values to the
+            // schema's numeric/boolean types.
             await strapi.documents('api::grant-application-final.grant-application-final').create({
-              data: {
+              data: coerceToSchema('api::grant-application-final.grant-application-final', {
                 "legal_entity_name": ctx.request.body.data.legal_entity_name,
                 "facility_id": ctx.request.body.data.facility_id,
                 // make sure this is always a number
@@ -342,12 +351,16 @@ export default ({strapi}) => ( {
                 "approved_projects": projectsApprovedIds,
                 "selected_projects": drinkingWaterProjectIds ? drinkingWaterProjectIds : wastewaterProjectIds,
                 "application_date": new Date()
-              },
+              }),
             })
+
+            // Koa defaults to 404 when ctx.body is never set; report success.
+            ctx.body = { message: 'success' }
           } catch (error) {
             console.log('Error in creating grant application:', error.message);
             console.log('Error in creating grant application:', error.details);
-    
+            ctx.status = 500
+            ctx.body = { message: 'error', error: error.message }
           }
         } catch (err) {
           console.error('Error:', err);

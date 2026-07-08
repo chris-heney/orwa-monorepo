@@ -27,10 +27,12 @@ export const processAndUploadFiles = async (payload: any, notify: {
       } else if (processedPayload[key]?.rawFile) {
         // If the key holds a single StrapiFormattedFile
         try {
-          const uploadedFile = await uploadService.uploadFile(
+          // uploadService.uploadFile resolves to the numeric file id;
+          // link it directly (Strapi 5 media fields accept file ids in JSON writes)
+          const uploadedFileId = await uploadService.uploadFile(
             processedPayload[key].rawFile
           );
-          processedPayload[key] = uploadedFile[0]; // Replace with uploaded file metadata
+          processedPayload[key] = uploadedFileId;
         } catch (error) {
           console.error(`Error uploading file for ${key}:`, error);
           notify(

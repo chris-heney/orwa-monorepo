@@ -2,6 +2,8 @@
  * wp-grant-applications service
  */
 
+import { coerceToSchema } from "../../../utils/coerce-to-schema";
+
 type Identifier = number;
 
 interface IContactPayload {
@@ -214,8 +216,11 @@ export default ({ strapi }) => ({
       console.log("data", ctx.request.body);
       const date = new Date();
 
+      // coerceToSchema strips keys that are not schema attributes ("proposal",
+      // misspelled "consesnt_order") which Strapi 5 rejects as "Invalid key",
+      // and coerces primitives (population_served string -> integer, etc.).
       await strapi.documents("api::grant-application-final.grant-application-final").create({
-        data: {
+        data: coerceToSchema("api::grant-application-final.grant-application-final", {
           legal_entity_name,
           facility_id,
           population_served,
@@ -268,7 +273,7 @@ export default ({ strapi }) => ({
           // uploaded_engineering_report,
           // upload_engineering_report,
           proposals,
-        },
+        }),
       });
     }  catch (err) {
       console.error("Error:", err.message);

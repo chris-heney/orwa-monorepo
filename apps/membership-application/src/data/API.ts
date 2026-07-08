@@ -57,11 +57,11 @@ const _uploadFile = async (file: File) => {
 
   data.append("files", file);
 
+  // No explicit Content-Type: the browser must set the multipart boundary for FormData
   return fetch(`${API_ENDPOINT}/upload`, {
     method: "POST",
     body: data,
     headers: {
-      "Content-Type": "application/json",
       Accept: "application/json",
       Authorization: `Bearer ${API_KEY}`,
     },

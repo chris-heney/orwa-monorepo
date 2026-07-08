@@ -5,6 +5,7 @@
 import dayjs from 'dayjs'
 
 import { updateById } from '../../../utils/document-compat'
+import { coerceToSchema } from '../../../utils/coerce-to-schema'
 
 export default ({ strapi }) => ({
 
@@ -36,13 +37,16 @@ export default ({ strapi }) => ({
 
         try {
             for (const watersystem of watersystems) {
-                const response = await updateById('api::watersystem.watersystem', watersystem.id, {
-                    previousData: { ...watersystem },
-
-                    data: {
-                        active: status,
-                    }
+                // NOTE: "active" is not a watersystem attribute (no schema field or
+                // DB column). v4 silently dropped it; Strapi 5 throws "Invalid key",
+                // so strip to schema keys and skip empty updates to preserve the
+                // (already no-op) v4 behavior.
+                const data = coerceToSchema('api::watersystem.watersystem', {
+                    active: status,
                 })
+                if (Object.keys(data).length === 0) continue
+
+                await updateById('api::watersystem.watersystem', watersystem.id, { data })
             }
             console.log(`Batch Updated ${watersystems.length} to ${status} .`);
         } catch (error) {
@@ -57,13 +61,13 @@ export default ({ strapi }) => ({
 
         try {
             for (const associate of associates) {
-                const response = await updateById('api::associate.associate', associate.id, {
-                    previousData: { ...associate },
-
-                    data: {
-                        active: status,
-                    }
+                // Same as above: "active" is not an associate attribute.
+                const data = coerceToSchema('api::associate.associate', {
+                    active: status,
                 })
+                if (Object.keys(data).length === 0) continue
+
+                await updateById('api::associate.associate', associate.id, { data })
             }
             console.log(`Batch Updated ${associates.length} to ${status} .`);
         } catch (error) {

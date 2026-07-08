@@ -7,6 +7,7 @@ import {
   ISponsorEntity,
 } from "../types";
 import { findOneById } from "../../../utils/document-compat";
+import { coerceToSchema } from "../../../utils/coerce-to-schema";
 
 /**
  * Conference webhook controller
@@ -155,7 +156,9 @@ export default ({ strapi }) => {
 
           // Create registration
           const newRegistration = await strapi.documents("api::conference-registration.conference-registration").create({
-            data: {
+            // Strapi 5 validates payload types strictly (v4 silently coerced);
+            // kiosk/admin flows send strings for numeric fields and vice versa.
+            data: coerceToSchema("api::conference-registration.conference-registration", {
               conference,
               year: currentYear,
               registration_date: new Date(),
@@ -166,17 +169,17 @@ export default ({ strapi }) => {
               organization: organization,
               sponsorships: sponsors.map((sponsor: ISponsorEntity) => sponsor.id),
               address: {
-                street: paymentData.billingAddress.address,
-                city: paymentData.billingAddress.city,
-                state: paymentData.billingAddress.state,
-                zip: paymentData.billingAddress.zip,
+                street: paymentData?.billingAddress?.address,
+                city: paymentData?.billingAddress?.city,
+                state: paymentData?.billingAddress?.state,
+                zip: paymentData?.billingAddress?.zip,
               },
               non_member_fee: nonMemberFee ? true : false,
               vendor_participation_acknowledgement:
                 vendor_participation_acknowledgement ? true : false,
               items: items,
               registration_source: registrationSource ?? "online",
-            },
+            }),
           });
 
           console.log("- Registration:", JSON.stringify(newRegistration));
@@ -280,7 +283,7 @@ export default ({ strapi }) => {
   ) {
     if (registrationAddons.some((item) => item.label === "Water Taste Test Contestant")) {
       await strapi.documents("api::taste-test-contestant.taste-test-contestant").create({
-        data: {
+        data: coerceToSchema("api::taste-test-contestant.taste-test-contestant", {
           conference,
           year: currentYear,
           first: registrant.first,
@@ -288,9 +291,10 @@ export default ({ strapi }) => {
           email: registrant.email,
           phone: registrant.phone,
           organization,
-          watersystem: watersystem.id,
+          // payload may carry a full watersystem object or a bare numeric id
+          watersystem: watersystem?.id ?? watersystem ?? null,
           registration: registrationId,
-        },
+        }),
       });
     }
   }
@@ -309,7 +313,7 @@ export default ({ strapi }) => {
     const total = sponsors.reduce((acc, sponsor) => acc + sponsor.amount, 0);
 
     await strapi.documents("api::conference-sponsor.conference-sponsor").create({
-      data: {
+      data: coerceToSchema("api::conference-sponsor.conference-sponsor", {
         conference,
         year: currentYear,
         registration: registrationId,
@@ -326,7 +330,7 @@ export default ({ strapi }) => {
         ),
         amount: total ?? 0,
         logo,
-      },
+      }),
     });
 
     // Update available sponsorships
@@ -418,7 +422,9 @@ export default ({ strapi }) => {
         promotional_emails: ticket.promotional_emails,
       };
 
-      const attendee = await strapi.documents("api::conference-attendee.conference-attendee").create({ data: attendeeData });
+      const attendee = await strapi.documents("api::conference-attendee.conference-attendee").create({
+        data: coerceToSchema("api::conference-attendee.conference-attendee", attendeeData),
+      });
 
       console.log("- Attendee:", JSON.stringify(attendee));
       console.log("-------------------------------------------------------------");
@@ -475,13 +481,14 @@ export default ({ strapi }) => {
         registration: registrationId,
         organization,
         subtotal: booth.subtotal,
-        booth_number: boothNumber.toString(),
+        // schema type is integer; v4 accepted the stringified value, v5 does not
+        booth_number: boothNumber,
         items: boothExtras,
         secondary_email: secondary_email,
       };
 
       const newBooth = await strapi.documents("api::conference-booth.conference-booth").create({
-        data: boothData,
+        data: coerceToSchema("api::conference-booth.conference-booth", boothData),
       });
 
       console.log("- Booth:", JSON.stringify(newBooth));
@@ -540,7 +547,7 @@ export default ({ strapi }) => {
       };
 
       const contestantEntity = await strapi.documents("api::conference-contestant.conference-contestant").create({
-        data: newContestant,
+        data: coerceToSchema("api::conference-contestant.conference-contestant", newContestant),
       });
 
       if (contestant.ticket_type.name === "Golfer") {
@@ -583,13 +590,13 @@ export default ({ strapi }) => {
     console.log("Creating team with contestantIds:", contestantIds);
     
     const newTeam = await strapi.documents("api::conference-team.conference-team").create({
-      data: {
+      data: coerceToSchema("api::conference-team.conference-team", {
         conference,
         year: currentYear,
         registration: registrationId,
         name: team,
         contestants: contestantIds,
-      },
+      }),
     });
 
     console.log("- Team:", JSON.stringify(newTeam));
