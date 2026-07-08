@@ -32,9 +32,10 @@ export default ({strapi}) => ({
       )
       
       // Only fetch specific conference details if an actual ID is provided
+      // v5 rejects populate: ['*'] (array form) with "Invalid key *" — use the string form
       const conference = conferenceId !== "-1" ? 
         await findOneById('api::conference.conference', conferenceId, {
-          populate: ['*']
+          populate: '*'
         }) : 
         {name: 'All Conferences', booths_available: 5000}; // Default value when no specific conference
 
