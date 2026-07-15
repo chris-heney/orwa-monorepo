@@ -22,6 +22,7 @@ import { Link } from "react-router-dom";
 import { formatDate } from "../../../../helpers/dateFormatter";
 import GrantStatus from "./GrantStatus";
 import ApplicationEmailModal from "./ApplicationEmailModal";
+import AssetModal, { AssetModalFile } from "../../../_components/AssetModal";
 import StarIcon from '@mui/icons-material/Star';
 
 const statusesForAwardLetter = [
@@ -71,40 +72,60 @@ export const displayLinks = (links: string) => {
   return <ul style={{ paddingLeft: "16px" }}>{linkElements}</ul>;
 };
 
-// Display Strapi stored files in a list
-export const displayFileLinks = (files: StrapiFile | StrapiFile[]) => {
+// Display Strapi stored files in a list; clicking opens an in-app preview
+// modal (AssetModal) instead of navigating away.
+export const FileLinkList = ({ files }: { files: StrapiFile | StrapiFile[] }) => {
+  const [previewFile, setPreviewFile] = React.useState<AssetModalFile | null>(null);
+
   if (!files) return null;
 
   // Ensure files is always an array
   const fileArray = Array.isArray(files) ? files : [files];
 
-  const fileElements = fileArray.map((file: any, index: number) => (
-    <li
-      key={index}
-      style={{
-        wordWrap: "break-word", // Ensures long URLs break onto a new line
-        overflowWrap: "break-word", // Cross-browser compatibility
-        whiteSpace: "normal", // Allow multi-line
-        marginBottom: "4px", // Adds some spacing between links
-      }}
-    >
-      <a
-        href={`${import.meta.env.VITE_API_ENDPOINT}${file.url}`}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          color: "#1a73e8", // Consistent link color
-          textDecoration: "underline",
-          wordBreak: "break-all", // Breaks long words
-        }}
-      >
-        {file.url}
-      </a>
-    </li>
-  ));
-
-  return <ul style={{ paddingLeft: "16px" }}>{fileElements}</ul>;
+  return (
+    <>
+      <ul style={{ paddingLeft: "16px" }}>
+        {fileArray.map((file: any, index: number) => (
+          <li
+            key={index}
+            style={{
+              wordWrap: "break-word", // Ensures long URLs break onto a new line
+              overflowWrap: "break-word", // Cross-browser compatibility
+              whiteSpace: "normal", // Allow multi-line
+              marginBottom: "4px", // Adds some spacing between links
+            }}
+          >
+            <a
+              href={`${import.meta.env.VITE_API_ENDPOINT}${file.url}`}
+              onClick={(e) => {
+                e.preventDefault();
+                setPreviewFile({ url: file.url, name: file.name, mime: file.mime });
+              }}
+              style={{
+                color: "#1a73e8", // Consistent link color
+                textDecoration: "underline",
+                wordBreak: "break-all", // Breaks long words
+                cursor: "pointer",
+              }}
+            >
+              {file.name || file.url}
+            </a>
+          </li>
+        ))}
+      </ul>
+      <AssetModal
+        open={previewFile !== null}
+        onClose={() => setPreviewFile(null)}
+        file={previewFile}
+      />
+    </>
+  );
 };
+
+// Backward-compatible helper form used throughout this file
+export const displayFileLinks = (files: StrapiFile | StrapiFile[]) => (
+  <FileLinkList files={files} />
+);
 
 const GrantApplicationDetails = () => {
   const record = useRecordContext<IGrantApplication>();

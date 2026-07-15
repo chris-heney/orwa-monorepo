@@ -15,9 +15,8 @@ export default defineConfig({
     port: 4205,
     strictPort: true,
     hmr: {
-      host: '0.0.0.0',
-      port: 4205,
-      protocol: 'ws',
+      // No explicit host: the client falls back to window.location.hostname,
+      // so HMR works whether the app is opened via localhost or a LAN/WSL IP.
       clientPort: 4205,
       overlay: true,
     },

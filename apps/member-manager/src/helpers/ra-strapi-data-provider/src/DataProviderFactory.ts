@@ -711,7 +711,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const url = `${this.endpoint}/${resource}?${populateString}&${queryString}`;
         
         // Check cache first
-        const cacheKey = `getList:${url}`;
+        const cacheKey = `getList:${raw ? "raw" : "ra"}:${url}`;
         const cached = this.cache.get(cacheKey);
         if (cached) {
           return cached;
@@ -756,7 +756,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const url = `${this.endpoint}/${resource}/${params.id}?${populateString}`;
         
         // Check cache first
-        const cacheKey = `getOne:${url}`;
+        const cacheKey = `getOne:${raw ? "raw" : "ra"}:${url}`;
         const cached = this.cache.get(cacheKey);
         if (cached) {
           return cached;
@@ -817,7 +817,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const url = `${this.endpoint}/${resource}?${populateString}&${queryStringify}`;
         
         // Check cache first
-        const cacheKey = `getMany:${url}`;
+        const cacheKey = `getMany:${raw ? "raw" : "ra"}:${image ? "img" : "std"}:${url}`;
         const cached = this.cache.get(cacheKey);
         if (cached) {
           return cached;
@@ -873,7 +873,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const url = `${this.endpoint}/${resource}?${populateString}&${queryStringify}`;
         
         // Check cache first
-        const cacheKey = `getManyReference:${url}`;
+        const cacheKey = `getManyReference:${raw ? "raw" : "ra"}:${url}`;
         const cached = this.cache.get(cacheKey);
         if (cached) {
           return cached;
