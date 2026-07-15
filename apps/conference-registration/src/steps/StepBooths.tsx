@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import {
+  Checkbox,
   Divider,
   FormControlLabel,
   FormLabel,
@@ -253,6 +254,54 @@ const StepBooths = () => {
           </div>
         </FormSection>
         <AddExtras useYesNo field="registrationExtrasIds" context="Registration" />
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6 text-left">
+          <h3 className="font-bold text-lg mb-3">
+            Vendor Participation Guideline &amp; Acknowledgement
+          </h3>
+          <p className="mb-4">
+            Membership and vendor participation are limited to individuals and
+            organizations that align with the mission, values, and service
+            objectives of ORWA and meet established eligibility criteria. All
+            applications are subject to review and approval, and ORWA reserves
+            the right to approve, deny, or revoke participation at its
+            discretion to ensure alignment with ORWA standards and the best
+            interests of its members. Participation may be limited or denied in
+            cases where an applicant&rsquo;s services or activities present a
+            direct conflict or competition with the programs or interests of
+            ORWA.
+          </p>
+          <FormControlLabel
+            control={
+              <Checkbox
+                {...register("vendor_participation_acknowledgement", {
+                  required:
+                    "You must acknowledge the Vendor Participation Guideline & Acknowledgement",
+                })}
+                checked={
+                  watch("vendor_participation_acknowledgement") === true
+                }
+                onChange={(e) =>
+                  form.setValue(
+                    "vendor_participation_acknowledgement",
+                    e.target.checked,
+                    { shouldValidate: true }
+                  )
+                }
+              />
+            }
+            label={
+              <span>
+                I acknowledge the Vendor Participation Guideline &amp;
+                Acknowledgement. <span className="text-red-500">*</span>
+              </span>
+            }
+          />
+          {errors.vendor_participation_acknowledgement && (
+            <span className="block text-red-500 text-left">
+              *{errors.vendor_participation_acknowledgement.message as string}
+            </span>
+          )}
+        </div>
         <Typography variant="h6" textAlign={"right"} sx={{ mt: 4 }}>
           Subtotal:
           <strong className="text-red-600">

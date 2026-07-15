@@ -662,6 +662,7 @@ export interface IRegistrationPayload {
   error?: boolean;
   contestants: IContestantPayload[] | [];
   team?: string;
+  vendor_participation_acknowledgement?: boolean;
 }
 
 export interface EntryPayloadContext {
@@ -763,6 +764,7 @@ export const defaultPayload: IRegistrationPayload = {
   online: false,
   error: false,
   contestants: [],
+  vendor_participation_acknowledgement: false,
 };
 
 export const testContestantPayload = {
