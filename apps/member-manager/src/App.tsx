@@ -108,6 +108,7 @@ export const App = () => {
         authProvider={AuthProvider}
         dashboard={AdminDashboard}
         requireAuth
+        disableTelemetry
       >
         {(permissions: ResourcePermission[]) => {
           const isStaff = isStaffPermissionSet(permissions);

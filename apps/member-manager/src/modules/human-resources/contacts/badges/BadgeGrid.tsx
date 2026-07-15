@@ -55,7 +55,7 @@ const BadgeGrid = ({ filter, filterGrid = false }: BadgeGridProps) => {
   return (
     <Grid container mx={1} my={1} spacing={1} sx={{ position: 'relative', textAlign: 'center' }}>
       {badges.map((badge, index: number) => (
-        badge.icon !== undefined && (
+        badge.icon?.url !== undefined && (
           <Grid item key={`${badge.title}-${index}`}>
             <Box
             >

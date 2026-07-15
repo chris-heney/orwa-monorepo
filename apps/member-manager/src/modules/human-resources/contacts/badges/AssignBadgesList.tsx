@@ -28,7 +28,7 @@ const AssignBadgesList = () => {
   return (
     <Grid container mx={1} my={1} spacing={1} justifyContent="flex-start">
       {badges.map((badge, index: number) => (
-        badge.icon !== undefined && (
+        badge.icon?.url !== undefined && (
 
           <Grid item key={`${badge.title}-${index}`} sx={{ position: 'relative', textAlign: 'center' }}>
             <Box>
