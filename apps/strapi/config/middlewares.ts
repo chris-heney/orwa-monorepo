@@ -5,7 +5,6 @@ export default [
   'strapi::cors',
   'strapi::poweredBy',
   'strapi::query',
-  'global::numeric-id-compat',
 //  'strapi::body',
 	{
     name: "strapi::body",
@@ -18,6 +17,8 @@ export default [
       },
     },
   },
+  // Must come after strapi::body: it rewrites numeric relation ids in parsed bodies.
+  'global::numeric-id-compat',
   'strapi::session',
   'strapi::favicon',
   'strapi::public',

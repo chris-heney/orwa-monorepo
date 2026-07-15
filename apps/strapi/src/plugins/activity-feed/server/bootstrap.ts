@@ -357,18 +357,24 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
             populate: "*"
           });
 
-          if (event.params.data.application) {
-            application = await findOneById("api::grant-application-final.grant-application-final", event.params.data.application, {
+          const createdStatusName = payout?.payout_status?.name ?? "created";
+
+          // In v5 lifecycles, relation values in event.params.data are already
+          // transformed to { set: [...] } shapes — read the populated payout instead.
+          if (payout?.application?.id) {
+            application = await findOneById("api::grant-application-final.grant-application-final", payout.application.id, {
               populate: "*"
             });
 
             message.push(
-              `Grant Payout of $${event.params.data.amount} was ${payout.payout_status.name} for ${application.legal_entity_name} for ${grant.name}`
+              `Grant Payout of $${event.params.data.amount} was ${createdStatusName} for ${application?.legal_entity_name ?? "unknown applicant"} for ${grant?.name ?? "grant"}`
             );
-            relations.push({ id: application.id, name: "grant-application" });
+            if (application) {
+              relations.push({ id: application.id, name: "grant-application" });
+            }
           } else {
             message.push(
-              `Grant Payout of $${event.params.data.amount} was ${payout.payout_status.name} for ${grant.name} type: ${event.params.data.type}`
+              `Grant Payout of $${event.params.data.amount} was ${createdStatusName} for ${grant?.name ?? "grant"} type: ${event.params.data.type}`
             );
           }
 
@@ -377,7 +383,9 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
           // })
 
           relations.push({ id: payoutId, name: "grant-payouts" });
-          relations.push({ id: grant.id, name: "grant" });
+          if (grant) {
+            relations.push({ id: grant.id, name: "grant" });
+          }
           // relations.push({ id: pointOfContact.id, name: 'contacts' });
           break;
       }
@@ -405,8 +413,12 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
           }
 
           break;
-        case "grant-application":
-          const statusId = event.params.data.status.id;
+        case "grant-application": {
+          // Clients may send the status relation as an object ({ id }) or a raw id.
+          const rawStatus = event.params.data.status;
+          const statusId = rawStatus && typeof rawStatus === "object" ? rawStatus.id : rawStatus;
+          if (!statusId) break;
+
           const status = await findOneById("api::grant-denial-reason.grant-denial-reason", statusId, {
             populate: "*"
           });
@@ -415,29 +427,40 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
           const application = await findOneById("api::grant-application.grant-application", applicationId, {
             populate: "*"
           });
-          const grant = await findOneById("api::grant.grant", application.grant.id, {
-            populate: "*"
-          });
-          const contact = await findOneById("api::contact.contact", application.applicant.id, {
-            populate: "*"
-          });
+          if (!status || !application) break;
+
+          const grant = application.grant?.id
+            ? await findOneById("api::grant.grant", application.grant.id, {
+                populate: "*"
+              })
+            : null;
+          const contact = application.applicant?.id
+            ? await findOneById("api::contact.contact", application.applicant.id, {
+                populate: "*"
+              })
+            : null;
           message.push(
-            `Grant Application for ${grant.name} was ${
+            `Grant Application for ${grant?.name ?? "grant"} was ${
               status.name === "Approved"
                 ? "Approved"
                 : status.name === "Not Approved"
                 ? "Not Approved"
                 : `rejected ${status.name}`
-            } for ${contact.first} ${contact.last} by ${
-              application.updatedBy.firstname
-            } ${application.updatedBy.lastname}`
+            } for ${contact?.first ?? ""} ${contact?.last ?? ""} by ${
+              application.updatedBy?.firstname ?? ""
+            } ${application.updatedBy?.lastname ?? ""}`
           );
 
           relations.push({ id: applicationId, name: "grant-application" });
-          relations.push({ id: grant.id, name: "grant" });
-          relations.push({ id: contact.id, name: "contact" });
+          if (grant) {
+            relations.push({ id: grant.id, name: "grant" });
+          }
+          if (contact) {
+            relations.push({ id: contact.id, name: "contact" });
+          }
 
           break;
+        }
         // on status change of a payout make an activity for the payout and attatch it to the grant application and related entities
         case "grant-payout":
           const payoutId = event.result.id;
@@ -452,27 +475,33 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
             populate: "*"
           });
 
-          if (event.params.data.application) {
+          const updatedStatusName = payout?.payout_status?.name ?? "updated";
+
+          if (event.params.data.application && payout?.application?.id) {
 
             applicationApplied = await findOneById("api::grant-application-final.grant-application-final", payout.application.id, {
               populate: "*"
             });
             message.push(
-              `Grant Payout of $${payout.amount} was ${payout.payout_status.name} for ${applicationApplied.legal_entity_name} for ${grantApplied.name}`
+              `Grant Payout of $${payout?.amount ?? event.result.amount} was ${updatedStatusName} for ${applicationApplied?.legal_entity_name ?? "unknown applicant"} for ${grantApplied?.name ?? "grant"}`
             );
-            relations.push({
-              id: applicationApplied.id,
-              name: "grant-application",
-            });
+            if (applicationApplied) {
+              relations.push({
+                id: applicationApplied.id,
+                name: "grant-application",
+              });
+            }
           } else {
             message.push(
-              `Grant Payout of $${event.result.amount} was ${payout.payout_status.name} for ${grantApplied.name} type: ${event.result.type}`
+              `Grant Payout of $${event.result.amount} was ${updatedStatusName} for ${grantApplied?.name ?? "grant"} type: ${event.result.type}`
             );
           }
           
          
           relations.push({ id: payoutId, name: "grant-payouts" });
-          relations.push({ id: grantApplied.id, name: "grant" });
+          if (grantApplied) {
+            relations.push({ id: grantApplied.id, name: "grant" });
+          }
           // relations.push({ id: pointOfContact.id, name: 'contacts' })
           
           break;
