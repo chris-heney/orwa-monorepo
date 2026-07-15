@@ -4,28 +4,41 @@ import {
   Identifier,
   Loading,
   NumberField,
-  RaRecord,
   useGetOne,
 } from "react-admin";
+
+// balance() only needs award_amount + payouts, so populate just that relation
+// instead of `populate=*` (~150KB/response); the full populate was overloading
+// Strapi 5 when dashboards fanned out hundreds of these calls in parallel.
+const BALANCE_META = { raw: true, populate: { payouts: true } };
+
+/**
+ * Compute the remaining balance from a record that already has `payouts`
+ * populated (e.g. from a getList with populate). Prefer this over `balance()`
+ * whenever the data is already loaded — it avoids a network round-trip.
+ */
+export const computeBalance = (application: {
+  award_amount?: number;
+  payouts?: { amount?: number }[];
+}) => {
+  const totalPaid = (application.payouts ?? []).reduce(
+    (acc: number, payout) => acc + (payout.amount || 0),
+    0
+  );
+  const payoutBalance = (application.award_amount ?? 0) - totalPaid;
+
+  return isNaN(payoutBalance) ? 0 : payoutBalance;
+};
 
 const BalanceField = ({ applicationId }: { applicationId: Identifier }) => {
   const { data: application, isLoading } = useGetOne(
     "grant-application-finals",
-    { id: applicationId, meta: { raw: true, populate: true } }
+    { id: applicationId, meta: BALANCE_META }
   );
 
   if (isLoading) return <Loading />;
 
-  const totalPaid = application.payouts.reduce(
-    (acc: number, payout: RaRecord) => acc + payout.amount,
-    0
-  );
-  let payoutBalance = application.award_amount - totalPaid;
-
-  // Check if payoutBalance is NaN, then set it to 0
-  if (isNaN(payoutBalance)) {
-    payoutBalance = 0;
-  }
+  const payoutBalance = computeBalance(application);
 
   return (
     <NumberField
@@ -46,19 +59,8 @@ export const balance = async (
 ) => {
   const { data: application } = await dataProvider.getOne(
     "grant-application-finals",
-    { id: applicationId, meta: { raw: true, populate: true } }
+    { id: applicationId, meta: BALANCE_META }
   );
 
-  const totalPaid = application.payouts.reduce(
-    (acc: number, payout: RaRecord) => acc + payout.amount,
-    0
-  );
-  let payoutBalance = application.award_amount - totalPaid;
-
-  // Check if payoutBalance is NaN, then set it to 0
-  if (isNaN(payoutBalance)) {
-    payoutBalance = 0;
-  }
-
-  return payoutBalance;
+  return computeBalance(application);
 };

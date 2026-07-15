@@ -19,7 +19,7 @@ import {
 import { CurrencyOptions } from "../../../config/Settings";
 import GrantApplicationCreateForm from "./CreateGrantApplication";
 import ModalDenialReason from "./components/ModalDenialReason";
-import BalanceField, { balance } from "../payouts/components/BalanceField";
+import BalanceField, { computeBalance } from "../payouts/components/BalanceField";
 import { getGrantStatus } from "../../emails-magement/Helper";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
@@ -84,16 +84,11 @@ const GrantApplicationList = () => {
   const checkAndUpdateRecords = async (records: RaRecord[]) => {
     const statusId = await getGrantStatus(dataProvider, "Paid in Full");
 
-    const filteredRecords = await Promise.all(
-      records.map(async (record) => {
-        const appBalance = await balance(dataProvider, record.id);
-        return { record, appBalance };
-      })
+    // Records arrive raw with payouts populated, so balances are computed
+    // locally instead of one getOne request per application.
+    const zeroBalances = records.filter(
+      (record) => computeBalance(record as any) === 0
     );
-
-    const zeroBalances = filteredRecords
-      .filter(({ appBalance }) => appBalance === 0)
-      .map(({ record }) => record);
 
     zeroBalances.map(async (record) => {
       if (record.payouts.length === 0) return;
@@ -125,6 +120,7 @@ const GrantApplicationList = () => {
         pagination: { page: 1, perPage: 1000 },
         sort: { field: "id", order: "ASC" },
         filter: { status: ids },
+        meta: { raw: true },
       });
       if (data.length === 0) return;
       checkAndUpdateRecords(data);

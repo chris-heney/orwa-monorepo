@@ -1,11 +1,6 @@
 import React, { useMemo } from "react";
 import { Box, Grid } from "@mui/material";
-import {
-  Loading,
-  useDataProvider,
-  useGetList,
-  useRecordContext,
-} from "react-admin";
+import { Loading, useGetList, useRecordContext } from "react-admin";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -17,7 +12,7 @@ import ApplicationStatusSummary from "./ApplicationStatusSummary";
 import WidgetFundAllocation from "./WidgetFundAllocation";
 import FinancialBreakdown from "./FinancialBreakdown";
 import FilterExplanationModal from "./FinancialsDateExplination";
-import { balance } from "../../payouts/components/BalanceField";
+import { computeBalance } from "../../payouts/components/BalanceField";
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -32,7 +27,6 @@ const GrantSummary = () => {
   const [payouts, setPayouts] = React.useState<IGrantPayout[] | null>(null);
   const grant = useRecordContext<IGrant>();
   const [isModalOpen, setIsModalOpen] = React.useState(false); // State for modal
-  const dataProvider = useDataProvider();
   const [leftoverFunds, setLeftoverFunds] = React.useState(0);
   const [fY1LeftoverFunds, setFY1LeftoverFunds] = React.useState(0);
   const [fy1AdminFundsRemaining, setFY1AdminFundsRemaining] = React.useState(0);
@@ -65,7 +59,7 @@ const GrantSummary = () => {
   );
 
   React.useEffect(() => {
-    const updateApplicationsWithBalance = async () => {
+    const updateApplicationsWithBalance = () => {
       if (!applicationsData) return;
 
       // Normalize from and to dates to UTC
@@ -100,11 +94,12 @@ const GrantSummary = () => {
         }
       );
 
-      // Fetch balances in parallel and attach them to applications
-      const applicationsWithBalance = await Promise.all(
-        filteredApplications.map(async (application) => {
-          const balanceAmount = await balance(dataProvider, application.id);
-          return { ...application, balance: balanceAmount };
+      // The list query already populates payouts, so balances can be computed
+      // locally — no per-application getOne round-trips.
+      const applicationsWithBalance = filteredApplications.map(
+        (application) => ({
+          ...application,
+          balance: computeBalance(application),
         })
       );
 
@@ -112,14 +107,7 @@ const GrantSummary = () => {
     };
 
     updateApplicationsWithBalance();
-  }, [
-    applicationsData,
-    to,
-    from,
-    fiscalYearStart,
-    fiscalYearEnd,
-    dataProvider,
-  ]);
+  }, [applicationsData, to, from, fiscalYearStart, fiscalYearEnd]);
 
   React.useEffect(() => {
     if ((from && to) || (fiscalYearStart && fiscalYearEnd)) {
@@ -234,7 +222,8 @@ const GrantSummary = () => {
   );
 
   React.useEffect(() => {
-    const calculateLeftoverFunds = async () => {
+    const calculateLeftoverFunds = () => {
+      if (!grant) return;
       if (!previousFiscalYearApplications) return;
       if (!fY1Applications) return;
       if (!fy1AdminPayouts) return;
@@ -245,13 +234,11 @@ const GrantSummary = () => {
       let total3 = 0;
       let total4 = 0;
       for (const application of previousFiscalYearApplications) {
-        const balanceAmount = await balance(dataProvider, application.id);
-        total += balanceAmount || 0;
+        total += computeBalance(application) || 0;
       }
 
       for (const application of fY1Applications) {
-        const balanceAmount = await balance(dataProvider, application.id);
-        total2 += balanceAmount || 0;
+        total2 += computeBalance(application) || 0;
       }
 
       for (const payout of fy1AdminPayouts) {
@@ -270,7 +257,17 @@ const GrantSummary = () => {
     };
 
     calculateLeftoverFunds();
-  }, [to, from, fiscalYearStart, fiscalYearEnd]);
+  }, [
+    to,
+    from,
+    fiscalYearStart,
+    fiscalYearEnd,
+    previousFiscalYearApplications,
+    fY1Applications,
+    fy1AdminPayouts,
+    fy2AdminPayouts,
+    grant?.admin_amount,
+  ]);
 
   return payoutsLoading ||
     applicationLoading ||
