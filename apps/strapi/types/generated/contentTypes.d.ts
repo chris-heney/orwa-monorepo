@@ -699,6 +699,7 @@ export interface ApiAssociateAssociate extends Struct.CollectionTypeSchema {
         'Control Valve Sales and Service',
         'Damage Prevention',
         'Distributor',
+        'Drone Cleaning',
         'Electric Motor and Pump Repair',
         'Electronic Fusion',
         'Engineer',
