@@ -62,30 +62,36 @@ const authProvider: AuthProvider = {
       }
   
       const userData = await authResponse.json();  
-      // 🔹 Step 2: Fetch user details
-      const userMetaResponse = await fetch(`${apiEndpoint}/api/users/me?populate=role`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${userData.jwt}`,
-        },
-      });
-  
-      if (!userMetaResponse.ok) {
-        const errorData = await userMetaResponse.json();
-        throw new Error(errorData?.message || "Failed to fetch user metadata");
-      }
-  
-      const userMeta = await userMetaResponse.json();
-      const userWithRole = getRoleName(userMeta)
-        ? userMeta
-        : await fetchUserWithRole(apiEndpoint, userData.user.id, userData.jwt)
-      const roleName = getRoleName(userWithRole)
+      // 🔹 Step 2: Resolve the user's role. Credentials are already verified,
+      // so a failure here must never block the login — fall back through
+      // /users/me -> /users/:id -> the auth response -> least-privilege Guest.
+      let userWithRole = userData.user;
+      try {
+        const userMetaResponse = await fetch(`${apiEndpoint}/api/users/me?populate=role`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userData.jwt}`,
+          },
+        });
 
-      if (!roleName) {
-        throw new Error("This user does not have a role assigned. Please assign a role before logging in.")
+        if (userMetaResponse.ok) {
+          const userMeta = await userMetaResponse.json();
+          if (getRoleName(userMeta)) {
+            userWithRole = userMeta;
+          }
+        }
+
+        if (!getRoleName(userWithRole)) {
+          userWithRole = await fetchUserWithRole(apiEndpoint, userData.user.id, userData.jwt);
+        }
+      } catch (metaError) {
+        console.error("Could not fetch user role; continuing login with fallback role.", metaError);
+        userWithRole = userData.user;
       }
-  
+
+      const roleName = getRoleName(userWithRole) ?? 'Guest';
+
       // 🔹 Step 3: Store user session data
       Cookies.setCookie('token', userData.jwt, 1);
       Cookies.setCookie('role', roleName, 1);
