@@ -10,11 +10,16 @@ const ConferenceForm = () => {
   const { setValue } = useFormContext();
 
   useEffect(() => {
-    if (record) {
-      setValue(
-        "conference_details",
-        record.conference_details ? record.conference_details : []
-      );
+    if (!record) return;
+
+    // Strapi 5 can return null for empty repeatable components; RHF needs real arrays.
+    for (const field of [
+      "conference_details",
+      "attendee_information",
+      "vendor_information",
+    ] as const) {
+      const value = record[field];
+      setValue(field, Array.isArray(value) ? value : []);
     }
   }, [record, setValue]);
 

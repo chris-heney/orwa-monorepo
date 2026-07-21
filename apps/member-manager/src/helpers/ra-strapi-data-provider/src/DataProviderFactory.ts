@@ -899,7 +899,12 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       },
 
       update: async (resource, params) => {
-        const url = `${this.endpoint}/${resource}/${params.id}`;
+        // Strapi 5 omits relation/media fields from write responses unless the
+        // write itself requests populate. react-admin merges this response into
+        // the cached record and resets the form from it, so a bare response
+        // makes relation inputs revert to their pre-save values (and a
+        // follow-up save then wipes them). populate=* restores v4 behavior.
+        const url = `${this.endpoint}/${resource}/${params.id}?populate=*`;
         const requestKey = `update:${resource}:${params.id}`;
 
         // Invalidate cache for this resource
@@ -956,7 +961,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       },
 
       create: async (resource, params) => {
-        const url = `${this.endpoint}/${resource}`;
+        // populate=* for the same reason as update(): Strapi 5 write responses
+        // omit relations unless populated, which breaks post-create hydration.
+        const url = `${this.endpoint}/${resource}?populate=*`;
         const requestKey = `create:${resource}`;
         
         // Invalidate cache for this resource
