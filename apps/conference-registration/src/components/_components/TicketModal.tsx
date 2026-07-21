@@ -9,7 +9,7 @@ import {
 } from "mj-react-form-builder";
 import { Checkbox, FormControlLabel, RadioGroup, Radio } from "@mui/material";
 import CustomSecondaryHeader from "./CustomSecondaryHeader";
-import currencyFormatter from "../../helpers/currencyFormat";
+import { formatCurrency } from "../../helpers/currencyFormat";
 import { useFormContext, useFieldArray, useWatch } from "react-hook-form";
 import {
   useRegistrationOptions,
@@ -19,6 +19,8 @@ import {
 } from "../../AppContextProvider";
 import { IExtraOption, ITicketOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
+import { getExtraData } from "../../helpers/getExtraData";
+import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
 
 interface ITicketModalProps {
   setIsOpen: React.Dispatch<
@@ -116,15 +118,15 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     }
 
     const extrasPrice = (ticket.extras || [])
-      .map((extraId: string) =>
-        ExtraOptions.find((extra) => extra.id === extraId)
-      )
-      .filter((extra: number) => extra) // Ensure the extra exists
+      .map((extraId: string | number) => getExtraData(ExtraOptions, extraId))
+      .filter((extra: IExtraOption | undefined): extra is IExtraOption => !!extra)
       .filter((extra: IExtraOption) => {
         // Check if the extra is included
-        return !extra?.included.some(
+        const included = extra.included;
+        if (!Array.isArray(included)) return true;
+        return !included.some(
           (includedTicket: ITicketOption) =>
-            includedTicket.id === ticket.ticket_type?.id
+            String(includedTicket.id) === String(ticket.ticket_type?.id)
         );
       })
       .reduce(
@@ -143,8 +145,10 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     const ticketType = TicketOptions.find((t) => t.name === value) || null;
 
     const includedExtras = ExtraOptions.filter((extra) => {
-      return extra.included.find((includedTicket: ITicketOption) => {
-        return includedTicket.id === ticketType?.id;
+      const included = extra.included;
+      if (!Array.isArray(included)) return false;
+      return included.find((includedTicket: ITicketOption) => {
+        return String(includedTicket.id) === String(ticketType?.id);
       });
     }).map((extra) => extra.id); // Only store the IDs
 
@@ -284,7 +288,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
               source={`tickets[${ticketIndex}].ticket_type.name`}
               label="Ticket Type"
               options={TicketOptions.filter((ticket) => {
-                return ticket.context === type || isAdminView;
+                return ticketMatchesContext(ticket, type) || isAdminView;
               }).map((t) => ({
                 value: t.name,
                 label: t.name,
@@ -382,7 +386,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
         <div className="border-t p-4 bg-gray-100 rounded-b-xl flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
           {calculateSubtotal() > 0 && (
             <p className="text-lg font-semibold text-gray-800 text-center sm:text-left">
-              Subtotal: {currencyFormatter.format(calculateSubtotal())}
+              Subtotal: {formatCurrency(calculateSubtotal())}
             </p>
           )}
           <div className="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-4">

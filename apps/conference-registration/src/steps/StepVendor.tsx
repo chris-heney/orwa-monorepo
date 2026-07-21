@@ -13,6 +13,7 @@ import {
 } from "../AppContextProvider";
 import { ITicketPayload } from "../types/types";
 import SelectPreviousRegistration from "../components/_components/SelectPreviousRegistration";
+import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 
 const StepVendors = () => {
   const { watch } = useFormContext();
@@ -33,7 +34,11 @@ const StepVendors = () => {
   useEffect(() => {
     const ticketPrice = watch("tickets")
       .filter((ticket: ITicketPayload) => {
-        return ticket.ticket_type && ticket.ticket_type.context === "Vendor";
+        return (
+          ticket.ticket_type &&
+          (ticketMatchesContext(ticket.ticket_type, "Vendor") ||
+            ticket.type === "Vendor")
+        );
       })
       ?.reduce((acc: number, ticket: ITicketPayload) => acc + ticket.price, 0);
     setSubtotal(ticketPrice || 0);

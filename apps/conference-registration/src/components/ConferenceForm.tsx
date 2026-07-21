@@ -16,6 +16,7 @@ import { Form, NotifyProvider } from "mj-react-form-builder";
 import { defaultPayload } from "../types/types";
 import Loading from "./Loading";
 import EntryListSidebar from "../entries/EntryListSidebar";
+import { sanitizeRegistrationExtras } from "../helpers/sanitizeRegistrationExtras";
 
 const ConferenceForm = () => {
   const { steps, setStepIndex, stepIndex } = useStepContext();
@@ -23,7 +24,8 @@ const ConferenceForm = () => {
     useExtraDetails();
   const registrationSource = useRegistrationSource();
   const conferenceId = useContext(ConferenceId);
-  const { isLoading, ConferenceOptions } = useRegistrationOptions();
+  const { isLoading, ConferenceOptions, ExtraOptions } =
+    useRegistrationOptions();
   const { isAdminView, isLoggedIn } = useUserContext();
   const { submitted } = useFormSubmitted();
   const { entryPayload } = useEntryPayload();
@@ -32,6 +34,13 @@ const ConferenceForm = () => {
   if (isLoading) {
     return <Loading />;
   }
+
+  const formDefaults = entryPayload
+    ? sanitizeRegistrationExtras(
+        { ...entryPayload, conference: conferenceId ?? entryPayload.conference },
+        ExtraOptions
+      )
+    : { ...defaultPayload, conference: conferenceId };
 
   return ConferenceOptions.status === "Online Registration" ||
     (ConferenceOptions.status === "Kiosk Registration" &&
@@ -47,9 +56,7 @@ const ConferenceForm = () => {
         {/* Active Step */}
         <section className="min-h-96">
           <Form
-            defaultValues={
-              entryPayload ?? { ...defaultPayload, conference: conferenceId }
-            }
+            defaultValues={formDefaults}
           >
             <div className="gap-4 grid grid-cols-12 align-middle p-5">
               <div

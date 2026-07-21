@@ -2,7 +2,7 @@ import { Checkbox, IconButton, TextField, Typography, Radio, RadioGroup, FormCon
 import InfoIcon from "@mui/icons-material/Info";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import currencyFormatter from "../helpers/currencyFormat";
+import { formatCurrency } from "../helpers/currencyFormat";
 import { ITicketOption, IExtraOption } from "../types/types";
 import {
   useExtraDetails,
@@ -130,16 +130,25 @@ const AddExtras = ({
     return isSelected ? 'yes' : 'no';
   };
 
-  return ExtraOptions.filter((extra) => {
-    const isExcluded = extra.excluded.some(
-      (excludedTicket: ITicketOption) => {
-        return (
-          excludedTicket.id === ticket?.ticket_type?.id && context !== "Booth"
-        );
-      }
-    );
+  const extraMatchesContext = (extra: IExtraOption) => {
+    if (extra.context === context) return true;
+    // Strapi has "Contestants" (plural) on Mulligan; UI context is "Contestant"
+    if (context === "Contestant" && extra.context === "Contestants") return true;
+    return false;
+  };
 
-    return (!isExcluded && extra.context === context)
+  return ExtraOptions.filter((extra) => {
+    const excluded = extra.excluded;
+    const isExcluded = Array.isArray(excluded)
+      ? excluded.some((excludedTicket: ITicketOption) => {
+          return (
+            String(excludedTicket.id) === String(ticket?.ticket_type?.id) &&
+            context !== "Booth"
+          );
+        })
+      : false;
+
+    return !isExcluded && extraMatchesContext(extra);
   }).length > 0 ? (
     <div className="border-t pt-3">
       <h3 className="font-semibold text-gray-800 text-lg">Extras</h3>
@@ -148,19 +157,21 @@ const AddExtras = ({
           if (!a.order || !b.order) return 0;
           return a.order - b.order;
         }).filter((extra) => {
-          const isExcluded = extra.excluded.some(
-            (excludedTicket: ITicketOption) => {
-              return (
-                excludedTicket.id === ticket?.ticket_type?.id &&
-                context !== "Booth"
-              );
-            }
-          );
+          const excluded = extra.excluded;
+          const isExcluded = Array.isArray(excluded)
+            ? excluded.some((excludedTicket: ITicketOption) => {
+                return (
+                  String(excludedTicket.id) ===
+                    String(ticket?.ticket_type?.id) && context !== "Booth"
+                );
+              })
+            : false;
 
-          return !isExcluded && extra.context === context
-
+          return !isExcluded && extraMatchesContext(extra);
         }).filter((extra) => {
-          return registrationSource === "kiosk" ? extra.price_event > 0 : true
+          return registrationSource === "kiosk"
+            ? (extra.price_event ?? 0) > 0
+            : true;
         }).map((extra) => {
           const currentQuantity =
             ticket?.extras?.filter((id: string) => id === extra.id).length || 0;
@@ -229,15 +240,18 @@ const AddExtras = ({
                     />
                   )}
                 </div>
-                {(extra.price_event > 0 || extra.price_online > 0) && <span className="text-gray-700 font-medium">
-                  {isExtraIncluded(ticket, ExtraOptions, extra.id)
-                    ? "Included"
-                    : currencyFormatter.format(
-                        registrationSource === "online"
-                          ? extra.price_online
-                          : extra.price_event
-                      )}
-                </span>}
+                {((extra.price_event ?? 0) > 0 ||
+                  (extra.price_online ?? 0) > 0) && (
+                  <span className="text-gray-700 font-medium">
+                    {isExtraIncluded(ticket, ExtraOptions, extra.id)
+                      ? "Included"
+                      : formatCurrency(
+                          registrationSource === "online"
+                            ? extra.price_online
+                            : extra.price_event
+                        )}
+                  </span>
+                )}
               </div>
               {extra.max_qty_each > 1 && (!useYesNo || isExtraSelected(extra.id) === 'yes') && (
                 <div className="flex items-center mt-2">

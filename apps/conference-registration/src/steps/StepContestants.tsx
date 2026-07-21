@@ -8,6 +8,7 @@ import { FormSection, TextInput } from "mj-react-form-builder";
 import AddTicketComponent from "../components/_components/AddTicket";
 import TicketModal from "../components/_components/TicketModal";
 import AddExtras from "../components/AddExtras";
+import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 
 const StepContestants = () => {
   const { getValues, watch } = useFormContext();
@@ -26,7 +27,9 @@ const StepContestants = () => {
     const ticketPrice = watch("tickets")
       .filter((ticket: ITicketPayload) => {
         return (
-          ticket.ticket_type && ticket.ticket_type.context === "Contestant"
+          ticket.ticket_type &&
+          (ticketMatchesContext(ticket.ticket_type, "Contestant") ||
+            ticket.type === "Contestant")
         );
       })
       ?.reduce((acc: number, ticket: ITicketPayload) => acc + ticket.price, 0);

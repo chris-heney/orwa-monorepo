@@ -7,6 +7,7 @@ import { RegistrationOptions, useTicketIndex } from "../AppContextProvider";
 import currencyFormatter from "../helpers/currencyFormat";
 import TicketModal from "../components/_components/TicketModal";
 import { ITicketPayload } from "../types/types";
+import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 
 const StepAttendees = () => {
   const { ticketIndex } = useTicketIndex();
@@ -23,7 +24,11 @@ const StepAttendees = () => {
   useEffect(() => {
     const ticketPrice = watch("tickets")
       .filter((ticket: ITicketPayload) => {
-        return ticket.ticket_type && ticket.ticket_type.context === "Attendee";
+        return (
+          ticket.ticket_type &&
+          (ticketMatchesContext(ticket.ticket_type, "Attendee") ||
+            ticket.type === "Attendee")
+        );
       })
       ?.reduce((acc: number, ticket: ITicketPayload) => acc + ticket.price, 0);
     setSubtotal(ticketPrice || 0);

@@ -1,6 +1,7 @@
 // Goal: check all tickets opptions for their context if only one ticket is available return that ticket else return an empty array
 
 import { IExtraOption, ITicketOption, ticketType } from "../types/types";
+import { ticketMatchesContext } from "./ticketMatchesContext";
 
 export const fetchSingleTicket = (
   ticketOptions: ITicketOption[],
@@ -15,12 +16,14 @@ export const fetchSingleTicket = (
     };
 
   const filteredTickets = ticketOptions.filter((ticket: ITicketOption) => {
-    return ticket.context === context;
+    return ticketMatchesContext(ticket, context);
   });
 
   const includedExtras = extraOptions.filter((extra) => {
-    return extra.included.find((includedTicket: ITicketOption) => {
-      return includedTicket.id === filteredTickets[0]?.id;
+    const included = extra.included;
+    if (!Array.isArray(included)) return false;
+    return included.find((includedTicket: ITicketOption) => {
+      return String(includedTicket.id) === String(filteredTickets[0]?.id);
     });
   });
 

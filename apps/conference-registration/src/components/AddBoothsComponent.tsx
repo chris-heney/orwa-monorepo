@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
-import currencyFormatter from "../helpers/currencyFormat";
+import { formatCurrency } from "../helpers/currencyFormat";
 import {
   useBoothIndex,
   useRegistrationOptions,
@@ -73,7 +73,7 @@ const AddBoothsComponent = ({
                   (Edit)
                 </button>
                 <span className="ml-auto">
-                  {currencyFormatter.format(
+                  {formatCurrency(
                     boothIndex === 0
                       ? ConferenceOptions.booth_price
                       : ConferenceOptions.booth_price_2
@@ -93,9 +93,11 @@ const AddBoothsComponent = ({
                   >
                     <span>{currentExtra.name}</span>
                     <span>
-                      {registrationSource === "online"
-                        ? currencyFormatter.format(currentExtra.price_online)
-                        : currencyFormatter.format(currentExtra.price_event)}
+                      {formatCurrency(
+                        registrationSource === "online"
+                          ? currentExtra.price_online
+                          : currentExtra.price_event
+                      )}
                     </span>
                   </li>
                 )})}

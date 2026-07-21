@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
-import currencyFormatter from "../../helpers/currencyFormat";
+import { formatCurrency } from "../../helpers/currencyFormat";
 import {
   useRegistrationOptions,
   useRegistrationSource,
@@ -100,7 +100,7 @@ const AddTicketComponent = ({
                       (Edit)
                     </button>
                     <span className="ml-auto">
-                      {currencyFormatter.format(ticket.price)}
+                      {formatCurrency(ticket.price)}
                     </span>
                   </div>
                   <ul className="border-t-2 border-slate-300">
@@ -110,7 +110,7 @@ const AddTicketComponent = ({
                         {ticket.ticket_type?.name === "Vendor" &&
                         ticketIndex + 1 <= freeVendors()
                           ? "Included"
-                          : currencyFormatter.format(
+                          : formatCurrency(
                               registrationSource === "online"
                                 ? ticket.ticket_type?.price_online
                                 : ticket.ticket_type?.price_event
@@ -119,6 +119,9 @@ const AddTicketComponent = ({
                     </li>
                     {ticket.extras?.map((extra: any, extraIndex: number) => {
                       const currentExtra = getExtraData(ExtraOptions, extra);
+                      // Orphan extras from another conference (e.g. resubmit)
+                      // previously rendered as "$NaN" — skip them instead.
+                      if (!currentExtra) return null;
 
                       return (
                         <li
@@ -127,20 +130,18 @@ const AddTicketComponent = ({
                             extraIndex % 2 !== 0 ? "bg-white" : "bg-gray-200"
                           }`}
                         >
-                          <span>{currentExtra?.name}</span>
+                          <span>{currentExtra.name}</span>
                           <span>
                             {isExtraIncluded(
                               ticket,
                               ExtraOptions,
-                              currentExtra?.id
+                              currentExtra.id
                             )
                               ? "Included"
-                              : registrationSource === "online"
-                              ? currencyFormatter.format(
-                                  currentExtra?.price_online as number
-                                )
-                              : currencyFormatter.format(
-                                  currentExtra?.price_event as number
+                              : formatCurrency(
+                                  registrationSource === "online"
+                                    ? currentExtra.price_online
+                                    : currentExtra.price_event
                                 )}
                           </span>
                         </li>
