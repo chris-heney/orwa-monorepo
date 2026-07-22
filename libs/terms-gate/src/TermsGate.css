@@ -1,0 +1,132 @@
+.orwa-terms-gate-root {
+  position: relative;
+  min-height: 100%;
+}
+
+.orwa-terms-gate-children--locked {
+  pointer-events: none;
+  user-select: none;
+}
+
+.orwa-terms-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.orwa-terms-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: min(85vh, 900px);
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  font-family: Georgia, 'Times New Roman', Times, serif;
+  color: #1a1a1a;
+}
+
+.orwa-terms-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.35rem 0.85rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.orwa-terms-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.orwa-terms-progress {
+  flex-shrink: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.orwa-terms-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 1.25rem 1.35rem;
+  line-height: 1.55;
+  font-size: 0.98rem;
+}
+
+.orwa-terms-body h1,
+.orwa-terms-body h2,
+.orwa-terms-body h3 {
+  margin-top: 1.1em;
+  margin-bottom: 0.4em;
+}
+
+.orwa-terms-body p {
+  margin: 0 0 0.85em;
+}
+
+.orwa-terms-body ul,
+.orwa-terms-body ol {
+  margin: 0 0 0.85em 1.25em;
+}
+
+.orwa-terms-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 0.9rem 1.35rem;
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+}
+
+.orwa-terms-agree {
+  appearance: none;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.25rem;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 650;
+  cursor: pointer;
+  background: #94a3b8;
+  color: #fff;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.orwa-terms-agree:disabled {
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.orwa-terms-agree:not(:disabled) {
+  background: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25);
+}
+
+.orwa-terms-agree:not(:disabled):hover {
+  background: #1e40af;
+  transform: translateY(-1px);
+}
+
+.orwa-terms-status {
+  padding: 2rem;
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: #334155;
+}
+
+.orwa-terms-status--error {
+  color: #b91c1c;
+}
