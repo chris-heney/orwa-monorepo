@@ -79,6 +79,10 @@
       "type": "boolean",
       "default": false
     },
+    "accepted_terms": {
+      "type": "json",
+      "default": []
+    },
     "registration_source": {
       "type": "enumeration",
       "enum": [

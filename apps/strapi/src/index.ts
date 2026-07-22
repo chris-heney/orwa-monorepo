@@ -1,3 +1,57 @@
+const TERM_PUBLIC_ACTIONS = [
+  'api::term.term.find',
+  'api::term.term.findOne',
+];
+
+const TERM_AUTHENTICATED_ACTIONS = [
+  ...TERM_PUBLIC_ACTIONS,
+  'api::term.term.create',
+  'api::term.term.update',
+  'api::term.term.delete',
+];
+
+const ensureRolePermissions = async (strapi, roleWhere, actions) => {
+  const roleQuery = strapi.db.query('plugin::users-permissions.role');
+  const permissionQuery = strapi.db.query('plugin::users-permissions.permission');
+  const role = await roleQuery.findOne({ where: roleWhere });
+  if (!role) {
+    return;
+  }
+
+  const existingPermissions = await permissionQuery.findMany({
+    where: { role: { id: role.id } },
+  });
+  const existingActions = new Set(existingPermissions.map((p) => p.action));
+
+  await Promise.all(
+    actions
+      .filter((action) => !existingActions.has(action))
+      .map((action) =>
+        permissionQuery.create({
+          data: {
+            action,
+            role: role.id,
+          },
+        })
+      )
+  );
+};
+
+const configureTermPermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(strapi, { type: 'public' }, TERM_PUBLIC_ACTIONS);
+    await ensureRolePermissions(
+      strapi,
+      { type: 'authenticated' },
+      TERM_AUTHENTICATED_ACTIONS
+    );
+    // Custom Admin role used by member-manager
+    await ensureRolePermissions(strapi, { type: 'admin' }, TERM_AUTHENTICATED_ACTIONS);
+  } catch (error) {
+    strapi.log.warn(`Unable to configure Term permissions: ${error.message}`);
+  }
+};
+
 const STAFF_ROLE_TYPE = 'staff';
 const STAFF_ALLOWED_ACTIONS = [
   'api::associate.associate.find',
@@ -109,5 +163,6 @@ export default {
    */
   async bootstrap({ strapi }) {
     await configureStaffRole(strapi);
+    await configureTermPermissions(strapi);
   },
 };

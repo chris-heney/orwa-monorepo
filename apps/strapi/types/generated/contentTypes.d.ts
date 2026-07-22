@@ -1141,6 +1141,7 @@ export interface ApiConferenceRegistrationConferenceRegistration
     draftAndPublish: false;
   };
   attributes: {
+    accepted_terms: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
     address: Schema.Attribute.Component<'simple.address', false>;
     attendees: Schema.Attribute.Relation<
       'oneToMany',
@@ -3699,6 +3700,37 @@ export interface ApiTasteTestContestantTasteTestContestant
   };
 }
 
+export interface ApiTermTerm extends Struct.CollectionTypeSchema {
+  collectionName: 'terms';
+  info: {
+    description: 'Scroll-to-agree legal terms documents, scoped by identifier tags';
+    displayName: 'Term';
+    pluralName: 'terms';
+    singularName: 'term';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    content: Schema.Attribute.RichText & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    identifiers: Schema.Attribute.JSON &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<[]>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<'oneToMany', 'api::term.term'> &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    slug: Schema.Attribute.UID<'title'> & Schema.Attribute.Required;
+    title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiTrainingEventLogTrainingEventLog
   extends Struct.CollectionTypeSchema {
   collectionName: 'training_event_logs';
@@ -5152,6 +5184,7 @@ declare module '@strapi/strapi' {
       'api::sw-request.sw-request': ApiSwRequestSwRequest;
       'api::sw.sw': ApiSwSw;
       'api::taste-test-contestant.taste-test-contestant': ApiTasteTestContestantTasteTestContestant;
+      'api::term.term': ApiTermTerm;
       'api::training-event-log.training-event-log': ApiTrainingEventLogTrainingEventLog;
       'api::training-event-registration.training-event-registration': ApiTrainingEventRegistrationTrainingEventRegistration;
       'api::training-event.training-event': ApiTrainingEventTrainingEvent;

@@ -49,6 +49,7 @@ export default ({ strapi }) => {
           adminOptions,
           secondary_email,
           vendor_participation_acknowledgement,
+          accepted_terms,
         } = ctx.request.body;
 
         // Get conference data
@@ -177,6 +178,7 @@ export default ({ strapi }) => {
               non_member_fee: nonMemberFee ? true : false,
               vendor_participation_acknowledgement:
                 vendor_participation_acknowledgement ? true : false,
+              accepted_terms: Array.isArray(accepted_terms) ? accepted_terms : [],
               items: items,
               registration_source: registrationSource ?? "online",
             }),
