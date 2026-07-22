@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { SubmitHandler, FieldValues } from 'react-hook-form'
+import { getAcceptedTerms } from '@orwa/terms-gate'
 import { EmailPayload, IRegistrationPayload } from '../types/types'
 
 
@@ -30,9 +31,15 @@ const _get = async (resource: string, query = '', method = 'GET') => {
 }
 
 const _postRegistration = async (resource: string, data: IRegistrationPayload) => {
+  const payload: IRegistrationPayload = {
+    ...data,
+    accepted_terms: data.accepted_terms?.length
+      ? data.accepted_terms
+      : getAcceptedTerms(),
+  }
   return fetch(`${API_ENDPOINT}/${resource}`, {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
