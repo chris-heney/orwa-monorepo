@@ -30,7 +30,7 @@ import {
 } from 'react-admin'
 import { Box } from '@mui/material'
 import DashboardAppBar from '../modules/dashboard/_components/DashboardBar'
-import { Email } from '@mui/icons-material'
+import { Email, Gavel } from '@mui/icons-material'
 import useCurrentUser from '../modules/_helpers/useCurrentUser'
 
 const STAFF_HOME = '/membership-management'
@@ -154,6 +154,13 @@ const MyMenu = () => {
         label="Conference Manager"
         title="Conference Manager"
         icon={<EventsIcon />}
+      />
+      <MultiLevelMenu.Item
+        name="terms"
+        to="/terms"
+        label="Terms Manager"
+        title="Terms Manager"
+        icon={<Gavel />}
       />
       <MultiLevelMenu.Item
         name="grant-dashboard"

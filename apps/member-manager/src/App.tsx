@@ -33,6 +33,7 @@ import {
   Attendees,
   EmailsTemplates,
   EmailTasks,
+  Terms,
 } from "./modules";
 import {
   AdminDashboard,
@@ -196,6 +197,7 @@ export const App = () => {
           {/* EMAILS */}
           <Resource name="email-templates" {...EmailsTemplates} />
           <Resource name="scheduled-email-tasks" {...EmailTasks} />
+          <Resource name="terms" {...Terms} />
 
           {/* --- MUI Pages--- */}
           <CustomRoutes>

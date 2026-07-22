@@ -9,23 +9,22 @@ import {
   AutocompleteArrayInput,
   ImageInput,
   ImageField,
-  useRecordContext,
 } from 'react-admin'
 import { Card, Divider, Grid, Typography } from '@mui/material'
 import AssetValidate from '../AssetValidate'
 import { AssetCategoryOptions, AssetLocationOptions, OrganizationType } from '../../../helpers/Data'
-import CustomHeader from '../../_components/CustomHeader'
+import CustomFormHeader from '../../_components/CustomFormHeader'
 import { StaffAutocompleteInput } from '../../_components/autocompletes/StaffAutocomplete'
 
 
 const AssetListForm = () => {
-
-  const asset = useRecordContext()
-  const title = asset ? `${asset.name}` : 'New Asset'
-
   return (
     <SimpleForm validate={AssetValidate} sx={{p: 0}}>
-      <CustomHeader title={title} />
+      <CustomFormHeader
+        redirectTo="/assets"
+        displayField="name"
+        hasShow={true}
+      />
       <Grid container alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}> 
         <Grid item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
           <Card sx={{ p: 2, my: 2, mx: 1 }}>

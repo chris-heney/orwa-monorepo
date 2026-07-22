@@ -1,3 +1,4 @@
+import path from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -7,6 +8,11 @@ export default defineConfig({
     // Add this to improve Fast Refresh reliability
     fastRefresh: true,
   })],
+  resolve: {
+    alias: {
+      '@orwa/terms-gate': path.resolve(__dirname, '../../libs/terms-gate/src/index.ts'),
+    },
+  },
   define: {
     'process.env': process.env,
   },

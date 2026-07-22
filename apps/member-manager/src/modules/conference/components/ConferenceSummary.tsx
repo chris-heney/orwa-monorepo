@@ -197,7 +197,20 @@ const ConferenceSummary = () => {
                   <DateStatusWidget
                     WidgetIcon={
                       metric.icon
-                        ? () => <img height={31} src={metric.icon} alt={metric.name} />
+                        ? () => (
+                            <img
+                              height={31}
+                              src={metric.icon}
+                              alt={metric.name}
+                              // Uploaded meal icons are black SVGs/PNGs; invert to match white MUI icons
+                              style={{
+                                height: 31,
+                                width: 31,
+                                objectFit: "contain",
+                                filter: "brightness(0) invert(1)",
+                              }}
+                            />
+                          )
                         : mealIcons[index % mealIcons.length]
                     }
                     heading={getItemCount(metric)}

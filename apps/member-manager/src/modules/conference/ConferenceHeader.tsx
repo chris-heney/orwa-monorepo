@@ -5,7 +5,6 @@ import {
   ExportButton,
   Loading,
   SelectColumnsButton,
-  TopToolbar,
   useListContext,
   useRedirect,
 } from "react-admin";
@@ -44,18 +43,20 @@ const ConferenceHeader = () => {
         justifyContent: "space-between",
         alignItems: "center",
         backgroundColor: "#262626",
-        px: 1,
-        py: isSmall ? 1 : 0,
+        px: 1.5,
+        py: 0.75,
+        minHeight: 48,
       }}
     >
       <Typography
         variant={isSmall ? "subtitle2" : "h6"}
         sx={{
-          alignItems: "center",
           color: "white",
           fontWeight: "bold",
           textTransform: "uppercase",
           textAlign: "left",
+          lineHeight: 1.2,
+          m: 0,
         }}
       >
         {titleConferenceId != null
@@ -64,28 +65,30 @@ const ConferenceHeader = () => {
           : "All Conferences"}{" "}
         : {title}
       </Typography>
-      {!isSmall && <TopToolbar>
+      {!isSmall && (
         <Box
           sx={{
             display: "flex",
             flexDirection: "row",
-            gap: isSmall ? 0 : 2,
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 1.5,
+            minHeight: 0,
+            "& .MuiButton-root": {
+              minHeight: 0,
+              py: 0.5,
+              lineHeight: 1.2,
+            },
+            "& .MuiTypography-root": {
+              lineHeight: 1.2,
+              display: "flex",
+              alignItems: "center",
+            },
           }}
         >
           {resource !== "" && (
             <>
-              {/* remount this componenet on tab change */}
-              {/* {!remount&& <FilterLiveSearch
-                resettable
-                InputProps={{
-                  sx: {
-                    color: 'white'
-                  }
-                }} sx={{
-
-                }}
-              />} */}
-              {!isSmall && <RecordCount />}
+              <RecordCount />
               <Button
                 onClick={() => {
                   if (selectedTab === "sponsors") {
@@ -106,15 +109,12 @@ const ConferenceHeader = () => {
                 <AddIcon />
               </Button>
 
-              {/* Columns Button */}
-
               <SelectColumnsButton
                 style={{
                   color: "white",
                 }}
               />
 
-              {/* Export Button */}
               <ExportButton
                 sx={{
                   color: "white",
@@ -128,7 +128,6 @@ const ConferenceHeader = () => {
             label="Filter"
             sx={{
               color: "white",
-              mr: isSmall ? 0 : 2,
             }}
             onClick={() => {
               setIsFilterSidebarOpen((prev) => !prev);
@@ -140,7 +139,7 @@ const ConferenceHeader = () => {
             <FilterAltIcon />
           </Button>
         </Box>
-      </TopToolbar>}
+      )}
     </Box>
   );
 };

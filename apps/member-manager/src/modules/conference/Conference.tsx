@@ -5,7 +5,7 @@ import ConferenceDashboard from './ConferenceDashboard'
 const Conferences = () => {
   return (
     <ConferenceContextProvider>
-      <ConferenceDashboard/>
+      <ConferenceDashboard />
     </ConferenceContextProvider>
   )
 }

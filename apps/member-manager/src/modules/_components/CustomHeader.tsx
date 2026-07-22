@@ -22,8 +22,9 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ title, sx, Component, textS
       overflow: 'hidden',
       borderTopRightRadius: 3,
       borderTopLeftRadius: 3,
-      p: isSmall ? 1 : 0, 
-      px: 1,
+      px: 1.5,
+      py: 0.75,
+      minHeight: 48,
       justifyContent: 'space-between',
       ...sx
     }}>
@@ -31,18 +32,32 @@ const CustomHeader: React.FC<CustomHeaderProps> = ({ title, sx, Component, textS
         variant='h6'
         sx={{
           fontSize: isSmall ? '10px'  : null,
-          alignItems: 'center',
           color: 'white',
-          backgroundColor: '#262626',
           fontWeight: 'bold',
           textTransform: 'uppercase',
-          p: 1,
+          lineHeight: 1.2,
+          m: 0,
           ...textSx
         }}
       >
         {title}
       </Typography>
-      {Component && <Box><Component/></Box>}
+      {Component && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            '& .MuiButton-root': {
+              minHeight: 0,
+              py: 0.5,
+              lineHeight: 1.2,
+            },
+          }}
+        >
+          <Component />
+        </Box>
+      )}
     </Box>
   )
 }

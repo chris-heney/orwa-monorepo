@@ -20,6 +20,10 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@orwa/terms-gate": ["../../libs/terms-gate/src/index.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "../../libs/terms-gate/src"]
 }
