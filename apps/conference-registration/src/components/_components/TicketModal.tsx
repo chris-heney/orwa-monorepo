@@ -4,7 +4,6 @@ import {
   MaskedPhoneInput,
   SelectInput,
   useNotify,
-  CheckboxInput,
   EmailInput,
 } from "mj-react-form-builder";
 import { Checkbox, FormControlLabel, RadioGroup, Radio } from "@mui/material";
@@ -71,10 +70,49 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     defaultValue: "None",
   });
 
+  // Any training credit selection requires a real email (not "I do not have an email").
+  const requiresEmailForTraining =
+    typeof trainingType === "string" &&
+    trainingType.trim() !== "" &&
+    trainingType !== "None";
+
   const { notify } = useNotify();
   const tickets = watch("tickets") || [];
   const ticket = tickets[ticketIndex] || {};
   const [noEmail, setNoEmail] = useState(false);
+
+  // If Training Type leaves None, force a real email: clear no-email / anonymous state.
+  useEffect(() => {
+    if (!requiresEmailForTraining) return;
+    if (noEmail) {
+      setNoEmail(false);
+    }
+    const currentEmail = watch(`tickets[${ticketIndex}].email`);
+    if (
+      typeof currentEmail === "string" &&
+      currentEmail.startsWith("anonymous+")
+    ) {
+      setValue(`tickets[${ticketIndex}].email`, "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requiresEmailForTraining, trainingType]);
+
+  // Prefill Company/Organization from the parent registration form on create only.
+  // Skip edit (keep ticket org) and skip if the ticket field already has a value.
+  useEffect(() => {
+    if (isOpen.context !== "create") return;
+    const parentOrg = watch("organization");
+    const ticketOrg = watch(`tickets[${ticketIndex}].organization`);
+    if (
+      typeof parentOrg === "string" &&
+      parentOrg.trim() &&
+      (!ticketOrg || (typeof ticketOrg === "string" && !ticketOrg.trim()))
+    ) {
+      setValue(`tickets[${ticketIndex}].organization`, parentOrg);
+    }
+    // Intentionally once on mount for this modal open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -166,6 +204,35 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   };
 
   const handleSave = async () => {
+    const ticketTrainingType = watch(`tickets[${ticketIndex}].training_type`);
+    const ticketRequiresEmail =
+      typeof ticketTrainingType === "string" &&
+      ticketTrainingType.trim() !== "" &&
+      ticketTrainingType !== "None";
+    const ticketEmail = watch(`tickets[${ticketIndex}].email`);
+
+    // Training credit cannot be attributed without a real email.
+    if (
+      ticketRequiresEmail &&
+      (noEmail ||
+        !ticketEmail ||
+        (typeof ticketEmail === "string" &&
+          ticketEmail.startsWith("anonymous+")))
+    ) {
+      if (noEmail) setNoEmail(false);
+      if (
+        typeof ticketEmail === "string" &&
+        ticketEmail.startsWith("anonymous+")
+      ) {
+        setValue(`tickets[${ticketIndex}].email`, "");
+      }
+      notify(
+        "Must have an email to attribute training credit.",
+        "error"
+      );
+      return;
+    }
+
     const isValid = await trigger(`tickets[${ticketIndex}]`);
     
     // Check if promotional emails choice is made
@@ -236,94 +303,6 @@ const TicketModal: React.FC<ITicketModalProps> = ({
                 id="ticket-modal-title"
                 className="text-sm font-semibold uppercase tracking-wide text-slate-500"
               >
-                Contact details
-              </h3>
-              <p className="mt-1 text-sm text-slate-500">
-                Who is this {type.toLowerCase()} registration for?
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-              <TextInput
-                source={`tickets[${ticketIndex}].first`}
-                label="First Name"
-                required
-              />
-              <TextInput
-                source={`tickets[${ticketIndex}].last`}
-                label="Last Name"
-                required
-              />
-              {isAdminView && (
-                <TextInput
-                  source={`tickets[${ticketIndex}].organization`}
-                  label="Company/Organization"
-                />
-              )}
-              <div
-                className="sm:col-span-2 flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100"
-                onClick={() => {
-                  const isChecked = !noEmail;
-                  setNoEmail(isChecked);
-                  setValue(
-                    `tickets[${ticketIndex}].email`,
-                    isChecked
-                      ? `anonymous+${ticket.first
-                          ?.trim()
-                          .replace(/[^a-zA-Z0-9]/g, "")}${ticket.last
-                          ?.trim()
-                          .replace(/[^a-zA-Z0-9]/g, "")}@orwa.org`
-                      : ""
-                  );
-                }}
-              >
-                <Checkbox
-                  checked={noEmail}
-                  onChange={(e) => {
-                    const isChecked = e.target.checked;
-                    setNoEmail(isChecked);
-                    setValue(
-                      `tickets[${ticketIndex}].email`,
-                      isChecked
-                        ? `anonymous+${ticket.first
-                            ?.trim()
-                            .replace(/[^a-zA-Z0-9]/g, "")}${ticket.last
-                            ?.trim()
-                            .replace(/[^a-zA-Z0-9]/g, "")}@orwa.org`
-                        : ""
-                    );
-                  }}
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                  sx={{ p: 0 }}
-                />
-                <span className="text-sm text-slate-700">
-                  I do not have an email
-                </span>
-              </div>
-              {!noEmail && (
-                <EmailInput
-                  source={`tickets[${ticketIndex}].email`}
-                  label="Email"
-                  required
-                />
-              )}
-              <MaskedPhoneInput
-                source={`tickets[${ticketIndex}].phone`}
-                required={!isAdminView}
-              />
-              {isAdminView && type === "Attendee" && (
-                <TextInput
-                  source={`tickets[${ticketIndex}].title`}
-                  label="Title"
-                />
-              )}
-            </div>
-          </section>
-
-          <section className="mt-8 space-y-4 border-t border-slate-200 pt-6">
-            <div>
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Registration options
               </h3>
             </div>
@@ -358,12 +337,33 @@ const TicketModal: React.FC<ITicketModalProps> = ({
                 />
               )}
               {isAdminView && type === "Attendee" && (
-                <div className="sm:col-span-2">
-                  <CheckboxInput
-                    source={`tickets[${ticketIndex}].speaker`}
-                    label="Speaker"
-                    helperText="Check if the attendee is a speaker at the conference."
+                <div
+                  className="sm:col-span-2 flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100"
+                  onClick={() => {
+                    setValue(
+                      `tickets[${ticketIndex}].speaker`,
+                      !watch(`tickets[${ticketIndex}].speaker`)
+                    );
+                  }}
+                >
+                  <Checkbox
+                    checked={!!watch(`tickets[${ticketIndex}].speaker`)}
+                    onChange={(e) => {
+                      setValue(
+                        `tickets[${ticketIndex}].speaker`,
+                        e.target.checked
+                      );
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-0.5 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    sx={{ p: 0 }}
                   />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="text-sm text-slate-800">Speaker</span>
+                    <span className="text-sm text-slate-500">
+                      Check if the attendee is a speaker at the conference.
+                    </span>
+                  </div>
                 </div>
               )}
               {type === "Attendee" &&
@@ -429,6 +429,103 @@ const TicketModal: React.FC<ITicketModalProps> = ({
                     </p>
                   )}
               </div>
+            </div>
+          </section>
+
+          <section className="mt-8 space-y-4 border-t border-slate-200 pt-6">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Contact details
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Who is this {type.toLowerCase()} registration for?
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+              <TextInput
+                source={`tickets[${ticketIndex}].first`}
+                label="First Name"
+                required
+              />
+              <TextInput
+                source={`tickets[${ticketIndex}].last`}
+                label="Last Name"
+                required
+              />
+              {isAdminView && (
+                <TextInput
+                  source={`tickets[${ticketIndex}].organization`}
+                  label="Company/Organization"
+                />
+              )}
+              {!requiresEmailForTraining && (
+                <div
+                  className="sm:col-span-2 flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100"
+                  onClick={() => {
+                    const isChecked = !noEmail;
+                    setNoEmail(isChecked);
+                    setValue(
+                      `tickets[${ticketIndex}].email`,
+                      isChecked
+                        ? `anonymous+${ticket.first
+                            ?.trim()
+                            .replace(/[^a-zA-Z0-9]/g, "")}${ticket.last
+                            ?.trim()
+                            .replace(/[^a-zA-Z0-9]/g, "")}@orwa.org`
+                        : ""
+                    );
+                  }}
+                >
+                  <Checkbox
+                    checked={noEmail}
+                    onChange={(e) => {
+                      const isChecked = e.target.checked;
+                      setNoEmail(isChecked);
+                      setValue(
+                        `tickets[${ticketIndex}].email`,
+                        isChecked
+                          ? `anonymous+${ticket.first
+                              ?.trim()
+                              .replace(/[^a-zA-Z0-9]/g, "")}${ticket.last
+                              ?.trim()
+                              .replace(/[^a-zA-Z0-9]/g, "")}@orwa.org`
+                          : ""
+                      );
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    sx={{ p: 0 }}
+                  />
+                  <span className="text-sm text-slate-700">
+                    I do not have an email
+                  </span>
+                </div>
+              )}
+              {(requiresEmailForTraining || !noEmail) && (
+                <div className="sm:col-span-2 space-y-1">
+                  <EmailInput
+                    source={`tickets[${ticketIndex}].email`}
+                    label="Email"
+                    required
+                  />
+                  {requiresEmailForTraining && (
+                    <p className="text-sm text-slate-600">
+                      Must have an email to attribute training credit.
+                    </p>
+                  )}
+                </div>
+              )}
+              <MaskedPhoneInput
+                source={`tickets[${ticketIndex}].phone`}
+                required={!isAdminView}
+              />
+              {isAdminView && type === "Attendee" && (
+                <TextInput
+                  source={`tickets[${ticketIndex}].title`}
+                  label="Title"
+                />
+              )}
             </div>
           </section>
 

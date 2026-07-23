@@ -3,10 +3,9 @@ const currencyFormatter = new Intl.NumberFormat("en-US", {
   currency: "USD", // You can change the currency code to match your requirements
 });
 
-/** Format a money value without ever rendering "$NaN". */
-export const formatCurrency = (
+const toAmount = (
   value: number | string | null | undefined
-): string => {
+): number => {
   const amount =
     typeof value === "string" && value.trim() !== ""
       ? Number(value)
@@ -14,10 +13,25 @@ export const formatCurrency = (
         ? value
         : 0;
 
-  if (!Number.isFinite(amount)) {
-    return currencyFormatter.format(0);
-  }
+  return Number.isFinite(amount) ? amount : 0;
+};
 
+/** Format a money value without ever rendering "$NaN". */
+export const formatCurrency = (
+  value: number | string | null | undefined
+): string => {
+  return currencyFormatter.format(toAmount(value));
+};
+
+/**
+ * Line-item display: free / null amounts read as "Included" instead of "$0.00".
+ * Use for extras and included ticket lines — not cart/step subtotals.
+ */
+export const formatMoneyOrIncluded = (
+  value: number | string | null | undefined
+): string => {
+  const amount = toAmount(value);
+  if (amount === 0) return "Included";
   return currencyFormatter.format(amount);
 };
 

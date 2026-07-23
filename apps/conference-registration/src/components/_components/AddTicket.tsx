@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
-import { formatCurrency } from "../../helpers/currencyFormat";
+import { formatMoneyOrIncluded } from "../../helpers/currencyFormat";
 import {
   useRegistrationOptions,
   useRegistrationSource,
@@ -121,7 +121,7 @@ const AddTicketComponent = ({
                       </p>
                     </div>
                     <span className="text-base font-bold tabular-nums text-slate-900">
-                      {formatCurrency(ticket.price)}
+                      {formatMoneyOrIncluded(ticket.price)}
                     </span>
                   </div>
 
@@ -132,7 +132,7 @@ const AddTicketComponent = ({
                         {ticket.ticket_type?.name === "Vendor" &&
                         ticketIndex + 1 <= freeVendors()
                           ? "Included"
-                          : formatCurrency(
+                          : formatMoneyOrIncluded(
                               registrationSource === "online"
                                 ? ticket.ticket_type?.price_online
                                 : ticket.ticket_type?.price_event
@@ -156,7 +156,7 @@ const AddTicketComponent = ({
                               currentExtra.id
                             )
                               ? "Included"
-                              : formatCurrency(
+                              : formatMoneyOrIncluded(
                                   registrationSource === "online"
                                     ? currentExtra.price_online
                                     : currentExtra.price_event

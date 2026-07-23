@@ -2,7 +2,7 @@ import { Checkbox, IconButton, TextField, Typography, Radio, RadioGroup, FormCon
 import InfoIcon from "@mui/icons-material/Info";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import { formatCurrency } from "../helpers/currencyFormat";
+import { formatMoneyOrIncluded } from "../helpers/currencyFormat";
 import { ITicketOption, IExtraOption } from "../types/types";
 import {
   useExtraDetails,
@@ -263,18 +263,15 @@ const AddExtras = ({
                     />
                   )}
                 </div>
-                {((extra.price_event ?? 0) > 0 ||
-                  (extra.price_online ?? 0) > 0) && (
-                  <span className="shrink-0 font-medium text-slate-700">
-                    {isExtraIncluded(ticket, ExtraOptions, extra.id)
-                      ? "Included"
-                      : formatCurrency(
-                          registrationSource === "online"
-                            ? extra.price_online
-                            : extra.price_event
-                        )}
-                  </span>
-                )}
+                <span className="shrink-0 font-medium text-slate-700">
+                  {isExtraIncluded(ticket, ExtraOptions, extra.id)
+                    ? "Included"
+                    : formatMoneyOrIncluded(
+                        registrationSource === "online"
+                          ? extra.price_online
+                          : extra.price_event
+                      )}
+                </span>
               </div>
               {extra.max_qty_each > 1 && (!useYesNo || isExtraSelected(extra.id) === 'yes') && (
                 <div

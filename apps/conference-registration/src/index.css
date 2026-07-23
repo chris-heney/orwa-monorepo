@@ -1,8 +1,45 @@
 @import "tailwindcss";
 
+/* Scan form-builder class names (FileInput uses col-span-5/7, etc.) */
+@source "../../../node_modules/mj-react-form-builder/dist/esm";
+
 /* Global Styles */
 body {
   background-color: #ffffff;
+}
+
+/*
+ * mj-react-form-builder FileInput lays out label/choose + selected file in a
+ * 12-col side-by-side grid. In the sponsorship logo column that is too narrow,
+ * so force a clean vertical stack with normal spacing.
+ */
+.sponsor-logo-upload > .max-w-lg {
+  max-width: 100%;
+  padding: 0;
+}
+
+.sponsor-logo-upload .grid.grid-cols-12 {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.sponsor-logo-upload .col-span-5,
+.sponsor-logo-upload .col-span-7 {
+  width: 100%;
+  max-width: 100%;
+}
+
+.sponsor-logo-upload .relative {
+  min-height: 2.5rem;
+  text-align: left;
+}
+
+.sponsor-logo-upload .flex.justify-between {
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 /* Sponsor Section */

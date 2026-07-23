@@ -42,96 +42,95 @@ const CardForm = () => {
   const [cardMask, setCardMask] = useState(masks.card.other);
   const [CVVMask, setCVVMask] = useState(masks.cvv.other);
 
+  const fieldClass =
+    "h-[48px] w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
+
   return (
-    <div className="border rounded-lg">
-      <div className="py-6 px-4 bg-neutral-50 rounded-2xl">
-        <div className="flex flex-col gap-6">
-          {/* Card number */}
-          <div className="flex flex-col">
-            <label
-              className="text-lg text-neutral-900 mb-3"
-              htmlFor="cardNumber"
-            >
-              Enter your card number
-            </label>
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col">
+        <label
+          className="mb-1.5 text-sm font-medium text-slate-700"
+          htmlFor="cardNumber"
+        >
+          Card number
+        </label>
 
-            <div className="relative block">
-              <InputMask
-                {...register("paymentData.cardNumber", {
-                  required: "Card number is required",
-                })}
-                mask={cardMask}
-                onKeyUp={(e) => updateMasks(e.currentTarget.value)}
-                required
-                placeholder="XXXX XXXX XXXX XXXX"
-                className="py-[14px] px-3 h-[52px] rounded-md w-full border-[1.5px] border-neutral-300 pr-[34px]"
+        <div className="relative block">
+          <InputMask
+            {...register("paymentData.cardNumber", {
+              required: "Card number is required",
+            })}
+            mask={cardMask}
+            onKeyUp={(e) => updateMasks(e.currentTarget.value)}
+            required
+            placeholder="XXXX XXXX XXXX XXXX"
+            className={`${fieldClass} pr-12`}
+          />
+          {errors.card && (
+            <span className="mt-1 text-left text-sm text-red-500">
+              *{errors.card.message as string}
+            </span>
+          )}
+
+          <span className="absolute inset-y-0 right-3 flex items-center">
+            <span className="flex h-6 w-[34px] items-center justify-center rounded border border-slate-200 bg-white">
+              <CardImage
+                type={
+                  returnCardType(watch("paymentData.cardNumber")) as string
+                }
               />
-              {errors.card && (
-                <span className="text-red-500 text-left">
-                  *{errors.card.message as string}
-                </span>
-              )}
+            </span>
+          </span>
+        </div>
+      </div>
 
-              <span className="absolute inset-y-3 right-3 w-[34px] h-6 flex justify-center items-center border border-neutral-100">
-                <CardImage
-                  type={returnCardType(watch("paymentData.cardNumber")) as string}
-                />
-              </span>
-            </div>
-          </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="flex flex-col">
+          <label
+            className="mb-1.5 text-sm font-medium text-slate-700"
+            htmlFor="expirationDate"
+          >
+            Expiry date
+          </label>
 
-          {/* Expiry date and cvv */}
-          <div className="flex gap-4">
-            {/* Expiry date */}
-            <div className="flex flex-col">
-              <label
-                className="text-lg text-neutral-900 mb-3"
-                htmlFor="cardNumber"
-              >
-                Expiry date
-              </label>
+          <InputMask
+            {...register("paymentData.expirationDate", {
+              required: "Expiration date is required",
+            })}
+            mask="99/99"
+            required
+            placeholder="MM/YY"
+            className={fieldClass}
+          />
+          {errors.exp && (
+            <span className="mt-1 text-left text-sm text-red-500">
+              *{errors.exp.message as string}
+            </span>
+          )}
+        </div>
 
-              <InputMask
-                {...register("paymentData.expirationDate", {
-                  required: "Expiration date is required",             
-                })}
-                mask="99/99"
-                required
-                placeholder="MM/YY"
-                className="rounded-md py-[14px] px-3 border-[1.5px] border-neutral-300 bg-white h-[52px] w-full"
-              />
-              {errors.exp && (
-                <span className="text-red-500 text-left">
-                  *{errors.exp.message as string}
-                </span>
-              )}
-            </div>
+        <div className="flex flex-col">
+          <label
+            className="mb-1.5 text-sm font-medium text-slate-700"
+            htmlFor="cardCode"
+          >
+            CVC / CVV
+          </label>
 
-            {/* CVV */}
-            <div className="flex flex-col">
-              <label
-                className="text-lg text-neutral-900 mb-3"
-                htmlFor="cardNumber"
-              >
-                CVC/CVV
-              </label>
-
-              <InputMask
-                {...register("paymentData.cardCode", {
-                  required: "CVV is required",
-                })}
-                mask={CVVMask}
-                required
-                placeholder="999"
-                className="rounded-md py-[14px] px-3 border-[1.5px] border-neutral-300 bg-white h-[52px] w-full"
-              />
-              {errors.cvv && (
-                <span className="text-red-500 text-left">
-                  *{errors.cvv.message as string}
-                </span>
-              )}
-            </div>
-          </div>
+          <InputMask
+            {...register("paymentData.cardCode", {
+              required: "CVV is required",
+            })}
+            mask={CVVMask}
+            required
+            placeholder="999"
+            className={fieldClass}
+          />
+          {errors.cvv && (
+            <span className="mt-1 text-left text-sm text-red-500">
+              *{errors.cvv.message as string}
+            </span>
+          )}
         </div>
       </div>
     </div>

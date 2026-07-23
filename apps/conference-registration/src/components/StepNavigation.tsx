@@ -7,7 +7,6 @@ import {
   useStepContext,
   useUserContext,
 } from "../AppContextProvider";
-import { Button } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { useSubmitRegistration2 } from "../data/API";
 import CircularProgress from "@mui/material/CircularProgress";
@@ -269,24 +268,14 @@ const StepNavigation = () => {
       return `20${year}-${month}`; // Combine into YYYY-MM
     })();
 
-    // Sponsorships are vendor-only — strip any leftover packages for attendees.
-    const sponsorsForSubmit =
-      processedPayload.registration_type === "Vendor"
-        ? processedPayload.sponsors
-        : [];
-    const payloadForSubmit = {
-      ...processedPayload,
-      sponsors: sponsorsForSubmit,
-    };
-
     const updatedRegistrationPayload = {
-      ...payloadForSubmit,
+      ...processedPayload,
       paymentData: {
-        ...payloadForSubmit.paymentData,
+        ...processedPayload.paymentData,
         cardNumber: getValues("paymentData.cardNumber")?.replaceAll(" ", ""),
         expirationDate: cardExpiration,
         amount: calculateSubtotal(
-          payloadForSubmit,
+          processedPayload,
           registrationSource,
           getValues("agency") === "false" &&
             getValues("member_status") === "Non Member"
@@ -333,36 +322,31 @@ const StepNavigation = () => {
     }
   };
 
+  const isBillingStep = activeSteps[stepIndex]?.key === "billing_step";
+
   return !ConferenceOptions || !payload ? null : (
-    <section className="w-full mt-auto self-end place-self-end py-4 px-4">
-      <div className="max-w-3xl mx-auto flex gap-3 justify-center">
-        <Button
+    <section className="mt-auto w-full place-self-end self-end border-t border-slate-200 bg-white py-4 px-4">
+      <div className="mx-auto flex max-w-3xl flex-col-reverse items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+        <button
           type="button"
-          variant="contained"
-          color="inherit"
           onClick={handlePrevious}
           disabled={stepIndex === 0}
-          className="w-full sm:w-36 bg-slate-300"
+          className="cursor-pointer rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-[9rem]"
         >
           &laquo; Previous
-        </Button>
+        </button>
         {isSubmitting ? (
-          <CircularProgress />
+          <div className="flex items-center justify-center sm:min-w-[9rem]">
+            <CircularProgress size={28} />
+          </div>
         ) : (
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={
-              activeSteps[stepIndex].key === "billing_step"
-                ? handleSubmitPayload
-                : handleNext
-            }
-            className="w-full sm:w-36"
+          <button
+            type="button"
+            onClick={isBillingStep ? handleSubmitPayload : handleNext}
+            className="cursor-pointer rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:min-w-[9rem]"
           >
-            {activeSteps[stepIndex].key === "billing_step"
-              ? "Submit Form"
-              : "Next »"}
-          </Button>
+            {isBillingStep ? "Submit Form" : "Next »"}
+          </button>
         )}
       </div>
     </section>

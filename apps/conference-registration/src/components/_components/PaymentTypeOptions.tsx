@@ -1,73 +1,70 @@
-import { Button, Typography } from '@mui/material'
-import CardSVG from './CardSVG'
-import InvoiceSVG from './InvoiceSVG'
+import CardSVG from "./CardSVG";
+import InvoiceSVG from "./InvoiceSVG";
 
-
-interface ApprovalProps {
-  paymentType: "Invoice" | "Card" | null
-  checked: "Invoice" | "Card" | null
-  setRegistrationType: React.Dispatch<React.SetStateAction<'Card' | 'Invoice' | null>>
+interface PaymentTypeOptionsProps {
+  paymentType: "Invoice" | "Card";
+  checked: "Invoice" | "Card" | null;
+  setRegistrationType: () => void;
 }
 
-const buttonClass = 'flex flex-col items-center'
-const buttonStyle = { border: '1px solid', borderRadius: '10px', padding: '10px' }
+const PaymentTypeOptions = ({
+  paymentType,
+  checked,
+  setRegistrationType,
+}: PaymentTypeOptionsProps) => {
+  const isSelected = checked === paymentType;
+  const description =
+    paymentType === "Card"
+      ? "Pay now with a credit or debit card"
+      : "Receive an invoice and pay later";
 
-const PaymentTypeOptions = ({ paymentType, checked, setRegistrationType }: ApprovalProps) =>
-  <>
-    {paymentType === 'Invoice' ? (
-      <Button
-        className={buttonClass}
-        sx={{ 
-          ...buttonStyle,
-          borderColor: checked === 'Invoice' ? 'lightgreen' : 'lightgray',
-          backgroundColor: checked === 'Invoice' ? 'green' : 'transparent'
-        }}
-        onClick={() => {
-          setRegistrationType(paymentType)
-        }}
-        disabled={checked === paymentType}
+  return (
+    <button
+      type="button"
+      onClick={setRegistrationType}
+      aria-pressed={isSelected}
+      className={`group flex w-full cursor-pointer flex-col items-center rounded-xl border-2 px-4 py-5 text-center transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+        isSelected
+          ? "border-blue-600 bg-blue-50 shadow-sm"
+          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+      }`}
+    >
+      <div
+        className={`mb-3 flex h-14 w-14 items-center justify-center rounded-full ${
+          isSelected
+            ? "bg-blue-100"
+            : "bg-slate-100 group-hover:bg-slate-200/80"
+        }`}
       >
-        <div>
-          <InvoiceSVG active={checked === 'Invoice'} />
-          <Typography
-            variant="body1"
-            sx={{
-              textAlign: 'center',
-              fontWeight: 800,
-              color: checked === 'Invoice' ? 'lightgreen' : 'lightgray'
-            }}
-          >
-            Invoice
-          </Typography>
+        <div className="h-8 w-8">
+          {paymentType === "Invoice" ? (
+            <InvoiceSVG active={isSelected} />
+          ) : (
+            <CardSVG active={isSelected} />
+          )}
         </div>
-        </Button>
-    ) : (
-      <Button
-        className={buttonClass}
-        sx={{ 
-          ...buttonStyle,
-          borderColor: checked === 'Card' ? 'lightgreen' : 'lightgray',
-          backgroundColor: checked === 'Card' ? 'green' : 'transparent'
-        }}
-        onClick={() => {
-          setRegistrationType(paymentType)
-        }}
-        disabled={checked === paymentType}
+      </div>
+      <span
+        className={`text-base font-bold ${
+          isSelected ? "text-blue-700" : "text-slate-800"
+        }`}
       >
-        <div>
-          <CardSVG active={checked === 'Card'} />
-          <Typography
-            variant="body1"
-            sx={{
-              textAlign: 'center',
-              fontWeight: 800,
-              color: checked === 'Card' ? 'lightgreen' : 'lightgray'
-            }}
-          >
-            Card
-          </Typography>
-        </div>
-      </Button>
-    )}
-  </>
-export default PaymentTypeOptions
+        {paymentType}
+      </span>
+      <span
+        className={`mt-1 text-xs leading-snug ${
+          isSelected ? "text-blue-700/80" : "text-slate-500"
+        }`}
+      >
+        {description}
+      </span>
+      {isSelected && (
+        <span className="mt-3 inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+          Selected
+        </span>
+      )}
+    </button>
+  );
+};
+
+export default PaymentTypeOptions;

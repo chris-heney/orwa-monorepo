@@ -95,8 +95,8 @@ const StepSponsorship = () => {
           Conference Sponsorships
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-slate-600 max-w-2xl">
-          Optional for vendor registration — select any packages you want to
-          purchase, or click Next to continue without sponsoring.
+          Optional — select any packages you want to purchase, or click Next to
+          continue without sponsoring.
         </p>
       </header>
 
@@ -228,7 +228,7 @@ const StepSponsorship = () => {
               />
             </ValidationHighlight>
 
-            <div className="rounded-md border border-slate-200 bg-white p-4">
+            <div className="sponsor-logo-upload rounded-md border border-slate-200 bg-white p-4">
               <FileInput
                 required
                 source="logo"

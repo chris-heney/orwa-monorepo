@@ -44,7 +44,7 @@ const SelectPreviousRegistration = () => {
     <div>
       <label
         htmlFor="organization"
-        className="block text-sm font-semibold text-left"
+        className="mb-1.5 block text-left text-sm font-medium text-slate-700"
       >
         Organization/Company <span className="text-red-500">*</span>
       </label>
@@ -72,11 +72,11 @@ const SelectPreviousRegistration = () => {
           })}
           onFocus={handleFocus}
           onBlur={handleBlur}
-          className="input-field text-left p-2 w-full border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent"
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-left text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
           placeholder="Type to search..."
         />
         {errors.organization && (
-          <span className="block text-red-500 text-left text-sm">
+          <span className="mt-1.5 block text-left text-sm text-red-500">
             *
             {errors.organization &&
               typeof errors.organization.message === "string" &&
@@ -85,7 +85,7 @@ const SelectPreviousRegistration = () => {
         )}
 
         {isDropdownOpen && (registrations?.length ?? 0) > 0 && (
-          <ul className="absolute z-10 bg-white border border-gray-300 rounded-md w-full max-h-40 overflow-y-auto mt-1 shadow-lg">
+          <ul className="absolute z-10 mt-1 max-h-40 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
             {registrations
               ?.filter((organization) => {
                 return organization.type === "Vendor" && ((organization.booths as any)?.length ?? 0) > 0;
@@ -98,7 +98,7 @@ const SelectPreviousRegistration = () => {
               .map((registration, index) => (
                 <li
                   key={index}
-                  className="p-2 hover:bg-blue-100 cursor-pointer text-left"
+                  className="cursor-pointer px-3 py-2 text-left text-sm text-slate-700 hover:bg-blue-50 hover:text-blue-800"
                   onClick={() => handleSelect(registration)}
                 >
                   {registration.organization}
@@ -107,7 +107,7 @@ const SelectPreviousRegistration = () => {
           </ul>
         )}
 
-        <p className="text-sm text-gray-500 text-left mt-2">
+        <p className="mt-2 text-left text-sm text-slate-500">
           Select your organization from the list of previous registrations
         </p>
       </div>

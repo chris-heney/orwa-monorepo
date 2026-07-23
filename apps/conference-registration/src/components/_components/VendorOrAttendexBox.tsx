@@ -15,7 +15,7 @@ const VendorOrAttendeeBox = ({
   const isSelected = checked === registrationType;
   const description =
     registrationType === "Attendee"
-      ? "Register people attending sessions and events"
+      ? "Register people attending sessions and events; optionally sponsor"
       : "Reserve booth space, register vendor reps, and optionally sponsor";
 
   return (

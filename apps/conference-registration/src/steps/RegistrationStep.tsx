@@ -32,7 +32,7 @@ const RegistrationStep = () => {
   } = useRegistrationOptions();
   const { isAdminView, isLoggedIn } = useUserContext();
   const registrationSource = useRegistrationSource();
-  const { register, watch, setValue, unregister, getValues } = useFormContext();
+  const { register, watch, setValue, unregister } = useFormContext();
 
   const registrationType = watch("registration_type");
   const showContestantsStep = watch("showContestantsStep") || false;
@@ -41,14 +41,12 @@ const RegistrationStep = () => {
   const hasAvailableSponsorships =
     registrationSource === "online" &&
     (SponsorshipOptions?.some((option) => option.available > 0) ?? false);
-  const showSponsorshipStep =
-    registrationType === "Vendor" && hasAvailableSponsorships;
 
   useEffect(() => {
     const stepsToHide: string[] = [];
 
-    // Sponsorships are vendor-only (and still require online + available packages).
-    if (!showSponsorshipStep) {
+    // Sponsorships available online when packages exist (Attendee and Vendor).
+    if (!hasAvailableSponsorships) {
       stepsToHide.push("sponsorship");
     }
 
@@ -103,17 +101,8 @@ const RegistrationStep = () => {
     registrationSource,
     registrationType,
     showContestantsStep,
-    showSponsorshipStep,
+    hasAvailableSponsorships,
   ]);
-
-  // Attendees (and unset type) must not keep sponsor packages from a prior Vendor selection or draft.
-  useEffect(() => {
-    if (registrationType === "Vendor") return;
-    const sponsors = getValues("sponsors");
-    if (Array.isArray(sponsors) && sponsors.length > 0) {
-      setValue("sponsors", []);
-    }
-  }, [getValues, registrationType, setValue]);
 
   if (!ConferenceOptions || !ExtraOptions || !TicketOptions) return <Loading />;
 
@@ -205,7 +194,6 @@ const RegistrationStep = () => {
                     setValue("registration_type", "Attendee");
                     setValue("booths", []);
                     setValue("tickets", []);
-                    setValue("sponsors", []);
                     unregister("organization");
                   }
                 }}
@@ -229,7 +217,7 @@ const RegistrationStep = () => {
             <p className="mt-3 text-xs font-medium text-amber-700">
               Select Attendee or Vendor to continue.
               {hasAvailableSponsorships
-                ? " Sponsorship packages are available for Vendor registration."
+                ? " Sponsorship packages are available for any registration type."
                 : ""}
             </p>
           )}

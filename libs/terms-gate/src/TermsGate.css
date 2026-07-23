@@ -64,6 +64,9 @@
   padding: 1.25rem 1.35rem;
   line-height: 1.55;
   font-size: 0.98rem;
+  /* Host apps often set #root { text-align: center }; don't inherit that.
+     Rich-text inline style="text-align: …" on child nodes still wins. */
+  text-align: left;
 }
 
 .orwa-terms-body h1,

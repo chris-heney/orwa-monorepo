@@ -1,6 +1,9 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
-import { formatCurrency } from "../helpers/currencyFormat";
+import {
+  formatCurrency,
+  formatMoneyOrIncluded,
+} from "../helpers/currencyFormat";
 import {
   useBoothIndex,
   useRegistrationOptions,
@@ -191,7 +194,7 @@ const AddBoothsComponent = ({
                         >
                           <span>{currentExtra.name}</span>
                           <span className="tabular-nums text-slate-800">
-                            {formatCurrency(
+                            {formatMoneyOrIncluded(
                               registrationSource === "online"
                                 ? currentExtra.price_online
                                 : currentExtra.price_event
