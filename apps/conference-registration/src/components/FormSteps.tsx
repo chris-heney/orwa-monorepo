@@ -5,8 +5,7 @@ import StepBooths from "../steps/StepBooths";
 import StepVendors from "../steps/StepVendor";
 import StepBilling from "../steps/StepBilling";
 import StepSponsorship from "../steps/StepSponsorship";
-// import StepContestants from "../steps/StepContestants";
-import StepWaterContestant from "../steps/StepWaterContestant";
+import StepContestantRegistration from "../steps/StepContestantRegistration";
 
 export interface IFormStep {
   label: string;
@@ -69,7 +68,7 @@ const DefualtFormSteps = () => {
       key: "contestant_registration",
       component: (
         <>
-          <StepWaterContestant />
+          <StepContestantRegistration />
         </>
       ),
       active: false,

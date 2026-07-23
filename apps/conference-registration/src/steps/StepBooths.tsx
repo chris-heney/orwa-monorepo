@@ -251,12 +251,33 @@ const StepBooths = () => {
               </ValidationHighlight>
 
               {agencyType === "false" && (
-                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                  <strong className="tabular-nums text-red-600">
-                    {currencyFormatter.format(ConferenceOptions.non_member_fee)}
-                  </strong>{" "}
-                  non-member fee applies.
-                </p>
+                <>
+                  <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                    <strong className="tabular-nums text-red-600">
+                      {currencyFormatter.format(
+                        ConferenceOptions.non_member_fee
+                      )}
+                    </strong>{" "}
+                    non-member fee applies.
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    <span className="text-red-600">
+                      *** If you do not see your company listed, please{" "}
+                    </span>
+                    <a
+                      href="http://orwa.org/new-associate-application/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-medium text-blue-600 underline hover:text-blue-800"
+                    >
+                      feel free to apply
+                    </a>
+                    <span className="font-semibold text-green-700">
+                      {" "}
+                      (SAVE $1000!)
+                    </span>
+                  </p>
+                </>
               )}
 
               <ValidationHighlight
@@ -279,16 +300,10 @@ const StepBooths = () => {
           clearWhen={booths.length > 0}
         >
           <section aria-label="Booths">
-            <div className="mb-3 flex items-baseline justify-between gap-3">
+            <div className="mb-3">
               <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Booths
               </h3>
-              <span className="text-xs text-slate-400">
-                {booths.length} added
-                {ConferenceOptions.purchasable_booths
-                  ? ` · max ${ConferenceOptions.purchasable_booths}`
-                  : ""}
-              </span>
             </div>
             <AddBoothsComponent setIsBoothModalOpen={setIsBoothModalOpen} />
           </section>

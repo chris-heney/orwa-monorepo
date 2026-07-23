@@ -20,6 +20,7 @@ import {
 import { useFormContext } from "react-hook-form";
 import Loading from "../components/Loading";
 import { ValidationHighlight } from "../helpers/validationHighlight";
+import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 
 const RegistrationStep = () => {
   const { setFormSteps } = useContext(FormSteps);
@@ -42,6 +43,16 @@ const RegistrationStep = () => {
     registrationSource === "online" &&
     (SponsorshipOptions?.some((option) => option.available > 0) ?? false);
 
+  // Fall: Golfer/Fisher tickets. Annual: Water Taste Test addon toggle.
+  const hasContestantTickets = (TicketOptions ?? []).some((ticket) =>
+    ticketMatchesContext(ticket, "Contestant")
+  );
+  const hasContestantAddons = (RegistrationAddons ?? []).some(
+    (addon) => addon.context === "Contestant"
+  );
+  const showContestants =
+    hasContestantTickets || (hasContestantAddons && showContestantsStep);
+
   useEffect(() => {
     const stepsToHide: string[] = [];
 
@@ -50,7 +61,7 @@ const RegistrationStep = () => {
       stepsToHide.push("sponsorship");
     }
 
-    if (!showContestantsStep) {
+    if (!showContestants) {
       stepsToHide.push("contestant_registration");
     }
 
@@ -100,7 +111,7 @@ const RegistrationStep = () => {
     previousRegistrationChange,
     registrationSource,
     registrationType,
-    showContestantsStep,
+    showContestants,
     hasAvailableSponsorships,
   ]);
 
@@ -125,21 +136,7 @@ const RegistrationStep = () => {
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
           Enter the point of contact for this registration, then choose Attendee
-          or Vendor. Already invoiced? Email{" "}
-          <a
-            href="mailto:sjohnson@orwa.org"
-            className="font-medium text-blue-600 hover:underline"
-          >
-            sjohnson@orwa.org
-          </a>{" "}
-          or call{" "}
-          <a
-            href="tel:405-671-3301"
-            className="font-medium text-blue-600 hover:underline"
-          >
-            405-671-3301
-          </a>
-          .
+          or Vendor.
         </p>
       </header>
 
@@ -159,7 +156,7 @@ const RegistrationStep = () => {
           </h3>
           <p className="mb-4 text-xs leading-relaxed text-slate-500">
             This is <span className="font-semibold text-red-600">not</span> a
-            ticket — it is the person placing this registration.
+            ticket — it is the person submitting this registration.
           </p>
           <div className="flex flex-col space-y-3">
             <TextInput source="registrant.first" label="First Name" required />
@@ -273,6 +270,48 @@ const RegistrationStep = () => {
           </div>
         </section>
       </div>
+
+      <aside
+        className="mt-6 flex gap-3 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3.5 text-left shadow-sm"
+        aria-label="Registration help"
+      >
+        <span
+          className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700"
+          aria-hidden="true"
+        >
+          <svg
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            className="h-4 w-4"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-7-4a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM9 9a1 1 0 0 0 0 2v3a1 1 0 0 0 1 1h1a1 1 0 1 0 0-2v-3a1 1 0 0 0-1-1H9Z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </span>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-slate-800">Need help?</p>
+          <p className="mt-0.5 text-sm leading-relaxed text-slate-600">
+            For any questions please email{" "}
+            <a
+              href="mailto:sjohnson@orwa.org"
+              className="font-medium text-blue-600 hover:underline"
+            >
+              sjohnson@orwa.org
+            </a>{" "}
+            or call{" "}
+            <a
+              href="tel:405-671-3301"
+              className="font-medium text-blue-600 hover:underline"
+            >
+              405-671-3301
+            </a>
+            .
+          </p>
+        </div>
+      </aside>
     </div>
   );
 };

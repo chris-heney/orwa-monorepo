@@ -473,6 +473,9 @@ export interface IAddress {
   city: string;
   state: string;
   zip: string;
+  /** Billing contact for receipts / Authorize.net billTo */
+  email?: string;
+  phone?: string;
 }
 
 export interface IPaymentDataPayload {
@@ -763,6 +766,8 @@ export const defaultPayload: IRegistrationPayload = {
       city: "",
       state: "Oklahoma",
       zip: "",
+      email: "",
+      phone: "",
     },
     amount: 0,
   } as IPaymentDataPayload,

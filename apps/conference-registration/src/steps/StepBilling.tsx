@@ -1,12 +1,15 @@
+import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
-import PaymentTypeOptions from "../components/_components/PaymentTypeOptions";
-import CheckoutReciept from "../components/CheckoutReciept";
-import CardForm from "../components/CardForm";
 import {
   SelectInput,
   TextInput,
   ZipCodeInput,
+  EmailInput,
+  MaskedPhoneInput as _MaskedPhoneInput,
 } from "mj-react-form-builder";
+import PaymentTypeOptions from "../components/_components/PaymentTypeOptions";
+import CheckoutReciept from "../components/CheckoutReciept";
+import CardForm from "../components/CardForm";
 import { stateOptions } from "../helpers/stateOptions";
 import {
   useFormSubmitted,
@@ -16,6 +19,12 @@ import {
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { IRegistrationPayload } from "../types/types";
 import { ValidationHighlight } from "../helpers/validationHighlight";
+
+// Type fix for React 19 compatibility
+const MaskedPhoneInput = _MaskedPhoneInput as React.ComponentType<{
+  source: string;
+  required?: boolean;
+}>;
 
 const BillingStep = () => {
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
@@ -36,6 +45,24 @@ const BillingStep = () => {
   );
 
   const hasCharge = (totalAmount as unknown as number) > 0;
+
+  // Prefill billing contact from registrant when empty (Authorize.net billTo).
+  useEffect(() => {
+    const registrant = getValues("registrant") || {};
+    const billingEmail = getValues("paymentData.billingAddress.email");
+    const billingPhone = getValues("paymentData.billingAddress.phone");
+
+    if (!billingEmail && registrant.email) {
+      setValue("paymentData.billingAddress.email", registrant.email, {
+        shouldDirty: false,
+      });
+    }
+    if (!billingPhone && registrant.phone) {
+      setValue("paymentData.billingAddress.phone", registrant.phone, {
+        shouldDirty: false,
+      });
+    }
+  }, [getValues, setValue]);
 
   return submitted ? (
     <div className="container mx-auto flex max-w-3xl items-center justify-center px-4 py-16">
@@ -72,6 +99,8 @@ const BillingStep = () => {
         className="p-1"
         clearWhen={Boolean(
           ((totalAmount as unknown as number) <= 0 || paymentType) &&
+            watch("paymentData.billingAddress.email") &&
+            watch("paymentData.billingAddress.phone") &&
             watch("paymentData.billingAddress.address") &&
             watch("paymentData.billingAddress.city") &&
             watch("paymentData.billingAddress.state") &&
@@ -105,6 +134,30 @@ const BillingStep = () => {
                   setRegistrationType={() =>
                     setValue("paymentType", "Invoice")
                   }
+                />
+              </div>
+            </section>
+          )}
+
+          {hasCharge && (
+            <section className="rounded-lg border border-slate-200 bg-white p-5">
+              <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Billing contact
+              </h3>
+              <p className="mb-4 text-xs leading-relaxed text-slate-500">
+                Sent with your payment to Authorize.net and used for billing
+                questions. Prefills from the registration contact — change if
+                needed.
+              </p>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <EmailInput
+                  source="paymentData.billingAddress.email"
+                  label="Billing email"
+                  required
+                />
+                <MaskedPhoneInput
+                  source="paymentData.billingAddress.phone"
+                  required
                 />
               </div>
             </section>

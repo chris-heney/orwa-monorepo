@@ -1,4 +1,4 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useEffect, useRef } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import currencyFormatter from "../helpers/currencyFormat";
 import { ISponsorshipOption } from "../types/types";
@@ -7,6 +7,18 @@ import { FileInput, TextInput } from "mj-react-form-builder";
 import SelectOrganization from "../components/_components/SelectOrganization";
 import { ValidationHighlight } from "../helpers/validationHighlight";
 
+/** Web-friendly raster/vector images only — excludes PDF and other docs. */
+const WEB_IMAGE_ACCEPT =
+  "image/jpeg,image/png,image/gif,image/webp,image/svg+xml,.jpg,.jpeg,.png,.gif,.webp,.svg";
+const WEB_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/svg+xml",
+]);
+const WEB_IMAGE_EXTENSIONS = /\.(jpe?g|png|gif|webp|svg)$/i;
+
 const StepSponsorship = () => {
   const { SponsorshipOptions } = useRegistrationOptions();
   const { watch, setValue, control } = useFormContext();
@@ -14,9 +26,21 @@ const StepSponsorship = () => {
     control,
     name: "sponsors",
   });
+  const logoUploadRef = useRef<HTMLDivElement>(null);
 
   const sponsors = watch("sponsors") || [];
   const hasSelectedSponsors = sponsors.length > 0;
+
+  // mj-react-form-builder FileInput hardcodes accept="*/*"; constrain the picker here.
+  useEffect(() => {
+    if (!hasSelectedSponsors) return;
+    const input = logoUploadRef.current?.querySelector<HTMLInputElement>(
+      'input[type="file"]'
+    );
+    if (input) {
+      input.accept = WEB_IMAGE_ACCEPT;
+    }
+  }, [hasSelectedSponsors]);
 
   const getSelectedCount = (sponsorshipId: number | string) =>
     sponsors.filter((s: ISponsorshipOption) => s.id === sponsorshipId).length;
@@ -75,15 +99,13 @@ const StepSponsorship = () => {
   );
 
   const validateImageFile = (file: File) => {
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "image/webp",
-      "image/svg+xml",
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      return "Only image files (JPEG, PNG, GIF, WebP, SVG) are allowed.";
+    if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+      return "PDFs are not accepted. Please upload a JPEG, PNG, GIF, WebP, or SVG image.";
+    }
+    const typeOk = WEB_IMAGE_TYPES.has(file.type);
+    const extensionOk = WEB_IMAGE_EXTENSIONS.test(file.name);
+    if (!typeOk && !extensionOk) {
+      return "Only web image files are allowed (JPEG, PNG, GIF, WebP, or SVG). PDFs are not accepted.";
     }
     return true;
   };
@@ -228,12 +250,15 @@ const StepSponsorship = () => {
               />
             </ValidationHighlight>
 
-            <div className="sponsor-logo-upload rounded-md border border-slate-200 bg-white p-4">
+            <div
+              ref={logoUploadRef}
+              className="sponsor-logo-upload rounded-md border border-slate-200 bg-white p-4"
+            >
               <FileInput
                 required
                 source="logo"
                 label="Logo"
-                helperText="Upload the logo to represent your organization at the conference (Images only)"
+                helperText="Upload a web image logo (JPEG, PNG, GIF, WebP, or SVG). PDFs are not accepted."
                 validate={validateImageFile}
               />
             </div>

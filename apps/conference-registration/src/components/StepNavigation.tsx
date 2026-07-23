@@ -27,7 +27,8 @@ import {
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useStepContext();
-  const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
+  const { ConferenceOptions, ExtraOptions, RegistrationAddons } =
+    useRegistrationOptions();
   const { setSubmitted } = useFormSubmitted();
   const { isAdminView, isLoggedIn } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -71,7 +72,13 @@ const StepNavigation = () => {
   };
 
   const contestantValid = (toast = true): boolean => {
+    // Water Taste Test (Annual) requires an addon selection on this step.
+    // Fall Golf/Bass uses contestant tickets and may be skipped with none added.
+    const hasWaterTasteAddons = (RegistrationAddons ?? []).some(
+      (addon) => addon.context === "Contestant"
+    );
     if (
+      hasWaterTasteAddons &&
       payload?.registrationAddonIds?.length === 0 &&
       currentStepLabel === "Contestants"
     ) {
@@ -176,6 +183,12 @@ const StepNavigation = () => {
       "registrant.email": "contact",
       "registrant.phone": "contact",
       paymentType: "billing",
+      "paymentData.billingAddress.email": "billing",
+      "paymentData.billingAddress.phone": "billing",
+      "paymentData.billingAddress.address": "billing",
+      "paymentData.billingAddress.city": "billing",
+      "paymentData.billingAddress.state": "billing",
+      "paymentData.billingAddress.zip": "billing",
       "paymentData.cardNumber": "billing",
       "paymentData.expirationDate": "billing",
       "paymentData.cardCode": "billing",

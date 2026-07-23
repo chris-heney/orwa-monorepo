@@ -39,9 +39,17 @@ const StepContestants = () => {
   return !ConferenceOptions ? (
     <>Loading</>
   ) : (
-    <div className="container mx-auto max-w-3xl px-4">
+    <div className="container mx-auto max-w-3xl px-4 py-6 text-left">
+      <header className="mb-6 border-b border-slate-200 pb-5">
+        <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+          Golf &amp; Bass Tournament
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+          Optional — add golfers and/or bass tournament fishers for this
+          registration, or click Next to skip.
+        </p>
+      </header>
       <FormSection title="Contestants">
-        {/* <SelectWatersystem /> */}
         <TextInput source="organization" label="Organization" required />
         {getValues("tickets").filter((ticket: ITicketPayload) => {
           return ticket.ticket_type?.name === "Golfer";

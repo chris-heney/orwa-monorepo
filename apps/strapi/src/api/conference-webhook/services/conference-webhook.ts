@@ -239,6 +239,10 @@ export default ({ strapi }) => {
     // Payment Processing
     processPayment: async (paymentData, registrant, organization) => {
       const { billingAddress, amount, cardNumber, expirationDate, cardCode } = paymentData;
+      const billingEmail =
+        billingAddress?.email?.trim() || registrant?.email || "";
+      const billingPhone =
+        billingAddress?.phone?.trim() || registrant?.phone || "";
 
       const createTransactionRequest = {
         createTransactionRequest: {
@@ -256,12 +260,24 @@ export default ({ strapi }) => {
                 cardCode,
               },
             },
+            // Match membership-forms Auth.net shape: email + phone on billTo
+            // (phone via faxNumber — same production pattern as membership).
+            customer: billingEmail ? { email: billingEmail } : undefined,
             billTo: {
               firstName: registrant.first,
               lastName: registrant.last,
               company: organization,
-              state: state_map.find((state) => state[billingAddress.state])?.[billingAddress.state] ?? billingAddress.state,
+              address: billingAddress?.address || "",
+              city: billingAddress?.city || "",
+              state:
+                state_map.find((state) => state[billingAddress?.state])?.[
+                  billingAddress?.state
+                ] ?? billingAddress?.state,
+              zip: billingAddress?.zip || "",
               country: "US",
+              email: billingEmail,
+              faxNumber: billingPhone,
+              phoneNumber: billingPhone,
             },
           },
         },
@@ -418,22 +434,36 @@ export default ({ strapi }) => {
             }
             </div>
             <div>
-                <label style="font-weight:800">Phone</label>: ${registrant.phone}
+                <label style="font-weight:800">Registrant Phone</label>: ${
+                  registrant.phone || ""
+                }
             </div>
             <div>
-                <label style="font-weight:800">Email</label>: <a href="${
-                  registrant.email
-                }" target="_blank">${registrant.email}</a>
+                <label style="font-weight:800">Registrant Email</label>: <a href="mailto:${
+                  registrant.email || ""
+                }" target="_blank">${registrant.email || ""}</a>
             </div>
             <div>
                 <label style="font-weight:800">Pay By</label>: ${paymentType}
             </div>
             <div>
-                <label style="font-weight:800">Address</label>: 
-                ${paymentData.billingAddress.address}, 
-                ${paymentData.billingAddress.city}, 
-                ${paymentData.billingAddress.state},
-                ${paymentData.billingAddress.zip}
+                <label style="font-weight:800">Billing Email</label>: <a href="mailto:${
+                  paymentData?.billingAddress?.email || ""
+                }" target="_blank">${
+                  paymentData?.billingAddress?.email || ""
+                }</a>
+            </div>
+            <div>
+                <label style="font-weight:800">Billing Phone</label>: ${
+                  paymentData?.billingAddress?.phone || ""
+                }
+            </div>
+            <div>
+                <label style="font-weight:800">Billing Address</label>: 
+                ${paymentData?.billingAddress?.address || ""}, 
+                ${paymentData?.billingAddress?.city || ""}, 
+                ${paymentData?.billingAddress?.state || ""},
+                ${paymentData?.billingAddress?.zip || ""}
             </div>
             ${
               watersystem
