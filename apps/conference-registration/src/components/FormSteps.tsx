@@ -35,6 +35,16 @@ const DefualtFormSteps = () => {
       active: true,
     },
     {
+      label: "Sponsorships",
+      key: "sponsorship",
+      component: (
+        <>
+          <StepSponsorship />
+        </>
+      ),
+      active: false,
+    },
+    {
       label: "Attendees",
       key: "attendee_registration",
       component: (
@@ -60,16 +70,6 @@ const DefualtFormSteps = () => {
       component: (
         <>
           <StepVendors />
-        </>
-      ),
-      active: false,
-    },
-    {
-      label: "Sponsorships",
-      key: "sponsorship",
-      component: (
-        <>
-          <StepSponsorship />
         </>
       ),
       active: false,

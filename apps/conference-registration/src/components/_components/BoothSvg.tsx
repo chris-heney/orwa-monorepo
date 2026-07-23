@@ -4,7 +4,7 @@ interface BoothSvgProps {
 
 const BoothSvg = ({ active }: BoothSvgProps) => (
 	<svg
-		fill={active ? 'lightgreen' : 'lightgray'}
+		fill={active ? '#2563eb' : '#94a3b8'}
 		version="1.1"
 		id="Capa_1"
 		xmlns="http://www.w3.org/2000/svg"

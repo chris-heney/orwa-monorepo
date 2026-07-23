@@ -7,7 +7,7 @@ const AttendeeSVG = ({ active }: AttendeeSVGProps) =>
     xmlns="http://www.w3.org/2000/svg"
     xmlnsXlink="http://www.w3.org/1999/xlink"
     version="1.1" x="0px" y="0px" viewBox="0 0 100 100"
-    fill={active ? 'lightgreen' : 'lightgray'}
+    fill={active ? '#2563eb' : '#94a3b8'}
     xmlSpace="preserve">
     <switch>
       <foreignObject requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/" x="0" y="0" width="200px" height="200px" />

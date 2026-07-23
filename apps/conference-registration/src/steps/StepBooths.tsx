@@ -1,18 +1,10 @@
 import React, { useContext, useEffect } from "react";
-import {
-  Checkbox,
-  Divider,
-  FormControlLabel,
-  FormLabel,
-  Modal,
-  Radio,
-  RadioGroup,
-  Typography,
-} from "@mui/material";
+import { Checkbox } from "@mui/material";
 import AddBoothsComponent from "../components/AddBoothsComponent";
 import AddBoothModal from "../components/_components/ModalBooth";
 import {
   RegistrationOptions,
+  useBoothIndex,
   useRegistrationSource,
 } from "../AppContextProvider";
 import { useFormContext } from "react-hook-form";
@@ -20,25 +12,59 @@ import { IBoothPayload, IRegistrationOptions } from "../types/types";
 import SelectOrganization from "../components/_components/SelectOrganization";
 import currencyFormatter from "../helpers/currencyFormat";
 import AddExtras from "../components/AddExtras";
-import { EmailInput, FormSection, TextInput } from "mj-react-form-builder";
+import { EmailInput, TextInput } from "mj-react-form-builder";
 import SkipBoothStep from "../components/SkipBoothStep";
 import Loading from "../components/Loading";
 import { getExtraData } from "../helpers/getExtraData";
+import { ValidationHighlight } from "../helpers/validationHighlight";
+
+const OptionWrap = ({
+  selected,
+  onClick,
+  children,
+  label,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  children?: React.ReactNode;
+  label: string;
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`flex w-full cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm font-semibold transition ${
+      selected
+        ? "border-blue-600 bg-blue-50 text-blue-800"
+        : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100"
+    }`}
+  >
+    <span
+      className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+        selected ? "border-blue-600 bg-blue-600" : "border-slate-300 bg-white"
+      }`}
+      aria-hidden="true"
+    >
+      {selected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+    </span>
+    <span className="flex-1">{label}</span>
+    {children}
+  </button>
+);
 
 const StepBooths = () => {
   const { ConferenceOptions, ExtraOptions } =
     useContext<IRegistrationOptions>(RegistrationOptions);
+  const { boothIndex } = useBoothIndex();
 
   const {
     formState: { errors },
     watch,
     register,
     unregister,
+    setValue,
   } = useFormContext();
 
   const registrationSource = useRegistrationSource();
-
-  const form = useFormContext();
 
   const [isBoothModalOpen, setIsBoothModalOpen] = React.useState({
     open: false,
@@ -47,218 +73,258 @@ const StepBooths = () => {
 
   const memberType = watch("member_status") ?? "";
   const agencyType = watch("agency") ?? "";
+  const booths = (watch("booths") || []) as IBoothPayload[];
+  const registrationExtras = (watch("registrationExtras") || []) as number[];
+  const acknowledgement = watch("vendor_participation_acknowledgement") === true;
 
-  const [boothCheckout, setBoothCheckout] = React.useState<number>(
-    agencyType === "false" && memberType === "Non Member"
-      ? ConferenceOptions.non_member_fee
-      : 0
-  );
-
-  // update current steps total price when an booth is added
-  const calculateSubtotal = (): number => {
-    const registrationExtras = watch("registrationExtras") as
-      | number[]
-      | undefined;
-
-    if (!registrationExtras || registrationExtras.length === 0) {
-      return 0; // Return 0 if there are no extras
-    }
-
-    return registrationExtras.reduce((total: number, extra: number) => {
-      const currentExtra = getExtraData(ExtraOptions, extra);
-      if (!currentExtra) return total; // Skip if the extra is not found
-      return (
-        total +
-        (registrationSource === "kiosk"
-          ? currentExtra.price_event
-          : currentExtra.price_online)
-      );
-    }, 0); // Start with an initial total of 0
-  };
+  const [boothCheckout, setBoothCheckout] = React.useState(0);
 
   useEffect(() => {
-    setBoothCheckout(() => {
-      const total =
-        (watch("booths").reduce((acc: number, booth: IBoothPayload) => {
-          return acc + booth.subtotal;
-        }, 0) as number) +
-        (memberType === "Non Member" && agencyType === "false"
-          ? ConferenceOptions.non_member_fee
-          : 0);
+    const boothTotal = booths.reduce(
+      (acc: number, booth: IBoothPayload) => acc + (booth.subtotal || 0),
+      0
+    );
+    const extrasTotal = registrationExtras.reduce(
+      (total: number, extra: number) => {
+        const currentExtra = getExtraData(ExtraOptions, extra);
+        if (!currentExtra) return total;
+        return (
+          total +
+          (registrationSource === "kiosk"
+            ? currentExtra.price_event
+            : currentExtra.price_online)
+        );
+      },
+      0
+    );
+    const nonMemberFee =
+      memberType === "Non Member" && agencyType === "false"
+        ? ConferenceOptions.non_member_fee
+        : 0;
 
-      return (total + calculateSubtotal()) as number;
-    });
-  }, [watch("booths"), watch("registrationExtras")]);
+    setBoothCheckout(boothTotal + extrasTotal + nonMemberFee);
+  }, [
+    booths,
+    registrationExtras,
+    memberType,
+    agencyType,
+    ExtraOptions,
+    ConferenceOptions.non_member_fee,
+    registrationSource,
+  ]);
 
-  return !ConferenceOptions || !ExtraOptions ? (
-    <Loading />
-  ) : (
+  const selectMember = (value: "Member" | "Non Member") => {
+    if (value === "Non Member" && memberType !== "Non Member") {
+      setValue("organization", "");
+      unregister("organization");
+    }
+    setValue("member_status", value, { shouldValidate: true });
+  };
+
+  const selectAgency = (value: "true" | "false") => {
+    setValue("agency", value, { shouldValidate: true });
+  };
+
+  if (!ConferenceOptions || !ExtraOptions) {
+    return <Loading />;
+  }
+
+  return (
     <>
-      <SkipBoothStep />
-      <div className="container mx-auto max-w-3xl px-4">
-        <FormSection title="Booth Information">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div title="Booth Information">
-              <FormLabel
-                sx={{ display: "block", textAlign: "left", fontWeight: 800 }}
+      <div className="container mx-auto max-w-3xl px-4 py-6 text-left">
+        <header className="mb-6 border-b border-slate-200 pb-5">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            Booth Information
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
+            Confirm member status, add booths, and acknowledge vendor guidelines
+            to continue.
+          </p>
+        </header>
+
+        <SkipBoothStep />
+
+        <ValidationHighlight
+          field="member_status"
+          className="mb-6 rounded-lg border border-slate-200 bg-white p-5"
+          clearWhen={Boolean(memberType)}
+        >
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            ORWA Associate Member Status
+          </h3>
+          <p className="mb-4 text-sm text-slate-600">
+            Member pricing applies to ORWA associate members.
+          </p>
+
+          <input
+            type="hidden"
+            {...register("member_status", {
+              required: "Member status is required",
+            })}
+          />
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <OptionWrap
+              label="Member"
+              selected={memberType === "Member"}
+              onClick={() => selectMember("Member")}
+            />
+            <OptionWrap
+              label="Non Member"
+              selected={memberType === "Non Member"}
+              onClick={() => selectMember("Non Member")}
+            />
+          </div>
+
+          {errors.member_status && (
+            <p className="mt-2 text-sm text-red-500">
+              *{errors.member_status.message as string}
+            </p>
+          )}
+
+          {memberType === "Member" && (
+            <div className="mt-5 space-y-2 border-t border-slate-100 pt-5">
+              <ValidationHighlight
+                field="organization"
+                clearWhen={Boolean(watch("organization"))}
               >
-                ORWA Associate Member Status
-              </FormLabel>
-              <RadioGroup value={memberType} aria-label="registration-type">
-                <FormControlLabel
-                  {...register("member_status", {
-                    required: "Member status is required",
-                  })}
-                  value="Member"
-                  control={
-                    <Radio
-                      onClick={() => {
-                        if (agencyType === "false") {
-                          setBoothCheckout(
-                            boothCheckout - ConferenceOptions.non_member_fee
-                          );
-                        }
-                      }}
-                    />
-                  }
-                  label="Member"
-                  checked={form.getValues("member_status") === "Member"}
-                />
-                <FormControlLabel
-                  {...form.register("member_status")}
-                  value="Non Member"
-                  control={
-                    <Radio
-                      onClick={() => {
-                        if (agencyType === "false") {
-                          setBoothCheckout(
-                            boothCheckout + ConferenceOptions.non_member_fee
-                          )
-                        }
-                        form.setValue("organization", "");
-                        unregister("organization");
-                      }}
-                    />
-                  }
-                  label="Non Member"
-                  checked={form.getValues("member_status") === "Non Member"}
-                />
-              </RadioGroup>
-              {errors.member_status && (
-                <span className="block text-red-500 text-left">
-                  *{errors.member_status.message as string}
+                <SelectOrganization />
+              </ValidationHighlight>
+              <p className="text-sm text-slate-600">
+                <span className="text-red-600">
+                  *** If you do not see your company listed, please{" "}
                 </span>
-              )}
-              {memberType === "Member" && (
-                <div>
-                  <SelectOrganization />
-                  <p className="text-left">
-                    <span className="text-red-500">
-                      *** If you do not see your company listed, please{" "}
-                    </span>
-                    <a
-                      href="http://orwa.org/new-associate-application/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-500 underline"
-                    >
-                      feel free to apply
-                    </a>
-                    <span className="text-green-600"> (SAVE $1000!)</span>
-                  </p>
-                </div>
-              )}
-              {memberType === "Non Member" && (
-                <div className="my-6">
-                  <FormLabel
-                    sx={{
-                      display: "block",
-                      textAlign: "left",
-                      fontWeight: 800,
-                    }}
-                  >
-                    Are you an Agency?
-                  </FormLabel>
-                  <RadioGroup value={agencyType} aria-label="registration-type">
-                    <FormControlLabel
-                      {...form.register("agency")}
-                      value={true}
-                      control={
-                        <Radio
-                          value={true}
-                          onClick={() => {
-                            if (
-                              agencyType === "false" &&
-                              memberType === "Non Member"
-                            ) {
-                              setBoothCheckout(
-                                boothCheckout - ConferenceOptions.non_member_fee
-                              );
-                            }
-                          }}
-                        />
-                      }
-                      label="Yes"
-                    />
-                    <FormControlLabel
-                      {...form.register("agency", {
-                        required: "Agency is required",
-                      })}
-                      value={false}
-                      control={
-                        <Radio
-                          value={false}
-                          onClick={() => {
-                            setBoothCheckout(
-                              boothCheckout + ConferenceOptions.non_member_fee
-                            );
-                          }}
-                        />
-                      }
-                      label="No"
-                    />
-                  </RadioGroup>
-                  <FormLabel sx={{ display: "block", textAlign: "left" }}>
-                    {" "}
-                    An agency is Rural Development, DEQ, etc.
-                  </FormLabel>
-                  {errors.agency && (
-                    <span className="block text-red-500 text-left">
-                      *{errors.agency.message as string}
-                    </span>
-                  )}
-                </div>
-              )}
-              {memberType === "Non Member" && (
-                <div>
-                  {agencyType === "false" && (
-                    <p className="italic text-slate-700 my-3">
-                      <strong className="text-red-600">
-                        ${ConferenceOptions.non_member_fee}
-                      </strong>{" "}
-                      Non-member Fee.
-                    </p>
-                  )}
-                  <TextInput
-                    source="organization"
-                    label="Organization"
-                    required
+                <a
+                  href="http://orwa.org/new-associate-application/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-blue-600 underline hover:text-blue-800"
+                >
+                  feel free to apply
+                </a>
+                <span className="font-semibold text-green-700">
+                  {" "}
+                  (SAVE $1000!)
+                </span>
+              </p>
+            </div>
+          )}
+
+          {memberType === "Non Member" && (
+            <div className="mt-5 space-y-4 border-t border-slate-100 pt-5">
+              <ValidationHighlight
+                field="agency"
+                clearWhen={agencyType === "true" || agencyType === "false"}
+              >
+                <h4 className="mb-1 text-sm font-semibold text-slate-800">
+                  Are you an Agency?
+                </h4>
+                <p className="mb-3 text-xs text-slate-500">
+                  An agency is Rural Development, DEQ, etc.
+                </p>
+                <input
+                  type="hidden"
+                  {...register("agency", {
+                    validate: (v) =>
+                      v === "true" ||
+                      v === "false" ||
+                      "Agency is required",
+                  })}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <OptionWrap
+                    label="Yes"
+                    selected={agencyType === "true"}
+                    onClick={() => selectAgency("true")}
+                  />
+                  <OptionWrap
+                    label="No"
+                    selected={agencyType === "false"}
+                    onClick={() => selectAgency("false")}
                   />
                 </div>
-              )}
-            </div>
+                {errors.agency && (
+                  <p className="mt-2 text-sm text-red-500">
+                    *{errors.agency.message as string}
+                  </p>
+                )}
+              </ValidationHighlight>
 
+              {agencyType === "false" && (
+                <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                  <strong className="tabular-nums text-red-600">
+                    {currencyFormatter.format(ConferenceOptions.non_member_fee)}
+                  </strong>{" "}
+                  non-member fee applies.
+                </p>
+              )}
+
+              <ValidationHighlight
+                field="organization"
+                clearWhen={Boolean(watch("organization"))}
+              >
+                <TextInput
+                  source="organization"
+                  label="Organization"
+                  required
+                />
+              </ValidationHighlight>
+            </div>
+          )}
+        </ValidationHighlight>
+
+        <ValidationHighlight
+          field="booths"
+          className="mb-6 p-2"
+          clearWhen={booths.length > 0}
+        >
+          <section aria-label="Booths">
+            <div className="mb-3 flex items-baseline justify-between gap-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Booths
+              </h3>
+              <span className="text-xs text-slate-400">
+                {booths.length} added
+                {ConferenceOptions.purchasable_booths
+                  ? ` · max ${ConferenceOptions.purchasable_booths}`
+                  : ""}
+              </span>
+            </div>
             <AddBoothsComponent setIsBoothModalOpen={setIsBoothModalOpen} />
-            {/* secondary_email */}
-            <EmailInput  source="secondary_email" label="Secondary Email" helperText="Used for email notifications" />
-          </div>
-        </FormSection>
-        <AddExtras useYesNo field="registrationExtrasIds" context="Registration" />
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6 text-left">
-          <h3 className="font-bold text-lg mb-3">
+          </section>
+        </ValidationHighlight>
+
+        <section className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Secondary email
+          </h3>
+          <p className="mb-4 text-sm text-slate-600">
+            Used for email notifications about this booth registration.
+          </p>
+          <EmailInput
+            source="secondary_email"
+            label="Secondary Email"
+            helperText="Used for email notifications"
+          />
+        </section>
+
+        <div className="mb-6">
+          <AddExtras
+            useYesNo
+            field="registrationExtrasIds"
+            context="Registration"
+          />
+        </div>
+
+        <ValidationHighlight
+          field="vendor_acknowledgement"
+          className="rounded-lg border border-slate-200 bg-slate-50/80 p-5"
+          clearWhen={acknowledgement}
+        >
+          <h3 className="mb-1 text-base font-semibold text-slate-900">
             Vendor Participation Guideline &amp; Acknowledgement
           </h3>
-          <p className="mb-4">
+          <p className="mb-4 text-sm leading-relaxed text-slate-600">
             Membership and vendor participation are limited to individuals and
             organizations that align with the mission, values, and service
             objectives of ORWA and meet established eligibility criteria. All
@@ -270,65 +336,75 @@ const StepBooths = () => {
             direct conflict or competition with the programs or interests of
             ORWA.
           </p>
-          <FormControlLabel
-            control={
-              <Checkbox
-                {...register("vendor_participation_acknowledgement", {
-                  required:
-                    "You must acknowledge the Vendor Participation Guideline & Acknowledgement",
-                })}
-                checked={
-                  watch("vendor_participation_acknowledgement") === true
-                }
-                onChange={(e) =>
-                  form.setValue(
-                    "vendor_participation_acknowledgement",
-                    e.target.checked,
-                    { shouldValidate: true }
-                  )
-                }
-              />
+          <button
+            type="button"
+            className={`flex w-full cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-left transition ${
+              acknowledgement
+                ? "border-blue-600 bg-blue-50"
+                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+            }`}
+            onClick={() =>
+              setValue(
+                "vendor_participation_acknowledgement",
+                !acknowledgement,
+                { shouldValidate: true }
+              )
             }
-            label={
-              <span>
-                I acknowledge the Vendor Participation Guideline &amp;
-                Acknowledgement. <span className="text-red-500">*</span>
-              </span>
-            }
-          />
-          {errors.vendor_participation_acknowledgement && (
-            <span className="block text-red-500 text-left">
-              *{errors.vendor_participation_acknowledgement.message as string}
+          >
+            <Checkbox
+              {...register("vendor_participation_acknowledgement", {
+                required:
+                  "You must acknowledge the Vendor Participation Guideline & Acknowledgement",
+              })}
+              checked={acknowledgement}
+              onChange={(e) =>
+                setValue(
+                  "vendor_participation_acknowledgement",
+                  e.target.checked,
+                  { shouldValidate: true }
+                )
+              }
+              onClick={(e) => e.stopPropagation()}
+              className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+              sx={{ p: 0, mt: "2px" }}
+            />
+            <span className="text-sm text-slate-800">
+              I acknowledge the Vendor Participation Guideline &amp;
+              Acknowledgement. <span className="text-red-500">*</span>
             </span>
+          </button>
+          {errors.vendor_participation_acknowledgement && (
+            <p className="mt-2 text-sm text-red-500">
+              *
+              {
+                errors.vendor_participation_acknowledgement
+                  .message as string
+              }
+            </p>
           )}
+        </ValidationHighlight>
+
+        <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-4">
+          <span className="text-sm text-slate-500">
+            {booths.length === 0
+              ? "No booths added yet"
+              : `${booths.length} booth${booths.length === 1 ? "" : "s"}`}
+          </span>
+          <p className="text-lg text-slate-900">
+            Subtotal:{" "}
+            <span className="font-bold tabular-nums">
+              {currencyFormatter.format(boothCheckout)}
+            </span>
+          </p>
         </div>
-        <Typography variant="h6" textAlign={"right"} sx={{ mt: 4 }}>
-          Subtotal:
-          <strong className="text-red-600">
-            {currencyFormatter.format(boothCheckout)}
-          </strong>
-        </Typography>
-        <Divider />
       </div>
-      <Modal
-        disableAutoFocus
-        open={isBoothModalOpen.open}
-        onClose={() =>
-          setIsBoothModalOpen({
-            open: false,
-            context: "create",
-          })
-        }
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description"
-      >
-        <>
-          <AddBoothModal
-            setIsOpen={setIsBoothModalOpen}
-            isOpen={isBoothModalOpen}
-          />
-        </>
-      </Modal>
+
+      {isBoothModalOpen.open && boothIndex !== null && boothIndex >= 0 && (
+        <AddBoothModal
+          setIsOpen={setIsBoothModalOpen}
+          isOpen={isBoothModalOpen}
+        />
+      )}
     </>
   );
 };

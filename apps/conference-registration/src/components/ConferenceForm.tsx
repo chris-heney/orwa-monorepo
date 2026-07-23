@@ -1,5 +1,5 @@
 import { Divider, Modal } from "@mui/material";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import FormStepper from "./FormStepper";
 import {
   ConferenceId,
@@ -17,6 +17,10 @@ import { defaultPayload } from "../types/types";
 import Loading from "./Loading";
 import EntryListSidebar from "../entries/EntryListSidebar";
 import { sanitizeRegistrationExtras } from "../helpers/sanitizeRegistrationExtras";
+import { useEntryList } from "../providers/EntryListProvider";
+import { loadWizardDraft } from "../helpers/wizardPersistence";
+import WizardStateSync from "./WizardStateSync";
+import { ValidationHighlightProvider } from "../helpers/validationHighlight";
 
 const ConferenceForm = () => {
   const { steps, setStepIndex, stepIndex } = useStepContext();
@@ -29,6 +33,16 @@ const ConferenceForm = () => {
   const { isAdminView, isLoggedIn } = useUserContext();
   const { submitted } = useFormSubmitted();
   const { entryPayload } = useEntryPayload();
+  const { sidebarVisible, setSidebarVisible } = useEntryList();
+
+  const wizardDraft = useMemo(
+    () =>
+      loadWizardDraft(
+        String(conferenceId ?? "2"),
+        registrationSource || "online"
+      ),
+    [conferenceId, registrationSource]
+  );
 
   // Handle loading state
   if (isLoading) {
@@ -40,7 +54,12 @@ const ConferenceForm = () => {
         { ...entryPayload, conference: conferenceId ?? entryPayload.conference },
         ExtraOptions
       )
-    : { ...defaultPayload, conference: conferenceId };
+    : {
+        ...defaultPayload,
+        ...(wizardDraft?.values ?? {}),
+        // Always bind to the current conference from the URL.
+        conference: conferenceId,
+      };
 
   return ConferenceOptions.status === "Online Registration" ||
     (ConferenceOptions.status === "Kiosk Registration" &&
@@ -58,17 +77,35 @@ const ConferenceForm = () => {
           <Form
             defaultValues={formDefaults}
           >
-            <div className="gap-4 grid grid-cols-12 align-middle p-5">
-              <div
-                className={`${
-                  isLoggedIn && isAdminView ? "col-span-9" : "col-span-12"
-                }`}
-              >
-                {steps.filter((step) => step.active)[stepIndex].component}
+            <ValidationHighlightProvider clearOn={stepIndex}>
+              <WizardStateSync />
+              <div className="gap-4 grid grid-cols-12 align-middle p-5">
+                <div
+                  className={`${
+                    isLoggedIn && isAdminView && sidebarVisible
+                      ? "col-span-9"
+                      : "col-span-12"
+                  }`}
+                >
+                  {isLoggedIn && isAdminView && !sidebarVisible && (
+                    <div className="mb-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setSidebarVisible(true)}
+                        className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        Show Notifications
+                      </button>
+                    </div>
+                  )}
+                  {steps.filter((step) => step.active)[stepIndex]?.component}
+                </div>
+                {isLoggedIn && isAdminView && sidebarVisible && (
+                  <EntryListSidebar />
+                )}
               </div>
-              {isLoggedIn && isAdminView && <EntryListSidebar />}
-            </div>
-            {!submitted && <StepNavigation />}
+              {!submitted && <StepNavigation />}
+            </ValidationHighlightProvider>
           </Form>
         </section>
 

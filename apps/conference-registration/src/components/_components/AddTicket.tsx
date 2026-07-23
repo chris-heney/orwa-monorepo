@@ -36,6 +36,10 @@ const AddTicketComponent = ({
   });
 
   const registrationSource = useRegistrationSource();
+  const tickets = watch("tickets") || [];
+  const typedTickets = tickets.filter(
+    (ticket: ITicketPayload) => ticket.type === type
+  );
 
   const boothCount = watch("booths")?.length || 0;
 
@@ -44,16 +48,14 @@ const AddTicketComponent = ({
   };
 
   const handleEdit = (ticketIndex: number) => {
-    // Find the actual index of the ticket in the entire tickets array
     const allTickets = getValues("tickets");
     const filteredTickets = allTickets.filter(
-      (ticket: any) => ticket.type === type
+      (ticket: ITicketPayload) => ticket.type === type
     );
     const actualIndex = allTickets.findIndex(
-      (ticket: any) => ticket === filteredTickets[ticketIndex]
+      (ticket: ITicketPayload) => ticket === filteredTickets[ticketIndex]
     );
 
-    // Set the correct ticket index
     setTicketIndex(actualIndex);
     setIsModalOpen({
       open: true,
@@ -80,33 +82,53 @@ const AddTicketComponent = ({
   };
 
   return (
-    <div>
-      <div className={`flex flex-col items-center ${sx}`}>
-        <div className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {getValues("tickets")
-              .filter((ticket: any) => ticket.type === type)
-              .map((ticket: ITicketPayload, ticketIndex: number) => (
-                <div key={`ticket-${ticketIndex}`} className="mb-3">
-                  <div className="flex items-start text-base font-semibold">
-                    <span className="mr-3">
-                      {ticket.first + " " + ticket.last}
-                    </span>
-                    <button
-                      className="text-blue-500 underline mr-auto italic"
-                      type="button"
-                      onClick={() => handleEdit(ticketIndex)}
-                    >
-                      (Edit)
-                    </button>
-                    <span className="ml-auto">
+    <div className={sx}>
+      {typedTickets.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
+          <p className="text-sm font-medium text-slate-600">
+            No {type.toLowerCase()}s added yet
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Add at least one {type.toLowerCase()} to continue.
+          </p>
+        </div>
+      ) : (
+        <ul className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          {typedTickets.map((ticket: ITicketPayload, ticketIndex: number) => {
+            const displayName =
+              [ticket.first, ticket.last].filter(Boolean).join(" ") ||
+              `Untitled ${type}`;
+
+            return (
+              <li key={`ticket-${type}-${ticketIndex}`}>
+                <div className="px-4 py-4 hover:bg-slate-50/80">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="font-semibold text-slate-900">
+                          {displayName}
+                        </span>
+                        <button
+                          type="button"
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800"
+                          onClick={() => handleEdit(ticketIndex)}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                      <p className="mt-0.5 text-sm text-slate-500">
+                        {ticket.ticket_type?.name || "Ticket type not set"}
+                      </p>
+                    </div>
+                    <span className="text-base font-bold tabular-nums text-slate-900">
                       {formatCurrency(ticket.price)}
                     </span>
                   </div>
-                  <ul className="border-t-2 border-slate-300">
-                    <li className="flex justify-between ml-3 border-b border-gray-100">
+
+                  <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3 text-sm">
+                    <li className="flex justify-between gap-4 text-slate-600">
                       <span>{ticket.ticket_type?.name || "N/A"}</span>
-                      <span>
+                      <span className="tabular-nums text-slate-800">
                         {ticket.ticket_type?.name === "Vendor" &&
                         ticketIndex + 1 <= freeVendors()
                           ? "Included"
@@ -117,21 +139,17 @@ const AddTicketComponent = ({
                             )}
                       </span>
                     </li>
-                    {ticket.extras?.map((extra: any, extraIndex: number) => {
+                    {ticket.extras?.map((extra: string | number, extraIndex: number) => {
                       const currentExtra = getExtraData(ExtraOptions, extra);
-                      // Orphan extras from another conference (e.g. resubmit)
-                      // previously rendered as "$NaN" — skip them instead.
                       if (!currentExtra) return null;
 
                       return (
                         <li
-                          key={`extra-${extraIndex}`}
-                          className={`flex justify-between ml-3 border-b border-gray-100 ${
-                            extraIndex % 2 !== 0 ? "bg-white" : "bg-gray-200"
-                          }`}
+                          key={`extra-${ticketIndex}-${extraIndex}`}
+                          className="flex justify-between gap-4 text-slate-600"
                         >
                           <span>{currentExtra.name}</span>
-                          <span>
+                          <span className="tabular-nums text-slate-800">
                             {isExtraIncluded(
                               ticket,
                               ExtraOptions,
@@ -149,21 +167,20 @@ const AddTicketComponent = ({
                     })}
                   </ul>
                 </div>
-              ))}
-          </div>
-        </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
 
-        {/* Button */}
-        <div className="py-3">
-          <button
-            type="button"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={handleAddTicket}
-          >
-            Add {type}
-          </button>
-          {/* {<p className="text-red-500 italic text-center">Add Another {type}</p>} */}
-        </div>
+      <div className="mt-4 flex justify-center">
+        <button
+          type="button"
+          className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          onClick={handleAddTicket}
+        >
+          Add {type}
+        </button>
       </div>
     </div>
   );

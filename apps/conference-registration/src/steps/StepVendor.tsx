@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Divider, Modal, Typography } from "@mui/material";
+import { Divider, Typography } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { FormSection } from "mj-react-form-builder";
 import AddVendorComponent from "../components/_components/AddTicket";
@@ -14,6 +14,7 @@ import {
 import { ITicketPayload } from "../types/types";
 import SelectPreviousRegistration from "../components/_components/SelectPreviousRegistration";
 import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const StepVendors = () => {
   const { watch } = useFormContext();
@@ -82,20 +83,30 @@ const StepVendors = () => {
         {(booths.length === 0 || registrationSource === "kiosk") && (
           <SelectPreviousRegistration/>
         )}
-        <div className="grid md:grid-cols-1 col-span-2 gap-4">
-            <AddVendorComponent
-              type="Vendor"
-              setIsModalOpen={setIsVendorModalOpen}
-            />
-            {(registrationSource === "online" &&
-              ConferenceOptions.booths_available !== 0 && booths.length !== 0) && (
-                <p className="mt-3">
-                  You must have at least{" "}
-                  <strong className="text-red-600">1 Vendor Rep</strong> to man
-                  your booth.
-                </p>
-              )}
-        </div>
+        <ValidationHighlight
+          field="vendors"
+          className="p-2"
+          clearWhen={
+            (watch("tickets") || []).filter(
+              (ticket: ITicketPayload) => ticket.type === "Vendor"
+            ).length > 0
+          }
+        >
+          <div className="grid md:grid-cols-1 col-span-2 gap-4">
+              <AddVendorComponent
+                type="Vendor"
+                setIsModalOpen={setIsVendorModalOpen}
+              />
+              {(registrationSource === "online" &&
+                ConferenceOptions.booths_available !== 0 && booths.length !== 0) && (
+                  <p className="mt-3">
+                    You must have at least{" "}
+                    <strong className="text-red-600">1 Vendor Rep</strong> to man
+                    your booth.
+                  </p>
+                )}
+          </div>
+        </ValidationHighlight>
       </FormSection>
 
       <Typography variant="h6" textAlign="right" sx={{ mt: 4 }}>
@@ -106,22 +117,12 @@ const StepVendors = () => {
       </Typography>
       <Divider />
 
-      {ticketIndex !== null && isVendorModalOpen && (
-        <Modal
-          disableAutoFocus
-          open={isVendorModalOpen.open}
-          onClose={() =>
-            setIsVendorModalOpen({ open: false, context: "create" })
-          }
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <TicketModal
-            setIsOpen={setIsVendorModalOpen}
-            type="Vendor"
-            isOpen={isVendorModalOpen}
-          />
-        </Modal>
+      {isVendorModalOpen.open && ticketIndex !== null && ticketIndex >= 0 && (
+        <TicketModal
+          setIsOpen={setIsVendorModalOpen}
+          type="Vendor"
+          isOpen={isVendorModalOpen}
+        />
       )}
     </div>
   );

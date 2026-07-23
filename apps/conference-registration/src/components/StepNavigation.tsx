@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  useConferenceId,
   useFormSubmitted,
   useRegistrationOptions,
   useRegistrationSource,
@@ -14,6 +15,16 @@ import { useNotify } from "mj-react-form-builder";
 import { IRegistrationPayload } from "../types/types";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
+import {
+  clearWizardDraft,
+  setStepKeyInUrl,
+} from "../helpers/wizardPersistence";
+import {
+  collectFormErrorMessages,
+  mapFormErrorsToValidationFields,
+  useValidationHighlight,
+  type ValidationField,
+} from "../helpers/validationHighlight";
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useStepContext();
@@ -22,48 +33,59 @@ const StepNavigation = () => {
   const { isAdminView, isLoggedIn } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const registrationSource = useRegistrationSource();
-  const { getValues, trigger } = useFormContext();
+  const conferenceId = useConferenceId() ?? "2";
+  const { getValues, trigger, getFieldState, formState } = useFormContext();
+  // Subscribe so formState.errors stays current after await trigger().
+  const { errors } = formState;
   const { notify } = useNotify();
+  const { showInvalid, clearAllInvalid } = useValidationHighlight();
 
   const payload = getValues() as IRegistrationPayload;
 
   if (!payload) return null;
 
-  const boothValid = () => {
+  const activeSteps = steps.filter((step) => step.active);
+  const currentStepLabel = activeSteps[stepIndex]?.label;
+
+  const fail = (
+    message: string | null,
+    fields: ValidationField[],
+    { toast = true }: { toast?: boolean } = {}
+  ) => {
+    if (fields.length > 0) {
+      showInvalid(...fields);
+    }
+    if (toast && message) {
+      notify(message, "error");
+    }
+    return false;
+  };
+
+  const boothValid = (toast = true): boolean => {
     if (
       payload.booths.length === 0 &&
-      steps.filter((step) => step.active)[stepIndex].label === "Booths"
+      currentStepLabel === "Booths"
     ) {
-      notify("Please add at least one booth", "error");
-      return;
+      return fail("Please add at least one booth", ["booths"], { toast });
     }
     return true;
   };
 
-  const contestantValid = () => {
-    // if (
-    //   payload.tickets.filter((ticket) => ticket.type === "Contestant").length ===
-    //     0 &&
-    //   steps.filter((step) => step.active)[stepIndex].label === "Contestants"
-    // ) {
-    //   notify("Please add at least one Contestant", "error");
-    //   return;
-    // }
-    // return true;
+  const contestantValid = (toast = true): boolean => {
     if (
       payload?.registrationAddonIds?.length === 0 &&
-      steps.filter((step) => step.active)[stepIndex].label === "Contestants"
+      currentStepLabel === "Contestants"
     ) {
-      notify("You must select water taste test option", "error");
-      return;
+      return fail(
+        "You must select water taste test option",
+        ["contestants"],
+        { toast }
+      );
     }
     return true;
   };
 
-  const ticketAttendeeValid = () => {
-    const currentStepLabel = steps.filter((step) => step.active)[stepIndex]
-      .label;
-
+  const ticketAttendeeValid = (toast = true): boolean => {
     const tickets = payload.tickets;
 
     const guestCount = tickets.filter(
@@ -71,13 +93,19 @@ const StepNavigation = () => {
     ).length;
 
     const attendeeCount = tickets.filter((ticket) =>
-      (ticket.ticket_type.name.toLowerCase().includes("registration") || ticket.ticket_type.name.toLowerCase().includes("attendee"))
+      ticket.ticket_type.name.toLowerCase().includes("registration") ||
+      ticket.ticket_type.name.toLowerCase().includes("attendee")
     ).length;
 
-    // Case 1: No Attendee ticket selected on the Attendees step
-    if ((attendeeCount === 0 && currentStepLabel === "Attendees" && guestCount === 0) && (!isAdminView || !isLoggedIn)) {
-      notify("Please add at least one Attendee", "error");
-      return false;
+    if (
+      attendeeCount === 0 &&
+      currentStepLabel === "Attendees" &&
+      guestCount === 0 &&
+      (!isAdminView || !isLoggedIn)
+    ) {
+      return fail("Please add at least one Attendee", ["attendees"], {
+        toast,
+      });
     }
 
     if (
@@ -85,67 +113,139 @@ const StepNavigation = () => {
       attendeeCount < guestCount &&
       (!isAdminView || !isLoggedIn)
     ) {
-      notify(
+      return fail(
         "Guest registration must accompany a full or partial registration.",
-        "error"
+        ["attendees"],
+        { toast }
       );
-      return false;
     }
 
     return true;
   };
 
-  const ticketVendorValid = () => {
+  const ticketVendorValid = (toast = true): boolean => {
     if (
       payload.tickets.filter((ticket) => ticket.type === "Vendor").length ===
         0 &&
-      steps.filter((step) => step.active)[stepIndex].label === "Vendors"
+      currentStepLabel === "Vendors"
     ) {
-      notify("Please add at least one Vendor", "error");
-      return;
+      return fail("Please add at least one Vendor", ["vendors"], { toast });
     }
     return true;
   };
 
-  const isRegistrationStepValid = () => {
-    const isValid = steps
-      .filter((step) => step.active)
-      .some((step) => {
-        return (
-          step.label === "Attendees" ||
-          step.label === "Vendors" ||
-          step.label === "Sponsorships" ||
-          step.label === "Contestants"
-        );
-      });
-    if (!isValid) {
-      notify(
-        "Please select one of Attendee, Vendor, Sponsor or Contestant",
-        "error"
+  const isRegistrationStepValid = (toast = true): boolean => {
+    const registrationType = payload.registration_type;
+    const hasAttendeeOrVendor =
+      registrationType === "Attendee" || registrationType === "Vendor";
+
+    if (currentStepLabel === "Type") {
+      if (hasAttendeeOrVendor) {
+        return true;
+      }
+      return fail(
+        "Please select Attendee or Vendor registration to continue",
+        ["registration_type"],
+        { toast }
       );
-      return false;
     }
+
+    const hasTypePath = activeSteps.some((step) =>
+      ["Attendees", "Vendors", "Contestants"].includes(step.label)
+    );
+    if (!hasTypePath && !hasAttendeeOrVendor) {
+      return fail(
+        "Please go back and select Attendee or Vendor registration",
+        ["registration_type"],
+        { toast }
+      );
+    }
+
     return true;
+  };
+
+  const handleFormFieldErrors = (): boolean => {
+    const fieldByPath: Record<string, ValidationField> = {
+      registration_type: "registration_type",
+      member_status: "member_status",
+      agency: "agency",
+      vendor_participation_acknowledgement: "vendor_acknowledgement",
+      organization: "organization",
+      logo: "sponsor_details",
+      "registrant.first": "contact",
+      "registrant.last": "contact",
+      "registrant.email": "contact",
+      "registrant.phone": "contact",
+      paymentType: "billing",
+      "paymentData.cardNumber": "billing",
+      "paymentData.expirationDate": "billing",
+      "paymentData.cardCode": "billing",
+      registrationAddonIds: "contestants",
+    };
+
+    const highlightFields = new Set<ValidationField>(
+      mapFormErrorsToValidationFields(errors)
+    );
+    const messages: string[] = [];
+
+    for (const [path, field] of Object.entries(fieldByPath)) {
+      const { error } = getFieldState(path);
+      if (error) {
+        highlightFields.add(field);
+        if (error.message) {
+          messages.push(String(error.message));
+        }
+      }
+    }
+
+    if (highlightFields.size > 0) {
+      showInvalid(...highlightFields);
+    }
+
+    const allMessages =
+      messages.length > 0 ? messages : collectFormErrorMessages(errors);
+
+    notify(
+      allMessages[0] ||
+        "Please correct the errors in the form before continuing",
+      "error"
+    );
+    return false;
   };
 
   const handleNext = async () => {
     const isValid = await trigger();
-    if (
-      isValid &&
+    if (!isValid) {
+      handleFormFieldErrors();
+      // Also toast/highlight step-specific list rules so every problem is obvious.
+      ticketAttendeeValid();
+      ticketVendorValid();
+      boothValid();
+      isRegistrationStepValid();
+      contestantValid();
+      return;
+    }
+
+    const stepChecksOk =
       ticketAttendeeValid() &&
       ticketVendorValid() &&
       boothValid() &&
       isRegistrationStepValid() &&
-      contestantValid()
-    ) {
-      if (stepIndex < steps.filter((step) => step.active).length - 1) {
-        setStepIndex(stepIndex + 1);
-      }
+      contestantValid();
+
+    if (!stepChecksOk) {
+      return;
+    }
+
+    if (stepIndex < activeSteps.length - 1) {
+      clearAllInvalid();
+      setStepIndex(stepIndex + 1);
     }
   };
 
   const handlePrevious = () => {
     if (stepIndex > 0) {
+      clearAllInvalid();
       setStepIndex(stepIndex - 1);
     }
   };
@@ -153,10 +253,7 @@ const StepNavigation = () => {
   const handleSubmitPayload = async () => {
     const isValid = await trigger();
     if (!isValid) {
-      notify(
-        "Please correct the errors in the form before submitting",
-        "error"
-      );
+      handleFormFieldErrors();
       return;
     }
 
@@ -172,14 +269,24 @@ const StepNavigation = () => {
       return `20${year}-${month}`; // Combine into YYYY-MM
     })();
 
-    const updatedRegistrationPayload = {
+    // Sponsorships are vendor-only — strip any leftover packages for attendees.
+    const sponsorsForSubmit =
+      processedPayload.registration_type === "Vendor"
+        ? processedPayload.sponsors
+        : [];
+    const payloadForSubmit = {
       ...processedPayload,
+      sponsors: sponsorsForSubmit,
+    };
+
+    const updatedRegistrationPayload = {
+      ...payloadForSubmit,
       paymentData: {
-        ...processedPayload.paymentData,
+        ...payloadForSubmit.paymentData,
         cardNumber: getValues("paymentData.cardNumber")?.replaceAll(" ", ""),
         expirationDate: cardExpiration,
         amount: calculateSubtotal(
-          processedPayload,
+          payloadForSubmit,
           registrationSource,
           getValues("agency") === "false" &&
             getValues("member_status") === "Non Member"
@@ -208,6 +315,8 @@ const StepNavigation = () => {
     setIsSubmitting(false);
 
     if (submitResponse.result === "success") {
+      clearWizardDraft(String(conferenceId), registrationSource || "online");
+      setStepKeyInUrl(null);
       setSubmitted(true);
       notify(submitResponse.message, "success");
     } else {
@@ -244,15 +353,13 @@ const StepNavigation = () => {
             variant="contained"
             color="primary"
             onClick={
-              steps.filter((step) => step.active)[stepIndex].key ===
-              "billing_step"
+              activeSteps[stepIndex].key === "billing_step"
                 ? handleSubmitPayload
                 : handleNext
             }
             className="w-full sm:w-36"
           >
-            {steps.filter((step) => step.active)[stepIndex].key ===
-            "billing_step"
+            {activeSteps[stepIndex].key === "billing_step"
               ? "Submit Form"
               : "Next »"}
           </Button>

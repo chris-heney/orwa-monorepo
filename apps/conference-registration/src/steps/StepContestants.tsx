@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Divider, Modal, Typography } from "@mui/material";
+import { Divider, Typography } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { IRegistrationOptions, ITicketPayload } from "../types/types";
 import { RegistrationOptions, useTicketIndex } from "../AppContextProvider";
@@ -68,20 +68,12 @@ const StepContestants = () => {
         </strong>
       </Typography>
       <Divider />
-      {ticketIndex !== null && isModalOpen && (
-        <Modal
-          disableAutoFocus
-          open={isModalOpen.open}
-          onClose={() => setIsModalOpen({ open: false, context: "create" })}
-          aria-labelledby="modal-modal-title"
-          aria-describedby="modal-modal-description"
-        >
-          <TicketModal
-            setIsOpen={setIsModalOpen}
-            type="Contestant"
-            isOpen={isModalOpen}
-          />
-        </Modal>
+      {isModalOpen.open && ticketIndex !== null && ticketIndex >= 0 && (
+        <TicketModal
+          setIsOpen={setIsModalOpen}
+          type="Contestant"
+          isOpen={isModalOpen}
+        />
       )}
           <AddExtras field="registrationExtras" context="Registration" />
     </div>

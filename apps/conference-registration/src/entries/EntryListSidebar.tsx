@@ -25,9 +25,13 @@ const EntryListSidebar = () => {
     string
   }) };
 
-  const { adminOptions, updateAdminOptions, selectedSubmission } =
-    useEntryList();
-    const {setViewingEntries} = useUserContext();
+  const {
+    adminOptions,
+    updateAdminOptions,
+    selectedSubmission,
+    setSidebarVisible,
+  } = useEntryList();
+  const { setViewingEntries } = useUserContext();
 
   const registrationSource = useRegistrationSource();
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
@@ -111,12 +115,31 @@ const EntryListSidebar = () => {
   };
 
   return (
-    <div className="bg-white rounded-md py-2 px-6 space-y-6 border border-gray-200 col-span-3">
+    <div className="bg-white rounded-md py-2 px-6 space-y-6 border border-gray-200 col-span-3 relative">
       {/* Notifications Section */}
       <div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2 text-left">
-          Notifications
-        </h3>
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h3 className="text-lg font-semibold text-gray-700 text-left">
+            Notifications
+          </h3>
+          <button
+            type="button"
+            onClick={() => setSidebarVisible(false)}
+            className="shrink-0 rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Dismiss notifications panel"
+            title="Dismiss"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+            </svg>
+          </button>
+        </div>
         <hr className="border-gray-300 py-2" />
 
         <div className="space-y-3">

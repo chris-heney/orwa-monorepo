@@ -77,26 +77,25 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   const [noEmail, setNoEmail] = useState(false);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         if (isOpen.context === "create") {
           remove(ticketIndex);
-          return setIsOpen({
-            open: false,
-            context: "create",
-          });
-        } else {
-          return setIsOpen({
-            open: false,
-            context: "create",
-          });
         }
+        setIsOpen({
+          open: false,
+          context: "create",
+        });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
@@ -206,48 +205,65 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     });
   };
 
-  const isModalOpen = () => {
+  const closeModal = () => {
     if (isOpen.context === "create") {
       remove(ticketIndex);
-      return setIsOpen({
-        open: false,
-        context: "create",
-      });
-    } else {
-      return setIsOpen({
-        open: false,
-        context: "create",
-      });
     }
+    setIsOpen({
+      open: false,
+      context: "create",
+    });
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50 overflow-y-auto border-r-2">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 sm:mx-6 md:mx-auto overflow-y-scroll">
-        <CustomSecondaryHeader title={`Add ${type}`} setIsOpen={isModalOpen} />
-        <div className="p-6 space-y-1 max-h-[50vh] md:max-h-[70vh] overflow-y-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <TextInput
-              source={`tickets[${ticketIndex}].first`}
-              label="First Name"
-              required
-            />
-            <TextInput
-              source={`tickets[${ticketIndex}].last`}
-              label="Last Name"
-              required
-            />
-            {isAdminView && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-4 sm:p-8">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ticket-modal-title"
+        className="flex max-h-[min(90vh,920px)] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+      >
+        <CustomSecondaryHeader
+          title={`${isOpen.context === "edit" ? "Edit" : "Add"} ${type}`}
+          setIsOpen={closeModal as React.Dispatch<React.SetStateAction<boolean>>}
+        />
+
+        {/* Single scroll region — header/footer stay put */}
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+          <section className="space-y-4">
+            <div>
+              <h3
+                id="ticket-modal-title"
+                className="text-sm font-semibold uppercase tracking-wide text-slate-500"
+              >
+                Contact details
+              </h3>
+              <p className="mt-1 text-sm text-slate-500">
+                Who is this {type.toLowerCase()} registration for?
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
               <TextInput
-                source={`tickets[${ticketIndex}].organization`}
-                label="Company/Organization"
+                source={`tickets[${ticketIndex}].first`}
+                label="First Name"
+                required
               />
-            )}
-            <div className="sm:col-span-2 flex items-center space-x-4">
-              <Checkbox
-                checked={noEmail}
-                onChange={(e) => {
-                  const isChecked = e.target.checked;
+              <TextInput
+                source={`tickets[${ticketIndex}].last`}
+                label="Last Name"
+                required
+              />
+              {isAdminView && (
+                <TextInput
+                  source={`tickets[${ticketIndex}].organization`}
+                  label="Company/Organization"
+                />
+              )}
+              <div
+                className="sm:col-span-2 flex cursor-pointer items-center gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 transition hover:bg-slate-100"
+                onClick={() => {
+                  const isChecked = !noEmail;
                   setNoEmail(isChecked);
                   setValue(
                     `tickets[${ticketIndex}].email`,
@@ -260,147 +276,190 @@ const TicketModal: React.FC<ITicketModalProps> = ({
                       : ""
                   );
                 }}
-                className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
-              <label className="text-gray-700 text-sm">
-                I do not have an email
-              </label>
-            </div>
-            {!noEmail && (
-              <EmailInput
-                source={`tickets[${ticketIndex}].email`}
-                label="Email"
-                required
-              />
-            )}
-            <MaskedPhoneInput
-              source={`tickets[${ticketIndex}].phone`}
-              required={!isAdminView}
-            />
-            {/* title */}
-            {isAdminView && type === "Attendee" && (
-              <TextInput
-                source={`tickets[${ticketIndex}].title`}
-                label="Title"
-              />
-            )}
-            <SelectInput
-              source={`tickets[${ticketIndex}].ticket_type.name`}
-              label="Ticket Type"
-              options={TicketOptions.filter((ticket) => {
-                return ticketMatchesContext(ticket, type) || isAdminView;
-              }).map((t) => ({
-                value: t.name,
-                label: t.name,
-              }))}
-              required
-              onChange={(e) => handleTicketTypeChange(e)}
-            />
-            {isAdminView && type === "Attendee" && (
-              <SelectInput
-                source={`tickets[${ticketIndex}].orwa_voting_status`}
-                label="ORWA Voting Status"
-                defualtValue="Non Voting"
-                options={VotingStatusOptions}
-              />
-            )}
-            {isAdminView && type === "Attendee" && (
-              <SelectInput
-                defualtValue="Non Voting"
-                source={`tickets[${ticketIndex}].orwaag_voting_status`}
-                label="ORWAAG Voting Status"
-                options={VotingStatusOptions}
-              />
-            )}
-            {isAdminView && type === "Attendee" && (
-              <CheckboxInput
-                source={`tickets[${ticketIndex}].speaker`}
-                label="Speaker"
-                helperText="Check if the attendee is a speaker at the conference."
-              />
-            )}
-            {type === "Attendee" &&
-              watch(`tickets[${ticketIndex}].ticket_type.name`) &&
-              watch(`tickets[${ticketIndex}].ticket_type.name`) !== "Guest" && (
-                <>
-                  <SelectInput
-                    source={`tickets[${ticketIndex}].training_type`}
-                    label="Training Type"
-                    options={[
-                      { label: "None", value: "None" },
-                      { label: "Both", value: "Both" },
-                      { label: "Operator", value: "Operator" },
-                      { label: "Board", value: "Board" },
-                    ]}
-                    required={!isAdminView}
-                  />
-                  {(trainingType === "Operator" || trainingType === "Both") && (
-                    <TextInput
-                      source={`tickets[${ticketIndex}].license`}
-                      label="License"
-                      required
-                    />
-                  )}
-                </>
-              )}
-
-            <div className="sm:col-span-2 mb-2">
-              <p className="text-sm mb-2 font-medium">
-                Promotional Emails Consent <span className="text-red-500">*</span>
-              </p>
-              <RadioGroup
-                name={`tickets[${ticketIndex}].promotional_emails`}
-                value={watch(`tickets[${ticketIndex}].promotional_emails`)}
-                onChange={(e) =>
-                  setValue(
-                    `tickets[${ticketIndex}].promotional_emails`,
-                    e.target.value === "true" ? true : false
-                  )
-                }
               >
-                <FormControlLabel
-                  value={true}
-                  control={<Radio />}
-                  label="I consent to receive informational and promotional emails from select conference vendors."
-                  className="text-sm"
+                <Checkbox
+                  checked={noEmail}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked;
+                    setNoEmail(isChecked);
+                    setValue(
+                      `tickets[${ticketIndex}].email`,
+                      isChecked
+                        ? `anonymous+${ticket.first
+                            ?.trim()
+                            .replace(/[^a-zA-Z0-9]/g, "")}${ticket.last
+                            ?.trim()
+                            .replace(/[^a-zA-Z0-9]/g, "")}@orwa.org`
+                        : ""
+                    );
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  sx={{ p: 0 }}
                 />
-                <FormControlLabel
-                  value={false}
-                  control={<Radio />}
-                  label="I DO NOT consent to receive informational and promotional emails from select conference vendors."
-                  className="text-sm"
+                <span className="text-sm text-slate-700">
+                  I do not have an email
+                </span>
+              </div>
+              {!noEmail && (
+                <EmailInput
+                  source={`tickets[${ticketIndex}].email`}
+                  label="Email"
+                  required
                 />
-              </RadioGroup>
-              {!watch(`tickets[${ticketIndex}].promotional_emails`) && 
-                watch(`tickets[${ticketIndex}].promotional_emails`) !== false && (
-                <p className="text-red-500 text-xs mt-1">Please select an option</p>
+              )}
+              <MaskedPhoneInput
+                source={`tickets[${ticketIndex}].phone`}
+                required={!isAdminView}
+              />
+              {isAdminView && type === "Attendee" && (
+                <TextInput
+                  source={`tickets[${ticketIndex}].title`}
+                  label="Title"
+                />
               )}
             </div>
-          </div>
-          <AddExtras
-            field={"tickets"}
-            fieldIndex={ticketIndex}
-            context={type}
-          />
-        </div>
-        <div className="border-t p-4 bg-gray-100 rounded-b-xl flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-          {calculateSubtotal() > 0 && (
-            <p className="text-lg font-semibold text-gray-800 text-center sm:text-left">
-              Subtotal: {formatCurrency(calculateSubtotal())}
-            </p>
-          )}
-          <div className="flex flex-col sm:flex-row w-full sm:w-auto space-y-2 sm:space-y-0 sm:space-x-4">
-            <button
-              className="bg-blue-600 text-white w-full sm:w-auto px-6 py-2 rounded-lg hover:bg-blue-700 transition text-center"
-              onClick={handleSave}
-            >
-              {isOpen.context === "edit" ? "Update" : "Add"} {type}
-            </button>
-            {/* remove button */}
+          </section>
 
+          <section className="mt-8 space-y-4 border-t border-slate-200 pt-6">
+            <div>
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Registration options
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+              <SelectInput
+                source={`tickets[${ticketIndex}].ticket_type.name`}
+                label="Ticket Type"
+                options={TicketOptions.filter((ticketOption) => {
+                  return ticketMatchesContext(ticketOption, type) || isAdminView;
+                }).map((t) => ({
+                  value: t.name,
+                  label: t.name,
+                }))}
+                required
+                onChange={(e) => handleTicketTypeChange(e)}
+              />
+              {isAdminView && type === "Attendee" && (
+                <SelectInput
+                  source={`tickets[${ticketIndex}].orwa_voting_status`}
+                  label="ORWA Voting Status"
+                  defualtValue="Non Voting"
+                  options={VotingStatusOptions}
+                />
+              )}
+              {isAdminView && type === "Attendee" && (
+                <SelectInput
+                  defualtValue="Non Voting"
+                  source={`tickets[${ticketIndex}].orwaag_voting_status`}
+                  label="ORWAAG Voting Status"
+                  options={VotingStatusOptions}
+                />
+              )}
+              {isAdminView && type === "Attendee" && (
+                <div className="sm:col-span-2">
+                  <CheckboxInput
+                    source={`tickets[${ticketIndex}].speaker`}
+                    label="Speaker"
+                    helperText="Check if the attendee is a speaker at the conference."
+                  />
+                </div>
+              )}
+              {type === "Attendee" &&
+                watch(`tickets[${ticketIndex}].ticket_type.name`) &&
+                watch(`tickets[${ticketIndex}].ticket_type.name`) !==
+                  "Guest" && (
+                  <>
+                    <SelectInput
+                      source={`tickets[${ticketIndex}].training_type`}
+                      label="Training Type"
+                      options={[
+                        { label: "None", value: "None" },
+                        { label: "Both", value: "Both" },
+                        { label: "Operator", value: "Operator" },
+                        { label: "Board", value: "Board" },
+                      ]}
+                      required={!isAdminView}
+                    />
+                    {(trainingType === "Operator" ||
+                      trainingType === "Both") && (
+                      <TextInput
+                        source={`tickets[${ticketIndex}].license`}
+                        label="License"
+                        required
+                      />
+                    )}
+                  </>
+                )}
+
+              <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
+                <p className="mb-2 text-sm font-medium text-slate-800">
+                  Promotional Emails Consent{" "}
+                  <span className="text-red-500">*</span>
+                </p>
+                <RadioGroup
+                  name={`tickets[${ticketIndex}].promotional_emails`}
+                  value={watch(`tickets[${ticketIndex}].promotional_emails`)}
+                  onChange={(e) =>
+                    setValue(
+                      `tickets[${ticketIndex}].promotional_emails`,
+                      e.target.value === "true" ? true : false
+                    )
+                  }
+                >
+                  <FormControlLabel
+                    value={true}
+                    control={<Radio />}
+                    label="I consent to receive informational and promotional emails from select conference vendors."
+                    className="items-start text-sm"
+                  />
+                  <FormControlLabel
+                    value={false}
+                    control={<Radio />}
+                    label="I DO NOT consent to receive informational and promotional emails from select conference vendors."
+                    className="items-start text-sm"
+                  />
+                </RadioGroup>
+                {!watch(`tickets[${ticketIndex}].promotional_emails`) &&
+                  watch(`tickets[${ticketIndex}].promotional_emails`) !==
+                    false && (
+                    <p className="mt-1 text-xs text-red-500">
+                      Please select an option
+                    </p>
+                  )}
+              </div>
+            </div>
+          </section>
+
+          <section className="mt-8 border-t border-slate-200 pt-6">
+            <AddExtras
+              field={"tickets"}
+              fieldIndex={ticketIndex}
+              context={type}
+            />
+          </section>
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-center text-base font-semibold text-slate-900 sm:text-left">
+            Subtotal:{" "}
+            <span className="tabular-nums">
+              {formatCurrency(calculateSubtotal())}
+            </span>
+          </p>
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <button
+              type="button"
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              onClick={closeModal}
+            >
+              Cancel
+            </button>
             {isOpen.context === "edit" && (
               <button
-                className="bg-red-500 text-white w-full sm:w-auto px-6 py-2 rounded-lg hover:bg-red-600 transition text-center"
+                type="button"
+                className="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
                 onClick={() => {
                   remove(ticketIndex);
                   setIsOpen({
@@ -413,23 +472,11 @@ const TicketModal: React.FC<ITicketModalProps> = ({
               </button>
             )}
             <button
-              className="bg-gray-500 text-white w-full sm:w-auto px-6 py-2 rounded-lg hover:bg-gray-600 transition text-center"
-              onClick={() => {
-                if (isOpen.context === "edit") {
-                  setIsOpen({
-                    open: false,
-                    context: "create",
-                  });
-                } else {
-                  remove(ticketIndex);
-                  setIsOpen({
-                    open: false,
-                    context: "create",
-                  });
-                }
-              }}
+              type="button"
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              onClick={handleSave}
             >
-              Cancel
+              {isOpen.context === "edit" ? "Update" : "Add"} {type}
             </button>
           </div>
         </div>

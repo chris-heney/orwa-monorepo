@@ -10,6 +10,8 @@ import AddExtras from "../AddExtras";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { useNotify } from "mj-react-form-builder";
 import { getExtraData } from "../../helpers/getExtraData";
+import { formatCurrency } from "../../helpers/currencyFormat";
+import { boothBasePrice } from "../../helpers/boothBasePrice";
 
 interface IBoothModalProps {
   isOpen: {
@@ -36,43 +38,42 @@ const AddBoothModal = ({ setIsOpen, isOpen }: IBoothModalProps) => {
     name: "booths",
   });
 
-  if (!registrationSource || !ExtraOptions) return;
+  const boothPrice = boothBasePrice(
+    ConferenceOptions,
+    boothIndex < 0 ? 0 : boothIndex
+  );
 
-  const boothPrice =
-    watch("booths").length < 1 || boothIndex === 0
-      ? ConferenceOptions.booth_price
-      : ConferenceOptions.booth_price_2;
+  const subtotal = (index: number) => {
+    let total = boothPrice;
 
-  const subtotal = (boothIndex: number) => {
-    let total = 0;
-
-    // Add booth price to the total
-    total += boothPrice;
-
-    // Fetch booths from watch
     const booths = watch("booths") as IBoothPayload[] | undefined;
-
-    // Validate booths and the specific booth index
-    if (!booths || booths.length === 0 || !booths[boothIndex]) {
-      return total; // Return the total if no booths or the index is invalid
+    if (!booths || booths.length === 0 || !booths[index]) {
+      return total;
     }
 
-    // Loop through extras for the specific booth and calculate their prices
     const extrasTotal =
-      booths[boothIndex]?.extras
+      booths[index]?.extras
         ?.map((extra: number) => {
           const currentExtra = getExtraData(ExtraOptions, extra);
-          if (!currentExtra) return 0; // Skip if the extra is not found
+          if (!currentExtra) return 0;
           return registrationSource === "online"
             ? currentExtra.price_online
             : currentExtra.price_event;
         })
-        .reduce((acc: number, curr: number) => acc + curr, 0) || 0; // Sum up the extras or default to 0
+        .reduce((acc: number, curr: number) => acc + curr, 0) || 0;
 
-    // Add extras total to the total
-    total += extrasTotal;
+    return total + extrasTotal;
+  };
 
-    return total;
+  const closeModal = () => {
+    if (isOpen.context === "create") {
+      remove(boothIndex);
+    }
+    setIsOpen({
+      open: false,
+      context: "create",
+    });
+    setBoothIndex(-1);
   };
 
   const handleSave = async () => {
@@ -95,84 +96,111 @@ const AddBoothModal = ({ setIsOpen, isOpen }: IBoothModalProps) => {
     setBoothIndex(-1);
   };
 
-  const isModalOpen = () => {
-    if (isOpen.context === "create") {
-      remove(boothIndex);
-      return setIsOpen({
-        open: false,
-        context: "create",
-      });
-    } else {
-      return setIsOpen({
-        open: false,
-        context: "create",
-      });
-    }
-  };
-
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (isOpen.context === "create") {
-          remove(boothIndex);
-          return setIsOpen({
-            open: false,
-            context: "create",
-          });
-        } else {
-          return setIsOpen({
-            open: false,
-            context: "create",
-          });
-        }
+        closeModal();
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
+      document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
-  return !ConferenceOptions ? (
-    <>Loading</>
-  ) : (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="bg-white border-2 border-black rounded-lg shadow-lg w-full max-w-xl mx-4 sm:mx-auto">
-        <CustomSecondaryHeader setIsOpen={isModalOpen} title={"Add Booth"} />
-        <div className="p-3">
-          <AddExtras field={"booths"} fieldIndex={boothIndex} context="Booth" />
-        </div>
-        <div className="p-3">
-          <p className="mt-2">Subtotal: ${subtotal(boothIndex)}</p>
-          <div className="flex justify-between">
-            <button
-              type="submit"
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-2"
-              onClick={() => {
-                handleSave();
-              }}
-            >
-              {isOpen.context === "create" ? "Add Booth" : "Update Booth"}
-            </button>
+  if (!registrationSource || !ExtraOptions || !ConferenceOptions) {
+    return null;
+  }
 
-            {boothIndex !== -1 && (
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-4 sm:p-8">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="booth-modal-title"
+        className="flex max-h-[min(90vh,920px)] w-full max-w-4xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+      >
+        <CustomSecondaryHeader
+          title={`${isOpen.context === "edit" ? "Edit" : "Add"} Booth`}
+          setIsOpen={closeModal as React.Dispatch<React.SetStateAction<boolean>>}
+        />
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+          <section className="space-y-2">
+            <h3
+              id="booth-modal-title"
+              className="text-sm font-semibold uppercase tracking-wide text-slate-500"
+            >
+              Booth space
+            </h3>
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50/80 px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  Booth {boothIndex + 1}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {boothIndex === 0 ? "Primary booth rate" : "Additional booth rate"}
+                </p>
+              </div>
+              <span className="text-base font-bold tabular-nums text-slate-900">
+                {formatCurrency(boothPrice)}
+              </span>
+            </div>
+          </section>
+
+          <section className="mt-8 border-t border-slate-200 pt-6">
+            <AddExtras
+              field={"booths"}
+              fieldIndex={boothIndex}
+              context="Booth"
+            />
+          </section>
+        </div>
+
+        <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-center text-base font-semibold text-slate-900 sm:text-left">
+            Subtotal:{" "}
+            <span className="tabular-nums">
+              {formatCurrency(subtotal(boothIndex))}
+            </span>
+          </p>
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <button
+              type="button"
+              className="cursor-pointer rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              onClick={closeModal}
+            >
+              Cancel
+            </button>
+            {isOpen.context === "edit" && (
               <button
                 type="button"
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mt-2 ml-2"
+                className="cursor-pointer rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700"
                 onClick={() => {
+                  remove(boothIndex);
                   setIsOpen({
                     open: false,
                     context: "create",
                   });
                   setBoothIndex(-1);
-                  remove(boothIndex);
                 }}
               >
                 Remove
               </button>
             )}
+            <button
+              type="button"
+              className="cursor-pointer rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              onClick={handleSave}
+            >
+              {isOpen.context === "edit" ? "Update Booth" : "Add Booth"}
+            </button>
           </div>
         </div>
       </div>

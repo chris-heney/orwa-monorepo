@@ -36,6 +36,10 @@ import DefualtFormSteps, {
   IFormStepContext,
 } from "./components/FormSteps";
 import authProvider from "./providers/authProvider";
+import {
+  loadAdminView,
+  saveAdminView,
+} from "./helpers/adminViewPersistence";
 
 export const ConferenceId = createContext<string | null>(null);
 export const PassportId = createContext<string | null>(null);
@@ -136,7 +140,7 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
   const [boothIndex, setBoothIndex] = useState<number>(0);
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isAdminView, setIsAdminView] = useState<boolean>(false);
+  const [isAdminView, setIsAdminView] = useState<boolean>(() => loadAdminView());
   const [viewingEntries, setViewingEntries] = useState<boolean>(false);
 
   // Sets the context for the extra details modal
@@ -168,12 +172,17 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
     useGetRegistrationAddons(parseInt(conferenceId));
 
   useEffect(() => {
+    saveAdminView(isAdminView);
+  }, [isAdminView]);
+
+  useEffect(() => {
     const checkUserAuth = async () => {
       try {
         await authProvider.checkAuth();
         setIsLoggedIn(true);
       } catch {
         setIsLoggedIn(false);
+        setIsAdminView(false);
       }
     };
     checkUserAuth();

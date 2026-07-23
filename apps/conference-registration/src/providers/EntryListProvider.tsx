@@ -24,6 +24,8 @@ import { entryPayload } from "../types/types";
     setSelectedSubmission: React.Dispatch<
       React.SetStateAction<entryPayload | null>
     >;
+    sidebarVisible: boolean;
+    setSidebarVisible: React.Dispatch<React.SetStateAction<boolean>>;
   }
   
   export const EntryListContext = createContext<IEntryListContextProvider>({
@@ -36,6 +38,8 @@ import { entryPayload } from "../types/types";
     updateAdminOptions: () => {},
     selectedSubmission: null,
     setSelectedSubmission: () => {},
+    sidebarVisible: true,
+    setSidebarVisible: () => {},
   });
   
   export const useEntryList = () => useContext(EntryListContext);
@@ -45,6 +49,7 @@ import { entryPayload } from "../types/types";
   const EntryListProvider = ({ children }: PropsWithChildren) => {
     const [selectedSubmission, setSelectedSubmission] =
       useState<entryPayload | null>(null);
+    const [sidebarVisible, setSidebarVisible] = useState(true);
     const [adminOptions, setAdminOptions] = useState({
       registrantNotification: false,
       adminNotification: false,
@@ -68,6 +73,8 @@ import { entryPayload } from "../types/types";
           updateAdminOptions,
           selectedSubmission,
           setSelectedSubmission,
+          sidebarVisible,
+          setSidebarVisible,
         }}
       >
         {children}

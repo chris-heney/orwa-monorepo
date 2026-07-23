@@ -15,6 +15,7 @@ import {
 import { isExtraIncluded } from "../helpers/isExtraIncluded";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { getExtraData } from "../helpers/getExtraData";
+import { boothBasePrice } from "../helpers/boothBasePrice";
 import {
   IRegistrationPayload,
   ITicketPayload,
@@ -166,11 +167,9 @@ const CheckoutReceipt = () => {
                 index={index}
                 key={index + booth.subtotal || 0}
                 label={`Booth ${index + 1}`}
-                value={
-                  index === 0
-                    ? currencyFormatter.format(ConferenceOptions.booth_price)
-                    : currencyFormatter.format(ConferenceOptions.booth_price_2)
-                }
+                value={currencyFormatter.format(
+                  boothBasePrice(ConferenceOptions, index)
+                )}
               />
             ))}
           </Section>

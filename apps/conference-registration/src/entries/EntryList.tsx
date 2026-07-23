@@ -10,7 +10,8 @@ const ITEMS_PER_PAGE = 10;
 const EntryList = () => {
   const { data: submissions, status: submissionsStatus } = useGetSubmissions();
   const { setEntryPayload } = useEntryPayload();
-  const { setSelectedSubmission } = useEntryList();
+  const { setSelectedSubmission, sidebarVisible, setSidebarVisible } =
+    useEntryList();
   const { setViewingEntries, setIsAdminView } = useUserContext();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -114,7 +115,22 @@ const EntryList = () => {
         {/* Table and Action Section */}
         <div className="gap-4 grid grid-cols-12">
           {/* Table Section */}
-          <div className="flex-grow rounded-md overflow-auto col-span-9">
+          <div
+            className={`flex-grow rounded-md overflow-auto ${
+              sidebarVisible ? "col-span-9" : "col-span-12"
+            }`}
+          >
+            {!sidebarVisible && (
+              <div className="mb-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setSidebarVisible(true)}
+                  className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Show Notifications
+                </button>
+              </div>
+            )}
             <table className="border-collapse border border-gray-300 text-sm sm:text-base w-full">
               <thead className="bg-gray-100">
                 <tr>
@@ -143,7 +159,10 @@ const EntryList = () => {
                   <tr
                     key={submission.id}
                     className="hover:bg-gray-50 even:bg-gray-50"
-                    onClick={() => setSelectedSubmission(submission)}
+                    onClick={() => {
+                      setSelectedSubmission(submission);
+                      setSidebarVisible(true);
+                    }}
                   >
                     <td className="border border-gray-300 px-4 py-2 text-center text-nowrap">
                       {new Date(submission.createdAt).toLocaleDateString(
@@ -211,7 +230,7 @@ const EntryList = () => {
             </div>
           </div>
 
-          <EntryListSidebar />
+          {sidebarVisible && <EntryListSidebar />}
         </div>
       </div>
     </div>

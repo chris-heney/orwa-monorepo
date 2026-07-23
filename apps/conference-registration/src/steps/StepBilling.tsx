@@ -16,6 +16,7 @@ import {
 } from "../AppContextProvider";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { IRegistrationPayload } from "../types/types";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const BillingStep = () => {
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
@@ -62,7 +63,21 @@ const BillingStep = () => {
         <CheckoutReciept />
       </div>
       {/* Form Section with Checkout and Billing */}
-      <div>
+      <ValidationHighlight
+        field="billing"
+        className="p-2"
+        clearWhen={Boolean(
+          ((totalAmount as unknown as number) <= 0 || paymentType) &&
+            watch("paymentData.billingAddress.address") &&
+            watch("paymentData.billingAddress.city") &&
+            watch("paymentData.billingAddress.state") &&
+            watch("paymentData.billingAddress.zip") &&
+            (paymentType !== "Card" ||
+              (watch("paymentData.cardNumber") &&
+                watch("paymentData.expirationDate") &&
+                watch("paymentData.cardCode")))
+        )}
+      >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 md:gap-6">
           {/* Checkout Type Section */}
           <div className="col-span-1">
@@ -119,7 +134,7 @@ const BillingStep = () => {
             {paymentType === "Card" && <CardForm />}
           </div>
         </div>
-      </div>
+      </ValidationHighlight>
     </div>
   );
 };

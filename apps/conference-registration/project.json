@@ -25,19 +25,20 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "nx:run-commands",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "conference-registration:build"
+        "command": "npm run dev",
+        "cwd": "apps/conference-registration"
       },
       "configurations": {
         "development": {
-          "buildTarget": "conference-registration:build:development",
-          "hmr": true
+          "command": "npm run dev",
+          "cwd": "apps/conference-registration"
         },
         "production": {
-          "buildTarget": "conference-registration:build:production",
-          "hmr": false
+          "command": "npm run preview",
+          "cwd": "apps/conference-registration"
         }
       }
     },

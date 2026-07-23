@@ -663,6 +663,8 @@ export interface IRegistrationPayload {
   contestants: IContestantPayload[] | [];
   team?: string;
   vendor_participation_acknowledgement?: boolean;
+  /** Skip booth step when editing a previous registration ("Yes" | "No"). */
+  previous_registration_change?: "Yes" | "No" | "";
   accepted_terms?: {
     slug: string;
     title: string;
@@ -771,6 +773,7 @@ export const defaultPayload: IRegistrationPayload = {
   error: false,
   contestants: [],
   vendor_participation_acknowledgement: false,
+  previous_registration_change: "",
   accepted_terms: [],
 };
 

@@ -150,9 +150,16 @@ const AddExtras = ({
 
     return !isExcluded && extraMatchesContext(extra);
   }).length > 0 ? (
-    <div className="border-t pt-3">
-      <h3 className="font-semibold text-gray-800 text-lg">Extras</h3>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <div className="mb-3">
+        <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Extras
+        </h3>
+        <p className="mt-1 text-sm text-slate-500">
+          Optional add-ons for this registration.
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {ExtraOptions.sort((a,b) => {
           if (!a.order || !b.order) return 0;
           return a.order - b.order;
@@ -176,13 +183,24 @@ const AddExtras = ({
           const currentQuantity =
             ticket?.extras?.filter((id: string) => id === extra.id).length || 0;
 
+          const selected = !!isExtraSelected(extra.id);
+
           return (
             <div
               key={extra.id}
-              className="flex flex-col bg-gray-50 border p-4 rounded-lg shadow-sm"
+              className={`flex flex-col rounded-lg border border-slate-200 px-3 py-2 transition ${
+                useYesNo
+                  ? "bg-slate-50/80"
+                  : "cursor-pointer bg-slate-50 hover:bg-slate-100"
+              }`}
+              onClick={
+                useYesNo
+                  ? undefined
+                  : () => handleExtrasChange(extra, !selected)
+              }
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   {useYesNo ? (
                     <FormControl 
                       {...register(`extras.${extra.id}`, {
@@ -218,15 +236,17 @@ const AddExtras = ({
                   ) : (
                     <>
                       <Checkbox
-                        checked={isExtraSelected(extra.id)}
+                        checked={selected}
                         onChange={(e) => handleExtrasChange(extra, e.target.checked)}
-                        className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        sx={{ p: 0 }}
                       />
-                      <div className="flex flex-col">
-                        <span className="text-gray-800 text-sm text-left">
+                      <div className="flex min-w-0 flex-col">
+                        <span className="text-left text-sm text-slate-800">
                           {extra.name}
                         </span>
-                        <span className="text-gray-500 text-sm text-left">
+                        <span className="text-left text-sm text-slate-500">
                           {extra.description}
                         </span>
                       </div>
@@ -235,14 +255,17 @@ const AddExtras = ({
                   {extra.details && (
                     <InfoIcon
                       fontSize="small"
-                      className="text-blue-400 cursor-pointer"
-                      onClick={() => openDetailsModal(extra)}
+                      className="shrink-0 cursor-pointer text-blue-400"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openDetailsModal(extra);
+                      }}
                     />
                   )}
                 </div>
                 {((extra.price_event ?? 0) > 0 ||
                   (extra.price_online ?? 0) > 0) && (
-                  <span className="text-gray-700 font-medium">
+                  <span className="shrink-0 font-medium text-slate-700">
                     {isExtraIncluded(ticket, ExtraOptions, extra.id)
                       ? "Included"
                       : formatCurrency(
@@ -254,7 +277,10 @@ const AddExtras = ({
                 )}
               </div>
               {extra.max_qty_each > 1 && (!useYesNo || isExtraSelected(extra.id) === 'yes') && (
-                <div className="flex items-center mt-2">
+                <div
+                  className="mt-2 flex items-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <IconButton
                     onClick={() => {
                       const index = ticket.extras?.indexOf(extra.id);

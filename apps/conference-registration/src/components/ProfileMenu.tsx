@@ -40,6 +40,7 @@ const ProfileMenu = () => {
   const handleLogout = () => {
     authProvider.logout();
     setIsLoggedIn(false);
+    setIsAdminView(false);
     setIsMenuOpen(false); // Close menu after logout
   };
 
