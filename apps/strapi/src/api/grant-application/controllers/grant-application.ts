@@ -18,7 +18,7 @@ const EDIT_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // Public URL of the grant application frontend (used in edit-link emails)
 const GRANT_APP_URL =
-  process.env.GRANT_APP_URL || "https://orwa.org/grant-application";
+  process.env.GRANT_APP_URL || "https://orwa.org/gapp-form";
 
 // Base URL for building absolute file URLs sent back to the form
 const FILE_BASE_URL =
