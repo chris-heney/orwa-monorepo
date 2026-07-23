@@ -276,6 +276,7 @@ export interface IGrantApplicationFormPayload {
   chairman_also_mayer_of_municipal_city: boolean;
   has_engineer: boolean;
   engineer: IContactPayload;
+  additional_contacts?: IContactPayload[];
   drinking_or_wastewater: "Drinking Water" | "Wastewater";
   other_describe: string;
   description_justification_estimated_cost: string;
@@ -312,10 +313,11 @@ export interface IGrantApplicationFormPayload {
 }
 
 export interface StrapiFormattedFile {
-  rawFile: File;
+  rawFile?: File; // absent for already-uploaded files hydrated from the server
   src: string;
   title: string;
   cacheId?: string; // ID for cached file in IndexedDB
+  id?: number; // Strapi file id for already-uploaded files (edit mode)
 }
 
 export interface GrantApplicationPayloadContext {

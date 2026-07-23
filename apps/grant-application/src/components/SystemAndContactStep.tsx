@@ -160,6 +160,17 @@ const SystemAndContactStep = () => {
           </div>
         </div>
       </FormSection>
+
+      <FormSection title="Additional Contacts">
+        <div className="max-w-xl">
+          <ContactArray
+            source="additional_contacts"
+            isArray
+            label="Additional Contacts"
+            helperText="Anyone else who should be able to follow up on this application."
+          />
+        </div>
+      </FormSection>
     </div>
   );
 };

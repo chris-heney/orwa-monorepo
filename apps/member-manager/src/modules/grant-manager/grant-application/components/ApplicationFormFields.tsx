@@ -5,6 +5,7 @@ import {
   DateInput,
   Loading,
   NumberInput,
+  ReferenceArrayInput,
   ReferenceInput,
   SelectInput,
   TextInput,
@@ -288,6 +289,20 @@ const GrantApplicationFormFields = () => {
                   optionText={(record) => record.first + " " + record.last}
                 />
               </ReferenceInput>
+            </Grid>
+            <Grid item xs={12} md={12} sm={12}>
+              <ReferenceArrayInput
+                source="additional_contacts"
+                label="Additional Contacts"
+                reference="contacts"
+                fullWidth
+              >
+                <AutocompleteArrayInput
+                  label="Additional Contacts"
+                  helperText={false}
+                  optionText={(record) => record.first + " " + record.last}
+                />
+              </ReferenceArrayInput>
             </Grid>
             <Grid item xs={12} md={6} sm={12}>
               <TextInput

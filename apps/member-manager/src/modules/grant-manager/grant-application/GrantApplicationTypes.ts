@@ -26,6 +26,7 @@ export interface IGrantApplication {
   chairman_also_mayer_of_municipal_city: boolean;
   has_engineer: boolean;
   engineer: IContact; 
+  additional_contacts: IContact[];
   email: string;
   drinking_or_wastewater: 'Drinking Water' | 'Wastewater';
   drinking_water_projects_selected: string;

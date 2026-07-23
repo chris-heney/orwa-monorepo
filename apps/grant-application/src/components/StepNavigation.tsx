@@ -3,7 +3,7 @@ import { useContext, useState } from "react";
 import { Button } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import CircularProgress from "@mui/material/CircularProgress";
-import { useGetApplicationId, useSubmitApplication } from "../data/API";
+import { updateApplication, useGetApplicationId, useSubmitApplication } from "../data/API";
 import {
   IGrantApplicationFormPayload,
 } from "../types/types";
@@ -14,6 +14,7 @@ import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import { clearSavedFormData } from "../helpers/formPersistence";
 import { fileCache } from "../helpers/fileCache";
 import { useUserContext } from "../providers/UserContextProvider";
+import { useEditSession } from "../providers/EditSessionProvider";
 // import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
 
 const StepNavigation = () => {
@@ -23,6 +24,8 @@ const StepNavigation = () => {
   const { scoringCriterias } = useScoringCriterias();
   const { setIsFormSubmitted, isFormSubmitted } = useFormSubmittedContext();
   const { isAdminView } = useUserContext();
+  const { isEditMode, editToken, rememberEditToken, invalidateSession } =
+    useEditSession();
 
   const applicationId = useGetApplicationId();
 
@@ -77,11 +80,16 @@ const StepNavigation = () => {
       setIsSubmitting(true);
       const formPayload = getValues() as IGrantApplicationFormPayload;
 
+      // Editing keeps the application's original id; new submissions get the next one
+      const submissionApplicationId = isEditMode
+        ? (formPayload as Record<string, any>).application_id
+        : applicationId.data;
+
       try {
         // Process the payload and upload files if necessary
         const processedPayload = await processAndUploadFiles({
           ...formPayload,
-          id: applicationId.data,
+          id: submissionApplicationId,
         }, notify);
 
         // Generate the applicant PDF and upload it
@@ -96,15 +104,24 @@ const StepNavigation = () => {
           ...processedPayload,
           additional_funding_requested: Math.round(watch("additional_funding_requested")),
           applicant_pdf: uploadedPDF,
-          application_id: applicationId.data,
+          application_id: submissionApplicationId,
           engineering_report_deq_approved: watch("engineering_report_deq_approved") === "Yes" ? true : false,
         };
 
-        // Submit the processed payload
-        const response = await useSubmitApplication(payload);
+        // Submit the processed payload (update in place when editing)
+        const response = isEditMode && editToken
+          ? await updateApplication(editToken, payload)
+          : await useSubmitApplication(payload);
 
         if (response.message === "success") {
           setIsFormSubmitted(true);
+
+          // Keep the edit token so the applicant can come back and modify
+          // this application later from the same device
+          if (!isEditMode && response.editToken) {
+            rememberEditToken(response.editToken);
+          }
+
           clearSavedFormData(); // Clear saved form data on successful submission
           
           // Clear file cache on successful submission
@@ -114,7 +131,19 @@ const StepNavigation = () => {
             console.warn('Failed to clear file cache:', error);
           }
           
-          notify("Application submitted successfully!", "success");
+          notify(
+            isEditMode
+              ? "Your changes have been saved!"
+              : "Application submitted successfully!",
+            "success"
+          );
+        } else if (isEditMode && (response.code === "invalid" || response.code === "locked")) {
+          setIsSubmitting(false);
+          invalidateSession(
+            response.code === "locked"
+              ? "Your application is already being processed and cannot be modified at this time."
+              : "Your edit link is no longer valid. Please verify your email to receive a new one."
+          );
         } else {
           setIsSubmitting(false);
           notify(
@@ -168,7 +197,9 @@ const StepNavigation = () => {
             className="w-full sm:w-36"
           >
             {steps.filter((step) => step.active)[stepIndex].key === "signature"
-              ? "Submit Form"
+              ? isEditMode
+                ? "Save Changes"
+                : "Submit Form"
               : "Next »"}
           </Button>
         )}

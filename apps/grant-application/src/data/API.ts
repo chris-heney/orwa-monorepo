@@ -42,6 +42,43 @@ const _submitApplication = async (resource: string, data: IGrantApplicationFormP
   .then( data => data)
 }
 
+/** Ask the backend to email a tokenized edit link for the given address. */
+export const requestEditLink = async (email: string): Promise<{ code: string }> => {
+  return fetch(`${API_ENDPOINT}/grant-application/request-edit`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+    }
+  }).then(httpResponse => httpResponse.json())
+}
+
+/** Validate an edit token and fetch the application shaped as a form payload. */
+export const fetchEditSession = async (token: string): Promise<{ code: string; application?: Record<string, unknown> }> => {
+  return fetch(`${API_ENDPOINT}/grant-application/edit-session?token=${encodeURIComponent(token)}`, {
+    method: 'GET',
+    headers: {
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+    }
+  }).then(httpResponse => httpResponse.json())
+}
+
+/** Save changes to an existing application via its edit token. */
+export const updateApplication = async (token: string, data: IGrantApplicationFormPayload) => {
+  return fetch(`${API_ENDPOINT}/grant-application/edit-session`, {
+    method: 'PUT',
+    body: JSON.stringify({ ...data, token }),
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${API_KEY}`
+    }
+  }).then(httpResponse => httpResponse.json())
+}
+
 
 const _uploadFile = async ( file: File) => {
   

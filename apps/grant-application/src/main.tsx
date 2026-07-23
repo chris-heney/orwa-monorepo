@@ -5,6 +5,7 @@ import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import UserContextProvider from "./providers/UserContextProvider.tsx";
 import AppContextProvider from "./providers/AppContextProvider.tsx";
+import EditSessionProvider from "./providers/EditSessionProvider.tsx";
 
 const queryClient = new QueryClient();
 
@@ -12,9 +13,11 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <UserContextProvider>
-        <AppContextProvider>
-          <App />
-        </AppContextProvider>
+        <EditSessionProvider>
+          <AppContextProvider>
+            <App />
+          </AppContextProvider>
+        </EditSessionProvider>
       </UserContextProvider>
     </QueryClientProvider>
   </React.StrictMode>

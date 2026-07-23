@@ -6,19 +6,34 @@ import EntryListProvider from "./providers/EntryListProvider";
 import { useUserContext } from "./providers/UserContextProvider";
 import EntryList from "./entries/EntryList";
 import LoginModal from "./components/LoginModal";
+import LandingView from "./components/LandingView";
+import EmailVerificationView from "./components/EmailVerificationView";
+import { useEditSession } from "./providers/EditSessionProvider";
+
+// Admins arriving with ?admin skip the landing/verify flow entirely.
+const isAdminRoute = new URLSearchParams(window.location.search).has("admin");
 
 function App() {
-  const { viewingEntries, isLoggedIn} = useUserContext();
+  const { viewingEntries, isLoggedIn } = useUserContext();
+  const { view } = useEditSession();
+
+  const showForm = isAdminRoute || view === "form";
 
   return (
     <>
       {!isLoggedIn && <LoginModal />}
       <Header />
-      <EntryListProvider>
-        <NotifyProvider>
-          {viewingEntries ? <EntryList /> : <GrantApplicationForm />}
-        </NotifyProvider>
-      </EntryListProvider>
+      {showForm ? (
+        <EntryListProvider>
+          <NotifyProvider>
+            {viewingEntries ? <EntryList /> : <GrantApplicationForm />}
+          </NotifyProvider>
+        </EntryListProvider>
+      ) : view === "verify" ? (
+        <EmailVerificationView />
+      ) : (
+        <LandingView />
+      )}
     </>
   );
 }

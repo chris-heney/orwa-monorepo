@@ -2173,6 +2173,10 @@ export interface ApiGrantApplicationFinalGrantApplicationFinal
     draftAndPublish: false;
   };
   attributes: {
+    additional_contacts: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::contact.contact'
+    >;
     additional_files: Schema.Attribute.Text;
     additional_funding_requested: Schema.Attribute.Integer;
     additional_information: Schema.Attribute.Text;
@@ -2212,6 +2216,8 @@ export interface ApiGrantApplicationFinalGrantApplicationFinal
       ['Drinking Water', 'Wastewater']
     >;
     drinking_water_projects_selected: Schema.Attribute.String;
+    edit_token: Schema.Attribute.String & Schema.Attribute.Private;
+    edit_token_expires: Schema.Attribute.DateTime & Schema.Attribute.Private;
     email: Schema.Attribute.String;
     engineer: Schema.Attribute.Relation<'oneToOne', 'api::contact.contact'>;
     engineering_report: Schema.Attribute.String;

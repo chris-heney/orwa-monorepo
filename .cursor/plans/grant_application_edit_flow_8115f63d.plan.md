@@ -4,46 +4,46 @@ overview: "Add a magic-link edit flow to the grant application (applicants verif
 todos:
   - id: schema-token-fields
     content: Add private edit_token / edit_token_expires fields to grant-application-final schema
-    status: pending
+    status: completed
   - id: schema-additional-contacts
     content: Add additional_contacts oneToMany contact relation to grant-application-final schema
-    status: pending
+    status: completed
   - id: backend-request-edit
     content: Implement POST /grant-application/request-edit (email lookup, status check, token issue, Brevo email)
-    status: pending
+    status: completed
   - id: backend-edit-session
     content: Implement GET /grant-application/edit-session (validate token+status, return form-shaped payload)
-    status: pending
+    status: completed
   - id: backend-update
     content: Implement PUT /grant-application/edit-session (re-validate, upsert contacts, update application, log)
-    status: pending
+    status: completed
   - id: backend-create-token
     content: Generate and return edit token from createGrantApplication
-    status: pending
+    status: completed
   - id: backend-additional-contacts
     content: Upsert and attach additional_contacts in create and edit-session update paths
-    status: pending
+    status: completed
   - id: fe-landing
     content: Add landing view with New Application / Modify Existing paths and token resolution (query param, localStorage, email view)
-    status: pending
+    status: completed
   - id: fe-email-verify
     content: Build email verification view with the three response messages
-    status: pending
+    status: completed
   - id: fe-hydrate-edit
     content: Hydrate form from edit-session, handle existing files in processAndUploadFiles, switch submit to PUT in edit mode
-    status: pending
+    status: completed
   - id: fe-store-token
     content: Store edit token in localStorage after new submission; clear on invalid/locked
-    status: pending
+    status: completed
   - id: fe-additional-contacts
     content: Add "Additional Contacts" field-array UI to SystemAndContactStep and payload types
-    status: pending
+    status: completed
   - id: mm-additional-contacts
     content: Show and edit additional_contacts in member-manager (details view + ReferenceArrayInput on form)
-    status: pending
+    status: completed
   - id: verify-e2e
     content: Verify the full flow locally against Strapi (request, email link, hydrate, save, status lockout, additional contacts round-trip)
-    status: pending
+    status: completed
 isProject: false
 ---
 

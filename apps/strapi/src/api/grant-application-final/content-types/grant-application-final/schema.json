@@ -75,6 +75,11 @@
       "relation": "oneToOne",
       "target": "api::contact.contact"
     },
+    "additional_contacts": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::contact.contact"
+    },
     "drinking_or_wastewater": {
       "type": "enumeration",
       "enum": [
@@ -327,6 +332,14 @@
     },
     "previous_application_id": {
       "type": "string"
+    },
+    "edit_token": {
+      "type": "string",
+      "private": true
+    },
+    "edit_token_expires": {
+      "type": "datetime",
+      "private": true
     }
   }
 }

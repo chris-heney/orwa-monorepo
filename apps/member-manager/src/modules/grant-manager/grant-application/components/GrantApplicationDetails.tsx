@@ -487,6 +487,21 @@ const GrantApplicationDetails = () => {
               divider
             />
           )}
+          {record.additional_contacts?.length > 0 && (
+            <ResponsiveListItem
+              label="Additional Contacts"
+              value={
+                <Box component="span" sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                  {record.additional_contacts.map((contact: RaRecord) => (
+                    <Link key={contact.id} to={`/contacts/${contact.id}`}>
+                      {contact.first + " " + contact.last}
+                    </Link>
+                  ))}
+                </Box>
+              }
+              divider
+            />
+          )}
         </Grid>
 
         {/* Files and Information */}

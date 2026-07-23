@@ -56,6 +56,7 @@ export interface IContactEntity {
     chairman_also_mayer_of_municipal_city: boolean;
     has_engineer: boolean;
     engineer: IContactPayload;
+    additional_contacts?: IContactPayload[];
     drinking_or_wastewater: "Drinking Water" | "Wastewater";
     drinking_water_projects_selected: string;
     wastewater_projects_selected: string;

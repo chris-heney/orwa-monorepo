@@ -36,6 +36,7 @@ export const defaultPayload = {
         phone: "",
         title: 'Engineer',
       } as IContactPayload,
+      additional_contacts: [] as IContactPayload[],
       drinking_or_wastewater: "Drinking Water",
       // drinking_water_projects_selected: "",
       // wastewater_projects_selected: "",

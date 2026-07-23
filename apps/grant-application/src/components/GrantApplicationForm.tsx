@@ -18,6 +18,7 @@ import {
   clearSavedFormData,
   restoreFilesFromCache
 } from "../helpers/formPersistence";
+import { useEditSession } from "../providers/EditSessionProvider";
 // import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
 // import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
 
@@ -26,13 +27,25 @@ const GrantApplicationForm = () => {
   const payload = useContext(PayloadProvider);
   const { entryPayload } = useEntryPayload();
   const { isAdminView, isLoggedIn } = useUserContext();
-  
+  const { isEditMode, editPayload } = useEditSession();
+
   const [showPreviousSessionModal, setShowPreviousSessionModal] = useState(false);
   const [savedTimestamp, setSavedTimestamp] = useState<number>(0);
   const [formDefaultValues, setFormDefaultValues] = useState<Record<string, any> | undefined>(
-    entryPayload ?? (payload.grantApplicationFormPayload as Record<string, any>)
+    (editPayload as Record<string, any> | null) ??
+      entryPayload ??
+      (payload.grantApplicationFormPayload as Record<string, any>)
   );
   const [formKey, setFormKey] = useState(0); // Force form re-render when needed
+
+  // Hydrate from the server-provided application when editing
+  useEffect(() => {
+    if (isEditMode && editPayload) {
+      setFormDefaultValues(editPayload as Record<string, any>);
+      setStepIndex(0);
+      setFormKey(prev => prev + 1);
+    }
+  }, [isEditMode, editPayload]);
 
   // Check for saved form data on component mount
   useEffect(() => {
@@ -48,8 +61,9 @@ const GrantApplicationForm = () => {
 
     cleanupFiles();
 
-    // Only check for saved data if we're not in admin view and no entryPayload exists
-    if (!isAdminView && !entryPayload) {
+    // Only check for saved data if we're not in admin view, not editing an
+    // existing application, and no entryPayload exists
+    if (!isAdminView && !entryPayload && !isEditMode) {
       const savedData = getSavedFormData();
       if (savedData) {
         setSavedTimestamp(savedData.timestamp);
@@ -109,6 +123,7 @@ const GrantApplicationForm = () => {
           <Form
             key={formKey}
             defaultValues={formDefaultValues}
+            autoSave={!isEditMode}
           >
             <div className="gap-4 grid grid-cols-12 align-middle p-5">
               <div className={`${(isLoggedIn  && isAdminView)  ? "col-span-9" : "col-span-12"}`}>
