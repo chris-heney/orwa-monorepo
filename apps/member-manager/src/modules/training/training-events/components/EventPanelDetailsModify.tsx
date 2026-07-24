@@ -18,7 +18,7 @@ const EventPanelDetailsModify = ({ context }: PanelEventDetailsModifyProps) => {
         sanitizeEmptyValues
         shouldUnregister
         validate={context === 'edit' ? EventEditValidate : EventCreateValidate}
-        sx={{ backgroundColor: '#fafafb' }}
+        sx={{ bgcolor: 'background.default' }}
       >
         <TrainingEventFormFields  />
       </SimpleForm>

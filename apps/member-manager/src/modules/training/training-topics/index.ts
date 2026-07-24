@@ -8,5 +8,5 @@ export default {
   create: TopicsCreateForm,
   edit: TopicsEditList,
   icon: GradingIcon,
-  recordRepresentation: 'title',
+  recordRepresentation: 'name',
 }

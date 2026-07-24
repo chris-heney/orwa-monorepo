@@ -151,8 +151,14 @@ const Schedule: React.FC<scheduleProps> = ({ button = true }) => {
     <>
 
       {button && schedule && schedule.length > 0 && <Button sx={{
-        backgroundColor: '#262626', borderRadius: '0px', '&:hover': {
-          backgroundColor: '#F3F2F2', color: 'black',
+        backgroundColor: '#262626',
+        color: 'white',
+        borderRadius: '0px',
+        '&:hover': {
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#F3F2F2',
+          color: (theme) =>
+            theme.palette.mode === 'dark' ? 'white' : 'black',
         },
       }} size='small' variant="contained" onClick={() => toPDF()}>
         <DownloadIcon />
@@ -189,7 +195,7 @@ const Schedule: React.FC<scheduleProps> = ({ button = true }) => {
                 lg={12}
                 key={blockIndex}
               >
-                <Card>
+                <Card sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
                   <EventScheduleBlockContent
                     qrTitle={qrTitle}
                     handleOpenModal={handleOpenModal}

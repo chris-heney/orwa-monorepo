@@ -1,32 +1,43 @@
 import React from 'react'
 import { Card, CardContent, Theme, useMediaQuery } from '@mui/material'
 import ClassIcon from '@mui/icons-material/Class'
-import {  FilterList, FilterListItem, FilterLiveSearch } from 'react-admin'
-import { SavedQueriesList } from '../../../_components/CustomSavedQueryList' 
-
+import { FilterList, FilterListItem, FilterLiveSearch } from 'react-admin'
+import { SavedQueriesList } from '../../../_components/CustomSavedQueryList'
+import { STAGE_META, STAGE_ORDER } from '../../workflow'
 
 const EventListFilter = () => {
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
 
   return (
-    <Card sx={{ order: -1, mr: 2 , mt: isSmall ? 0 : 6, minWidth: 200, maxHeight: 500, width: 200, position: 'sticky', top: '0' }}>
-      <CardContent>
+    <Card
+      sx={{
+        order: -1,
+        mr: 2,
+        mt: isSmall ? 0 : 0,
+        minWidth: 210,
+        width: 210,
+        alignSelf: 'flex-start',
+        position: 'sticky',
+        top: 0,
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+      }}
+    >
+      <CardContent sx={{ pt: 1 }}>
         <SavedQueriesList />
         <FilterLiveSearch />
-        {/* <SearchInput source="q" alwaysOn /> */}
         <FilterList label="Event Status" icon={<ClassIcon />}>
-          <FilterListItem label="DRAFT" value={{ status: 'DRAFT' }} />
-          <FilterListItem label="REVIEW" value={{ status: 'REVIEW' }} />
-          <FilterListItem label="DEQ" value={{ status: 'DEQ' }} />
-          <FilterListItem label="RSVP" value={{ status: 'RSVP' }} />
-          <FilterListItem label="LIVE" value={{ status: 'LIVE' }} />
-          <FilterListItem label="COMPLETE" value={{ status: 'COMPLETE' }} />
-          <FilterListItem label="CANCELLED" value={{ status: 'CANCELLED' }} />
+          {[...STAGE_ORDER, 'CANCELLED' as const].map((stage) => (
+            <FilterListItem
+              key={stage}
+              label={STAGE_META[stage].label}
+              value={{ status: stage }}
+            />
+          ))}
         </FilterList>
       </CardContent>
     </Card>
   )
 }
-
 
 export default EventListFilter

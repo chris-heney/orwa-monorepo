@@ -108,7 +108,7 @@ const EventFormFields = () => {
         <Grid item xs={12} md={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
 
           {/* DETAILS */}
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
             <Typography variant='h5'>Details</Typography>
             <SelectInput helperText={false} source="training_type" label="Training Type" choices={ClassTypeOptions} fullWidth disabled={record === undefined ? false : record?.status !== 'REVIEW' && record?.status !== 'DRAFT'} />
             <Grid item xs={12} sm={12} md={12} lg={12}>
@@ -135,7 +135,7 @@ const EventFormFields = () => {
           </Card>
 
           {/* LOCATION */}
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
             <Typography variant='h5'>Location</Typography>
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -178,7 +178,7 @@ const EventFormFields = () => {
 
         <Grid item xs={12} md={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
           {/* EVENT DATES */}
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
             <Typography variant='h5'>Dates</Typography>
             <Grid container spacing={2}>
               <Grid item xs={6}>
@@ -224,7 +224,7 @@ const EventFormFields = () => {
           </Card>
 
           {/* INSTRUCTOR */}
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
             <Typography variant='h5'>Instructor Information</Typography>
             <Typography variant='body1'>Please enter the instructor information below. If the instructor is not in the system, please click the &quot;Add Instructor&quot; button to add them.</Typography>
             <Grid container spacing={2}>
@@ -243,7 +243,7 @@ const EventFormFields = () => {
           </Card>
 
           {/* NOTES */}
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
             <Typography variant='h5'>Notes</Typography>
             <TextInput helperText={false} source="private_notes" label="Internal Notes" fullWidth multiline rows={5} />
             <TextInput helperText={false} source="public_notes" label="Public Notes" fullWidth multiline rows={5} />

@@ -11,5 +11,4 @@ export default {
   edit: TrainingHistoryEdit,
   show: TrainingHistoryShow,
   icon: GradingIcon,
-  recordRepresentation: 'title',
 }

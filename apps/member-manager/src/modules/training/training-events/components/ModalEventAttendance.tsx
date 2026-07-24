@@ -26,13 +26,14 @@ const ModalEventAttendance = ({ record, openModal, setOpenModal, modalTitle, sel
           transform: 'translate(-50%, -50%)',
           width: '80%',
           bgcolor: 'background.paper',
-          border: '2px solid #000',
+          border: '2px solid',
+          borderColor: 'divider',
           boxShadow: 24,
           p: 1,
         }}
       >
         <Button
-          style={{  color: 'white', position: 'absolute', top: '10px', right: '10px', border: 'none', cursor: 'pointer' }}
+          sx={{ color: 'common.white', position: 'absolute', top: '10px', right: '10px', border: 'none', cursor: 'pointer', zIndex: 1 }}
           onClick={() => setOpenModal(false)}
         >X</Button>
         <CustomHeader title={modalTitle} sx={{ textAlign: 'center' }} />

@@ -16,7 +16,7 @@ interface BlockContentProps {
   }  
 const  EventScheduleBlockContent = ({record, block ,blockIndex, handleQrToggle, handleOpenModal, QRField} : BlockContentProps) => {
   return (
-    <CardContent sx={{ background: '#F3F2F2' }}>
+    <CardContent sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'action.selected' : '#F3F2F2' }}>
       <Box display="flex" alignItems="center" justifyContent="space-between">
         <Box>
           <Typography variant="h6">  {`${block.am_pm} ${dayjs(record.start).add(Math.floor((blockIndex - 2) / 2) + 1, 'day').format('MM-DD-YYYY')}`}</Typography>

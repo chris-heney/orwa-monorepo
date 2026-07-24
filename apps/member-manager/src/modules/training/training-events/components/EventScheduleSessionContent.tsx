@@ -18,7 +18,7 @@ interface SessionContentProps {
   }  
 const EventScheduleSessionContent = ({block ,blockIndex, blocks , sessions, topics, handleQrToggle, handleOpenModal, QRField} : SessionContentProps) => {
   return (
-    <CardContent sx={{ background: '#F8F8F8' }}>
+    <CardContent sx={{ bgcolor: (theme) => theme.palette.mode === 'dark' ? 'action.hover' : '#F8F8F8' }}>
       <Grid container spacing={2}>
         {block.training_sessions?.map((sessionId, sessionIndex) => {
           const session = sessions?.find((s: ITrainingSession) => s.id === sessionId)

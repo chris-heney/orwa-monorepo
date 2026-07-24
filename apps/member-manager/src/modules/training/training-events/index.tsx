@@ -8,5 +8,5 @@ export default {
   create: TrainingClassCreate,
   edit: TrainingClassEdit,
   show: TrainingEventShow,
-  recordRepresentation: 'title',
+  recordRepresentation: 'training_type',
 }

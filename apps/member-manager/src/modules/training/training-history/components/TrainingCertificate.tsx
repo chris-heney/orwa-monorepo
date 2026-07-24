@@ -17,7 +17,20 @@ export default function TrainingCertificate({
   'eventName': string
 }) {
   return (
-    <Box sx={{ ...boxStyle, border: '1px solid #999', maxWidth: '768px', mx: 'auto', boxShadow: '0 0 15px rgba(0,0,0,0.4)', borderRadius: '5px', bgcolor: '#F9F9F9', textAlign: 'center' }}>
+    <Box sx={{
+      ...boxStyle,
+      border: '1px solid',
+      borderColor: 'divider',
+      maxWidth: '768px',
+      mx: 'auto',
+      boxShadow: '0 0 15px rgba(0,0,0,0.4)',
+      borderRadius: '5px',
+      // Printable certificate stays light; dark mode uses paper for contrast.
+      bgcolor: (theme) =>
+        theme.palette.mode === 'dark' ? theme.palette.background.paper : '#F9F9F9',
+      color: 'text.primary',
+      textAlign: 'center',
+    }}>
       <Box ref={targetRef}>
         <img src={LogoSrc} alt="logo" width={130} style={{ marginTop: 20 }} />
         <Typography variant={'h1'} fontSize={37} fontWeight={'bold'}>OPERATOR</Typography>
@@ -26,7 +39,7 @@ export default function TrainingCertificate({
           <hr style={{ backgroundColor: 'blue', height: '5px', border: 'none' }} />
         </Box>
         <Typography variant='h5' mt={3} fontWeight={'bold'}>AWARDED TO</Typography>
-        <Box style={{ color: 'black' }}>
+        <Box sx={{ color: 'text.primary' }}>
           {<ReferenceField source="contact" reference="contacts"
             link={false}
           >

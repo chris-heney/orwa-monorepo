@@ -1,12 +1,31 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { RaRecord, useRecordContext } from 'react-admin'
-import { ITrainingInstructor, ITrainingTopic, ITrainingBlock, ITrainingSession } from '../../_types'
-import { Accordion, AccordionDetails, AccordionSummary, Autocomplete, Box, Divider, Grid, IconButton, TextField, Typography, Button } from '@mui/material'
+import {
+  ITrainingInstructor,
+  ITrainingTopic,
+  ITrainingBlock,
+  ITrainingSession,
+} from '../../_types'
+import {
+  Autocomplete,
+  Box,
+  Button,
+  Card,
+  Chip,
+  Divider,
+  Grid,
+  IconButton,
+  TextField,
+  Tooltip,
+  Typography,
+} from '@mui/material'
 import { LocalizationProvider, TimeField } from '@mui/x-date-pickers'
 import dayjs from 'dayjs'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import DeleteIcon from '@mui/icons-material/Delete'
-import SaveIcon from '@mui/icons-material/Save'
+import AddIcon from '@mui/icons-material/Add'
+import WbSunnyIcon from '@mui/icons-material/WbSunny'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
 
 interface ISyllabusProps {
   setIsTopicOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -17,332 +36,319 @@ interface ISyllabusProps {
   updateTrainingSchedule: () => void
 }
 
-const TrainingSyllabusAccordion = ({
+/** Parse legacy time strings ("09:00:00.000") into a dayjs for the TimeField. */
+const parseSessionTime = (value: ITrainingSession['start']) => {
+  if (value == null) return null
+  if (dayjs(value as string).isValid()) return dayjs(value as string)
+  const [hour = '0', minute = '0'] = value.toString().split(':')
+  return dayjs().set('hour', parseInt(hour)).set('minute', parseInt(minute))
+}
+
+const SESSION_LIMIT_PER_BLOCK = 4
+
+/**
+ * Modern schedule builder: one card per half-day block, sessions as inline
+ * editable rows. State model and persistence endpoints are unchanged.
+ */
+const TrainingScheduleBuilder = ({
   blocks,
   setBlocks,
   instructorOptions,
   topicOptions,
   setIsTopicOpen,
-  updateTrainingSchedule
 }: ISyllabusProps) => {
-
   const record = useRecordContext<RaRecord>()
 
-  const [expandedBlock, setExpandedBlock] = useState<number | undefined>(undefined)
-  const [expandedTopic, setExpandedTopic] = useState<number | undefined>(undefined)
-
   const addBlock = () => {
-    if (typeof record === 'undefined' || !record) return
+    if (!record) return
     const eventStartDate = new Date(record.start)
     const blockDate = new Date(eventStartDate)
-    blockDate.setDate(eventStartDate.getDate() +
-      + Math.floor(blocks.length / 2))
+    blockDate.setDate(eventStartDate.getDate() + Math.floor(blocks.length / 2))
     const data: ITrainingBlock = {
       date: blockDate.toISOString().split('T')[0],
       am_pm: blocks.length % 2 ? 'PM' : 'AM',
       sessions: [],
     }
-
     setBlocks([...blocks, { ...data }])
-    setExpandedBlock(blocks.length)
   }
 
   const deleteBlock = (blockIndex: number) => {
-
-    // Clone the blocks array to avoid mutating the state directly
     const updatedBlocks = [...blocks]
-
-    // Check if the specified block index is valid
-    if (blockIndex >= 0 && blockIndex < updatedBlocks.length) {
-
-      // Remove the block at the specifiedindex
-      updatedBlocks.splice(blockIndex, 1)
-
-      updatedBlocks.forEach((block, index) => {
-        block.am_pm = index % 2 === 0 ? 'AM' : 'PM'
-      })
-
-      setBlocks(updatedBlocks)
-    } else {
-      console.error('Invalid block index.')
-    }
+    updatedBlocks.splice(blockIndex, 1)
+    updatedBlocks.forEach((block, index) => {
+      block.am_pm = index % 2 === 0 ? 'AM' : 'PM'
+    })
+    setBlocks(updatedBlocks)
   }
 
-  const addSession = async (blockIndex: number) => {
-    const instructor = instructorOptions.filter(type => type.id === record.instructor)
-    if (typeof record === 'undefined' || !record) return
-    // Create a new session
-  
+  const addSession = (blockIndex: number) => {
+    if (!record) return
+    const instructor = instructorOptions.find((i) => i.id === record.instructor)
+    const sessionCount = blocks[blockIndex]?.sessions.length ?? 0
     const newSession: ITrainingSession = {
       id: '',
       topic: null,
-      training_instructor: instructor[0],
+      training_instructor: instructor ?? null,
       category: '',
       summary: '',
-      start: blockIndex % 2 === 0 ? dayjs(record.start).add(blocks[blockIndex]?.sessions.length, 'hour').format('hh:mm:ss.SSS'):  dayjs().set('hour', 13).set('minute', 0).add(blocks[blockIndex]?.sessions.length, 'hour').format('hh:mm:ss.SSS'),
-      end: blockIndex % 2 === 0 ?  dayjs(record.start).add(50, 'minutes').add(blocks[blockIndex]?.sessions.length, 'hour').format('hh:mm:ss.SSS') : dayjs().set('hour', 13).set('minute', 50).add(blocks[blockIndex]?.sessions.length, 'hour').format('hh:mm:ss.SSS'), 
+      start:
+        blockIndex % 2 === 0
+          ? dayjs(record.start).add(sessionCount, 'hour').format('hh:mm:ss.SSS')
+          : dayjs()
+              .set('hour', 13)
+              .set('minute', 0)
+              .add(sessionCount, 'hour')
+              .format('hh:mm:ss.SSS'),
+      end:
+        blockIndex % 2 === 0
+          ? dayjs(record.start)
+              .add(50, 'minutes')
+              .add(sessionCount, 'hour')
+              .format('hh:mm:ss.SSS')
+          : dayjs()
+              .set('hour', 13)
+              .set('minute', 50)
+              .add(sessionCount, 'hour')
+              .format('hh:mm:ss.SSS'),
     }
-
-    // Clone the blocks array to avoid mutating the state directly
     const updatedBlocks = [...blocks]
-
-    // Check if the specified block index is valid
-    if (blockIndex >= 0 && blockIndex < updatedBlocks.length) {
-
-      // Add the new session to the sessions array of the specified block
-      updatedBlocks[blockIndex].sessions.push(newSession)
-      setBlocks(updatedBlocks)
-
-      //expands the new session
-      setExpandedTopic(updatedBlocks[blockIndex].sessions.length - 1)
-
-    } else {
-      console.error('Invalid block index.')
-    }
+    updatedBlocks[blockIndex].sessions.push(newSession)
+    setBlocks(updatedBlocks)
   }
 
-  const deleteSession = (blockIndex: number, topicIndex: number) => {
+  const deleteSession = (blockIndex: number, sessionIndex: number) => {
     const updatedBlocks = [...blocks]
+    updatedBlocks[blockIndex].sessions.splice(sessionIndex, 1)
+    setBlocks(updatedBlocks)
+  }
 
-    if (blockIndex >= 0 && blockIndex < updatedBlocks.length) {
-      updatedBlocks[blockIndex].sessions.splice(topicIndex, 1)
-      setBlocks(updatedBlocks)
-    } else {
-      console.error('Invalid block index.')
+  const patchSession = (
+    blockIndex: number,
+    sessionIndex: number,
+    patch: Partial<ITrainingSession>
+  ) => {
+    const updatedBlocks = [...blocks]
+    updatedBlocks[blockIndex].sessions[sessionIndex] = {
+      ...updatedBlocks[blockIndex].sessions[sessionIndex],
+      ...patch,
     }
+    setBlocks(updatedBlocks)
   }
 
   return (
-    <>
-      {blocks.map((block: ITrainingBlock, blockIndex: number) => {
-        const isExpanded = expandedBlock === blockIndex
-        const sessionsCount = block.sessions.length
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {blocks.length === 0 && (
+          <Typography color="text.secondary" textAlign="center" sx={{ py: 4 }}>
+            No schedule yet. Add the first block to start building — blocks
+            alternate AM / PM, one pair per event day.
+          </Typography>
+        )}
 
-        return (
-          <Accordion
-            expanded={isExpanded}
-            onChange={() => { isExpanded ? setExpandedBlock(undefined) : setExpandedBlock(blockIndex) }}
-            key={`block-index-${blockIndex}`} sx={{ my: 1, mx: 2 }} disableGutters>
-            <AccordionSummary>
-              <Box sx={{
-                display: 'flex',
-                width: '100%'
-              }}>
-                <Typography variant='h5' sx={{
-                  flexGrow: 1,
-                  flexShrink: 1,
-                  flexBasis: 'auto',
-                  mr: 'auto'
-                }}>Block {blockIndex + 1}: {block.am_pm} ({dayjs(record.start).add(Math.floor((blockIndex - 2) / 2) + 1, 'day').format('MM-DD-YYYY')})</Typography>
-                <IconButton onClick={() => deleteBlock(blockIndex)} color='error' aria-label="delete" sx={{
-                  flexShrink: 1,
-                  flexBasis: 'auto',
-                  justifyContent: 'flex-end',
-                  ml: 'auto'
-                }}>
-                  <DeleteIcon />
-                </IconButton>
+        {blocks.map((block: ITrainingBlock, blockIndex: number) => {
+          const blockDate = block.date
+            ? dayjs(block.date).format('MM/DD/YYYY')
+            : dayjs(record?.start)
+                .add(Math.floor(blockIndex / 2), 'day')
+                .format('MM/DD/YYYY')
+          const blockHours = block.sessions.reduce(
+            (sum, s) => sum + (s.topic?.hours ?? 0),
+            0
+          )
+
+          return (
+            <Card key={`block-${blockIndex}`} variant="outlined" sx={{ overflow: 'visible' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  px: 2,
+                  py: 1,
+                  borderBottom: (theme) => `1px solid ${theme.palette.divider}`,
+                  bgcolor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.04)'
+                      : 'rgba(0,0,0,0.03)',
+                }}
+              >
+                {block.am_pm === 'AM' ? (
+                  <WbSunnyIcon sx={{ color: 'warning.main', fontSize: 20 }} />
+                ) : (
+                  <DarkModeIcon sx={{ color: 'info.main', fontSize: 20 }} />
+                )}
+                <Typography variant="subtitle1" fontWeight="bold">
+                  Block {blockIndex + 1} — {block.am_pm}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {blockDate}
+                </Typography>
+                <Chip
+                  size="small"
+                  label={`${blockHours} hr${blockHours === 1 ? '' : 's'}`}
+                  sx={{ ml: 'auto' }}
+                />
+                <Tooltip title="Delete block">
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => deleteBlock(blockIndex)}
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
               </Box>
-            </AccordionSummary>
-            <AccordionDetails>  
-              <Divider sx={{ mt: -3, mb: 3 }} />
-              <Box sx={{ width: '100%' }}>
-                {block.sessions.map((topic: ITrainingSession, topicIndex) => {
-                  const isExpanded = expandedTopic === topicIndex
 
-                  const start = dayjs(topic.start).isValid()
-                    ? topic.start
-                    : dayjs().set('hour', (
-                      topic.start !== null ? parseInt(topic.start.toString().split(':')[0] as string) : 0
-                    )).set('minute', (
-                      topic.start !== null ? parseInt(topic.start.toString().split(':')[1] as string) : 0
-                    ))
-
-                  const end = dayjs(topic.end).isValid()
-                    ? topic.end
-                    : dayjs().set('hour', (
-                      topic.end !== null ? parseInt(topic.end.toString().split(':')[0] as string) : 0
-                    )).set('minute', (
-                      topic.end !== null ? parseInt(topic.end.toString().split(':')[1] as string) : 0
-                    ))
-
-                  return (
-                    <Accordion
-                      expanded={isExpanded}
-                      onChange={() => isExpanded ? setExpandedTopic(undefined) : setExpandedTopic(topicIndex)}
-                      key={`topic-index-${topicIndex}`} sx={{ my: 1 }} disableGutters>
-                      <AccordionSummary sx={{ backgroundColor: '#262626', my: 0, height: 30 }}>
-                        <Box sx={{
-                          alignItems: 'center',
-                          display: 'flex',
-                          width: '100%'
-                        }}>
-                          <Typography sx={{
-                            color: 'white',
-                            flexGrow: 1,
-                            flexShrink: 1,
-                            flexBasis: 'auto',
-                            mr: 'auto',
-                            fontSize: 14
-                          }} variant='h6'>Topic {topicIndex + 1} : {topic.topic?.name}</Typography>
+              <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {block.sessions.map((session: ITrainingSession, sessionIndex) => (
+                  <Box key={`session-${blockIndex}-${sessionIndex}`}>
+                    {sessionIndex > 0 && <Divider sx={{ mb: 1.5 }} />}
+                    <Grid container spacing={1.5} alignItems="center">
+                      <Grid item xs={12} sm={6} md={3}>
+                        <Autocomplete
+                          options={topicOptions || []}
+                          size="small"
+                          getOptionLabel={(option) => option.name}
+                          fullWidth
+                          value={(session.topic as ITrainingTopic) ?? null}
+                          isOptionEqualToValue={(option, value) => option.id === value.id}
+                          onChange={(e, newValue) =>
+                            patchSession(blockIndex, sessionIndex, {
+                              topic: newValue,
+                              summary: newValue ? newValue.description : '',
+                              category: newValue ? newValue.category : '',
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Topic" fullWidth />
+                          )}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6} md={2.5}>
+                        <Autocomplete
+                          options={instructorOptions || []}
+                          size="small"
+                          getOptionLabel={(option) =>
+                            option.instructor
+                              ? `${option.instructor.first} ${option.instructor.last}`
+                              : String(option.instructor ?? '')
+                          }
+                          fullWidth
+                          value={session.training_instructor ?? null}
+                          isOptionEqualToValue={(option, value) => option.id === value.id}
+                          onChange={(e, newValue) =>
+                            patchSession(blockIndex, sessionIndex, {
+                              training_instructor: newValue,
+                            })
+                          }
+                          renderInput={(params) => (
+                            <TextField {...params} label="Instructor" fullWidth />
+                          )}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={4} md={2}>
+                        <TextField
+                          label="Category"
+                          size="small"
+                          fullWidth
+                          value={session.category ?? ''}
+                          onChange={(e) =>
+                            patchSession(blockIndex, sessionIndex, {
+                              category: e.target.value,
+                            })
+                          }
+                        />
+                      </Grid>
+                      <Grid item xs={5} sm={3} md={1.75}>
+                        <TimeField
+                          fullWidth
+                          size="small"
+                          label="Start"
+                          value={parseSessionTime(session.start)}
+                          onChange={(newValue) =>
+                            patchSession(blockIndex, sessionIndex, {
+                              start: dayjs(newValue).format('hh:mm:ss.SSS'),
+                            })
+                          }
+                          format="h:mm"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Backspace') e.preventDefault()
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={5} sm={3} md={1.75}>
+                        <TimeField
+                          fullWidth
+                          size="small"
+                          label="End"
+                          value={parseSessionTime(session.end)}
+                          onChange={(newValue) =>
+                            patchSession(blockIndex, sessionIndex, {
+                              end: dayjs(newValue).format('hh:mm:ss.SSS'),
+                            })
+                          }
+                          format="h:mm"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Backspace') e.preventDefault()
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={2} sm={2} md={1} sx={{ textAlign: 'right' }}>
+                        <Tooltip title="Remove session">
                           <IconButton
-                            color='error'
-                            onClick={() => deleteSession(blockIndex, topicIndex)}
-                            aria-label="delete"
-                            sx={{
-                              flexShrink: 1,
-                              flexBasis: 'auto',
-                              justifyContent: 'flex-end',
-                              ml: 'auto'
-                            }}
+                            size="small"
+                            color="error"
+                            onClick={() => deleteSession(blockIndex, sessionIndex)}
                           >
-                            <DeleteIcon />
+                            <DeleteIcon fontSize="small" />
                           </IconButton>
-                        </Box>
-                      </AccordionSummary>
-                      <Button sx={{ ml: 2 }} onClick={() => setIsTopicOpen(true)}>New Topic</Button>
-                      <AccordionDetails>
-                        <Grid container spacing={2}>
-                          <Grid item xs={12} sm={6} md={4} lg={3}>
-                            <Autocomplete
-                              options={topicOptions || []}
-                              getOptionLabel={(option) => option.name}
-                              fullWidth
-                              value={topic.topic as ITrainingTopic}
-                              isOptionEqualToValue={(option, value) => option.id === value.id}
-                              onChange={(e, newValue) => {
-                                const updatedBlocks = [...blocks]
-                                updatedBlocks[blockIndex].sessions[topicIndex].topic = newValue
-                                updatedBlocks[blockIndex].sessions[topicIndex].summary = newValue ? newValue.description : ''
-                                updatedBlocks[blockIndex].sessions[topicIndex].category = newValue ? newValue.category : ''
+                        </Tooltip>
+                      </Grid>
+                      <Grid item xs={12}>
+                        <TextField
+                          label="Description"
+                          size="small"
+                          fullWidth
+                          multiline
+                          maxRows={3}
+                          value={session.summary ?? ''}
+                          onChange={(e) =>
+                            patchSession(blockIndex, sessionIndex, {
+                              summary: e.target.value,
+                            })
+                          }
+                        />
+                      </Grid>
+                    </Grid>
+                  </Box>
+                ))}
 
-                                setBlocks(updatedBlocks)
-                              }}
-                              renderInput={(params) => (
-                                <TextField  {...params} label={`Topic ${topicIndex + 1}`} fullWidth />
-                              )}
-                            />
-                          </Grid>
-
-                          <Grid item xs={12} sm={6} md={4} lg={2}>
-                            <Autocomplete
-                              options={instructorOptions || []}
-                              getOptionLabel={(option) => (option.instructor ? option.instructor.first + ' ' + option.instructor.last : option.instructor)}
-                              fullWidth
-                              value={topic.training_instructor}
-                              isOptionEqualToValue={(option, value) => option.id === value.id}
-                              onChange={(e, newValue) => {
-                                const updatedBlocks = [...blocks]
-                                updatedBlocks[blockIndex].sessions[topicIndex].training_instructor = newValue
-                                setBlocks(updatedBlocks)
-                              }}
-                              renderInput={(params) => (
-                                <TextField {...params} label={'Instructor'} fullWidth />
-                              )}
-                            />
-                          </Grid>
-
-                          <Grid item xs={12} sm={6} md={4} lg={3}>
-                            <TextField
-                              label={'Category'}
-                              fullWidth
-                              value={topic.category ?? ''}
-                              onChange={(e) => {
-                                const updatedBlocks = [...blocks]
-                                updatedBlocks[blockIndex].sessions[topicIndex].category = e.target.value
-                                setBlocks(updatedBlocks)
-                              }}
-                            />
-                          </Grid>
-
-                          <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <Grid item xs={6} sm={6} md={4} lg={2}>
-                              <TimeField
-                                fullWidth
-                                label="Start"
-                                value={topic.start === null ? null : start}
-                                onChange={(newValue) => {  
-                                  const updatedBlocks = [...blocks]
-                                  updatedBlocks[blockIndex].sessions[topicIndex].start = dayjs(newValue).format('hh:mm:ss.SSS')
-                                  setBlocks(updatedBlocks)
-                                }}
-                                format="h:mm"
-                                onKeyDown={(e) => { e.key === 'Backspace' && e.preventDefault() }}
-                              />
-                            </Grid>
-                            <Grid item xs={6} sm={6} md={4} lg={2}>
-                              <TimeField
-                                fullWidth
-                                label="End"
-                                value={topic.end === null ? null : end}
-                                onChange={(newValue) => {
-                                  const updatedBlocks = [...blocks]
-                                  updatedBlocks[blockIndex].sessions[topicIndex].end = dayjs(newValue).format('hh:mm:ss.SSS')
-                                  setBlocks(updatedBlocks)
-                                }}
-                                format="h:mm"
-                                onKeyDown={(e) => { e.key === 'Backspace' && e.preventDefault() }}
-                              />
-                            </Grid>
-                          </LocalizationProvider>
-
-                          <Grid item xs={12} >
-                            <TextField
-                              label={'Description'}
-                              fullWidth
-                              multiline
-                              rows={2}
-                              value={topic.summary ?? ''}
-                              onChange={(e) => {
-                                const updatedBlocks = [...blocks]
-                                updatedBlocks[blockIndex].sessions[topicIndex].summary = e.target.value
-                                setBlocks(updatedBlocks)
-                              }}
-                            />
-                          </Grid>
-                        </Grid>
-                        <Divider sx={{ mt: 2 }} />
-                        <Box
-                          display="flex"
-                          justifyContent="flex-end"
-                          mt={2}  // Adjust the margin as needed
-                        >
-                          <Button
-                            onClick={() => {
-                              updateTrainingSchedule()
-                              setExpandedTopic(undefined)
-                            }}
-                            variant='contained'
-                            color='success'
-                            endIcon={<SaveIcon />}
-                          >
-                            Save
-                          </Button>
-                        </Box>
-                      </AccordionDetails>
-                    </Accordion>
-                  )
-                })}
-                {sessionsCount < 4 && (
-                  <Button value={'Add Topic'} onClick={() => addSession(blockIndex)}> Add Session</Button>
+                {block.sessions.length < SESSION_LIMIT_PER_BLOCK && (
+                  <Button
+                    startIcon={<AddIcon />}
+                    size="small"
+                    onClick={() => addSession(blockIndex)}
+                    sx={{ alignSelf: 'flex-start' }}
+                  >
+                    Add Session
+                  </Button>
                 )}
               </Box>
-            </AccordionDetails>
-          </Accordion>
-        )
-      })}
-      <Divider sx={{ mt: blocks.length === 0 ? 20 : 2 }} />
-      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-        <Button
-          sx={{ mt: 2, width: 200, backgroundColor: 'black', '&:hover': { backgroundColor: 'gray' } }}
-          variant='contained'
-          onClick={addBlock}>
-          Add Block
-        </Button>
+            </Card>
+          )
+        })}
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, pb: 1 }}>
+          <Button variant="outlined" startIcon={<AddIcon />} onClick={addBlock}>
+            Add {blocks.length % 2 ? 'PM' : 'AM'} Block
+          </Button>
+          <Button size="small" onClick={() => setIsTopicOpen(true)}>
+            New Topic…
+          </Button>
+        </Box>
       </Box>
-      <Divider sx={{ py: 10 }} />
-    </>
+    </LocalizationProvider>
   )
 }
 
-export default TrainingSyllabusAccordion
+export default TrainingScheduleBuilder

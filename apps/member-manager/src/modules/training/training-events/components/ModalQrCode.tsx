@@ -21,21 +21,25 @@ const ModalQrCode = ({ qrTitle, QRFieldComponent, isQrCodeOpen, handleQrClose, h
           transform: 'translate(-50%, -50%)',
           width: '50%',
           bgcolor: 'background.paper',
-          border: '2px solid black',
+          border: '2px solid',
+          borderColor: 'divider',
           boxShadow: 24,
           p: 1,
         }}
       >
         <Button
-          style={{ color: 'white', position: 'absolute', top: '10px', right: '10px', border: 'none', cursor: 'pointer' }}
+          sx={{ color: 'common.white', position: 'absolute', top: '10px', right: '10px', border: 'none', cursor: 'pointer', zIndex: 1 }}
           onClick={() => handleQrClose()}
         >
           X
         </Button>
         <CustomHeader title={qrTitle} sx={{ textAlign: 'center' }} />
         <Box my={5} display={'flex'} flexDirection={'column'} alignItems={'center'} justifyContent={'center'} width={1}>
-          <Typography color={'black'} fontSize={12}>Click to Download</Typography>
-          <QRFieldComponent border={true} download={true} trainsitions={false} size={'70%'} handleQrToggle={handleQrToggle} minutes={240} />
+          <Typography color="text.primary" fontSize={12} mb={1}>Click to Download</Typography>
+          {/* Keep a light well so the QR remains scannable/downloadable */}
+          <Box sx={{ bgcolor: 'common.white', p: 2, borderRadius: 1, lineHeight: 0 }}>
+            <QRFieldComponent border={true} download={true} trainsitions={false} size={'70%'} handleQrToggle={handleQrToggle} minutes={240} />
+          </Box>
         </Box>
       </Box>
     </Fade>

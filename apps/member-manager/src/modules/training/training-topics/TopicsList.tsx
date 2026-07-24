@@ -9,6 +9,7 @@ import {
   useStore,
   DatagridConfigurable,
   NumberField,
+  RaRecord,
 } from 'react-admin'
 import CustomExportFunction from '../../../helpers/custom-export-function'
 import CustomListActions from '../../_components/CustomListActions'
@@ -25,7 +26,7 @@ const SessionList = () => {
     []
   )
 
-  const exporter = (records: ConfigurableDatagridColumn[]) => {
+  const exporter = (records: RaRecord[]) => {
     CustomExportFunction(records, availableColumns, columnIds, 'TopicsList')
   }
 

@@ -29,15 +29,6 @@ const ModalEmailContent = () => {
     ids: topicIds,
   })
 
-  const divStyle: React.CSSProperties = {
-    fontFamily: 'Arial, sans-serif',
-    minWidth: '60%',
-    margin: '0 auto',
-    padding: '20px',
-    border: '1px solid',
-    backgroundColor: '#FBFBFB',
-  }
-
   const headerStyle: React.CSSProperties = {
     fontSize: '16px',
     fontWeight: 'bold',
@@ -61,7 +52,18 @@ const ModalEmailContent = () => {
       </Typography>
       <Typography id="modal-modal-description" sx={{ mt: 2 }}>
         <>
-          <Box style={divStyle}>
+          <Box
+            sx={{
+              fontFamily: 'Arial, sans-serif',
+              minWidth: '60%',
+              margin: '0 auto',
+              padding: '20px',
+              border: '1px solid',
+              borderColor: 'divider',
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark' ? theme.palette.background.default : '#FBFBFB',
+            }}
+          >
             <Box style={headerStyle}>
               Dear DEQ,
             </Box>

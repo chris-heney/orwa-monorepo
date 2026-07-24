@@ -1,133 +1,97 @@
 import React from 'react'
-import { Avatar, Box, Button, Card, Grid, Typography } from '@mui/material'
-import { SimpleShowLayout, useGetList, useGetOne, useRecordContext } from 'react-admin'
+import { Avatar, Box, Card, IconButton, Tooltip, Typography } from '@mui/material'
+import { useGetOne, useRecordContext } from 'react-admin'
 import TrainingClassActionsButton from './EventListActionsPopUp'
 import { YearMonthDay } from '../../../../helpers/Data'
 import DirectionsIcon from '@mui/icons-material/Directions'
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth'
+import TrainingStatusChip from '../../_components/TrainingStatusChip'
 
 const EventListCardMobile = () => {
-
   const record = useRecordContext()
 
-  const startDate = new Date(record.start)
-  const endDate = new Date(record.end)
-  const formattedStartDate = startDate.toLocaleString('en-US', YearMonthDay)
-  const formattedEndDate = endDate.toLocaleString('en-US', YearMonthDay)
+  const formattedStartDate = new Date(record.start).toLocaleString('en-US', YearMonthDay)
+  const formattedEndDate = new Date(record.end).toLocaleString('en-US', YearMonthDay)
 
-  const { data, isLoading, error } = record.instructor
-    ? useGetList('training-instructors', {
-      meta: {
-        raw: true,
-      },
-      pagination: { page: 1, perPage: 1000 },
-      filter: { id: record.instructor },
-    })
-    : { data: undefined, isLoading: false, error: null }
-    
-  const { data : contact } = useGetOne('contacts', {id : data ? data[0].instructor.id : ''})
+  // Single cached lookup per instructor (react-query dedupes across cards)
+  const { data: instructorRecord } = useGetOne(
+    'training-instructors',
+    { id: record.instructor },
+    { enabled: record.instructor != null }
+  )
+  const contact = instructorRecord?.instructor
+  const contactName =
+    contact && typeof contact === 'object'
+      ? `${contact.first ?? ''} ${contact.last ?? ''}`.trim()
+      : null
 
-  if (isLoading) return <>Loading...</>
-  if (error) return <>Error</>  
+  const mapsHref = record.address
+    ? `https://maps.google.com/?q=${encodeURIComponent(
+        `${record.address.street ?? ''}, ${record.address.city ?? ''}, ${record.address.state ?? ''} ${record.address.zip ?? ''}`
+      )}`
+    : null
+
   return (
     <Card
-      title="Staff"
       sx={{
-        flexGrow: 1,
         width: '100%',
-        ml: ['auto', 0],
-        mr: 'auto',
-        py: '1rem',
-        position: 'relative'
+        p: 1.5,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 1,
+        bgcolor: 'background.paper',
       }}
     >
-      <SimpleShowLayout>
-        <Box>
-          <Grid container spacing={2} sx={{ position: 'absolute', top: 0, right: 0, padding: '8px', alignItems: 'center' }}>
-            {/* Place button far left */}
-            <Grid item xs={2}>
-              <TrainingClassActionsButton />
-            </Grid>
-
-            {/* Centered text */}
-            <Grid item xs={7} textAlign="center">
-              <Typography variant="h6" fontWeight="bold" fontSize={16}>
-                {record.training_type}
-              </Typography>
-            </Grid>
-
-            {/* Status far right */}
-            <Grid item xs={3} >
-              <Typography
-                fontWeight={'bold'}
-                variant={'h6'}
-                color='white'
-                textAlign={'center'}
-                sx={{
-                  backgroundColor: '#2196f3',
-                  textTransform: 'uppercase',
-                  borderBottomLeftRadius: '5px',
-                  fontSize: '12px',
-                  py: 0.5,
-                  px: 1,
-                }}
-              >
-                {record.status}
-              </Typography>
-            </Grid>
-          </Grid>
-        </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <TrainingStatusChip status={record.status} />
         <Typography
-          mt={3}
-          textAlign={'center'}
-          variant="h6"
-          fontSize={12}
+          variant="subtitle1"
           fontWeight="bold"
-          sx={{
-            whiteSpace: 'pre-line',
-            maxWidth: '100%',
-            marginLeft: 'auto',
-          }}
+          noWrap
+          sx={{ flexGrow: 1, minWidth: 0 }}
         >
-          {formattedStartDate} - {formattedEndDate}
+          {record.training_type}
         </Typography>
+        <TrainingClassActionsButton />
+      </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: data ? 'space-between' : 'flex-start', gap: '8px', minHeight: 30 }}>
-          {data ? (
-            <>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Avatar src={contact ? contact.avatar[0].url : ''} />
-                <Typography>{contact ? contact.first : ' '}</Typography>
-                <Typography>{contact ? contact.last: ' '}</Typography>
-              </Box>
-              <Box>
-                <Button
-                  sx={{ justifyContent: 'center', height: 20 }}
-                  variant='contained'
-                  href={`https://maps.google.com/?q=${encodeURIComponent(
-                    `${record.address.street}, ${record.address.city}, ${record.address.state} ${record.address.zip}`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <DirectionsIcon sx={{ height: 20 }} />
-                </Button>
-              </Box>
-            </>
-          ) : (
-            <Button
-              sx={{ justifyContent: 'center', height: 20 }}
-              variant='contained'
-              href={`https://maps.google.com/?q=${encodeURIComponent(
-                `${record.address.street}, ${record.address.city}, ${record.address.state} ${record.address.zip}`
-              )}`}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: 'text.secondary' }}>
+        <CalendarMonthIcon sx={{ fontSize: 18 }} />
+        <Typography variant="body2">
+          {formattedStartDate} – {formattedEndDate}
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 }}>
+        {contactName ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
+            <Avatar
+              src={contact?.avatar?.[0]?.url}
+              sx={{ width: 28, height: 28, fontSize: '0.8rem' }}
+            >
+              {contactName.charAt(0)}
+            </Avatar>
+            <Typography variant="body2" noWrap>
+              {contactName}
+            </Typography>
+          </Box>
+        ) : (
+          <Box />
+        )}
+        {mapsHref && (
+          <Tooltip title="Directions">
+            <IconButton
+              size="small"
+              color="primary"
+              href={mapsHref}
               target="_blank"
               rel="noopener noreferrer"
             >
-              <DirectionsIcon sx={{ height: 20 }} />
-            </Button>
-          )}
-        </Box>
-      </SimpleShowLayout>
+              <DirectionsIcon />
+            </IconButton>
+          </Tooltip>
+        )}
+      </Box>
     </Card>
   )
 }

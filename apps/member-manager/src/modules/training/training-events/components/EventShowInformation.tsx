@@ -56,14 +56,14 @@ const EventShowInformation = () => {
   const toggleNotes = () => {
     setShowNotes(!showNotes)
   }
+  if (typeof record === 'undefined' || !record) return null
+
   const examDate = new Date(record.exam_datetime)
   const startDate = new Date(record.start)
   const endDate = new Date(record.end)
   const formatedExamDate = examDate.toLocaleString('en-US', YearMonthDayMinute)
   const formatedStartDate = startDate.toLocaleString('en-US', YearMonthDayMinute)
   const formatedEndDate = endDate.toLocaleString('en-US', YearMonthDayMinute)
-
-  if (typeof record === 'undefined' || !record) return null
 
   return (
     <Box>
@@ -113,16 +113,27 @@ const EventShowInformation = () => {
       {record.hours !== null && <ResponsiveListItem label="Credit hours: " value={record.hours.toString()} divider={true} />}
       <ResponsiveListItem label="Audience: " value={record.audience} divider={true} />
       {record.phone && <ResponsiveListItem label="Phone Number:" value={(<a href={`tel:+1${record.phone.replace(/-/g, '')}`}>{record.phone}</a>) as ReactNode} divider={true} />}
-      <ResponsiveListItem label="Address: " value={record.address.city + ', ' + record.address.state + ' ' + record.address.street + ', ' + record.address.zip} divider={true} />
+      <ResponsiveListItem
+        label="Address: "
+        value={
+          record.address
+            ? `${record.address.street ?? ''}, ${record.address.city ?? ''}, ${record.address.state ?? ''} ${record.address.zip ?? ''}`
+            : '—'
+        }
+        divider={true}
+      />
       <ResponsiveListItem label="Has DEQ Exam: " value={record.deq_exam ? 'Yes' : 'No'} divider={true} />
       {record.exam_datetime && <ResponsiveListItem label="Exam Date: " value={formatedExamDate} divider={false} />}
 
-      <Accordion expanded={showNotes}>
+      <Accordion
+        expanded={showNotes}
+        sx={{ bgcolor: 'background.paper', color: 'text.primary' }}
+      >
         <AccordionSummary onClick={toggleNotes}>
           <Typography variant="h5"><Button>View Class Notes</Button></Typography>
         </AccordionSummary>
         <AccordionDetails>
-          <Typography>{record.private_notes}</Typography>
+          <Typography color="text.primary">{record.private_notes}</Typography>
         </AccordionDetails>
       </Accordion>
     </Box>

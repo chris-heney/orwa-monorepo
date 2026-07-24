@@ -1,19 +1,13 @@
 import React from 'react'
-import {
-  Create,
-} from 'react-admin'
+import { Create } from 'react-admin'
 import Event from './components/Event'
-import EventHeader from './components/EventHeader'
+import EventPipelineHeader from '../_components/EventPipelineHeader'
 
+const TrainingEventCreate = () => (
+  <Create title="Training Events">
+    <EventPipelineHeader context="create" />
+    <Event context="create" />
+  </Create>
+)
 
-const TrainingEventEdit = () => {
-  
-  return (
-    <Create title={'Training Events'} >
-      <EventHeader context='create' title={'New Event'}/>
-      <Event context="create" />
-    </Create >
-  )
-}
-
-export default TrainingEventEdit
+export default TrainingEventCreate

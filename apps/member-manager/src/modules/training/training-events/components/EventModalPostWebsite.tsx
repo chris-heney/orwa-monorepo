@@ -280,7 +280,8 @@ const EventModalPostWebsite = ({
         maxHeight: '60%',
         overflowY: 'scroll',
         bgcolor: 'background.paper',
-        border: '2px solid #000',
+        border: '2px solid',
+        borderColor: 'divider',
         boxShadow: 24,
         p: 4,
       }}>

@@ -1,81 +1,95 @@
 import React from 'react'
 import 'react-calendar/dist/Calendar.css'
-import { Card, Box, Typography } from '@mui/material'
+import { Box, Card, Divider, Typography } from '@mui/material'
 import EventsIcon from '@mui/icons-material/CalendarMonth'
 import { useGetList } from 'react-admin'
 import dayjs from 'dayjs'
+import { Link } from 'react-router-dom'
 import { YearMonthDay } from '../../../helpers/Data'
 import NextConference from '../../dashboard/_components/MuiCalender'
 
+/** Next scheduled events — server-side filtered, no client-side scans. */
 const UpComingEventCard = () => {
-  const { data: event } = useGetList('training-events', {
-    pagination: {
-      page: 1,
-      perPage: 10000
+  // Stable across renders so the query key doesn't change every paint
+  const [now] = React.useState(() => new Date().toISOString())
+  const { data: upcoming = [] } = useGetList('training-events', {
+    pagination: { page: 1, perPage: 5 },
+    sort: { field: 'start', order: 'ASC' },
+    filter: {
+      start: { $gt: now },
+      status: { $in: ['REVIEW', 'DEQ', 'RSVP', 'LIVE'] },
     },
   })
 
-  const upComingEvents = event?.filter((event) => {
-    const eventDate = new Date(event.start)
-    return eventDate > new Date()
-  })
-  const mostRecentEvent = upComingEvents?.length
-    ? upComingEvents.reduce((prev, current) => {
-      const prevDate = new Date(prev.start)
-      const currentDate = new Date(current.start)
-      return currentDate < prevDate ? current : prev
-    })
+  const nextEvent = upcoming[0]
+  const daysLeft = nextEvent
+    ? dayjs(nextEvent.start).diff(dayjs(), 'days') + 1
     : null
 
-  const daysLeft = mostRecentEvent
-    ? dayjs(mostRecentEvent?.start).diff(dayjs(new Date()), 'days') + 1
-    : null
-
-  const start = mostRecentEvent?.start
-  const formattedStartDate = start ? new Date(start).toLocaleDateString('en-US', YearMonthDay) : null
   return (
     <Card
       sx={{
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100%',
-        width: '100%',
-        position: 'relative',
-        mb: 2,
-        borderRadius: '10px',
-        backgroundColor: '#f0f0f0',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+        bgcolor: 'background.paper',
       }}
-    ><Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          margin: '8px',
-          display: 'flex',
-          alignItems: 'center',
-        }}
-      >
-        <EventsIcon sx={{ fontSize: 30, marginRight: '8px' }} />
-        <Typography variant='h5'> {mostRecentEvent?.name ? `${mostRecentEvent?.name},` : ' '} {mostRecentEvent ? formattedStartDate : 'No Upcoming Training Events'}</Typography>
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1.25 }}>
+        <EventsIcon sx={{ color: 'primary.main' }} />
+        <Typography variant="subtitle1" fontWeight="bold">
+          Upcoming Events
+        </Typography>
+        {nextEvent && daysLeft != null && (
+          <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto' }}>
+            next in {daysLeft} day{daysLeft === 1 ? '' : 's'}
+          </Typography>
+        )}
       </Box>
-      <Box mb={5} />
-      <Box sx={{
-        '& .react-calendar': {
-          width: 200
-        }
-      }}>
-      </Box>
-      <NextConference selectedDate={dayjs(mostRecentEvent?.start_date)} />
+      <Divider />
       <Box
         sx={{
-          textAlign: 'center',
-          marginTop: '5px'
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+          gap: 2,
+          p: 2,
+          flexGrow: 1,
         }}
       >
-        {mostRecentEvent && <Typography variant='h6'> Days Left:  {daysLeft}</Typography>}
+        <NextConference selectedDate={nextEvent ? dayjs(nextEvent.start) : dayjs()} />
+        <Box sx={{ flexGrow: 1, minWidth: 220 }}>
+          {upcoming.length === 0 && (
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              No upcoming training events.
+            </Typography>
+          )}
+          {upcoming.map((event) => (
+            <Box
+              key={event.id}
+              component={Link}
+              to={`/training-events/${event.id}/show`}
+              sx={{
+                display: 'block',
+                textDecoration: 'none',
+                color: 'text.primary',
+                py: 0.75,
+                px: 1,
+                borderRadius: 1,
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <Typography variant="body2" fontWeight={600} noWrap>
+                {event.training_type}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {new Date(event.start).toLocaleDateString('en-US', YearMonthDay)}
+                {event.address?.city ? ` · ${event.address.city}` : ''}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
       </Box>
     </Card>
   )
