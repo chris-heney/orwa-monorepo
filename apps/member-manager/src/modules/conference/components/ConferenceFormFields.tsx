@@ -139,9 +139,9 @@ const ConferenceFormFields = () => {
             <Grid item xs={12} md={6}>
               <NumberInput
                 source="available_contestants"
-                label="Available Golfers"
+                label="Available Golf Contestants"
                 fullWidth
-                helperText="How many golfers are available at this conference?"
+                helperText="Golf tournament inventory — only Golfer tickets count against this limit. Fishing tickets are not limited by it."
               />
             </Grid>
           </Grid>

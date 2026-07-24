@@ -631,4 +631,5 @@ export const VotingStatusOptions: ISelectInputChoice[] = [
 export const RegistrationType: ISelectInputChoice[] = [
   { id: 'Vendor', name: 'Vendor' },
   { id: 'Attendee', name: 'Attendee' },
+  { id: 'Contestant', name: 'Contestant' },
 ]

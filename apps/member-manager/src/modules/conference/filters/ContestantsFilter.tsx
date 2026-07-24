@@ -24,6 +24,19 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
   const disableDeselect = selectedTab === 'edit';
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
+  const isContestantTicket = (ticket: IConferenceTicket) =>
+    ticket.context === "Contestant" ||
+    (!ticket.context && ["Golfer", "Fisher", "Contestant"].includes(ticket.name));
+
+  const contestantTickets = (tickets ?? []).filter(
+    (ticket) =>
+      isContestantTicket(ticket) &&
+      (filterConferenceId == null ||
+        (ticket.conferences as IConference[]).some(
+          (c) => c.id === filterConferenceId
+        ))
+  );
+
   // Custom toggle function that enforces single selection
   const singleSelectionToggle = (value: any, filters: any) => {
     // Get the key (should be conference_ticket)
@@ -54,18 +67,13 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
         disableDeselect={disableDeselect}
       />
       
-      {/* Contestant Type Filter - only for Fall Conference (ID 3) */}
-      {filterConferenceId === 3 && (
-        <FilterList label="Contestant Type" icon={<GroupIcon />}>
-          {tickets
-            ?.filter((ticket) =>
-              filterConferenceId != null
-                ? (ticket.conferences as IConference[]).some(
-                    (c) => c.id === filterConferenceId
-                  ) &&
-                  (ticket.name === "Golfer" || ticket.name === "Fisher")
-                : true
-            )
+      {/* Contestant Ticket filter — built from the conference's contestant
+          tickets (context "Contestant", or legacy Golfer/Fisher rows with no
+          context) so new tournaments (e.g. fishing-only) appear without code
+          changes. */}
+      {contestantTickets.length > 0 && (
+        <FilterList label="Contestant Ticket" icon={<GroupIcon />}>
+          {contestantTickets
             .map((ticket) => {
               const ticketId = typeof ticket.id === "string"
                 ? parseInt(ticket.id, 10)

@@ -232,6 +232,14 @@ const ConferenceContestants = () => {
 
         <TextField source="organization" label="Organization" noWrap />
         <TextField source="type" label="Type" />
+        <ReferenceField
+          source="conference_ticket"
+          reference="conference-tickets"
+          label="Ticket"
+          sortBy="conference_ticket.name"
+        >
+          <TextField source="name" noWrap />
+        </ReferenceField>
         <TextField source="first" label="First Name" noWrap />
         <TextField source="last" label="Last Name" noWrap />
         <TextField source="email" label="Email" noWrap />

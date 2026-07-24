@@ -40,7 +40,18 @@ const RegistrationFilter: React.FC<RegistrationFilterProps> = ({
         disableDeselect={disableDeselect}
       />
       
-      {/* Contestant Type Filter - only for Fall Conference (ID 3) */}
+      <FilterList label="Registration Type" icon={<GroupIcon />}>
+        {["Attendee", "Vendor", "Contestant"].map((type) => (
+          <FilterListItem
+            key={`type-${type}`}
+            label={type}
+            value={{ type }}
+            isSelected={isSelected}
+            toggleFilter={toggleFilter}
+          />
+        ))}
+      </FilterList>
+
         <FilterList label="Registration Extras" icon={<GroupIcon />}>
           {extras 
             ?.filter((extra) => extra.context === "Registration")

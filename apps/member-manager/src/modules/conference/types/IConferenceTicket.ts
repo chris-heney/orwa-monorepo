@@ -11,4 +11,5 @@ export default interface IConferenceTicket extends RaRecord {
   price_event: number
   includes: number[] | IConferenceExtra[]
   excludes: number[] | IConferenceExtra[]
+  context?: 'Attendee' | 'Vendor' | 'Contestant' | null
 }
