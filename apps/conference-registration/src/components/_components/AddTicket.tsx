@@ -81,16 +81,25 @@ const AddTicketComponent = ({
     });
   };
 
+  const emptyCopy =
+    type === "Contestant"
+      ? {
+          title: "No golfers or fishers added yet",
+          hint: "Optional — add participants below, or click Next to skip.",
+          button: "Add Golfer / Fisher",
+        }
+      : {
+          title: `No ${type.toLowerCase()}s added yet`,
+          hint: `Add at least one ${type.toLowerCase()} to continue.`,
+          button: `Add ${type}`,
+        };
+
   return (
     <div className={sx}>
       {typedTickets.length === 0 ? (
         <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
-          <p className="text-sm font-medium text-slate-600">
-            No {type.toLowerCase()}s added yet
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Add at least one {type.toLowerCase()} to continue.
-          </p>
+          <p className="text-sm font-medium text-slate-600">{emptyCopy.title}</p>
+          <p className="mt-1 text-xs text-slate-400">{emptyCopy.hint}</p>
         </div>
       ) : (
         <ul className="divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -179,7 +188,7 @@ const AddTicketComponent = ({
           className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
           onClick={handleAddTicket}
         >
-          Add {type}
+          {emptyCopy.button}
         </button>
       </div>
     </div>

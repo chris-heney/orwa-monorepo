@@ -80,7 +80,8 @@ const StepNavigation = () => {
     if (
       hasWaterTasteAddons &&
       payload?.registrationAddonIds?.length === 0 &&
-      currentStepLabel === "Contestants"
+      (currentStepLabel === "Contestants" ||
+        currentStepLabel === "Golf/Bass")
     ) {
       return fail(
         "You must select water taste test option",
@@ -157,7 +158,7 @@ const StepNavigation = () => {
     }
 
     const hasTypePath = activeSteps.some((step) =>
-      ["Attendees", "Vendors", "Contestants"].includes(step.label)
+      ["Attendees", "Vendors", "Contestants", "Golf/Bass"].includes(step.label)
     );
     if (!hasTypePath && !hasAttendeeOrVendor) {
       return fail(
