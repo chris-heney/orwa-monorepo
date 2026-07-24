@@ -20,6 +20,7 @@ import { IExtraOption, ITicketOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
 import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
+import { allowedContestantTickets } from "../../helpers/contestantTicketTiers";
 
 interface ITicketModalProps {
   setIsOpen: React.Dispatch<
@@ -312,7 +313,17 @@ const TicketModal: React.FC<ITicketModalProps> = ({
                 source={`tickets[${ticketIndex}].ticket_type.name`}
                 label="Ticket Type"
                 options={TicketOptions.filter((ticketOption) => {
-                  return ticketMatchesContext(ticketOption, type) || isAdminView;
+                  if (isAdminView) return true;
+                  if (type === "Contestant") {
+                    // Tiered contestant pricing: only offer the tier matching
+                    // this registration ($75 add-on vs $150 contestant-only).
+                    return allowedContestantTickets(
+                      TicketOptions,
+                      watch("registration_type"),
+                      watch("contestant_already_registered") === "Yes"
+                    ).some((allowed) => String(allowed.id) === String(ticketOption.id));
+                  }
+                  return ticketMatchesContext(ticketOption, type);
                 }).map((t) => ({
                   value: t.name,
                   label: t.name,

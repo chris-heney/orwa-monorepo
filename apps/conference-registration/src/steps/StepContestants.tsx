@@ -2,18 +2,31 @@ import { useContext, useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { TextInput } from "mj-react-form-builder";
 import AddTicketComponent from "../components/_components/AddTicket";
-import { RegistrationOptions, useTicketIndex } from "../AppContextProvider";
+import {
+  RegistrationOptions,
+  useRegistrationSource,
+  useTicketIndex,
+} from "../AppContextProvider";
 import currencyFormatter from "../helpers/currencyFormat";
 import TicketModal from "../components/_components/TicketModal";
 import AddExtras from "../components/AddExtras";
 import { ITicketPayload } from "../types/types";
 import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
+import {
+  allowedContestantTickets,
+  hasBothContestantTiers,
+  isStandaloneContestantTicket,
+  tierMinPrice,
+} from "../helpers/contestantTicketTiers";
 import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const StepContestants = () => {
   const { ticketIndex } = useTicketIndex();
-  const { ConferenceOptions, ExtraOptions } = useContext(RegistrationOptions);
-  const { watch } = useFormContext();
+  const { ConferenceOptions, ExtraOptions, TicketOptions } = useContext(
+    RegistrationOptions
+  );
+  const registrationSource = useRegistrationSource();
+  const { watch, setValue } = useFormContext();
 
   const [isModalOpen, setIsModalOpen] = useState({
     open: false,
@@ -23,6 +36,10 @@ const StepContestants = () => {
 
   const tickets = watch("tickets") || [];
   const organization = watch("organization");
+  const registrationType = watch("registration_type");
+  const alreadyRegistered = watch("contestant_already_registered");
+
+  const isContestantOnly = registrationType === "Contestant";
 
   const contestantTickets = tickets.filter(
     (ticket: ITicketPayload) =>
@@ -38,6 +55,65 @@ const StepContestants = () => {
     (extra) =>
       extra.context === "Contestant" || extra.context === "Contestants"
   );
+
+  // Tournament copy is driven by the contestant tickets on this conference,
+  // so golf-era conferences (resubmits) still read correctly.
+  const contestantOptions = (TicketOptions ?? []).filter((ticket) =>
+    ticketMatchesContext(ticket, "Contestant")
+  );
+  const hasGolf = contestantOptions.some((t) => /golf/i.test(t.name ?? ""));
+  const hasFishing = contestantOptions.some((t) => /fish/i.test(t.name ?? ""));
+  const tournamentTitle =
+    hasGolf && hasFishing
+      ? "Golf & Bass Tournament"
+      : hasFishing
+      ? "Fishing Tournament"
+      : hasGolf
+      ? "Golf Tournament"
+      : "Tournament Contestants";
+
+  // Contestant-only flow: two price tiers driven by ticket data.
+  const showTierToggle = isContestantOnly && hasBothContestantTiers(TicketOptions);
+  const addOnPrice = tierMinPrice(
+    contestantOptions.filter((t) => !isStandaloneContestantTicket(t)),
+    registrationSource
+  );
+  const standalonePrice = tierMinPrice(
+    contestantOptions.filter(isStandaloneContestantTicket),
+    registrationSource
+  );
+
+  // Default the toggle to the full (standalone) price so no one is
+  // undercharged by accident; they opt in to the registered discount.
+  useEffect(() => {
+    if (showTierToggle && alreadyRegistered === undefined) {
+      setValue("contestant_already_registered", "No");
+    }
+  }, [showTierToggle, alreadyRegistered, setValue]);
+
+  const handleTierChange = (value: "Yes" | "No") => {
+    if (alreadyRegistered === value) return;
+    setValue("contestant_already_registered", value);
+
+    // Drop contestant tickets priced for the other tier so carts never mix
+    // $75 and $150 fishing tickets.
+    const allowed = allowedContestantTickets(
+      TicketOptions,
+      "Contestant",
+      value === "Yes"
+    );
+    const allowedIds = new Set(allowed.map((t) => String(t.id)));
+    const pruned = tickets.filter((ticket: ITicketPayload) => {
+      const isContestantTicket =
+        ticket.type === "Contestant" ||
+        ticketMatchesContext(ticket.ticket_type, "Contestant");
+      if (!isContestantTicket) return true;
+      return allowedIds.has(String(ticket.ticket_type?.id));
+    });
+    if (pruned.length !== tickets.length) {
+      setValue("tickets", pruned);
+    }
+  };
 
   useEffect(() => {
     const ticketPrice = contestantTickets.reduce(
@@ -59,13 +135,87 @@ const StepContestants = () => {
     <div className="container mx-auto max-w-3xl px-4 py-6 text-left">
       <header className="mb-6 border-b border-slate-200 pb-5">
         <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-          Golf &amp; Bass Tournament
+          {tournamentTitle}
         </h2>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-          Optional — add golfers and/or bass tournament fishers for this
-          registration, or click Next to skip.
+          {isContestantOnly
+            ? "Add each tournament contestant below. At least one contestant is required."
+            : "Optional — add tournament contestants for this registration, or click Next to skip."}
         </p>
       </header>
+
+      {showTierToggle && (
+        <ValidationHighlight
+          field="contestant_already_registered"
+          className="mb-6 rounded-lg border border-slate-200 bg-white p-5"
+          clearWhen={Boolean(alreadyRegistered)}
+        >
+          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Conference registration status
+          </h3>
+          <p className="mb-4 text-xs leading-relaxed text-slate-500">
+            Contestants from organizations already registered — or registering
+            separately — as an Attendee or Vendor qualify for the reduced
+            ticket price. ORWA staff verify this against conference
+            registrations.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  value: "Yes" as const,
+                  title: "Already registered",
+                  detail:
+                    "My organization is registered (or registering separately) as an Attendee or Vendor",
+                  price: addOnPrice,
+                },
+                {
+                  value: "No" as const,
+                  title: "Contestant only",
+                  detail:
+                    "My organization is not otherwise registered for this conference",
+                  price: standalonePrice,
+                },
+              ]
+            ).map((option) => {
+              const selected = alreadyRegistered === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => handleTierChange(option.value)}
+                  className={`flex cursor-pointer flex-col rounded-lg border-2 px-4 py-3 text-left transition ${
+                    selected
+                      ? "border-blue-600 bg-blue-50"
+                      : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
+                  }`}
+                >
+                  <span
+                    className={`text-sm font-bold ${
+                      selected ? "text-blue-700" : "text-slate-800"
+                    }`}
+                  >
+                    {option.title}
+                    {option.price != null && (
+                      <span className="ml-2 tabular-nums">
+                        {currencyFormatter.format(option.price)} per contestant
+                      </span>
+                    )}
+                  </span>
+                  <span
+                    className={`mt-1 text-xs leading-snug ${
+                      selected ? "text-blue-700/80" : "text-slate-500"
+                    }`}
+                  >
+                    {option.detail}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </ValidationHighlight>
+      )}
 
       <ValidationHighlight
         field="organization"
@@ -105,7 +255,9 @@ const StepContestants = () => {
                 Participants
               </h3>
               <p className="mt-1 text-xs leading-relaxed text-slate-500">
-                Choose Golfer or Fisher when you add each person.
+                {hasGolf && hasFishing
+                  ? "Choose Golfer or Fisher when you add each person."
+                  : "Enter each contestant's contact details."}
               </p>
             </div>
             <span className="shrink-0 text-xs tabular-nums text-slate-400">
@@ -122,7 +274,8 @@ const StepContestants = () => {
 
       {hasContestantExtras && (
         <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5">
-          <AddExtras field="registrationExtras" context="Contestant" />
+          {/* registrationExtrasIds is the field checkout + webhook bill from. */}
+          <AddExtras field="registrationExtrasIds" context="Contestant" />
         </section>
       )}
 

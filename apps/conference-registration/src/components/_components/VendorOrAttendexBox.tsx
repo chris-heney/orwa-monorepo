@@ -1,22 +1,33 @@
 import BoothSvg from "./BoothSvg";
 import AttendeeSVG from "./AttendeeSVG";
+import FishSVG from "./FishSVG";
 
 interface ApprovalProps {
-  registrationType: "Vendor" | "Attendee";
-  checked: "Vendor" | "Attendee" | null;
+  registrationType: "Vendor" | "Attendee" | "Contestant";
+  checked: "Vendor" | "Attendee" | "Contestant" | null;
   setRegistrationType: () => void;
+  /** Optional display label (e.g. "Contestant Only"); defaults to the type. */
+  label?: string;
+  description?: string;
 }
+
+const DESCRIPTIONS: Record<ApprovalProps["registrationType"], string> = {
+  Attendee:
+    "Register people attending sessions and events; optionally sponsor",
+  Vendor: "Reserve booth space, register vendor reps, and optionally sponsor",
+  Contestant:
+    "Tournament contestants only — not attending conference sessions",
+};
 
 const VendorOrAttendeeBox = ({
   registrationType,
   checked,
   setRegistrationType,
+  label,
+  description: descriptionProp,
 }: ApprovalProps) => {
   const isSelected = checked === registrationType;
-  const description =
-    registrationType === "Attendee"
-      ? "Register people attending sessions and events; optionally sponsor"
-      : "Reserve booth space, register vendor reps, and optionally sponsor";
+  const description = descriptionProp ?? DESCRIPTIONS[registrationType];
 
   return (
     <button
@@ -37,6 +48,8 @@ const VendorOrAttendeeBox = ({
         <div className="h-9 w-9">
           {registrationType === "Vendor" ? (
             <BoothSvg active={isSelected} />
+          ) : registrationType === "Contestant" ? (
+            <FishSVG active={isSelected} />
           ) : (
             <AttendeeSVG active={isSelected} />
           )}
@@ -47,7 +60,7 @@ const VendorOrAttendeeBox = ({
           isSelected ? "text-blue-700" : "text-slate-800"
         }`}
       >
-        {registrationType}
+        {label ?? registrationType}
       </span>
       <span
         className={`mt-1 text-xs leading-snug ${

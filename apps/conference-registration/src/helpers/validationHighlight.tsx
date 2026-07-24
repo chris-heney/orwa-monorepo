@@ -20,6 +20,7 @@ export type ValidationField =
   | "attendees"
   | "vendors"
   | "contestants"
+  | "contestant_already_registered"
   | "organization"
   | "sponsor_details"
   | "billing"

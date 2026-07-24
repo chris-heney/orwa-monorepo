@@ -52,6 +52,8 @@ const RegistrationStep = () => {
   );
   const showContestants =
     hasContestantTickets || (hasContestantAddons && showContestantsStep);
+  // Contestant-only registration is offered when contestant tickets exist.
+  const offerContestantOnly = hasContestantTickets;
 
   useEffect(() => {
     const stepsToHide: string[] = [];
@@ -68,6 +70,15 @@ const RegistrationStep = () => {
     switch (registrationType) {
       case "Attendee":
         stepsToHide.push("booth_registration", "vendor_registration");
+        break;
+      case "Contestant":
+        // Contestant-only: Type → Contestants → Billing.
+        stepsToHide.push(
+          "attendee_registration",
+          "booth_registration",
+          "vendor_registration",
+          "sponsorship"
+        );
         break;
       case "Vendor":
         stepsToHide.push("attendee_registration");
@@ -135,8 +146,8 @@ const RegistrationStep = () => {
           Registration Contact
         </h2>
         <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-          Enter the point of contact for this registration, then choose Attendee
-          or Vendor.
+          Enter the point of contact for this registration, then choose your
+          registration type.
         </p>
       </header>
 
@@ -178,10 +189,16 @@ const RegistrationStep = () => {
             field="registration_type"
             className="p-1"
             clearWhen={
-              registrationType === "Attendee" || registrationType === "Vendor"
+              registrationType === "Attendee" ||
+              registrationType === "Vendor" ||
+              registrationType === "Contestant"
             }
           >
-            <div className="grid grid-cols-2 gap-3">
+            <div
+              className={`grid gap-3 ${
+                offerContestantOnly ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2"
+              }`}
+            >
               <VendorOrAttendeeBox
                 {...register("registration_type")}
                 registrationType="Attendee"
@@ -207,12 +224,30 @@ const RegistrationStep = () => {
                   }
                 }}
               />
+              {offerContestantOnly && (
+                <VendorOrAttendeeBox
+                  {...register("registration_type")}
+                  registrationType="Contestant"
+                  label="Contestant Only"
+                  checked={registrationType}
+                  setRegistrationType={() => {
+                    if (registrationType !== "Contestant") {
+                      setValue("registration_type", "Contestant");
+                      setValue("booths", []);
+                      setValue("tickets", []);
+                      unregister("organization");
+                    }
+                  }}
+                />
+              )}
             </div>
           </ValidationHighlight>
 
           {!registrationType && (
             <p className="mt-3 text-xs font-medium text-amber-700">
-              Select Attendee or Vendor to continue.
+              {offerContestantOnly
+                ? "Select Attendee, Vendor, or Contestant Only to continue."
+                : "Select Attendee or Vendor to continue."}
               {hasAvailableSponsorships
                 ? " Sponsorship packages are available for any registration type."
                 : ""}

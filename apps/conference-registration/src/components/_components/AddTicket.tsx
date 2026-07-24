@@ -10,6 +10,7 @@ import { ITicketPayload } from "../../types/types";
 import { isExtraIncluded } from "../../helpers/isExtraIncluded";
 import { fetchSingleTicket } from "../../helpers/fetchSingleTicket";
 import { getExtraData } from "../../helpers/getExtraData";
+import { allowedContestantTickets } from "../../helpers/contestantTicketTiers";
 
 interface IAddTicketComponentProps {
   setIsModalOpen: Dispatch<
@@ -40,6 +41,15 @@ const AddTicketComponent = ({
   const typedTickets = tickets.filter(
     (ticket: ITicketPayload) => ticket.type === type
   );
+
+  const registrationType = watch("registration_type");
+  const alreadyRegistered = watch("contestant_already_registered") === "Yes";
+  // Contestant tickets are tiered ($75 add-on vs $150 standalone); offer only
+  // the tier that matches this registration.
+  const optionsForType =
+    type === "Contestant"
+      ? allowedContestantTickets(TicketOptions, registrationType, alreadyRegistered)
+      : TicketOptions;
 
   const boothCount = watch("booths")?.length || 0;
 
@@ -72,7 +82,7 @@ const AddTicketComponent = ({
       type,
       training_type: "None",
       price: 0,
-      ...fetchSingleTicket(TicketOptions, ExtraOptions, type),
+      ...fetchSingleTicket(optionsForType, ExtraOptions, type),
     });
     setTicketIndex(getValues("tickets").length - 1);
     setIsModalOpen({
@@ -84,9 +94,12 @@ const AddTicketComponent = ({
   const emptyCopy =
     type === "Contestant"
       ? {
-          title: "No golfers or fishers added yet",
-          hint: "Optional — add participants below, or click Next to skip.",
-          button: "Add Golfer / Fisher",
+          title: "No contestants added yet",
+          hint:
+            registrationType === "Contestant"
+              ? "Add at least one contestant to continue."
+              : "Optional — add participants below, or click Next to skip.",
+          button: "Add Contestant",
         }
       : {
           title: `No ${type.toLowerCase()}s added yet`,

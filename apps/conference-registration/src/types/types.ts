@@ -642,7 +642,7 @@ export interface entryPayload {
 
 export interface IRegistrationPayload {
   adminOptions?: AdminOptions;
-  type: "Attendee" | "Vendor" | null;
+  type: "Attendee" | "Vendor" | "Contestant" | null;
   conference: Identifier;
   year: number;
   registrant: IContactPayload;
@@ -652,7 +652,11 @@ export interface IRegistrationPayload {
   registrationAddonIds: Identifier[] | [];
   registrationExtrasIds: Identifier[] | [];
   passport_id?: number; // will be set via query param IF there is one.
-  registrationType: "Vendor" | "Attendee" | null;
+  registrationType: "Vendor" | "Attendee" | "Contestant" | null;
+  /** Wizard Type-step selection (submitted to the webhook as the registration type). */
+  registration_type?: "Attendee" | "Vendor" | "Contestant" | null;
+  /** Contestant-only flow: buyer self-identifies as already/concurrently registered ($75 tier). */
+  contestant_already_registered?: "Yes" | "No";
   organization: string; // in case they are an agency
   associate?: Identifier | null;
   watersystem?: Identifier | null;

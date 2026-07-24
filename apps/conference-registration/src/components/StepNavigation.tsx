@@ -72,16 +72,20 @@ const StepNavigation = () => {
   };
 
   const contestantValid = (toast = true): boolean => {
+    const onContestantStep =
+      currentStepLabel === "Contestants" || currentStepLabel === "Golf/Bass";
+
     // Water Taste Test (Annual) requires an addon selection on this step.
-    // Fall Golf/Bass uses contestant tickets and may be skipped with none added.
+    // Fall tournament uses contestant tickets and may be skipped with none
+    // added — except contestant-only registrations, which exist solely to
+    // buy contestant tickets.
     const hasWaterTasteAddons = (RegistrationAddons ?? []).some(
       (addon) => addon.context === "Contestant"
     );
     if (
       hasWaterTasteAddons &&
       payload?.registrationAddonIds?.length === 0 &&
-      (currentStepLabel === "Contestants" ||
-        currentStepLabel === "Golf/Bass")
+      onContestantStep
     ) {
       return fail(
         "You must select water taste test option",
@@ -89,6 +93,20 @@ const StepNavigation = () => {
         { toast }
       );
     }
+
+    if (
+      payload.registration_type === "Contestant" &&
+      onContestantStep &&
+      (payload.tickets ?? []).filter((ticket) => ticket.type === "Contestant")
+        .length === 0
+    ) {
+      return fail(
+        "Please add at least one contestant",
+        ["contestants"],
+        { toast }
+      );
+    }
+
     return true;
   };
 
@@ -143,15 +161,17 @@ const StepNavigation = () => {
 
   const isRegistrationStepValid = (toast = true): boolean => {
     const registrationType = payload.registration_type;
-    const hasAttendeeOrVendor =
-      registrationType === "Attendee" || registrationType === "Vendor";
+    const hasValidType =
+      registrationType === "Attendee" ||
+      registrationType === "Vendor" ||
+      registrationType === "Contestant";
 
     if (currentStepLabel === "Type") {
-      if (hasAttendeeOrVendor) {
+      if (hasValidType) {
         return true;
       }
       return fail(
-        "Please select Attendee or Vendor registration to continue",
+        "Please select a registration type to continue",
         ["registration_type"],
         { toast }
       );
@@ -160,9 +180,9 @@ const StepNavigation = () => {
     const hasTypePath = activeSteps.some((step) =>
       ["Attendees", "Vendors", "Contestants", "Golf/Bass"].includes(step.label)
     );
-    if (!hasTypePath && !hasAttendeeOrVendor) {
+    if (!hasTypePath && !hasValidType) {
       return fail(
-        "Please go back and select Attendee or Vendor registration",
+        "Please go back and select a registration type",
         ["registration_type"],
         { toast }
       );
