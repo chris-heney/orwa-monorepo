@@ -1,5 +1,6 @@
 // import test from "./cron-tasks-two";
 import updateMembership from "./cron-tasks";
+import trainingStatus from "./cron-training-status";
 
 export default ({ env }) => ({
   host: env('HOST', '0.0.0.0'),
@@ -17,6 +18,7 @@ export default ({ env }) => ({
     tasks: {
       // ...test,
       ...updateMembership,
+      ...trainingStatus,
     }
   },
 
