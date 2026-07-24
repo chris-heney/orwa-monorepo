@@ -66,10 +66,14 @@ const oneYearAgoFormatted = formatDate(oneYearAgo);
             "Authorization": `Bearer ${import.meta.env.VITE_API_KEY}`,
           },
         })
+        if (!response.ok) {
+          throw new Error(`Associates request failed (${response.status})`)
+        }
         const data = await response.json()
-        setAssociates(data.data)
+        setAssociates(Array.isArray(data?.data) ? data.data : [])
       } catch (error) {
         console.error('Error fetching data:', error)
+        setAssociates([])
       } finally {
         setTimeout(() => {
           setLoading(false)
