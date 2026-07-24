@@ -1,26 +1,51 @@
-export const customDatagridStyle = {
+import type { Theme } from '@mui/material/styles'
+import { alpha, SxProps } from '@mui/material'
+
+/**
+ * Shared Datagrid zebra / border styles.
+ * Odd rows must stay dark in dark mode (never hardcode light greys).
+ */
+export const customDatagridStyle: SxProps<Theme> = {
   '& .RaDatagrid-rowOdd': {
-    backgroundColor: '#eeeeee',
+    backgroundColor: (theme) =>
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.common.white, 0.06)
+        : '#eeeeee',
+  },
+  '& .RaDatagrid-row:hover': {
+    backgroundColor: (theme) =>
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.common.white, 0.1)
+        : undefined,
+  },
+  '& .RaDatagrid-rowOdd:hover': {
+    backgroundColor: (theme) =>
+      theme.palette.mode === 'dark'
+        ? alpha(theme.palette.common.white, 0.12)
+        : undefined,
   },
   '& .css-19tabqp-RaBulkActionsToolbar-root .RaBulkActionsToolbar-toolbar': {
     justifyContent: 'flex-start',
-    alignContent: 'center'
+    alignContent: 'center',
   },
   '& .css-uw9l4c .RaBulkActionsToolbar-toolbar': {
     justifyContent: 'flex-start',
-    alignContent: 'center'
+    alignContent: 'center',
   },
   '& .RaDatagrid-thead': {
-    whiteSpace: 'nowrap'
+    whiteSpace: 'nowrap',
   },
-  "tr th": {
+  '& .RaDatagrid-headerCell, & .RaDatagrid-rowCell': {
+    color: (theme) => theme.palette.text.primary,
+  },
+  'tr th': {
     py: 1,
-    border: "1px solid #ccc",
+    border: (theme) => `1px solid ${theme.palette.divider}`,
   },
-  "tr td": {
-    py: .5,
-    border: "1px solid #ccc",
-  }
+  'tr td': {
+    py: 0.5,
+    border: (theme) => `1px solid ${theme.palette.divider}`,
+  },
 }
 
 export const positionStickyComponent = {

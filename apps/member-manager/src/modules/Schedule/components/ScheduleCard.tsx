@@ -5,6 +5,7 @@ import {
   IconButton,
   Box,
   Chip,
+  useTheme,
 } from "@mui/material";
 import dayjs from "dayjs";
 import EditIcon from "@mui/icons-material/Edit";
@@ -68,9 +69,11 @@ const ConferenceScheduleCard: React.FC<ConferenceScheduleCardProps> = ({
   // Generate a unique class name for this time slot
   const timeSlotClass = `time-slot-${record.id}`;
   
+  const theme = useTheme();
+
   // Common styles for table cells
   const cellStyle = {
-    border: "1px solid rgba(224, 224, 224, 0.8)",
+    border: `1px solid ${theme.palette.divider}`,
     padding: "4px",
     fontSize: "0.75rem",
     lineHeight: 1.2,
@@ -78,13 +81,22 @@ const ConferenceScheduleCard: React.FC<ConferenceScheduleCardProps> = ({
     overflow: "hidden",
     textOverflow: "ellipsis",
   };
-
-  // Define row style based on rowIndex for proper alternating colors
+  // Alternating rows: light zebra in light mode, subtle hover tone in dark
   const isOdd = rowIndex % 2 === 1;
-  const rowColor = isOdd ? "#F3F2F2" : "white";
+  const rowColor =
+    theme.palette.mode === "dark"
+      ? isOdd
+        ? theme.palette.action.hover
+        : theme.palette.background.paper
+      : isOdd
+        ? "#F3F2F2"
+        : theme.palette.common.white;
 
   const rowStyle = {
-    "& td": cellStyle,
+    "& td": {
+      ...cellStyle,
+      color: printView ? undefined : theme.palette.text.primary,
+    },
     backgroundColor: rowColor,
   };
 

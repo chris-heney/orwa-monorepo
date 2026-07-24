@@ -44,7 +44,7 @@ const ConferenceForm = () => {
           mb: 4,
           p: 2,
           backgroundColor: "primary.main",
-          color: "white",
+          color: "common.white",
           borderRadius: "8px",
         }}
       >
@@ -65,11 +65,11 @@ const ConferenceForm = () => {
             top: "50%",
             right: "16px",
             transform: "translateY(-50%)",
-            backgroundColor: "white",
+            backgroundColor: "common.white",
             color: "primary.main",
             fontWeight: "bold",
             "&:hover": {
-              backgroundColor: "primary.light",
+              backgroundColor: "grey.100",
             },
           }}
         />

@@ -7,12 +7,14 @@ import {
   TextField,
   CloneButton,
 } from "react-admin";
-import { customDatagridStyle } from "../../../css";
+import { useTheme } from "@mui/material/styles";
 import { useEmailManagementContext } from "../EmailManagementContextProvider";
+import { emailDatagridStyle } from "../emailDatagridStyle";
 
 const ScheduledTaskList = () => {
 
   const { emailTaskFilters } = useEmailManagementContext();
+  const theme = useTheme();
   
   return (
     <List
@@ -26,7 +28,7 @@ const ScheduledTaskList = () => {
       <DatagridConfigurable
         bulkActionButtons={false}
         rowClick="edit"
-        sx={{ ...customDatagridStyle }}
+        sx={emailDatagridStyle(theme)}
       >
         <TextField source="name" />
         <FunctionField

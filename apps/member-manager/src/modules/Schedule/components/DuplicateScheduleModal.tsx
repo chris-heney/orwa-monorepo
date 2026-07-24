@@ -65,7 +65,7 @@ const DuplicateScheduleModal: React.FC = () => {
     >
       <Box
         sx={{
-          backgroundColor: "white",
+          backgroundColor: "background.paper",
           boxShadow: "0px 4px 15px rgba(0, 0, 0, 0.25)",
           display: "flex",
           flexDirection: "column",
@@ -104,7 +104,7 @@ const DuplicateScheduleModal: React.FC = () => {
               textAlign: "center",
               fontSize: "1rem",
               fontWeight: 500,
-              color: "#333",
+              color: "text.primary",
               mb: 3,
             }}
           >
@@ -146,7 +146,7 @@ const DuplicateScheduleModal: React.FC = () => {
             sx={{
               fontSize: "1rem",
               fontWeight: 500,
-              color: "#333",
+              color: "text.primary",
               mb: 2,
             }}
           >

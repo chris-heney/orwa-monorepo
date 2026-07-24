@@ -210,14 +210,7 @@ const CreateUserModal = ({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-            variant="contained"
-            onClick={handleClose}
-            sx={{
-              backgroundColor: "gray",
-              color: "white",
-            }}
-          >
+          <Button variant="outlined" color="inherit" onClick={handleClose}>
             Cancel
           </Button>
           <Button

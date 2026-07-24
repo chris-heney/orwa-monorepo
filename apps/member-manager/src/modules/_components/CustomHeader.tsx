@@ -3,7 +3,7 @@ import { Box, Theme, Typography, useMediaQuery } from '@mui/material'
 import { SxProps } from '@mui/system'
 
 interface CustomHeaderProps {
-  title: string
+  title: React.ReactNode
   Component?: () => JSX.Element
   textSx?: SxProps
   sx?: SxProps

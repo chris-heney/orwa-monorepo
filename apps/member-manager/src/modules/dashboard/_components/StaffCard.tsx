@@ -39,8 +39,9 @@ const StaffCard = () => {
         mb: 2,
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
         borderRadius: '15px',
-        backgroundColor: '#2C3238', // Darker background color
-        color: '#ffffff', // Text color
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#2C3238',
+        color: '#ffffff',
       }}
     >
       <Typography
@@ -50,7 +51,8 @@ const StaffCard = () => {
           position: 'absolute',
           top: -10,
           right: -3,
-          backgroundColor: '#4C535A', // Darker gray background color
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#4C535A',
           padding: '10px',
           borderRadius: '50%',
           width: '50px',

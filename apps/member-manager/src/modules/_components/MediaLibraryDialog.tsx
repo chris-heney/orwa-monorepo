@@ -157,7 +157,9 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({ open, onClose, 
         sx: {
           height: '80vh',
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          bgcolor: 'background.paper',
+          color: 'text.primary',
         }
       }}
     >
@@ -165,12 +167,14 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({ open, onClose, 
         display: 'flex', 
         justifyContent: 'space-between',
         alignItems: 'center',
-        pb: 1
+        pb: 1,
+        bgcolor: 'background.paper',
+        color: 'text.primary',
       }}>
-        <Typography variant="h6" component="div">
+        <Typography variant="h6" component="div" color="text.primary">
           Media Library
         </Typography>
-        <IconButton onClick={onClose} size="small" aria-label="close">
+        <IconButton onClick={onClose} size="small" aria-label="close" sx={{ color: 'text.secondary' }}>
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -291,33 +295,40 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({ open, onClose, 
                 onClick={() => handleImageClick(file)}
                 sx={{ 
                   cursor: 'pointer',
-                  border: selectedImage === file.id ? `2px solid ${theme.palette.primary.main}` : 'none',
+                  bgcolor: 'background.paper',
+                  border: selectedImage === file.id
+                    ? `2px solid ${theme.palette.primary.main}`
+                    : `1px solid ${theme.palette.divider}`,
                   borderRadius: 1,
                   overflow: 'hidden',
                   transition: 'all 0.2s',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: 3
+                    boxShadow: 3,
+                    borderColor: 'primary.main',
                   }
                 }}
               >
                 <Box sx={{ position: 'relative' }}>
-                  <img
+                  <Box
+                    component="img"
                     src={url}
                     alt={file.name}
                     loading="lazy"
-                    style={{ 
+                    sx={{
                       height: 180,
                       width: '100%',
                       objectFit: 'cover',
-                      background: '#f5f5f5'
+                      display: 'block',
+                      bgcolor: 'action.hover',
                     }}
                   />
                   <Box sx={{ 
                     p: 1.5,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 0.5
+                    gap: 0.5,
+                    bgcolor: 'background.paper',
                   }}>
                     <Typography 
                       variant="body2" 
@@ -326,7 +337,8 @@ const MediaLibraryDialog: React.FC<MediaLibraryDialogProps> = ({ open, onClose, 
                         fontWeight: 500,
                         textOverflow: 'ellipsis',
                         overflow: 'hidden',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        color: 'text.primary',
                       }}
                     >
                       {file.name}

@@ -27,7 +27,11 @@ const AssociatesCard = () => {
         height: '100%',
         width: '100%',
         borderRadius: '10px',
-        backgroundColor: '#f5f5f5', // Grayer blue color
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark'
+            ? theme.palette.background.paper
+            : '#f5f5f5',
+        color: 'text.primary',
         position: 'relative',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
       }}
@@ -39,7 +43,11 @@ const AssociatesCard = () => {
           position: 'absolute',
           top: -5,
           right: -6,
-          backgroundColor: '#f0f0f0',
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark'
+              ? theme.palette.action.selected
+              : '#f0f0f0',
+          color: 'text.primary',
           fontWeight: 'bold',
           padding: '8px',
           borderRadius: '50%',

@@ -1,7 +1,8 @@
 import React from "react";
 import { CloneButton, DatagridConfigurable, FunctionField, List, RaRecord, TextField } from "react-admin";
+import { useTheme } from "@mui/material/styles";
 import { useEmailManagementContext } from "../EmailManagementContextProvider";
-import { customDatagridStyle } from "../../../css"; 
+import { emailDatagridStyle } from "../emailDatagridStyle";
 
 interface EmailInterfaceProps {
   module?: string;
@@ -9,6 +10,7 @@ interface EmailInterfaceProps {
 const EmailInterface = ({ module }: EmailInterfaceProps) => {
   const { emailFilters } =
     useEmailManagementContext();
+  const theme = useTheme();
 
   return (
       <List
@@ -23,7 +25,7 @@ const EmailInterface = ({ module }: EmailInterfaceProps) => {
         <DatagridConfigurable
           bulkActionButtons={false}
           rowClick="edit"
-          sx={{...customDatagridStyle}}
+          sx={emailDatagridStyle(theme)}
         >
           <TextField source="email_name" />
           <TextField source="module" />

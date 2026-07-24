@@ -47,7 +47,11 @@ const NextConferencsCard = () => {
         position: 'relative',
         mb: 2,
         borderRadius: '10px',
-        backgroundColor: '#f0f0f0',
+        // Keep the light-grey card in light mode; fall back to the theme
+        // surface in dark mode so the calendar text stays readable.
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark' ? theme.palette.background.paper : '#f0f0f0',
+        color: 'text.primary',
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
       }}
     ><Box
@@ -58,6 +62,7 @@ const NextConferencsCard = () => {
           margin: '8px',
           display: 'flex',
           alignItems: 'center',
+          color: 'text.primary',
         }}
       >
         <EventsIcon sx={{ fontSize: 30, marginRight: '8px' }} />

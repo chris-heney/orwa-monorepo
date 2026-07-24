@@ -43,6 +43,13 @@ const IdentifiersInput = ({
             key={`${option}-${index}`}
             label={option}
             size="small"
+            sx={{
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255,255,255,0.12)'
+                  : undefined,
+              color: 'text.primary',
+            }}
           />
         ))
       }

@@ -177,7 +177,7 @@ const StaffShow = () => {
                     ) : asset.assigned_to ? (
                       <Button
                         variant="contained"
-                        style={{ backgroundColor: '#F6EC57' }}
+                        color="warning"
                         size="small"
                         onClick={() => assignAsset(asset)}
                       >

@@ -55,7 +55,7 @@ const CustomToolBar = ({ onEdit, setIsEditing }: CustomToolBarProps) => {
 
   return (
     <>
-      <Box display="flex" alignContent={'center'} sx={{ backgroundColor: '#fafafb', padding: 2 }}>
+      <Box display="flex" alignContent={'center'} sx={{ backgroundColor: 'background.default', padding: 2 }}>
         <Grid container spacing={2}>
           {/* Draft Button */}
           <Grid item>

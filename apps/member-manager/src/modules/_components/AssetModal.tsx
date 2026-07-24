@@ -95,7 +95,13 @@ const AssetModal = ({ open, onClose, file, height = "75vh" }: AssetModalProps) =
           </Tooltip>
         </Stack>
       </DialogTitle>
-      <DialogContent sx={{ p: 0, backgroundColor: "#525659" }}>
+      <DialogContent
+        sx={{
+          p: 0,
+          bgcolor: (theme) =>
+            theme.palette.mode === "dark" ? "grey.900" : "grey.700",
+        }}
+      >
         {isImage(file) ? (
           <Box
             sx={{
@@ -125,11 +131,11 @@ const AssetModal = ({ open, onClose, file, height = "75vh" }: AssetModalProps) =
             alignItems="center"
             justifyContent="center"
             spacing={2}
-            sx={{ height: "40vh", color: "white" }}
+            sx={{ height: "40vh", color: "common.white" }}
           >
             <InsertDriveFileIcon sx={{ fontSize: 64 }} />
             <Typography>No inline preview available for this file type.</Typography>
-            <Typography variant="body2">
+            <Typography variant="body2" sx={{ color: "grey.300" }}>
               Use the open or download buttons above.
             </Typography>
           </Stack>

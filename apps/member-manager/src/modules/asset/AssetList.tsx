@@ -89,7 +89,18 @@ const AssetList = () => {
         actions={false}
         sx={{
           '& .RaList-main': { marginTop: 0 },
-          '& .RaList-content': { boxShadow: 'none' },
+          '& .RaList-content': {
+            boxShadow: 'none',
+            bgcolor: 'background.paper',
+          },
+          '& .RaDatagrid-headerCell': {
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+            color: 'text.primary',
+          },
+          '& .RaDatagrid-rowCell': {
+            color: 'text.primary',
+          },
         }}
       >
         <AssetListHeader />

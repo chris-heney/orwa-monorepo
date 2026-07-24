@@ -11,7 +11,7 @@ const CustomToolBar = ({ onEdit, redirect }: CustomToolBarProps) => {
     <>
       <Card
         sx={{
-          backgroundColor: "#f5f5f5",
+          backgroundColor: "action.hover",
           padding: 2,
           borderRadius: 0,
           borderTop: null,

@@ -140,11 +140,13 @@ const SubAssetAssignList = () => {
             <>
               {record.sub_assets.includes(asset.id) ? (
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   color="primary"
+                  size="small"
                   onClick={() => handleCheckIn(asset)}
+                  sx={{ fontSize: 12, color: 'primary.main', borderColor: 'primary.main' }}
                 >
-                  <Typography fontSize={12}>Un Assgin Sub Asset</Typography>
+                  Un Assign Sub Asset
                 </Button>
               ) : (
                 <Button
@@ -152,9 +154,10 @@ const SubAssetAssignList = () => {
                   color="success"
                   size="small"
                   onClick={() => assignAsset(asset)}
+                  startIcon={<LibraryAddIcon />}
+                  sx={{ fontSize: 12, color: 'success.contrastText' }}
                 >
-                  <LibraryAddIcon sx={{ mr: 1 }} />
-                  <Typography fontSize={12}>Assign Sub Asset</Typography>
+                  Assign Sub Asset
                 </Button>
               )}
             </>

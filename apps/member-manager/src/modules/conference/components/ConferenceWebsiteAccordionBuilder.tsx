@@ -76,7 +76,8 @@ const ConferenceWebsiteAccordionBuilder = ({
       sx={{
         boxShadow: "none",
         position: "relative",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+        borderBottom: "1px solid",
+        borderColor: "divider",
         m: 0,
         p: 0,
       }}
@@ -184,7 +185,8 @@ const ConferenceWebsiteAccordionBuilder = ({
                     sx={{
                       boxShadow: "none",
                       position: "relative",
-                      borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+                      borderBottom: "1px solid",
+        borderColor: "divider",
                       m: 0,
                       p: 0,
                     }}

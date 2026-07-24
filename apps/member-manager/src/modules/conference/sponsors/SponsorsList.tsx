@@ -1,4 +1,5 @@
 import React, { JSX } from "react";
+import { Box } from "@mui/material";
 import {
   ChipField,
   DatagridConfigurable,
@@ -64,7 +65,11 @@ const SponsorsList = () => {
           sortBy="items.label"
           render={(record: RaRecord) => {
             if (!record)
-              return <span style={{ color: "gray" }}>No record data</span>;
+              return (
+                <Box component="span" sx={{ color: "text.secondary" }}>
+                  No record data
+                </Box>
+              );
 
             const itemsToRender: JSX.Element[] = [];
 
@@ -116,9 +121,9 @@ const SponsorsList = () => {
             // If no items to render, display fallback message
             if (itemsToRender.length === 0) {
               return (
-                <span style={{ color: "gray", fontStyle: "italic" }}>
+                <Box component="span" sx={{ color: "text.secondary", fontStyle: "italic" }}>
                   No items or sponsorships available
-                </span>
+                </Box>
               );
             }
 

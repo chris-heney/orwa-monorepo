@@ -146,14 +146,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button
-          variant="contained"
-          onClick={onClose}
-          sx={{
-            backgroundColor: "gray",
-            color: "white",
-          }}
-        >
+        <Button variant="outlined" color="inherit" onClick={onClose}>
           Cancel
         </Button>
         <Button

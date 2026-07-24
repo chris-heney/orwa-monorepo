@@ -8,14 +8,35 @@ import {
   TextField,
   Title,
 } from 'react-admin'
-import { Box } from '@mui/material'
-import { customDatagridStyle } from '../../css'
+import { Box, Theme } from '@mui/material'
 import PageHeadingBar from '../_components/PageHeadingBar'
 
 const barButtonSx = {
   color: 'white',
   '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
 }
+
+const termDatagridSx = (theme: Theme) => ({
+  '& .RaDatagrid-rowOdd': {
+    backgroundColor:
+      theme.palette.mode === 'dark'
+        ? 'rgba(255, 255, 255, 0.04)'
+        : '#eeeeee',
+  },
+  '& .RaDatagrid-thead': {
+    whiteSpace: 'nowrap',
+  },
+  'tr th': {
+    py: 1,
+    border: `1px solid ${theme.palette.divider}`,
+    color: 'text.primary',
+  },
+  'tr td': {
+    py: 0.5,
+    border: `1px solid ${theme.palette.divider}`,
+    color: 'text.primary',
+  },
+})
 
 const TermListHeader = () => (
   <PageHeadingBar
@@ -38,7 +59,7 @@ const TermList = () => (
       }}
     >
       <TermListHeader />
-      <Datagrid rowClick="edit" bulkActionButtons={false} sx={customDatagridStyle}>
+      <Datagrid rowClick="edit" bulkActionButtons={false} sx={termDatagridSx}>
         <TextField source="title" />
         <TextField source="slug" />
         <FunctionField

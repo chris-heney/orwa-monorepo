@@ -29,6 +29,13 @@ const SettingsPage = () => {
         resource="contacts"
         title={"Settings"}
         redirect={() => "/admin/settings"}
+        sx={{
+          "& .RaCreate-main": { bgcolor: "transparent" },
+          "& .RaCreate-card": {
+            bgcolor: "background.default",
+            boxShadow: "none",
+          },
+        }}
       >
         <CustomHeader title={`Setup your profile!`} />
         <SimpleForm
@@ -37,6 +44,18 @@ const SettingsPage = () => {
             user: user.id,
           }}
           validate={ContactValidate}
+          sx={{
+            bgcolor: "background.default",
+            color: "text.primary",
+            "& .MuiCard-root": {
+              bgcolor: "background.paper",
+              color: "text.primary",
+              border: (theme) =>
+                theme.palette.mode === "dark"
+                  ? `1px solid ${theme.palette.divider}`
+                  : undefined,
+            },
+          }}
         >
           <ContactCreateFormFields />
         </SimpleForm>
@@ -55,6 +74,15 @@ const SettingsPage = () => {
       id={contact.id}
       resource={"contacts"}
       actions={false}
+      sx={{
+        "& .RaEdit-main": {
+          bgcolor: "transparent",
+        },
+        "& .RaEdit-card": {
+          bgcolor: "background.default",
+          boxShadow: "none",
+        },
+      }}
     >
       <CustomAvatarHeader
         title={`${contact.first} ${contact.last}`}
@@ -63,7 +91,22 @@ const SettingsPage = () => {
         }`}
         dashboardButton={false}
       />
-      <SimpleForm toolbar={<CustomToolBar />} validate={ContactValidate}>
+      <SimpleForm
+        toolbar={<CustomToolBar />}
+        validate={ContactValidate}
+        sx={{
+          bgcolor: "background.default",
+          color: "text.primary",
+          "& .MuiCard-root": {
+            bgcolor: "background.paper",
+            color: "text.primary",
+            border: (theme) =>
+              theme.palette.mode === "dark"
+                ? `1px solid ${theme.palette.divider}`
+                : undefined,
+          },
+        }}
+      >
         <ContactFormFields />
       </SimpleForm>
     </Edit>

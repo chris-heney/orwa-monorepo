@@ -1,6 +1,5 @@
 import React from "react";
 import Button from "@mui/material/Button";
-import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
@@ -13,6 +12,7 @@ import Typography from "@mui/material/Typography";
 
 import { useNotify, useRedirect } from "react-admin";
 import Logo from "./components/logo";
+import AuthPageShell from "./components/AuthPageShell";
 import authProvider from "../authProvider";
 
 function Copyright(props: TypographyProps) {
@@ -56,23 +56,22 @@ const LoginPage = () => {
       });
   };
   return (
-    <>
-      <CssBaseline />
+    <AuthPageShell>
       <Box
         sx={{
-          marginTop: 8,
+          width: "100%",
+          maxWidth: 420,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "15px",
         }}
       >
         <Logo />
 
-        <Typography component="h1" variant="h6">
+        <Typography component="h1" variant="h6" sx={{ mt: 1 }}>
           ORWA Admin v2
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: "100%" }}>
           <TextField
             margin="normal"
             required
@@ -122,7 +121,7 @@ const LoginPage = () => {
         </Box>
       </Box>
       <Copyright sx={{ mt: 8, mb: 4 }} />
-    </>
+    </AuthPageShell>
   );
 };
 

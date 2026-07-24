@@ -4,8 +4,13 @@ import {
   AuthProvider,
   StrapiRestDataProviderFactory,
 } from "./helpers/ra-strapi-data-provider";
-import { Admin, CustomRoutes, Resource } from "react-admin";
+import {
+  Admin,
+  CustomRoutes,
+  Resource,
+} from "react-admin";
 import { AdminLayout } from "./layouts";
+import { darkTheme, lightTheme } from "./theme";
 import {
   Asset,
   Associate,
@@ -108,6 +113,10 @@ export const App = () => {
         dataProvider={dataProvider}
         authProvider={AuthProvider}
         dashboard={AdminDashboard}
+        // Providing both themes enables the AppBar theme toggle; react-admin
+        // persists the choice and follows the OS preference by default.
+        theme={lightTheme}
+        darkTheme={darkTheme}
         requireAuth
         disableTelemetry
       >

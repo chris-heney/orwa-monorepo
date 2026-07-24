@@ -21,7 +21,7 @@ const EditScheduleModal: React.FC = () => {
     <Modal open={isCreating} onClose={handleClose}>
       <Box
         sx={{
-          backgroundColor: "white",
+          backgroundColor: "background.paper",
           boxShadow: 24,
           display: "flex",
           flexDirection: "column",

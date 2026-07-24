@@ -1,10 +1,33 @@
 import React, { useEffect, useRef } from 'react'
-import { SimpleForm, TextInput, required, useInput } from 'react-admin'
+import {
+  DeleteButton,
+  SaveButton,
+  SimpleForm,
+  TextInput,
+  Toolbar,
+  required,
+  useInput,
+} from 'react-admin'
 import { RichTextInput } from 'ra-input-rich-text'
 import { useFormContext, useWatch } from 'react-hook-form'
 import { Box, Card } from '@mui/material'
 import IdentifiersInput from './IdentifiersInput'
 import CustomFormHeader from '../_components/CustomFormHeader'
+
+const TermToolbar = () => (
+  <Toolbar
+    sx={{
+      bgcolor: 'background.paper',
+      color: 'text.primary',
+      borderTop: 1,
+      borderColor: 'divider',
+      justifyContent: 'space-between',
+    }}
+  >
+    <SaveButton variant="contained" />
+    <DeleteButton />
+  </Toolbar>
+)
 
 const slugify = (title: string) =>
   title
@@ -40,10 +63,41 @@ const SlugFromTitle = () => {
   )
 }
 
+const richTextSx = {
+  width: '100%',
+  '& .RaRichTextInputToolbar-root': {
+    color: 'text.primary',
+  },
+  '& .RaRichTextInput-editorContent .ProseMirror': {
+    bgcolor: 'background.paper',
+    color: 'text.primary',
+    borderColor: 'divider',
+    minHeight: 220,
+  },
+  '& .RaRichTextInput-editorContent .ProseMirror:hover': {
+    bgcolor: 'action.hover',
+  },
+  '& .RaRichTextInput-editorContent .ProseMirror:focus': {
+    bgcolor: 'background.paper',
+  },
+}
+
 const TermForm = () => {
   return (
-    <Card sx={{ m: 2 }}>
-      <SimpleForm sx={{ p: 0 }}>
+    <Card
+      sx={{
+        m: 2,
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        boxShadow: (theme) =>
+          theme.palette.mode === 'dark' ? 'none' : undefined,
+        border: (theme) =>
+          theme.palette.mode === 'dark'
+            ? `1px solid ${theme.palette.divider}`
+            : undefined,
+      }}
+    >
+      <SimpleForm sx={{ p: 0 }} toolbar={<TermToolbar />}>
         <CustomFormHeader
           redirectTo="/terms"
           displayField="title"
@@ -64,6 +118,7 @@ const TermForm = () => {
             label="Content"
             fullWidth
             validate={required('Content is required')}
+            sx={richTextSx}
           />
         </Box>
       </SimpleForm>

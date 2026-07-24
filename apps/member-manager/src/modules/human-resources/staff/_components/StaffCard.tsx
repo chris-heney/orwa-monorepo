@@ -49,7 +49,8 @@ const StaffCard = ({source = 'contact' , link = false, instructorLink = false} :
               ? <Box sx={{
                 display: 'flex',
                 textAlign: 'center',
-                borderTop: '1px solid rgba(0, 0, 0, 0.12)',
+                borderTop: '1px solid',
+                borderColor: 'divider',
                 pt: '0.5rem',
                 width: '100%',
                 justifyContent: 'space-evenly',

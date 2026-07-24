@@ -80,7 +80,10 @@ const HumanResourcesDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: "#eee",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? theme.palette.grey[900]
+                        : theme.palette.grey[100],
                     maxWidth: isSmall ? 320 : undefined,
                     overflow: "clip",
                   }}
@@ -121,7 +124,7 @@ const HumanResourcesDashboard = () => {
             <Box sx={{ overflow: "hidden", flexGrow: 1, width: "100%" }}>
               <Box sx={{ overflow: "auto" }}>
                 <TabContext value={selectedTab}>
-                  <Box sx={{ backgroundColor: "#fff" }}>
+                  <Box sx={{ backgroundColor: "background.paper" }}>
                     <TabPanel value="contacts" {...a11yTabPanelProps(0)}>
                       <ContactList title=" "/>
                     </TabPanel>

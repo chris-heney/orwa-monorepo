@@ -151,7 +151,14 @@ const ScheduleControls: React.FC = () => {
           sx={{
             backgroundColor: "#262626",
             color: "white",
-            "&:hover": { backgroundColor: "#F3F2F2", color: "black" },
+            "&:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : "#F3F2F2",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "common.white" : "black",
+            },
           }}
           onClick={() => setIsDuplicateModalOpen(true)}
         >
@@ -164,7 +171,14 @@ const ScheduleControls: React.FC = () => {
           sx={{
             backgroundColor: "red",
             color: "white",
-            "&:hover": { backgroundColor: "#F3F2F2", color: "black" },
+            "&:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : "#F3F2F2",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "common.white" : "black",
+            },
           }}
           onClick={() => setIsClearModalOpen(true)}
         >
@@ -177,7 +191,14 @@ const ScheduleControls: React.FC = () => {
           sx={{
             backgroundColor: "#262626",
             color: "white",
-            "&:hover": { backgroundColor: "#F3F2F2", color: "black" },
+            "&:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : "#F3F2F2",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "common.white" : "black",
+            },
           }}
           onClick={() => setPrintView(!printView)}
         >
@@ -191,7 +212,14 @@ const ScheduleControls: React.FC = () => {
             sx={{
               backgroundColor: "#262626",
               color: "white",
-              "&:hover": { backgroundColor: "#F3F2F2", color: "black" },
+              "&:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : "#F3F2F2",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "common.white" : "black",
+            },
             }}
             onClick={toPDF}
           >
@@ -206,7 +234,14 @@ const ScheduleControls: React.FC = () => {
           sx={{ 
             backgroundColor: "#262626", 
             color: "white", 
-            "&:hover": { backgroundColor: "#F3F2F2", color: "black" } 
+            "&:hover": {
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.grey[700]
+                  : "#F3F2F2",
+              color: (theme) =>
+                theme.palette.mode === "dark" ? "common.white" : "black",
+            }, 
           }}
           onClick={handleExportToExcel}
           disabled={exporting}

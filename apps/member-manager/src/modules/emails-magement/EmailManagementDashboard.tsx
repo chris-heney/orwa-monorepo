@@ -52,7 +52,10 @@ const EmailManagementDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: "#eee",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? theme.palette.grey[900]
+                        : theme.palette.grey[100],
                     maxWidth: isSmall ? 320 : undefined,
                     overflow: "clip",
                   }}
@@ -90,7 +93,7 @@ const EmailManagementDashboard = () => {
             <Box sx={{ overflow: "hidden", flexGrow: 1 }}>
               <Box sx={{ overflow: "scroll" }}>
                 <TabContext value={selectedTab}>
-                  <Box sx={{ backgroundColor: "#fff" }}>
+                  <Box sx={{ backgroundColor: "background.paper" }}>
                     <TabPanel value="email-templates" {...a11yTabPanelProps(1)}>
                       <EmailInterface />
                     </TabPanel>

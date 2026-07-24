@@ -30,31 +30,36 @@ const WaterSystemsCard = () => {
     ],
   }
 
+  // Axis/legend colors must stay light — the card itself is a saturated blue
+  // surface in both themes, so black chart chrome washes out.
+  const chartChrome = 'rgba(255, 255, 255, 0.85)'
+  const chartGrid = 'rgba(255, 255, 255, 0.25)'
+
   const chartOptions: ChartOptions<'bar'> = {
     scales: {
       x: {
         ticks: {
-          color: '#000000', // Set x-axis tick color to black
+          color: chartChrome,
         },
         grid: {
-          color: '#000000', // Set x-axis grid lines color to black
+          color: chartGrid,
         },
       },
       y: {
         beginAtZero: true,
         max: watersystems?.length || 0,
         ticks: {
-          color: '#000000', // Set y-axis tick color to black
+          color: chartChrome,
         },
         grid: {
-          color: '#000000', // Set y-axis grid lines color to black
+          color: chartGrid,
         },
       },
     },
     plugins: {
       legend: {
         labels: {
-          color: '#000000', // Set legend label color to black
+          color: chartChrome,
         },
       },
     },
@@ -98,7 +103,10 @@ const WaterSystemsCard = () => {
           position: 'absolute',
           top: -5,
           right: -6,
-          backgroundColor: '#fff',
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark'
+              ? theme.palette.background.paper
+              : '#fff',
           padding: '8px',
           borderRadius: '50%',
           color: '#2b8de2',

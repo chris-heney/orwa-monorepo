@@ -1,16 +1,16 @@
 import React, { useState } from "react";
 import { useAuthProvider, useNotify } from "react-admin";
 import Button from "@mui/material/Button";
-import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { Link, CircularProgress } from "@mui/material";
 import Logo from "./components/logo";
+import AuthPageShell from "./components/AuthPageShell";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false); // Track loading state
+  const [loading, setLoading] = useState(false);
   const authProvider = useAuthProvider();
   const notify = useNotify();
 
@@ -22,7 +22,7 @@ const ForgotPasswordPage = () => {
       return;
     }
 
-    setLoading(true); // Start loading
+    setLoading(true);
 
     try {
       await authProvider.sendResetPasswordEmail(email);
@@ -30,32 +30,31 @@ const ForgotPasswordPage = () => {
     } catch (error) {
       notify("Error sending reset password link. Please try again.", { type: "error" });
     } finally {
-      setLoading(false); // Stop loading after submission
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <CssBaseline />
+    <AuthPageShell>
       <Box
         sx={{
-          marginTop: 8,
+          width: "100%",
+          maxWidth: 420,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "15px",
         }}
       >
         <Logo />
 
-        <Typography component="h1" variant="h6">
+        <Typography component="h1" variant="h6" sx={{ mt: 1 }}>
           ORWA Admin v2
         </Typography>
-        <Typography component="h1" variant="h6">
+        <Typography component="h2" variant="h6">
           Reset Password
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: "100%" }}>
           <TextField
             margin="normal"
             required
@@ -68,16 +67,16 @@ const ForgotPasswordPage = () => {
             autoFocus
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={loading} // Disable input while loading
+            disabled={loading}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading} // Disable button while loading
+            disabled={loading}
           >
-            {loading ? <CircularProgress size={24} /> : "Send Reset Password Link"}
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Send Reset Password Link"}
           </Button>
           <Link
             href="#/login"
@@ -89,7 +88,7 @@ const ForgotPasswordPage = () => {
           </Link>
         </Box>
       </Box>
-    </>
+    </AuthPageShell>
   );
 };
 

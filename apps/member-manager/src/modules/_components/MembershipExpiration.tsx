@@ -2,6 +2,7 @@ import React from 'react'
 import getExpirationDate from '../_helpers/getExpirationDate'
 import { Typography } from '@mui/material'
 import getExpiryBackground from '../_helpers/getExpiryBackground'
+import coloredSurfaceSx from '../_helpers/coloredSurfaceSx'
 
 
 interface MembershipExpirationProps {
@@ -22,16 +23,14 @@ const MembershipExpiration = ({
   
   return (
     <Typography variant='h6'
-      sx={{ 
-        backgroundColor, 
-        color: '#555', 
-        padding: '5px 15px', 
-        fontWeight: 900, 
-        letterSpacing: 1, 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        fontSize: fontSize ? fontSize : undefined
-      }}>
+      sx={coloredSurfaceSx(backgroundColor, {
+        padding: '5px 15px',
+        fontWeight: 900,
+        letterSpacing: 1,
+        display: 'flex',
+        justifyContent: 'space-between',
+        fontSize: fontSize ? fontSize : undefined,
+      })}>
       <span>Expiration: </span>
       <span>{ (lastPayment || previousPayment) ? (
         expirationDate.format(format).replace('Invalid Date', 'N/A')

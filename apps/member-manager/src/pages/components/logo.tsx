@@ -1,18 +1,23 @@
 import React from 'react'
+import { Theme, useMediaQuery, useTheme } from '@mui/material'
 import LogoSrc from '../../assets/logo.png'
-import { Theme, useMediaQuery } from '@mui/material'
+import LogoWhiteSrc from '../../assets/logo-white.webp'
 
 const Logo = () => {
-  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'))
+  const theme = useTheme()
+  const isSmall = useMediaQuery((t: Theme) => t.breakpoints.down('sm'))
+  const isDark = theme.palette.mode === 'dark'
 
-  const logo: Record<string,string> = {
-    src: LogoSrc,
-    width: isSmall ? '96' : '196',
-    height: isSmall ? '96' : '196',
-  }
+  const width = isSmall ? 96 : 196
 
-  return <img src={logo.src} alt="logo" width={logo.width} />
+  return (
+    <img
+      src={isDark ? LogoWhiteSrc : LogoSrc}
+      alt="ORWA logo"
+      width={width}
+      style={{ maxWidth: '100%', height: 'auto' }}
+    />
+  )
 }
-
 
 export default Logo

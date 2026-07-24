@@ -191,10 +191,16 @@ const ConferenceTabs = () => {
   return (
     <Box sx={{ p: 0 }}>
       <TabContext value={selectedTab.toString()}>
-        <Box sx={{ justifyContent: "center", backgroundColor: "#eee" }}>
+        <Box sx={{ justifyContent: "center" }}>
           {/* need to fix max width for mobile and smallwer screen tab list isnt responsive  */}
           <TabList
             variant="scrollable"
+            sx={{
+              backgroundColor: (theme) =>
+                theme.palette.mode === "dark"
+                  ? theme.palette.grey[900]
+                  : theme.palette.grey[100],
+            }}
             onChange={(event: React.SyntheticEvent, tv) => {
               setSelectedTab(tv);
               setResource(tabs.find((tab) => tab.value === tv)?.resource || "");
@@ -225,7 +231,9 @@ const ConferenceTabs = () => {
               .map((tab, i) => (
                 <Tab
                   sx={{
-                    borderRight: tab.divider ? "2px solid #ccc;" : undefined,
+                    borderRight: tab.divider
+                      ? (theme) => `2px solid ${theme.palette.divider}`
+                      : undefined,
                   }}
                   key={`tab-${i}`}
                   label={tab.label}
@@ -240,7 +248,7 @@ const ConferenceTabs = () => {
         <Paper
           sx={{
             mb: 2,
-            backgroundColor: "#fff",
+            backgroundColor: "background.paper",
             maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
             overflow: "scroll",
           }}

@@ -10,7 +10,7 @@ const ConferenceCreate = () => {
         warnWhenUnsavedChanges
         sanitizeEmptyValues
         shouldUnregister
-        sx={{ backgroundColor: "#fafafb", m: 0, p: 0 }}
+        sx={{ backgroundColor: "background.default", m: 0, p: 0 }}
       >
         {" "}
         <CustomHeader title="Create Conference" />

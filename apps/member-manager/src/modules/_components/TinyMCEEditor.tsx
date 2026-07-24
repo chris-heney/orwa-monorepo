@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Editor } from '@tinymce/tinymce-react';
-import { Box, Paper, Tooltip, IconButton, CircularProgress } from '@mui/material';
+import { Box, Paper, Tooltip, IconButton, CircularProgress, useTheme } from '@mui/material';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import { useInput } from 'react-admin';
 import { getFullUrl } from '../_helpers/imageUtils';
@@ -35,6 +35,8 @@ const TinyMCEEditor = (props: TinyMCEEditorProps) => {
     
   } = props;
   
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const editorRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mediaLibraryOpen, setMediaLibraryOpen] = useState(false);
@@ -138,6 +140,7 @@ const TinyMCEEditor = (props: TinyMCEEditorProps) => {
       
       {/* @ts-ignore - Ignoring TypeScript errors for TinyMCE Editor component */}
       <Editor
+        key={isDark ? 'tinymce-dark' : 'tinymce-light'}
         apiKey={"7mhg9z9cvwrxmvhvaqztnn98jcbpqjf3lzlnngvsotvlgnyi"}
         onInit={handleEditorInit}
         value={field.value}
@@ -145,6 +148,12 @@ const TinyMCEEditor = (props: TinyMCEEditorProps) => {
         init={{
           height,
           menubar: true,
+          // Toolbar/menubar follow app theme; canvas stays light (emails are light)
+          skin: isDark ? 'oxide-dark' : 'oxide',
+          content_css: [
+            '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
+            '//www.tiny.cloud/css/codepen.min.css',
+          ],
           plugins: [
             'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
@@ -155,7 +164,8 @@ const TinyMCEEditor = (props: TinyMCEEditorProps) => {
             'bold italic forecolor | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'removeformat | image media_library link | table emoticons | code fullscreen',
-          content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
+          content_style:
+            'body { font-family:Helvetica,Arial,sans-serif; font-size:14px; background:#ffffff; color:#222222; }',
           placeholder: placeholder,
           images_upload_handler: createImageUploadHandler(),
           setup: (editor: any) => {
@@ -202,10 +212,6 @@ const TinyMCEEditor = (props: TinyMCEEditorProps) => {
               `
             }
           ],
-          content_css: [
-            '//fonts.googleapis.com/css?family=Lato:300,300i,400,400i',
-            '//www.tiny.cloud/css/codepen.min.css'
-          ]
         }}
       />
       

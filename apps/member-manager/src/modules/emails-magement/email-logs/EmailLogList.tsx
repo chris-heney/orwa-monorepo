@@ -4,6 +4,7 @@ import {
     DialogContent,
     DialogTitle,
   } from "@mui/material";
+  import { useTheme } from "@mui/material/styles";
   import React, { useState } from "react";
   import {
     List,
@@ -14,11 +15,13 @@ import {
     ReferenceField,
   } from "react-admin";
 import { useEmailManagementContext } from "../EmailManagementContextProvider";
+import { emailDatagridStyle } from "../emailDatagridStyle";
   
   const EmailLogsList = ({template}: {template?: number}) => {
 
     const { emailLogFilters } = useEmailManagementContext();
     const [selectedEmail, setSelectedEmail] = useState<string | null>(null);
+    const theme = useTheme();
   
     return (
       <Box>
@@ -29,9 +32,17 @@ import { useEmailManagementContext } from "../EmailManagementContextProvider";
           isRowExpandable={() => true}
           isRowSelectable={() => false}
           rowClick="expand"
+          sx={emailDatagridStyle(theme)}
           expand={(record: RaRecord) => {
             return (
-              <div
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: "#ffffff",
+                  color: "#222222",
+                  borderRadius: 1,
+                  overflow: "auto",
+                }}
                 dangerouslySetInnerHTML={{ __html: record.record.html || "" }}
               />
             );
@@ -62,7 +73,10 @@ import { useEmailManagementContext } from "../EmailManagementContextProvider";
         <Dialog open={!!selectedEmail} onClose={() => setSelectedEmail(null)}>
           <DialogTitle>Email Content</DialogTitle>
           <DialogContent>
-            <div dangerouslySetInnerHTML={{ __html: selectedEmail || "" }} />
+            <Box
+              sx={{ bgcolor: "#ffffff", color: "#222222", p: 1, borderRadius: 1 }}
+              dangerouslySetInnerHTML={{ __html: selectedEmail || "" }}
+            />
           </DialogContent>
         </Dialog>
       </Box>

@@ -157,21 +157,29 @@ const StaffAssignList = () => {
             <>
               {!staff.assigned_assets.indexOf(record.id) ? (
                 <Button
-                  variant="contained"
+                  variant="outlined"
                   color="primary"
+                  size="small"
                   onClick={() => handleCheckIn()}
+                  sx={{ fontSize: 12, color: 'primary.main', borderColor: 'primary.main' }}
                 >
-                  <Typography fontSize={12}>Un Assign Staff</Typography>
+                  Un Assign Staff
                 </Button>
               ) : staff.assigned_asset ? (
                 <Button
                   variant="contained"
-                  style={{ backgroundColor: '#F6EC57' }}
+                  color="warning"
                   size="small"
                   onClick={() => assignStaff(staff)}
+                  startIcon={<LibraryAddIcon />}
+                  sx={{
+                    fontSize: 12,
+                    bgcolor: 'warning.main',
+                    color: 'warning.contrastText',
+                    '&:hover': { bgcolor: 'warning.dark' },
+                  }}
                 >
-                  <LibraryAddIcon sx={{ mr: 1 }} />
-                  <Typography fontSize={12}>Transfer Staff</Typography>
+                  Transfer Staff
                 </Button>
               ) : (
                 <Button
@@ -179,9 +187,10 @@ const StaffAssignList = () => {
                   color="success"
                   size="small"
                   onClick={() => assignStaff(staff)}
+                  startIcon={<LibraryAddIcon />}
+                  sx={{ fontSize: 12, color: 'success.contrastText' }}
                 >
-                  <LibraryAddIcon sx={{ mr: 1 }} />
-                  <Typography fontSize={12}>Assign Staff</Typography>
+                  Assign Staff
                 </Button>
               )}
             </>

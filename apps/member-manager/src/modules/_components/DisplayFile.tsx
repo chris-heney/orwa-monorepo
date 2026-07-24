@@ -118,10 +118,22 @@ const DisplayFile = ({
         display: "flex",
         flexDirection: "column",
         marginBottom: compact ? "8px" : "10px",
-        border: compact ? "1px solid #e0e0e0" : "none",
+        border: (theme) =>
+          compact
+            ? `1px solid ${
+                theme.palette.mode === "dark"
+                  ? theme.palette.divider
+                  : "#e0e0e0"
+              }`
+            : "none",
         borderRadius: compact ? "8px" : "0",
         padding: compact ? "8px" : "0",
-        backgroundColor: compact ? "#fafafa" : "transparent",
+        backgroundColor: (theme) =>
+          compact
+            ? theme.palette.mode === "dark"
+              ? theme.palette.action.hover
+              : "#fafafa"
+            : "transparent",
       }}
     >
       {/* File Display */}
@@ -146,7 +158,10 @@ const DisplayFile = ({
             justifyContent: "center",
             width: "100%",
             height: compact ? "80px" : "auto",
-            backgroundColor: "#f5f5f5",
+            backgroundColor: (theme) =>
+              theme.palette.mode === "dark"
+                ? theme.palette.action.hover
+                : "#f5f5f5",
             borderRadius: "4px",
             marginBottom: compact ? "4px" : "10px",
             padding: compact ? "8px" : "16px",
@@ -158,7 +173,7 @@ const DisplayFile = ({
             rel="noopener noreferrer"
             style={{
               textAlign: "center",
-              color: "blue",
+              color: "inherit",
               textDecoration: "underline",
               fontSize: compact ? "12px" : "14px",
               wordBreak: "break-word",

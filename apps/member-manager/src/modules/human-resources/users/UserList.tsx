@@ -147,16 +147,18 @@ const UserList: React.FC = () => {
           ...customDatagridStyle,
           borderCollapse: "collapse",
           width: "100%",
-          boxShadow: "0 1px 5px 0 rgba(0,0,0,0.2)",
+          boxShadow: 1,
           borderRadius: "4px",
           overflow: "hidden",
           "tr th": {
             py: 1,
-            border: "1px solid #ccc",
+            border: "1px solid",
+            borderColor: "divider",
           },
           "tr td": {
             py: 0,
-            border: "1px solid #ccc",
+            border: "1px solid",
+            borderColor: "divider",
           }
         }}
       >
@@ -164,7 +166,7 @@ const UserList: React.FC = () => {
           sx={{
             fontWeight: "bold",
             fontSize: "1.1em",
-            boxShadow: "0 1px 5px 0 rgba(0,0,0,0.2)",
+            boxShadow: 1,
           }}
         >
           <TableRow>
@@ -238,7 +240,14 @@ const UserList: React.FC = () => {
         </TableHead>
         <TableBody>
           {users.map((user: IUser, i) => (
-            <TableRow key={user.id} sx={{ borderBottom: "1px solid #ccc", bgcolor: i % 2 === 0 ? "#eeeeee": null }}>
+            <TableRow
+              key={user.id}
+              sx={{
+                borderBottom: "1px solid",
+                borderColor: "divider",
+                bgcolor: i % 2 === 0 ? "action.hover" : "transparent",
+              }}
+            >
               <TableCell align="left">{user.id}</TableCell>
               <TableCell align="left">{user.username || "N/A"}</TableCell>
               <TableCell align="left">

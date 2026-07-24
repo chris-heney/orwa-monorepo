@@ -15,6 +15,13 @@ export default function NextConference({selectedDate}: DateCalendarViewsProps) {
         views={['day']}
         value={selectedDate}
         onChange={(date) => console.log('Selected Date:', date)}
+        sx={{
+          color: 'text.primary',
+          '& .MuiPickersCalendarHeader-label': { color: 'text.primary' },
+          '& .MuiDayCalendar-weekDayLabel': { color: 'text.secondary' },
+          '& .MuiPickersDay-root': { color: 'text.primary' },
+          '& .MuiPickersArrowSwitcher-button': { color: 'text.primary' },
+        }}
       />
     </LocalizationProvider>
   )

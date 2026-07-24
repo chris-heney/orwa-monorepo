@@ -1,33 +1,31 @@
 import React, { useState, useEffect } from "react";
 import { useAuthProvider, useNotify } from "react-admin";
 import Button from "@mui/material/Button";
-import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import { Link, CircularProgress } from "@mui/material";
 import Logo from "./components/logo";
+import AuthPageShell from "./components/AuthPageShell";
 
-const ForgotPasswordPage = () => {
+const ResetPasswordPage = () => {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [code, setCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false); // Track loading state
+  const [loading, setLoading] = useState(false);
   const authProvider = useAuthProvider();
   const notify = useNotify();
 
-  // Extract the code from the hash when the component mounts
   useEffect(() => {
     const hash = window.location.hash;
-    const params = new URLSearchParams(hash.split("?")[1]); // Get the part after '?'
-    const extractedCode = params.get("code"); // Extract 'code'
+    const params = new URLSearchParams(hash.split("?")[1]);
+    const extractedCode = params.get("code");
     setCode(extractedCode as string);
   }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // Validate password and confirmation
     if (!password || !passwordConfirmation) {
       notify("Please enter both password and password confirmation", {
         type: "error",
@@ -49,10 +47,10 @@ const ForgotPasswordPage = () => {
       return;
     }
 
-    setLoading(true); // Start loading
+    setLoading(true);
 
     try {
-    const response =  await authProvider.resetUserPassword(code, password, passwordConfirmation);
+      await authProvider.resetUserPassword(code, password, passwordConfirmation);
       notify("Your password has been reset successfully", {
         type: "success",
       });
@@ -61,32 +59,31 @@ const ForgotPasswordPage = () => {
         type: "error",
       });
     } finally {
-      setLoading(false); // Stop loading after submission
+      setLoading(false);
     }
   };
 
   return (
-    <>
-      <CssBaseline />
+    <AuthPageShell>
       <Box
         sx={{
-          marginTop: 8,
+          width: "100%",
+          maxWidth: 420,
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          padding: "15px",
         }}
       >
         <Logo />
 
-        <Typography component="h1" variant="h6">
+        <Typography component="h1" variant="h6" sx={{ mt: 1 }}>
           ORWA Admin v2
         </Typography>
-        <Typography component="h1" variant="h6">
+        <Typography component="h2" variant="h6">
           Reset Password
         </Typography>
 
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: "100%" }}>
           <TextField
             margin="normal"
             required
@@ -99,7 +96,7 @@ const ForgotPasswordPage = () => {
             variant="outlined"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={loading} // Disable input while loading
+            disabled={loading}
           />
           <TextField
             margin="normal"
@@ -113,16 +110,16 @@ const ForgotPasswordPage = () => {
             variant="outlined"
             value={passwordConfirmation}
             onChange={(e) => setPasswordConfirmation(e.target.value)}
-            disabled={loading} // Disable input while loading
+            disabled={loading}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading} // Disable button while loading
+            disabled={loading}
           >
-            {loading ? <CircularProgress size={24} /> : "Reset Password"}
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Reset Password"}
           </Button>
           <Link
             href="#/login"
@@ -134,8 +131,8 @@ const ForgotPasswordPage = () => {
           </Link>
         </Box>
       </Box>
-    </>
+    </AuthPageShell>
   );
 };
 
-export default ForgotPasswordPage;
+export default ResetPasswordPage;

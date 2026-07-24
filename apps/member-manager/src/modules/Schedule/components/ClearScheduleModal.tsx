@@ -11,7 +11,7 @@ const ClearScheduleModal: React.FC = () => {
     <Modal open={isClearModalOpen} onClose={() => setIsClearModalOpen(false)}>
       <Box
         sx={{
-          backgroundColor: "white",
+          backgroundColor: "background.paper",
           boxShadow: 24,
           display: "flex",
           flexDirection: "column",

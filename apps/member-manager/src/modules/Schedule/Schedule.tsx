@@ -9,7 +9,7 @@ import ScheduleModals from "../Schedule/ScheduleModals";
 const Schedule = () => {
   return (
     <ScheduleProvider>
-      <Box sx={{ p: 2, backgroundColor: "#ffffff", color: "#000000" }}>
+      <Box sx={{ p: 2, backgroundColor: "background.paper", color: "text.primary" }}>
         <ScheduleControls />
         <ScheduleList />
         <ScheduleModals />

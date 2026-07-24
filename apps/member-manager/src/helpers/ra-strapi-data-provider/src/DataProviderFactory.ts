@@ -442,6 +442,15 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
               `${prefix}[${key}][$between][0]=${encodeURIComponent(opValue[0])}`,
               `${prefix}[${key}][$between][1]=${encodeURIComponent(opValue[1])}`
             );
+          } else if (
+            !operator.startsWith("$") &&
+            typeof opValue === "object" &&
+            opValue !== null &&
+            !Array.isArray(opValue)
+          ) {
+            // Nested relational filter, e.g. { application: { committee_date: { $between: [...] } } }
+            // -> filters[application][committee_date][$between][...]
+            buildFilterQuery(operator, opValue, `${prefix}[${key}]`);
           } else {
             filters.push(`${prefix}[${key}][${operator}]=${encodeURIComponent(opValue as string)}`);
           }

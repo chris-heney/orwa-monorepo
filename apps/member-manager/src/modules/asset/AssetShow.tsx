@@ -27,6 +27,7 @@ const labelStyle = {
   fontWeight: 'bold',
   marginRight: '5px',
   whiteSpace: 'nowrap',
+  color: 'text.secondary',
 }
 
 interface ResponsiveListItemProps {
@@ -64,8 +65,8 @@ const AssetShow = () => {
         <Grid container spacing={1} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
           <Grid sx={{maxHeight:650}} item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
             <CustomSecondaryHeader title={record.name} />
-            <Card >
-              <List sx={{ pb: 0 }}>
+            <Card sx={{ bgcolor: 'background.paper', color: 'text.primary' }}>
+              <List sx={{ pb: 0, color: 'text.primary' }}>
                 <ResponsiveListItem label="Category:" value={record.category} divider={true} />
                 <ResponsiveListItem label="Make:" value={record.make} divider={true} />
                 <ResponsiveListItem label="Model:" value={record.model} divider={true} />
@@ -93,7 +94,14 @@ const AssetShow = () => {
                       link={(record: RaRecord) => `/assets/${record.id}/show`}
                       reference="Assets"
                     >
-                      <ChipField source="name" />
+                      <ChipField
+                        source="name"
+                        sx={{
+                          bgcolor: 'action.selected',
+                          color: 'text.primary',
+                          '& .MuiChip-label': { color: 'text.primary' },
+                        }}
+                      />
                     </ReferenceField>
                   </SingleFieldList>
                 </ReferenceArrayField>} divider={true} />

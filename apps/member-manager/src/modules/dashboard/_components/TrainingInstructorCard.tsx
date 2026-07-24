@@ -36,8 +36,9 @@ const InstructorsCard = () => {
         mb: 2,
         boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
         borderRadius: '15px',
-        backgroundColor: '#1a1a1a', // Dark background color
-        color: '#ffffff', // Text color
+        backgroundColor: (theme) =>
+          theme.palette.mode === 'dark' ? theme.palette.grey[900] : '#1a1a1a',
+        color: '#ffffff',
       }}
     >
       <Typography
@@ -47,7 +48,8 @@ const InstructorsCard = () => {
           position: 'absolute',
           top: -10,
           right: -3,
-          backgroundColor: '#333333', // Dark gray background color
+          backgroundColor: (theme) =>
+            theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#333333',
           padding: '10px',
           borderRadius: '50%',
           width: '50px',

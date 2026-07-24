@@ -31,10 +31,28 @@ const ActivityFeed = ({ entity = '', entity_id = 0, title = '', sx, admin = fals
 
   return (
     <>
-      <Card sx={{ ...sx, width: '100%', mb: 20 }}>
+      <Card
+        sx={{
+          ...sx,
+          width: '100%',
+          mb: 20,
+          bgcolor: 'background.paper',
+          color: 'text.primary',
+        }}
+      >
         <ActivityFeedHeader sx={headerSx} variant={variant} admin={admin} setDisplaySearch={setDisplaySearch} />
         <InfiniteList
-          sx={{ maxHeight: 500, overflowY: 'scroll', ...listSx }} 
+          sx={{
+            maxHeight: 500,
+            overflowY: 'scroll',
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+            '& .RaList-content': {
+              bgcolor: 'transparent',
+              boxShadow: 'none',
+            },
+            ...listSx,
+          }} 
           filter={
             entity_id > 0
               ? {

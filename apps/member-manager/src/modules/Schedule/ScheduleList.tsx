@@ -213,7 +213,7 @@ const ScheduleList: React.FC = () => {
           fontWeight: 700,
           mb: printView ? 0.5 : 1,
           fontSize: printView ? "1rem" : "1.5rem",
-          color: printView ? "#000" : "#262626",
+          color: printView ? "#000" : "text.primary",
         }}
       >
         ORWA {conferences.find((conference) => conference.id === filterValues?.conference)?.name} - {filterValues?.year} Schedule
@@ -245,7 +245,7 @@ const ScheduleList: React.FC = () => {
                 borderCollapse: "collapse",
                 width: "100%",
                 "& tbody tr:hover": {
-                  backgroundColor: "rgba(0, 0, 0, 0.04)",
+                  backgroundColor: "action.selected",
                 },
               }}
             >

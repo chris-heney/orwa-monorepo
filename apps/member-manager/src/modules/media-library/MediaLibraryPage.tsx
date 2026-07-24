@@ -529,6 +529,7 @@ const MediaLibraryPage: React.FC = () => {
           gap: 1.5,
           border: 1,
           borderColor: "divider",
+          bgcolor: "background.paper",
         }}
         onDragOver={(e) => {
           e.preventDefault();
@@ -737,7 +738,16 @@ const MediaLibraryPage: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : pageFiles.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: "center" }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            textAlign: "center",
+            bgcolor: "background.paper",
+            border: 1,
+            borderColor: "divider",
+          }}
+        >
           <Typography color="text.secondary">
             {allFiles.length === 0
               ? "No files yet. Upload or drop files above."
@@ -763,11 +773,23 @@ const MediaLibraryPage: React.FC = () => {
           {pageFiles.map((file) => {
             const fullUrl = getPublicFileUrl(file.url);
             return (
-              <Card key={file.id} variant="outlined" sx={{ overflow: "hidden" }}>
+              <Card
+                key={file.id}
+                variant="outlined"
+                sx={{
+                  overflow: "hidden",
+                  bgcolor: "background.paper",
+                  borderColor: "divider",
+                  "&:hover": { borderColor: "action.disabled" },
+                }}
+              >
                 <Box
                   sx={{
                     height: 140,
-                    bgcolor: "action.hover",
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? "grey.900"
+                        : "action.hover",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -799,7 +821,12 @@ const MediaLibraryPage: React.FC = () => {
                   >
                     {file.name}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" display="block" noWrap>
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    noWrap
+                    sx={{ color: "text.secondary", opacity: 0.95 }}
+                  >
                     {file.mime || "—"} · {formatWhen(file.createdAt)}
                   </Typography>
                   <Stack
@@ -834,95 +861,128 @@ const MediaLibraryPage: React.FC = () => {
           })}
         </Box>
       ) : (
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell width={72} component="th" scope="col">
-                Preview
-              </TableCell>
-              <SortableHeaderCell
-                field="name"
-                label="Name"
-                tooltip="Sort by file name (A–Z / Z–A)"
-              />
-              <SortableHeaderCell
-                field="mime"
-                label="Type"
-                tooltip="Sort by MIME type"
-              />
-              <SortableHeaderCell
-                field="createdAt"
-                label="Uploaded"
-                tooltip="Sort by upload date (newest or oldest first)"
-              />
-              <TableCell align="right" component="th" scope="col">
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pageFiles.map((file) => {
-              const fullUrl = getPublicFileUrl(file.url);
-              return (
-                <TableRow key={file.id} hover>
-                  <TableCell>
-                    {isImage(file.mime) ? (
+        <Paper
+          elevation={0}
+          sx={{
+            overflow: "auto",
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "background.paper",
+          }}
+        >
+          <Table size="small">
+            <TableHead>
+              <TableRow
+                sx={{
+                  "& th": {
+                    bgcolor: (theme) =>
+                      theme.palette.mode === "dark" ? "grey.900" : "grey.100",
+                    color: "text.primary",
+                    borderBottomColor: "divider",
+                  },
+                }}
+              >
+                <TableCell width={72} component="th" scope="col">
+                  Preview
+                </TableCell>
+                <SortableHeaderCell
+                  field="name"
+                  label="Name"
+                  tooltip="Sort by file name (A–Z / Z–A)"
+                />
+                <SortableHeaderCell
+                  field="mime"
+                  label="Type"
+                  tooltip="Sort by MIME type"
+                />
+                <SortableHeaderCell
+                  field="createdAt"
+                  label="Uploaded"
+                  tooltip="Sort by upload date (newest or oldest first)"
+                />
+                <TableCell align="right" component="th" scope="col">
+                  Actions
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {pageFiles.map((file) => {
+                const fullUrl = getPublicFileUrl(file.url);
+                return (
+                  <TableRow
+                    key={file.id}
+                    hover
+                    sx={{
+                      "& td": { borderBottomColor: "divider", color: "text.primary" },
+                    }}
+                  >
+                    <TableCell>
+                      {isImage(file.mime) ? (
+                        <Box
+                          component="img"
+                          src={fullUrl}
+                          alt=""
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            objectFit: "cover",
+                            borderRadius: 1,
+                            bgcolor: "action.hover",
+                          }}
+                        />
+                      ) : (
+                        <InsertDriveFileIcon color="action" />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={500} noWrap sx={{ maxWidth: 280 }}>
+                        {file.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" noWrap display="block">
+                        {fullUrl}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{file.mime || "—"}</TableCell>
+                    <TableCell>{formatWhen(file.createdAt)}</TableCell>
+                    <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                       <Box
-                        component="img"
-                        src={fullUrl}
-                        alt=""
-                        sx={{ width: 48, height: 48, objectFit: "cover", borderRadius: 1 }}
-                      />
-                    ) : (
-                      <InsertDriveFileIcon color="action" />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500} noWrap sx={{ maxWidth: 280 }}>
-                      {file.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" noWrap display="block">
-                      {fullUrl}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>{file.mime || "—"}</TableCell>
-                  <TableCell>{formatWhen(file.createdAt)}</TableCell>
-                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
-                    <Box
-                      component="span"
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                        gap: 0.25,
-                        verticalAlign: "middle",
-                      }}
-                    >
-                      <Tooltip title="Copy public URL">
-                        <IconButton
-                          size="small"
-                          onClick={() => copyUrl(file)}
-                          aria-label={`Copy URL for ${file.name}`}
-                        >
-                          <ContentCopyIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Download file">
-                        <IconButton
-                          size="small"
-                          onClick={() => downloadFile(file)}
-                          aria-label={`Download ${file.name}`}
-                        >
-                          <DownloadIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                        component="span"
+                        sx={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "flex-end",
+                          gap: 0.25,
+                          verticalAlign: "middle",
+                        }}
+                      >
+                        <Tooltip title="Copy public URL">
+                          <IconButton
+                            size="small"
+                            onClick={() => copyUrl(file)}
+                            aria-label={`Copy URL for ${file.name}`}
+                            sx={{ color: "text.secondary" }}
+                          >
+                            <ContentCopyIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Download file">
+                          <IconButton
+                            size="small"
+                            onClick={() => downloadFile(file)}
+                            aria-label={`Download ${file.name}`}
+                            sx={{ color: "text.secondary" }}
+                          >
+                            <DownloadIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Paper>
       )}
 
       {!loading && total > 0 && pageCount > 1 && (

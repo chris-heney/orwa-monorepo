@@ -36,7 +36,8 @@ const RecipientDetails = ({
       square
       sx={{
         boxShadow: "none",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.12)",
+        borderBottom: 1,
+        borderColor: "divider",
       }}
     >
       <AccordionSummary

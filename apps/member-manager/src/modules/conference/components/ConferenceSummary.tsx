@@ -117,14 +117,14 @@ const ConferenceSummary = () => {
                   key={index}
                   label={ucwords(metric.type)}
                   value={`${metric.count}`}
-                  sx={{ borderBottom: "1px solid #eee" }}
+                  sx={{ borderBottom: "1px solid", borderColor: "divider" }}
                 />
               ))}
             <ResponsiveListItem
               key="last"
               label="Total"
               value={`${totalHeadCount}`}
-              sx={{ borderBottom: "1px solid #eee" }}
+              sx={{ borderBottom: "1px solid", borderColor: "divider" }}
             />
 
             {conferenceSummary.headCountAttendees.filter((headCount: any) => {
@@ -146,7 +146,7 @@ const ConferenceSummary = () => {
                   key={index}
                   label={ucwords(metric.type)}
                   value={`${metric.count}`}
-                  sx={{ borderBottom: "1px solid #eee" }}
+                  sx={{ borderBottom: "1px solid", borderColor: "divider" }}
                 />
               ))}
             {conferenceSummary.headCountContestants.length > 0 && (
@@ -162,7 +162,7 @@ const ConferenceSummary = () => {
                 key={index}
                 label={ucwords(metric.type)}
                 value={`${metric.count}`}
-                sx={{ borderBottom: "1px solid #eee" }}
+                sx={{ borderBottom: "1px solid", borderColor: "divider" }}
               />
             ))}
           </Grid>

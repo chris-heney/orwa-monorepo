@@ -1,7 +1,7 @@
 import { Box, Button, FormControlLabel, FormLabel, Radio, RadioGroup, Theme, useMediaQuery } from '@mui/material'
 import React from 'react'
 import { useGetList } from 'react-admin'
-import { useSoonerwarnContext } from '../SoonerwarnContextProvider'
+import coloredSurfaceSx from '../../_helpers/coloredSurfaceSx'
 
 const SoonerwarnStatusFilter = ({
   resource,
@@ -46,7 +46,11 @@ const SoonerwarnStatusFilter = ({
         {legendData?.map((legend, i) => (
           <FormControlLabel
             key={`status-${i}`}
-            sx={{ whiteSpace: isSmall ? 'normal' : 'nowrap', backgroundColor: legend.color }}
+            sx={coloredSurfaceSx(legend.color || '#cccccc', {
+              whiteSpace: isSmall ? 'normal' : 'nowrap',
+              px: 0.5,
+              borderRadius: 0.5,
+            })}
             value={legend.id}
             control={<Radio onClick={() => handleStatusChange(legend.id.toString())} />}
             label={legend.name}

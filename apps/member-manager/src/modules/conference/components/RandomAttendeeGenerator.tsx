@@ -100,7 +100,7 @@ const RandomAttendeeGenerator = () => {
   };
 
   return (
-    <Box sx={{ p: 2, border: "1px solid #ccc" }}>
+    <Box sx={{ p: 2, border: "1px solid", borderColor: "divider" }}>
       <Typography variant="h6" gutterBottom>
         Random Attendee Generator
       </Typography>
@@ -137,7 +137,7 @@ const RandomAttendeeGenerator = () => {
         Generate Random Attendee
       </Button>
       {randomAttendee && (
-        <Box mt={2} sx={{ p: 1, background: "#f5f5f5", borderRadius: 1 }}>
+        <Box mt={2} sx={{ p: 1, bgcolor: "action.hover", borderRadius: 1 }}>
           <Typography variant="subtitle1">Selected Attendee:</Typography>
           <Typography>
             Name: {randomAttendee.first} {randomAttendee.last}
