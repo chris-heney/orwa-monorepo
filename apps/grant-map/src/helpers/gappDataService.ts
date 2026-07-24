@@ -14,10 +14,31 @@ import { useGetGrantApplications } from "./APIService";
  */
 let allApplicationsPromise: Promise<IGrantApplication[]> | null = null;
 
+// Download-progress fan-out: the bulk fetch may be started by whichever
+// consumer mounts first, so listeners subscribe independently of the caller.
+let progressListeners: Array<(fraction: number) => void> = [];
+let lastProgress = 0;
+
+const emitProgress = (fraction: number) => {
+  lastProgress = fraction;
+  for (const listener of progressListeners) listener(fraction);
+};
+
+/** Subscribe to bulk-download progress (0..1). Returns an unsubscribe fn. */
+export const subscribeLoadProgress = (
+  listener: (fraction: number) => void
+): (() => void) => {
+  progressListeners.push(listener);
+  listener(lastProgress);
+  return () => {
+    progressListeners = progressListeners.filter((l) => l !== listener);
+  };
+};
+
 export const fetchAllGrantApplications = (): Promise<IGrantApplication[]> => {
   if (!allApplicationsPromise) {
     const getGrantApplications = useGetGrantApplications();
-    allApplicationsPromise = getGrantApplications([])
+    allApplicationsPromise = getGrantApplications([], undefined, emitProgress)
       .then((data) => {
         // An empty result usually means "not logged in yet" — don't cache it,
         // so the fetch retries after authentication.

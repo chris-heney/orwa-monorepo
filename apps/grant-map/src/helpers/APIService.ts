@@ -8,6 +8,18 @@ import { polygon } from "@turf/helpers";
 
 const STRAPI_API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 
+// A 401 with a stored JWT means the session is stale/expired. Clear it and
+// reload so the login modal returns, instead of a dead map full of failed
+// requests. (After the reload no JWT exists, so this cannot loop.)
+axios.interceptors.response.use(undefined, (error) => {
+  if (error?.response?.status === 401 && localStorage.getItem("jwt")) {
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("user");
+    window.location.reload();
+  }
+  return Promise.reject(error);
+});
+
 const login = async (identifier: string, password: string) => {
   return await (
     await fetch(`${STRAPI_API_ENDPOINT}/auth/local`, {
@@ -55,11 +67,16 @@ export const useUpdateGrantApplication =
   };
 
 //if
+/** Typical bulk payload size, used for progress when the response is
+ * chunked/gzipped and carries no content-length. */
+const EXPECTED_BULK_BYTES = 1_500_000;
+
 export const useGetGrantApplications =
   () =>
   async (
     filters: Filter[],
-    perPage?: number[]
+    perPage?: number[],
+    onProgress?: (fraction: number) => void
   ): Promise<IGrantApplication[]> => {
     const jwt = localStorage.getItem("jwt");
     if (!jwt) return [];
@@ -128,6 +145,10 @@ export const useGetGrantApplications =
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${jwt}`,
+        },
+        onDownloadProgress: (event) => {
+          const total = event.total ?? EXPECTED_BULK_BYTES;
+          onProgress?.(Math.min(1, event.loaded / total));
         },
       }
     );

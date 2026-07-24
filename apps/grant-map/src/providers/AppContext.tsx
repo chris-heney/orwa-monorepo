@@ -12,6 +12,7 @@ import { useGetGrants } from "../helpers/APIService";
 import {
   fetchAllGrantApplications,
   filterApplications,
+  subscribeLoadProgress,
 } from "../helpers/gappDataService";
 import { Filter } from "../types/Filter";
 import IGrant from "../types/IGrant";
@@ -60,6 +61,10 @@ interface AppContext {
   setActiveLayer: React.Dispatch<React.SetStateAction<MapLayer | null>>;
   selectedRegions: string[];
   setSelectedRegions: React.Dispatch<React.SetStateAction<string[]>>;
+  /** Initial bulk-download progress, 0-100. */
+  loadProgress: number;
+  /** True once the session dataset (applications + grant) has settled. */
+  dataLoaded: boolean;
 }
 
 const initialUiState: UIState = {
@@ -108,6 +113,8 @@ const initialContext: AppContext = {
   setActiveLayer: () => {},
   selectedRegions: [],
   setSelectedRegions: () => {},
+  loadProgress: 0,
+  dataLoaded: false,
 };
 
 const AppContext = createContext(initialContext);
@@ -158,6 +165,8 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [activeLayer, setActiveLayer] = useState<MapLayer | null>(null);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [loadProgress, setLoadProgress] = useState(0);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
   const getGrants = useGetGrants();
 
@@ -166,8 +175,27 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
   // the FY rollover chain needs every fiscal year), and the toolbar counts
   // (via gappDataService). Filter changes no longer refetch from Strapi.
   useEffect(() => {
-    fetchAllGrantApplications().then(setAllApplications);
-    getGrants().then(setGrant);
+    if (!localStorage.getItem("jwt")) {
+      // Not authenticated: nothing to download, the login modal owns the screen.
+      setLoadProgress(100);
+      setDataLoaded(true);
+      return;
+    }
+    // Download progress drives the loading overlay (capped below 100 until
+    // the payload has also been parsed and applied).
+    const unsubscribe = subscribeLoadProgress((fraction) =>
+      setLoadProgress((prev) => Math.max(prev, Math.round(fraction * 95)))
+    );
+    Promise.all([
+      fetchAllGrantApplications().then(setAllApplications),
+      getGrants().then(setGrant),
+    ])
+      .catch((error) => console.error("Initial data load failed:", error))
+      .finally(() => {
+        setLoadProgress(100);
+        setDataLoaded(true);
+      });
+    return unsubscribe;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -274,6 +302,8 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
         setActiveLayer,
         selectedRegions,
         setSelectedRegions,
+        loadProgress,
+        dataLoaded,
       }}
     >
       {children}

@@ -3,6 +3,7 @@ import { ThemeProvider } from "@mui/material/styles"
 import CssBaseline from "@mui/material/CssBaseline"
 import AppContext from "./providers/AppContext"
 import LoginModal from "./components/LoginModal"
+import DataLoadingOverlay from "./components/DataLoadingOverlay"
 import DefaultLayout from "./layouts/DefaultLayout"
 import MapContextProvider from "./providers/MapContext"
 import { muiTheme } from "./theme/muiTheme"
@@ -14,6 +15,7 @@ const App = () => {
       <CssBaseline />
       <AppContext>
         <LoginModal />
+        <DataLoadingOverlay />
         <MapContextProvider>
           <DefaultLayout />
         </MapContextProvider>
