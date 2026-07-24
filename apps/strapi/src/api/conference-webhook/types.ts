@@ -85,7 +85,7 @@ export interface ITicketPayload {
   phone: string;
   license?: string;
   training_type?: "None" | "Both" | "Operator" | "Board";
-  type: "Attendee" | "Vendor" | "Guest";
+  type: "Attendee" | "Vendor" | "Guest" | "Contestant";
   price: number;
   extras: number[];
   ticket_type: ITicketOption;

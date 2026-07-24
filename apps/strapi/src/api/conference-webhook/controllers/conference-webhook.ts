@@ -12,6 +12,21 @@ import { coerceToSchema } from "../../../utils/coerce-to-schema";
 /**
  * Conference webhook controller
  */
+// Mirrors the frontend's ticketMatchesContext fallback: legacy Fall tickets
+// have no `context`, so match by name too or they get stored as attendees.
+const CONTESTANT_NAME_FALLBACKS = ["Golfer", "Fisher", "Contestant"];
+
+const isContestantTicket = (ticket: ITicketPayload): boolean => {
+  if (ticket?.ticket_type?.context === "Contestant") return true;
+  if (ticket?.ticket_type?.context) return false;
+  return CONTESTANT_NAME_FALLBACKS.some(
+    (name) =>
+      ticket?.ticket_type?.name?.localeCompare(name, undefined, {
+        sensitivity: "accent",
+      }) === 0
+  );
+};
+
 export default ({ strapi }) => {
   const service = strapi.service("api::conference-webhook.conference-webhook");
   const  currentYear  = new Date().getFullYear();
@@ -365,7 +380,7 @@ export default ({ strapi }) => {
     
     // Filter out contestants
     const attendees = tickets.filter(
-      (ticket: ITicketPayload) => ticket.ticket_type.context !== "Contestant"
+      (ticket: ITicketPayload) => !isContestantTicket(ticket)
     );
 
     for (const ticket of attendees) {
@@ -511,8 +526,8 @@ export default ({ strapi }) => {
   ) {
     if (!tickets) return [];
     
-    const contestants = tickets.filter(
-      (ticket: ITicketPayload) => ticket.ticket_type.context === "Contestant"
+    const contestants = tickets.filter((ticket: ITicketPayload) =>
+      isContestantTicket(ticket)
     );
     
     if (contestants.length === 0) return [];

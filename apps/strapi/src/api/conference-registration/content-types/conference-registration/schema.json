@@ -59,7 +59,8 @@
       "type": "enumeration",
       "enum": [
         "Attendee",
-        "Vendor"
+        "Vendor",
+        "Contestant"
       ]
     },
     "sponsorships": {
