@@ -34,6 +34,7 @@ import { updateRecord } from "../../_helpers/updateRecord";
 import { createRecord } from "../../_helpers/createRecord";
 import CustomToolBar from "../../_components/CustomToolbar";
 import { formatTitle } from "../../../helpers/formatResourceTitle";
+import getContrastColor from "../../_helpers/getContrastColor";
 
 interface GrantStatusesProps {
   context:
@@ -258,10 +259,21 @@ const GrantStatusesInterface = ({ context }: GrantStatusesProps) => {
             isRowExpandable={() => true}
             isRowSelectable={() => false}
             rowSx={(record) => {
+              const fg = getContrastColor(record.color);
+              // Status color must win over shared RaDatagrid-rowOdd zebra.
               return {
                 backgroundColor: record.color,
-                "&:hover": {
+                color: fg,
+                "&.RaDatagrid-rowOdd, &.RaDatagrid-rowEven": {
                   backgroundColor: record.color,
+                },
+                "&:hover, &.RaDatagrid-rowOdd:hover, &.RaDatagrid-rowEven:hover":
+                  {
+                    backgroundColor: record.color,
+                  },
+                "& .MuiTableCell-root": {
+                  color: fg,
+                  backgroundColor: "transparent",
                 },
               };
             }}

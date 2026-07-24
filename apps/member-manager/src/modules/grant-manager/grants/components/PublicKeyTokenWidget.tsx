@@ -41,14 +41,15 @@ const PublicKeyTokenWidget = ({ heading, subheading, token }: StatWidgetProps) =
     <>
       <Card
         sx={{
-          background: 'linear-gradient(to right, #ddd , #eee)',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? theme.palette.background.paper
+              : 'linear-gradient(to right, #ddd , #eee)',
           justifyContent: 'space-between',
           padding: 1,
           borderRadius: '0px',
           boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-          color: 'white',
-          //0 radius
-          
+          color: 'text.primary',
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

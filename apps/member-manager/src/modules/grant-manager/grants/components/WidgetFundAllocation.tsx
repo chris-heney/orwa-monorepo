@@ -1,21 +1,24 @@
 import React, { useState, useMemo } from "react";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import Sunburst from "highcharts/modules/sunburst";
-import HCDrilldown from "highcharts/modules/drilldown";
-import { Box, Grid, Typography } from "@mui/material";
-import { formatNumber } from "../../../../helpers/Formators";
+// Highcharts v12 modules self-register on import
+import "highcharts/modules/sunburst";
+import "highcharts/modules/drilldown";
+import { Box, Typography } from "@mui/material";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
 import { IGrant, IGrantPayout } from "./GrantTypes";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { useGrantContext } from "../../GrantContextProvider";
+import { display, money, useSummaryTokens, SummaryTokens } from "./summary/tokens";
+import {
+  aggregatePathways,
+  flattenPathways,
+  FlatPathwayNode,
+  PathwayValue,
+} from "./summary/pathways/model";
 
 dayjs.extend(isSameOrAfter);
-
-// Initialize Highcharts modules
-if (typeof Sunburst === "function") Sunburst(Highcharts);
-if (typeof HCDrilldown === "function") HCDrilldown(Highcharts);
 
 interface IWidgetFundAllocationProps {
   applications: IGrantApplication[];
@@ -23,22 +26,72 @@ interface IWidgetFundAllocationProps {
   grant: IGrant;
   to: Dayjs | null;
   from: Dayjs | null;
-  lastCloseoutBalance: number;
-  fy1CloseoutBalance: number;
-  fy1AdminFundsRemaining: number;
-  fy2AdminFundsRemaining: number;
+  previousFyRollover: number;
 }
+
+/** Lighten/darken a token color for sibling shades within a branch. */
+const shade = (color: string, amount: number): string =>
+  Highcharts.color(color).brighten(amount).get() as string;
+
+/**
+ * Slice colors follow the summary token families: violet = administration,
+ * blue = requests/review, amber = committed (reserved), green = money
+ * available or moved, red = exits (denied/withdrawn).
+ */
+const colorsFor = (T: SummaryTokens): Record<string, string> => ({
+  total: T.deepWater,
+
+  admin: T.violet,
+  admin_available: shade(T.violet, 0.28),
+  admin_unapproved: shade(T.violet, 0.38),
+  admin_reserved: shade(T.violet, -0.08),
+  admin_approved: shade(T.violet, -0.16),
+  admin_paid: shade(T.violet, -0.24),
+  admin_paid_full: shade(T.violet, -0.32),
+  admin_paid_partial: shade(T.violet, -0.38),
+  admin_invoiced: shade(T.violet, 0.12),
+  admin_undisbursed: shade(T.violet, 0.16),
+
+  grant: T.water,
+  grant_available: T.inflow,
+  unapproved: shade(T.exit, 0.08),
+  denied: T.exit,
+  withdrawn: shade(T.exit, 0.28),
+  unclaimed: shade(T.inflow, -0.14),
+  grant_reserved: T.committed,
+  approved: shade(T.committed, -0.1),
+  disbursed: T.stage.disbursed,
+  paid_full: T.stage.paid,
+  paid_partial: shade(T.stage.disbursed, 0.18),
+  undisbursed: T.stage.signed,
+  needing_signature: shade(T.stage.signed, -0.14),
+  awaiting_payment_request: shade(T.stage.signed, 0.18),
+  under_review: T.stage.review,
+  awaiting_approval: shade(T.stage.review, -0.14),
+  awaiting_committee: shade(T.stage.review, 0.14),
+  on_hold: T.textFaint,
+});
+
+interface VisibleNode extends FlatPathwayNode {
+  value: PathwayValue;
+  color: string;
+  /** True when none of this node's children carry data (chart leaf). */
+  isLeaf: boolean;
+}
+
+const countText = (value: PathwayValue): string | null =>
+  value.count === null
+    ? null
+    : `${value.count.toLocaleString()} application${value.count === 1 ? "" : "s"}`;
 
 const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
   applications,
   payouts,
   grant,
-  lastCloseoutBalance,
-  fy1CloseoutBalance,
-  fy1AdminFundsRemaining,
-  fy2AdminFundsRemaining,
+  previousFyRollover,
 }) => {
-  const [selectedNode, setSelectedNode] = useState<string>("root");
+  const T = useSummaryTokens();
+  const [selectedNode, setSelectedNode] = useState<string>("total");
 
   const { to, from, fiscalYearEnd, fiscalYearStart } = useGrantContext();
 
@@ -47,24 +100,27 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
     from: Dayjs | null,
     to: Dayjs | null
   ): number => {
-
-    const fromDate = from ? from : dayjs(fiscalYearStart);  
+    const fromDate = from ? from : dayjs(fiscalYearStart);
     const toDate = from ? to : dayjs(fiscalYearEnd);
 
-    if (!fromDate.isValid() || !toDate?.isValid()) return new Date().getFullYear() - 2022;
+    if (!fromDate.isValid() || !toDate?.isValid())
+      return new Date().getFullYear() - 2022;
 
     const fiscalYearStartMonth = 6; // July is the 6th month (0-indexed)
     const fiscalYearStartDay = 1; // Fiscal year starts on the 1st of July
-    
 
     const fromFiscalYearStart = dayjs(fromDate).isSameOrAfter(
-      dayjs(`${fromDate.year()}-${fiscalYearStartMonth + 1}-${fiscalYearStartDay}`)
+      dayjs(
+        `${fromDate.year()}-${fiscalYearStartMonth + 1}-${fiscalYearStartDay}`
+      )
     )
       ? fromDate.year()
       : fromDate.year() - 1;
 
     const toFiscalYearStart = dayjs(to).isSameOrAfter(
-      dayjs(`${toDate.year()}-${fiscalYearStartMonth + 1}-${fiscalYearStartDay}`)
+      dayjs(
+        `${toDate.year()}-${fiscalYearStartMonth + 1}-${fiscalYearStartDay}`
+      )
     )
       ? toDate.year()
       : toDate.year() - 1;
@@ -81,64 +137,13 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
     [from, to, fiscalYearStart, fiscalYearEnd]
   );
 
-  // Calculate total funding and admin funding
-  const totalFunding = useMemo(
-    () => parseInt(grant.grant_amount) * yearsMultiplier,
-    [grant.grant_amount, yearsMultiplier]
-  );
-  const totalAdminFunding = useMemo(
-    () => parseInt(grant.admin_amount) * yearsMultiplier,
-    [grant.admin_amount, yearsMultiplier]
-  );
-
-  // Filter applications and calculate approved funds
-  // Filter applications and calculate approved funds
-  const approvedApplications = useMemo(
-    () =>
-      applications
-        .filter((app) => !app.status.name.includes("PFY")) // Exclude any status with PFY
-        .filter((app) =>
-          [
-            "Grant Agreement Signed/Sealed/Returned",
-            "Paid in Full",
-            "Revised per COR",
-            "Authorized by DEQ",
-            "Authorized by ORWA",
-            "Committee Approved",
-            "Award Letter Sent",
-          ].includes(app.status.name)
-        ),
-    [applications]
-  );
-
-  // Calculate total requested grant funds
-  const totalRequested = useMemo(
-    () =>
-      applications
-        .filter(
-          (app) =>
-            !["Not Approved", "Change Order"].includes(app.status.name) &&
-            !app.status.name.includes("PFY") // Exclude any status with PFY
-        )
-        .reduce(
-          (total, app) =>
-            total + (parseInt(app.requested_grant_amount.toString() || "0") || 0),
-          0
-        ),
-    [applications]
-  );
-
-  const approvedFunds = useMemo(
-    () =>
-      approvedApplications.reduce(
-        (total, app) => total + (app.award_amount || 0),
-        0
-      ),
-    [approvedApplications]
-  );
-
-  // Calculate total admin and awarded payouts
-  const totalAdminPayouts = useMemo(
+  // Pool numbers for the model. Previous FY rollover feeds the Funds
+  // Available total only — it is no longer its own node in the hierarchy.
+  const fundsAvailable =
+    (parseInt(grant.grant_amount) || 0) * yearsMultiplier + previousFyRollover;
+  const adminAllocation =
+    (parseInt(grant.admin_amount) || 0) * yearsMultiplier;
+  const adminDisbursed = useMemo(
     () =>
       payouts
         .filter((payout) => payout.type === "Administrative")
@@ -146,164 +151,93 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
     [payouts]
   );
 
-  const totalAwardedPayouts = useMemo(
-    () =>
-      payouts
-        .filter((payout) => payout.type === "Reimbursement")
-        .reduce((total, payout) => total + payout.amount, 0),
-    [payouts]
-  );
+  const visibleNodes = useMemo((): VisibleNode[] => {
+    const values = aggregatePathways(applications, payouts, {
+      fundsAvailable,
+      adminAllocation,
+      adminDisbursed,
+    });
+    const colors = colorsFor(T);
+    // A node earns a slice when it holds dollars or applications. Parents are
+    // children-sums of non-negative values, so a visible node's ancestors are
+    // always visible too ("always 0" nodes hide themselves).
+    const flat = flattenPathways().filter((node) => {
+      const v = values[node.id];
+      return node.id === "total" || v.amount > 0.5 || (v.count ?? 0) > 0;
+    });
+    const visibleIds = new Set(flat.map((n) => n.id));
+    return flat.map((node) => ({
+      ...node,
+      value: values[node.id],
+      color: colors[node.id] ?? T.water,
+      isLeaf: !(node.children ?? []).some((c) => visibleIds.has(c.id)),
+    }));
+  }, [applications, payouts, fundsAvailable, adminAllocation, adminDisbursed, T]);
 
-  const rootFunding = dayjs(fiscalYearEnd).year() === 2025 ? totalFunding + (parseInt(grant.admin_amount) + fy1CloseoutBalance + fy1AdminFundsRemaining + fy2AdminFundsRemaining) : totalFunding + parseInt(grant.admin_amount);
-  const totalRootFunding =  dayjs(fiscalYearEnd).year() === 2025 ? totalFunding + (fy1CloseoutBalance + fy1AdminFundsRemaining + fy2AdminFundsRemaining) : totalFunding;
-  
-  // Chart data
+  // Chart data: only chart-leaves carry values — Highcharts sunburst sizes
+  // parents as the sum of their children.
   const chartData = useMemo(
-    () => [
-      {
-        id: "root",
-        name: "Funding",
-        color: "#4CAF50",
-        value: rootFunding,
-      },
-      {
-        id: "funding",
-        name: "Funds Available",
-        parent: "root",
-        color: "#077200",
-        value: totalRootFunding,
-      },
-      {
-        id: "admin",
-        name: "Admin Funding",
-        parent: "root",
-        color: "#673AB7",
-        value: totalAdminFunding,
-      },
-      {
-        id: "requested",
-        name: "Requested Grant Funds",
-        parent: "funding",
-        color: "#219300",
-        value: totalRequested,
-      },
-     
-      {
-        id: "approved",
-        name: "Funds Approved",
-        parent: "requested",
-        color: "#2196F3",
-        value: approvedFunds,
-      },
-      {
-        id: "applied_not_approved",
-        name: "Awaiting Approval",
-        parent: "requested",
-        color: "#f1fc01",
-        value: totalRequested - approvedFunds,
-      },
-      {
-        name: "Funds Still Available",
-        parent: "funding",
-        color: "#e91c00",
-        value: totalRootFunding - approvedFunds,
-      },
-      {
-        id: "disbursed",
-        name: "Funds Disbursed",
-        parent: "approved",
-        color: "#FF5252",
-        value: totalAwardedPayouts,
-      },
-      {
-        id: "undistributed",
-        name: "Undistributed Funds",
-        parent: "approved",
-        color: "#ff8914",
-        value: approvedFunds - totalAwardedPayouts,
-      },
-      {
-        id: "admin_disbursed",
-        name: "Admin Funds Disbursed",
-        parent: "admin",
-        color: "#9C27B0",
-        value: Math.round(totalAdminPayouts),
-      },
-      {
-        id: "admin_available",
-        name: "Admin Funds Available",
-        parent: "admin",
-        color: "#3F51B5",
-        value: Math.round(totalAdminFunding - totalAdminPayouts),
-      },
-      {
-        id: "closeout",
-        name: "Closeout Funds Remaining",
-        parent: "root",
-        color: "#FF5252",
-        value: lastCloseoutBalance,
-      },
-    ],
-    [
-      totalFunding,
-      totalAdminFunding,
-      totalRequested,
-      approvedFunds,
-      totalAwardedPayouts,
-      totalAdminPayouts,
-      lastCloseoutBalance,
-      fiscalYearStart,
-      fiscalYearEnd,
-      fy1CloseoutBalance,
-      fy1AdminFundsRemaining,
-      fy2AdminFundsRemaining,
-    ]
+    () =>
+      visibleNodes.map((node) => ({
+        id: node.id,
+        parent: node.parentId ?? "",
+        name: node.label,
+        color: node.color,
+        value: node.isLeaf ? Math.round(node.value.amount) : undefined,
+        custom: {
+          count: node.value.count,
+          amount: node.value.amount,
+          dimension: node.dimension,
+        },
+      })),
+    [visibleNodes]
   );
 
-  // Handle node selection in the chart
+  // Handle node selection in the chart (drives the legend's scope)
   const handleNodeSelection = (nodeId: string) => {
     if (nodeId === selectedNode) {
-      const currentNode = chartData.find((d) => d.id === selectedNode);
-      if (currentNode?.parent) setSelectedNode(currentNode.parent);
+      const currentNode = visibleNodes.find((d) => d.id === selectedNode);
+      if (currentNode?.parentId) setSelectedNode(currentNode.parentId);
     } else {
-      const children = chartData.filter((d) => d.parent === nodeId);
-      if (children.length > 0 || nodeId === "root") setSelectedNode(nodeId);
+      const node = visibleNodes.find((d) => d.id === nodeId);
+      const hasChildren = visibleNodes.some((d) => d.parentId === nodeId);
+      if (node && (hasChildren || nodeId === "total")) setSelectedNode(nodeId);
     }
   };
 
-  // Get filtered data based on the selected node
-  const getChildrenWithParent = (parentId: string = ""): any[] => {
-    const parent = chartData.find((d) => d.id === parentId);
-    const children = chartData
-      .filter((d) => d.parent === parentId)
-      .flatMap((child) => [child, ...getChildrenWithParent(child.id)]);
-    return parentId === selectedNode && parent
-      ? [parent, ...children]
-      : children;
-  };
+  // Legend scope: the selected node and its visible subtree, in tree order.
+  const legendNodes = useMemo((): VisibleNode[] => {
+    const start = visibleNodes.findIndex((n) => n.id === selectedNode);
+    if (start === -1) return visibleNodes;
+    const scoped = [visibleNodes[start]];
+    for (let i = start + 1; i < visibleNodes.length; i++) {
+      if (visibleNodes[i].depth <= visibleNodes[start].depth) break;
+      scoped.push(visibleNodes[i]);
+    }
+    return scoped;
+  }, [visibleNodes, selectedNode]);
 
-  const filteredData = useMemo(
-    () =>
-      selectedNode === "root" ? chartData : getChildrenWithParent(selectedNode),
-    [selectedNode, chartData]
-  );
+  const baseDepth = legendNodes[0]?.depth ?? 0;
 
   // Highcharts options
   const chartOptions = useMemo(
     () => ({
       chart: {
         type: "sunburst",
-        backgroundColor: "#333333",
+        backgroundColor: "transparent",
+        style: { fontFamily: display.fontFamily },
         spacing: [10, 10, 10, 10],
+        height: 520,
       },
       title: {
-        text: `Funding (${
+        text: `Total Funding (${
           from && to
             ? `${dayjs(fiscalYearStart).get("year")} - ${dayjs(fiscalYearEnd).get("year")}`
             : "Totals"
         })`,
-        style: { color: "#FFFFFF", fontSize: "18px" },
+        style: { color: T.textHi, fontSize: "18px" },
       },
+      credits: { enabled: false },
       series: [
         {
           type: "sunburst",
@@ -313,15 +247,29 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
           events: {
             click: (e: any) => e.point && handleNodeSelection(e.point.id),
           },
-          dataLabels: { format: "{point.name}", style: { color: "#FFFFFF" } },
+          // Slices are saturated/dark hues in both modes, so labels stay white.
+          dataLabels: {
+            format: "{point.name}",
+            style: { color: "#FFFFFF", textOutline: "none", fontSize: "11px" },
+          },
         },
       ],
       tooltip: {
         useHTML: true,
-        formatter: function (): any {
-          return `<b>${(this as any).point.name}</b>: $${(
-            this as any
-          ).point.value.toLocaleString()}`;
+        backgroundColor: T.panelSoft,
+        style: { color: T.textHi },
+        formatter: function (): string {
+          const point = (this as any).point;
+          const custom = point.custom ?? {};
+          const counts =
+            custom.count != null
+              ? `${custom.count.toLocaleString()} application${custom.count === 1 ? "" : "s"} · `
+              : "";
+          return (
+            `<b>${point.name}</b><br/>` +
+            `<span style="opacity:0.75">${custom.dimension ?? ""}</span><br/>` +
+            `${counts}${money(custom.amount ?? point.value ?? 0)}`
+          );
         },
       },
       plotOptions: {
@@ -333,54 +281,129 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
           position: { align: "center", verticalAlign: "top", y: -30 },
           buttonTheme: {
             fill: "transparent",
-            style: { color: "#FFFFFF", fontWeight: "bold" },
+            style: { color: T.textHi, fontWeight: "bold" },
             states: {
-              hover: { fill: "transparent", style: { color: "#FFD700" } },
+              hover: { fill: "transparent", style: { color: T.committed } },
             },
           },
           showFullPath: false,
         },
       },
     }),
-    [chartData, from, to, lastCloseoutBalance]
+    [chartData, from, to, fiscalYearStart, fiscalYearEnd, T]
   );
 
   return (
     <Box
       sx={{
-        backgroundColor: "#333333",
+        backgroundColor: T.panel,
+        border: `1px solid ${T.line}`,
         px: 2,
         py: 1,
         borderRadius: "10px",
-        color: "#FFFFFF",
+        color: T.textHi,
       }}
     >
-      <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-      <Grid container spacing={2} sx={{ mt: -2 }}>
-        {filteredData.map((metric, index) => (
-          <Grid item xs={filteredData.length > 5 ? 4 : 6} key={index}>
-            <Box
-              sx={{
-                textAlign: "center",
-                borderTop: `4px solid ${metric.color}`,
-              }}
-            >
-              <Typography fontSize="0.9rem" sx={{ color: "#FFFFFF" }}>
-                {metric.name}
-              </Typography>
-              <Typography
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", md: "row" },
+          alignItems: { md: "flex-start" },
+          gap: 2,
+        }}
+      >
+        {/* Sunburst gets the lion's share of the width */}
+        <Box sx={{ flex: { md: "1 1 64%" }, minWidth: 0, width: "100%" }}>
+          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+        </Box>
+
+        {/* Legend: single stacked column on the right (below on small screens) */}
+        <Box
+          sx={{
+            flex: { md: "0 0 34%" },
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 0.5,
+            pt: { md: 5 },
+            pb: 1,
+            maxHeight: { md: 500 },
+            overflowY: { md: "auto" },
+            "&::-webkit-scrollbar": { width: 6 },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: T.panelSoft,
+              borderRadius: 3,
+            },
+          }}
+        >
+          {legendNodes.map((node) => {
+            const counts = countText(node.value);
+            const drillable =
+              visibleNodes.some((d) => d.parentId === node.id) ||
+              node.id === "total";
+            return (
+              <Box
+                key={node.id}
+                onClick={() => drillable && handleNodeSelection(node.id)}
                 sx={{
-                  fontSize: "1rem",
-                  color: metric.color,
-                  fontWeight: "bold",
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 1,
+                  ml: (node.depth - baseDepth) * 1.5,
+                  px: 1,
+                  py: 0.4,
+                  borderRadius: "8px",
+                  cursor: drillable ? "pointer" : "default",
+                  backgroundColor:
+                    node.id === selectedNode ? T.panelSoft : "transparent",
+                  "&:hover": { backgroundColor: T.panelSoft },
                 }}
               >
-                {formatNumber(metric.value)}
-              </Typography>
-            </Box>
-          </Grid>
-        ))}
-      </Grid>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    mt: 0.55,
+                    flex: "0 0 auto",
+                    borderRadius: "3px",
+                    backgroundColor: node.color,
+                  }}
+                />
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    sx={{
+                      fontSize: 12.5,
+                      fontWeight: 600,
+                      color: T.textHi,
+                      lineHeight: 1.25,
+                    }}
+                  >
+                    {node.label}
+                    <Box
+                      component="span"
+                      sx={{ ml: 0.75, fontSize: 10, color: T.textFaint }}
+                    >
+                      {node.dimension}
+                    </Box>
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: 11.5,
+                      color: T.textLo,
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {counts ? `${counts} · ` : ""}
+                    <Box component="span" sx={{ color: node.color, fontWeight: 700 }}>
+                      {money(node.value.amount)}
+                    </Box>
+                  </Typography>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      </Box>
     </Box>
   );
 };

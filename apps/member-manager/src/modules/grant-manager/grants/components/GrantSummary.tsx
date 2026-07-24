@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Box, Grid } from "@mui/material";
+import { Box } from "@mui/material";
 import { Loading, useGetList, useRecordContext } from "react-admin";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -8,17 +8,39 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
 import { IGrant, IGrantPayout } from "./GrantTypes";
 import { useGrantContext } from "../../GrantContextProvider";
-import ApplicationStatusSummary from "./ApplicationStatusSummary";
-import WidgetFundAllocation from "./WidgetFundAllocation";
-import FinancialBreakdown from "./FinancialBreakdown";
 import FilterExplanationModal from "./FinancialsDateExplination";
 import { computeBalance } from "../../payouts/components/BalanceField";
+import {
+  computePreviousFyRollover,
+  fiscalYearOf,
+} from "../helpers/previousFyRollover";
+import { useSummaryTokens } from "./summary/tokens";
+import SummaryHeader, { SummaryView } from "./summary/SummaryHeader";
+import { useGrantMetrics } from "./summary/useGrantMetrics";
+import DashboardView from "./summary/DashboardView";
+import GraphView from "./summary/GraphView";
+import TableView from "./summary/TableView";
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
 
+/**
+ * Financial reports attribute a payout to the fiscal year the application was
+ * approved (committee date), NOT the year the check was cut. Otherwise a FY
+ * shows more money disbursed than approved while the prior FY appears to have
+ * money missing. Administrative payouts are not tied to an application, so
+ * their transaction date is the only meaningful date.
+ */
+export const payoutReportDate = (payout: IGrantPayout) =>
+  payout.type === "Reimbursement"
+    ? payout.application?.committee_date ??
+      payout.application?.createdAt ??
+      payout.transaction_date
+    : payout.transaction_date;
+
 const GrantSummary = () => {
+  const T = useSummaryTokens();
   const { setGodMode, to, from, fiscalYearStart, fiscalYearEnd } =
     useGrantContext();
   const [applications, setApplications] = React.useState<
@@ -27,10 +49,7 @@ const GrantSummary = () => {
   const [payouts, setPayouts] = React.useState<IGrantPayout[] | null>(null);
   const grant = useRecordContext<IGrant>();
   const [isModalOpen, setIsModalOpen] = React.useState(false); // State for modal
-  const [leftoverFunds, setLeftoverFunds] = React.useState(0);
-  const [fY1LeftoverFunds, setFY1LeftoverFunds] = React.useState(0);
-  const [fy1AdminFundsRemaining, setFY1AdminFundsRemaining] = React.useState(0);
-  const [fy2AdminFundsRemaining, setFY2AdminFundsRemaining] = React.useState(0);
+  const [view, setView] = React.useState<SummaryView>("dashboard");
 
   // Fetch all payouts without filtering by date
   const { data: allPayoutsData, isLoading: payoutsLoading } = useGetList(
@@ -122,152 +141,49 @@ const GrantSummary = () => {
         toUTC = dayjs(to).utc().endOf("day");
       }
 
-      // Filter payouts by transaction_date in UTC
-      const filteredPayouts = allPayoutsData?.filter((payout: IGrantPayout) =>
-        payout.transaction_date
-          ? dayjs(payout.transaction_date.toString())
-              .utc()
-              .isSameOrAfter(fromUTC) &&
-            dayjs(payout.transaction_date.toString())
-              .utc()
-              .isSameOrBefore(toUTC)
-          : false
-      );
+      // Filter payouts by their report date (application approval date for
+      // reimbursements, transaction date for administrative payouts) in UTC
+      const filteredPayouts = allPayoutsData?.filter((payout: IGrantPayout) => {
+        const reportDate = payoutReportDate(payout);
+        return reportDate
+          ? dayjs(reportDate.toString()).utc().isSameOrAfter(fromUTC) &&
+              dayjs(reportDate.toString()).utc().isSameOrBefore(toUTC)
+          : false;
+      });
       setPayouts(filteredPayouts || null);
     } else {
       setPayouts(allPayoutsData || null);
     }
   }, [allPayoutsData, to, from, fiscalYearStart, fiscalYearEnd]);
 
-  // Calculate leftover funds from the previous fiscal year
-  const previousFiscalYearEnd = dayjs(fiscalYearEnd).subtract(1, "year");
-  const previousFiscalYearStart = dayjs(fiscalYearStart).subtract(1, "year");
+  // Grant funds carried into the selected FY from all earlier years
+  // (unawarded allocation + closeout returns, chained year over year).
+  const previousFyRollover = useMemo(() => {
+    if (!grant || !applicationsData) return 0;
+    const rangeStart = fiscalYearStart || from;
+    if (!rangeStart) return 0; // "Totals" view spans all years; nothing rolls in
+    return computePreviousFyRollover(
+      applicationsData,
+      parseInt(grant.grant_amount),
+      fiscalYearOf(dayjs(rangeStart).toISOString())
+    );
+  }, [applicationsData, grant, fiscalYearStart, from]);
 
-  const previousFiscalYearApplications = useMemo(
-    () =>
-      applicationsData?.filter((application) => {
-        const dateToCheck =
-          application.status.name === "New Application" ||
-          application.status.name === "Awaiting Committee"
-            ? application.createdAt || application.application_date
-            : application.committee_date;
-
-        return (
-          application.closed_out === true &&
-          dateToCheck &&
-          dayjs(dateToCheck.toString())
-            .utc()
-            .isSameOrAfter(previousFiscalYearStart) &&
-          dayjs(dateToCheck.toString())
-            .utc()
-            .isSameOrBefore(previousFiscalYearEnd)
-        );
-      }),
-    [applicationsData, previousFiscalYearStart, previousFiscalYearEnd]
+  const metrics = useGrantMetrics(
+    applications ?? [],
+    payouts ?? [],
+    (allPayoutsData as IGrantPayout[] | undefined) ?? [],
+    grant,
+    previousFyRollover
   );
 
-  const fY1End = dayjs(fiscalYearEnd).subtract(2, "year");
-  const fY1Start = dayjs(fiscalYearStart).subtract(2, "year");
-
-  const fY2End = dayjs(fiscalYearEnd).subtract(1, "year");
-  const fY2Start = dayjs(fiscalYearStart).subtract(1, "year");
-
-  const fY1Applications = useMemo(
-    () =>
-      applicationsData?.filter((application) => {
-        const dateToCheck =
-          application.status.name === "New Application" ||
-          application.status.name === "Awaiting Committee"
-            ? application.createdAt || application.application_date
-            : application.committee_date;
-
-        return (
-          application.closed_out === true &&
-          dateToCheck &&
-          dayjs(dateToCheck.toString()).utc().isSameOrAfter(fY1Start) &&
-          dayjs(dateToCheck.toString()).utc().isSameOrBefore(fY1End)
-        );
-      }),
-    [applicationsData, previousFiscalYearStart, previousFiscalYearEnd]
-  );
-
-  const fy1AdminPayouts = useMemo(
-    () =>
-      allPayoutsData?.filter((payout) => {
-        return (
-          payout.transaction_date &&
-          payout.type === "Administrative" &&
-          dayjs(payout.transaction_date.toString())
-            .utc()
-            .isSameOrAfter(fY1Start) &&
-          dayjs(payout.transaction_date.toString()).utc().isSameOrBefore(fY1End)
-        );
-      }),
-    [allPayoutsData, fiscalYearStart, fiscalYearEnd]
-  );
-
-  const fy2AdminPayouts = useMemo(
-    () =>
-      allPayoutsData?.filter((payout) => {
-        return (
-          payout.transaction_date &&
-          payout.type === "Administrative" &&
-          dayjs(payout.transaction_date.toString())
-            .utc()
-            .isSameOrAfter(fY2Start) &&
-          dayjs(payout.transaction_date.toString()).utc().isSameOrBefore(fY2End)
-        );
-      }),
-    [allPayoutsData, fiscalYearStart, fiscalYearEnd]
-  );
-
-  React.useEffect(() => {
-    const calculateLeftoverFunds = () => {
-      if (!grant) return;
-      if (!previousFiscalYearApplications) return;
-      if (!fY1Applications) return;
-      if (!fy1AdminPayouts) return;
-      if (!fy2AdminPayouts) return;
-
-      let total = 0;
-      let total2 = 0;
-      let total3 = 0;
-      let total4 = 0;
-      for (const application of previousFiscalYearApplications) {
-        total += computeBalance(application) || 0;
-      }
-
-      for (const application of fY1Applications) {
-        total2 += computeBalance(application) || 0;
-      }
-
-      for (const payout of fy1AdminPayouts) {
-        total3 += payout.amount || 0;
-      }
-
-      for (const payout of fy2AdminPayouts) {
-        total4 += payout.amount || 0;
-      }
-
-      setLeftoverFunds(total);
-      setFY1LeftoverFunds(total2);
-      setFY1AdminFundsRemaining(parseInt(grant.admin_amount) - Math.round(total3));
-      setFY2AdminFundsRemaining(parseInt(grant.admin_amount) - Math.round(total4));
-
-    };
-
-    calculateLeftoverFunds();
-  }, [
-    to,
-    from,
-    fiscalYearStart,
-    fiscalYearEnd,
-    previousFiscalYearApplications,
-    fY1Applications,
-    fy1AdminPayouts,
-    fy2AdminPayouts,
-    grant?.admin_amount,
-  ]);
+  const periodLabel = useMemo(() => {
+    if (fiscalYearStart && fiscalYearEnd)
+      return `FY ${dayjs(fiscalYearStart).year()}`;
+    if (from && to)
+      return `${dayjs(from).format("MMM YYYY")} – ${dayjs(to).format("MMM YYYY")}`;
+    return "All-Time";
+  }, [fiscalYearStart, fiscalYearEnd, from, to]);
 
   return payoutsLoading ||
     applicationLoading ||
@@ -276,45 +192,74 @@ const GrantSummary = () => {
     !applications ? (
     <Loading />
   ) : (
-    <Box maxWidth={1200} mx="auto" p={2}>
-      <Grid container spacing={2} p={1}>
-        <Grid item xs={12} md={5}>
-          <Box
-            component="img"
-            sx={{ height: 250, mx: "auto", flexGrow: 1, display: "block" }}
-            src={"rig-logo.webp"}
-            alt="Grant Manager Logo"
-            // allow to set false and true
-            onClick={() => setGodMode((prev) => !prev)}
-          />
-          <ApplicationStatusSummary
-            from={dayjs(fiscalYearStart)}
-            to={dayjs(fiscalYearEnd)}
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        backgroundColor: T.ink,
+        borderRadius: "0 0 18px 18px",
+        p: { xs: 2, md: 3 },
+        overflow: "hidden",
+        isolation: "isolate",
+      }}
+    >
+      {/* RIG logo as a faint watermark instead of a real-estate hog */}
+      <Box
+        component="img"
+        src="rig-logo.webp"
+        alt=""
+        aria-hidden
+        sx={{
+          position: "absolute",
+          top: -40,
+          right: -60,
+          height: 480,
+          opacity: T.watermarkOpacity,
+          pointerEvents: "none",
+          filter: T.watermarkFilter,
+          zIndex: 0,
+        }}
+      />
+
+      <Box sx={{ position: "relative", zIndex: 1 }}>
+        <SummaryHeader
+          grantName={grant.name || "Rural Infrastructure Grant"}
+          periodLabel={periodLabel}
+          view={view}
+          onViewChange={setView}
+          onLogoClick={() => setGodMode((prev) => !prev)}
+        />
+
+        {view === "dashboard" && (
+          <DashboardView
+            metrics={metrics}
             applications={applications}
+            payouts={payouts}
           />
-        </Grid>
-        {/* Display Leftover Funds */}
-        <Grid item xs={12} md={7}>
-          <WidgetFundAllocation
-            fy1AdminFundsRemaining={fy1AdminFundsRemaining}
-            fy2AdminFundsRemaining={fy2AdminFundsRemaining}
-            lastCloseoutBalance={leftoverFunds}
+        )}
+
+        {view === "graphs" && (
+          <GraphView
             grant={grant}
             applications={applications}
             payouts={payouts}
-            to={to}
+            previousFyRollover={previousFyRollover}
             from={from}
-            fy1CloseoutBalance={fY1LeftoverFunds}
+            to={to}
+            statusFrom={fiscalYearStart ? dayjs(fiscalYearStart) : null}
+            statusTo={fiscalYearEnd ? dayjs(fiscalYearEnd) : null}
+            metrics={metrics}
           />
-        </Grid>
-        <Grid item xs={12}>
-          <FinancialBreakdown
-            setIsModalOpen={setIsModalOpen}
+        )}
+
+        {view === "tables" && (
+          <TableView
             applications={applications}
             payouts={payouts}
+            setIsModalOpen={setIsModalOpen}
           />
-        </Grid>
-      </Grid>
+        )}
+      </Box>
 
       {/* Modal */}
       <FilterExplanationModal

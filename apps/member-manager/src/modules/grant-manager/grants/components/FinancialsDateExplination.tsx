@@ -50,6 +50,31 @@ const FilterExplanationModal: React.FC<FilterExplanationModalProps> = ({
               Applications with the status <strong>&quot;New Application&quot;</strong> are
               always filtered based on their <strong>creation date</strong>.
             </li>
+            <li>
+              <strong>Reimbursement payouts</strong> are attributed to the fiscal year
+              of their application&apos;s <strong>committee review date</strong>, not the
+              payout transaction date. This keeps disbursements in the same year as
+              the approval they draw from.
+            </li>
+            <li>
+              <strong>Administrative payouts</strong> are not tied to an application,
+              so they are filtered by their <strong>transaction date</strong>.
+            </li>
+            <li>
+              <strong>Previous FY Rollover</strong> is grant money carried in from
+              every earlier fiscal year: allocation that was never awarded, plus
+              funds returned by closed-out applications that spent less than their
+              award. It is added to the year&apos;s available funds, so a year whose
+              approvals draw on carryover does not appear overdrawn. Awards that are
+              still open but unpaid remain committed and do not roll over.
+            </li>
+            <li>
+              <strong>Closeout returns accrue over time.</strong> When an open award
+              closes out and returns unspent funds, the rollover of the year that
+              award belonged to grows. Historical figures are therefore a living
+              record — every view reflects the books as of today, and a past
+              year&apos;s numbers can shift as its awards finish closing out.
+            </li>
           </ul>
         </Typography>
         <Button

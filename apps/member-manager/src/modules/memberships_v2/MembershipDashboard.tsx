@@ -91,9 +91,22 @@ const MembershipDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: "#eee",
+                    backgroundColor: (theme) =>
+                      theme.palette.mode === "dark"
+                        ? theme.palette.grey[900]
+                        : theme.palette.grey[100],
                     maxWidth: isSmall ? 320 : undefined,
                     overflow: "clip",
+                    "& .MuiTab-root": {
+                      color: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(255, 255, 255, 0.85)"
+                          : "rgba(0, 0, 0, 0.7)",
+                      opacity: 1,
+                      "&.Mui-selected": {
+                        color: "primary.main",
+                      },
+                    },
                   }}
                   onChange={(event: React.SyntheticEvent, tv) => {
                     setSelectedTab(tv as TabValue);
@@ -132,9 +145,20 @@ const MembershipDashboard = () => {
             <Box sx={{ overflow: "hidden", flexGrow: 1 }}>
               <Box sx={{ overflow: "scroll" }}>
                 <TabContext value={selectedTab}>
-                  <Box sx={{ backgroundColor: "#fff" }}>
+                  <Box
+                    sx={{
+                      backgroundColor:
+                        selectedTab === "summary"
+                          ? "transparent"
+                          : "background.paper",
+                    }}
+                  >
                     {!isStaff && (
-                      <TabPanel value="summary" {...a11yTabPanelProps(0)}>
+                      <TabPanel
+                        value="summary"
+                        {...a11yTabPanelProps(0)}
+                        sx={{ p: 0 }}
+                      >
                         <MembershipsSummary />
                       </TabPanel>
                     )}

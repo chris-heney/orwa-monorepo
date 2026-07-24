@@ -20,6 +20,7 @@ import getExpirationDate, {
   isMembershipActiveByExpiration,
 } from "../../_helpers/getExpirationDate";
 import getExpiryBackground from "../../_helpers/getExpiryBackground";
+import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
 import AssociateBulkUpdateButton from "./components/AssociateBulkUpdateButton";
 import AssociateGrid from "./components/AssociateGrid";
 import { useMembershipContext } from "../MembershipsContextProvider";
@@ -99,12 +100,11 @@ const AssociateList = () => {
               );
               return (
                 <Box
-                  sx={{
-                    backgroundColor: active ? backgroundColor : "#ff5555",
+                  sx={coloredSurfaceSx(active ? backgroundColor : "#ff5555", {
                     textAlign: "center",
                     fontWeight: 600,
                     px: 1,
-                  }}
+                  })}
                 >
                   {active ? "Active" : "Not Active"}
                 </Box>

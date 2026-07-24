@@ -1,4 +1,4 @@
-import { Box, Modal, Theme, useMediaQuery } from "@mui/material";
+import { Box, Modal, Theme, useMediaQuery, useTheme } from "@mui/material";
 import React, { useEffect } from "react";
 import {
   CreateButton,
@@ -11,7 +11,7 @@ import {
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
 import { EditableDatagridConfigurable } from "@react-admin/ra-editable-datagrid";
-import { customDatagridStyle } from "../../../css";
+import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import SelectPayoutStatus from "./components/SelectPayoutStatus";
 import EditPayoutMobile from "./EditPayoutMobile";
 import EditPayout from "./EditPayoutRowForm";
@@ -30,6 +30,7 @@ const AdministrativePayoutsList = () => {
   }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const theme = useTheme();
 
   let runningTotal = 0;
 
@@ -91,7 +92,7 @@ const AdministrativePayoutsList = () => {
           mutationMode="undoable"
           noDelete
           rowClick="expand"
-          sx={customDatagridStyle}
+          sx={grantDatagridStyle(theme)}
           editForm={
             isSmall ? (
               <EditPayoutMobile />

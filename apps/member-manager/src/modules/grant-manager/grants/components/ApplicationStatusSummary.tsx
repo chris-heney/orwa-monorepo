@@ -12,6 +12,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ResponsiveListItem from "../../../_components/ResponsiveListItem";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
 import { Dayjs } from "dayjs";
+import { useSummaryTokens } from "./summary/tokens";
 
 interface ApplicationStatusSummaryProps {
   applications: IGrantApplication[];
@@ -46,8 +47,8 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
   from,
   to,
 }) => {
+  const T = useSummaryTokens();
   const [expandedPanel, setExpandedPanel] = useState<string | false>(false);
-  const theme = { palette: { grey: { 900: "#333333" } } }; // Example theme setup
 
   const {
     applicationsApproved,
@@ -97,9 +98,11 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
 
   return (
     <Card
+      elevation={0}
       sx={{
-        backgroundColor: theme.palette.grey[900],
-        color: "white",
+        backgroundColor: T.panel,
+        color: T.textHi,
+        border: `1px solid ${T.line}`,
         borderRadius: 2,
         overflow: "hidden",
       }}
@@ -108,7 +111,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
         Applications {from && to ? `(${from.year()} - ${to.year()})` : "Totals"}
       </Typography>
 
-      <Divider sx={{ bgcolor: "rgba(255,255,255,0.12)" }} />
+      <Divider sx={{ bgcolor: T.line }} />
 
       <Box component="ul" sx={{ p: 0, m: 0, listStyle: "none" }}>
         <ResponsiveListItem
@@ -136,8 +139,8 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
         >
           <AccordionSummary
             sx={{
-              backgroundColor: "#333333",
-              color: "white",
+              backgroundColor: T.panelSoft,
+              color: T.textHi,
               px: 0,
               " & > .MuiAccordionSummary-content": {
                 my: 0,
@@ -148,7 +151,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
                 left: 10,
               },
             }}
-            expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+            expandIcon={<ExpandMoreIcon sx={{ color: T.textLo }} />}
           >
             {" "}
             <ResponsiveListItem
@@ -159,7 +162,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
             />
           </AccordionSummary>
           <AccordionDetails
-            sx={{ p: 0, mt: 1, backgroundColor: "#333333", color: "white" }}
+            sx={{ p: 0, mt: 1, backgroundColor: T.panelSoft, color: T.textHi }}
           >
             {STATUS_GROUPS.approved.map((status) => (
               <ResponsiveListItem
@@ -181,8 +184,8 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
         >
           <AccordionSummary
             sx={{
-              backgroundColor: "#333333",
-              color: "white",
+              backgroundColor: T.panelSoft,
+              color: T.textHi,
               px: 0,
               " & > .MuiAccordionSummary-content": {
                 my: 0,
@@ -193,7 +196,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
                 left: 10,
               },
             }}
-            expandIcon={<ExpandMoreIcon sx={{ color: "white" }} />}
+            expandIcon={<ExpandMoreIcon sx={{ color: T.textLo }} />}
           >
             <ResponsiveListItem
               label="Unable to Approve"
@@ -203,7 +206,7 @@ const ApplicationStatusSummary: React.FC<ApplicationStatusSummaryProps> = ({
             />
           </AccordionSummary>
           <AccordionDetails
-            sx={{ p: 0, mt: 1, backgroundColor: "#333333", color: "white" }}
+            sx={{ p: 0, mt: 1, backgroundColor: T.panelSoft, color: T.textHi }}
           >
             {STATUS_GROUPS.unapproved.map((status) => (
               <ResponsiveListItem

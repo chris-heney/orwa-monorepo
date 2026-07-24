@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Box, Checkbox, Modal, useMediaQuery } from "@mui/material";
+import { Box, Checkbox, Modal, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
   List,
@@ -24,9 +24,9 @@ import { getGrantStatus } from "../../emails-magement/Helper";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
 import TotalPayoutsField from "../payouts/components/TotalPayoutField";
-import { customDatagridStyle } from "../../../css";
+import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import { IProject } from "../types";
-import getContrastColor from "../../_helpers/getContrastColor";
+import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
 
 const PersistentFilterLiveSearch = () => {
   const { applicationSearchFilter, setApplicationSearchFilter } =
@@ -130,6 +130,7 @@ const GrantApplicationList = () => {
   }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const theme = useTheme();
   return isCreating ? (
     <GrantApplicationCreateForm
       setIsCreating={setIsCreating}
@@ -167,19 +168,12 @@ const GrantApplicationList = () => {
       >
         <DatagridConfigurable
           sx={{
-            ...customDatagridStyle,
+            ...grantDatagridStyle(theme),
             "& .RaDatagrid-row": {
-              padding: "0", // Remove default padding for rows
+              padding: "0",
             },
             "& .RaDatagrid-cell": {
-              padding: "4px 8px", // Add tighter padding for cells
-            },
-            " .th": {
               padding: "4px 8px",
-              fontWeight: "bold",
-              fontSize: "0.9rem",
-              color: "rgba(0, 0, 0, 0.54)",
-              backgroundColor: "#f5f5f5",
             },
           }}
           bulkActionButtons={false}
@@ -232,19 +226,17 @@ const GrantApplicationList = () => {
             noWrap
             render={(record) => (
               <Box
-                sx={{
-                  backgroundColor: record.status.color,
+                sx={coloredSurfaceSx(record.status?.color || "#cccccc", {
                   padding: 0.5,
-                  color: getContrastColor(record.status.color),
                   textOverflow: "ellipsis",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   maxWidth: "40px",
                   width: "40px",
                   display: "inline-block",
-                }}
+                })}
               >
-                {record.status.name}
+                {record.status?.name}
               </Box>
             )}
           />

@@ -9,10 +9,11 @@ import {
   Button,
   Box,
   Typography,
+  useTheme,
 } from "@mui/material";
 import { useRecordContext, useDataProvider, RaRecord, useGetList } from "react-admin";
 import { CurrencyOptions } from "../../../config/Settings";
-import { customDatagridStyle } from "../../../css";
+import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import { formatDate } from "../../../helpers/dateFormatter";
 import ModalMakePayout from "./components/MadalMakePayout";
 import { Money } from "@mui/icons-material";
@@ -25,6 +26,7 @@ const statusesForPayout = [
 const ApplicationPayoutList = () => {
   const record = useRecordContext<RaRecord>();
   const dataProvider = useDataProvider();
+  const theme = useTheme();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -47,7 +49,7 @@ const ApplicationPayoutList = () => {
   let totalPaid = 0;
 
   const rowSx = {
-    color: "white",
+    color: "text.primary",
     textAlign: "right",
   };
 
@@ -80,14 +82,12 @@ const ApplicationPayoutList = () => {
 
       <Table
         sx={{
-          ...customDatagridStyle,
-          ...{
-            borderCollapse: "collapse",
-            width: "100%",
-            boxShadow: "0 1px 5px 0 rgba(0,0,0,0.2)",
-            borderRadius: "4px",
-            overflow: "hidden",
-          },
+          ...grantDatagridStyle(theme),
+          borderCollapse: "collapse",
+          width: "100%",
+          boxShadow: "0 1px 5px 0 rgba(0,0,0,0.2)",
+          borderRadius: "4px",
+          overflow: "hidden",
         }}
       >
         <TableHead

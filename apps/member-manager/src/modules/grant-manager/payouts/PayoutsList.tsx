@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Box, Modal, useMediaQuery } from "@mui/material";
+import { Box, Modal, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
   List,
@@ -21,7 +21,7 @@ import TotalPayoutsField from "./components/TotalPayoutField";
 import BalanceField from "./components/BalanceField";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
-import { customDatagridStyle } from "../../../css";
+import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import SelectPayoutStatus from "./components/SelectPayoutStatus";
 import { CurrencyOptions } from "../../../config/Settings";
 
@@ -43,6 +43,7 @@ const ReimbursementPayoutsList = () => {
   }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const theme = useTheme();
 
   return (
     <>
@@ -54,10 +55,14 @@ const ReimbursementPayoutsList = () => {
             type: "Reimbursement",
           },
           ...(payoutStatusId && { payout_status: payoutStatusId }),
+          // Financial reporting: reimbursement payouts belong to the fiscal
+          // year their application was approved, not the year they were paid.
           ...(fiscalYearStart &&
             fiscalYearEnd && {
-              transaction_date: {
-                $between: [fiscalYearStart, fiscalYearEnd],
+              application: {
+                committee_date: {
+                  $between: [fiscalYearStart, fiscalYearEnd],
+                },
               },
             }),
         }}
@@ -107,7 +112,7 @@ const ReimbursementPayoutsList = () => {
           mutationMode="undoable"
           noDelete
           rowClick="expand"
-          sx={customDatagridStyle}
+          sx={grantDatagridStyle(theme)}
           editForm={
             isSmall ? <EditPayoutMobile /> : <EditPayout type="Reimbursement" />
           }

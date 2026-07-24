@@ -96,6 +96,26 @@ const GrantDashboardHeader = () => {
     );
   };
 
+  // Financial reporting: reimbursement payouts are attributed to the fiscal
+  // year their application was approved (committee date); administrative
+  // payouts have no application, so they keep the transaction date.
+  const payoutFiscalYearFilter =
+    fiscalYearStart && fiscalYearEnd
+      ? selectedTab === "Admin Payouts"
+        ? {
+            transaction_date: {
+              $between: [fiscalYearStart, fiscalYearEnd],
+            },
+          }
+        : {
+            application: {
+              committee_date: {
+                $between: [fiscalYearStart, fiscalYearEnd],
+              },
+            },
+          }
+      : {};
+
   return (
     <Box
       sx={{
@@ -152,32 +172,14 @@ const GrantDashboardHeader = () => {
                     ? { grant: grantId, status: applicationStatuses }
                     : { grant: grantId }
                   : resource === "grant-payouts"
-                  ? payoutStatusId
-                    ? {
-                        grant: grantId,
-                        payout_status: payoutStatusId,
-                        type:
-                          selectedTab === "Admin Payouts"
-                            ? "Administrative"
-                            : "Reimbursement",
-                            ...(fiscalYearStart && fiscalYearEnd && {
-                              transaction_date: {
-                                $between: [fiscalYearStart, fiscalYearEnd],
-                              },
-                          }),
-                        
-                      }
-                    : { grant: grantId,
+                  ? {
+                      grant: grantId,
+                      ...(payoutStatusId && { payout_status: payoutStatusId }),
                       type:
-                          selectedTab === "Admin Payouts"
-                            ? "Administrative"
-                            : "Reimbursement",
-                            ...(fiscalYearStart && fiscalYearEnd && {
-                              transaction_date: {
-                                $between: [fiscalYearStart, fiscalYearEnd],
-                              },
-                          }),
-
+                        selectedTab === "Admin Payouts"
+                          ? "Administrative"
+                          : "Reimbursement",
+                      ...payoutFiscalYearFilter,
                     }
                   : undefined
               }

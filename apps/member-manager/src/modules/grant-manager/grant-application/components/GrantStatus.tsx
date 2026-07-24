@@ -89,6 +89,12 @@ const GrantStatus = ({
             textAlign: 'center', width: fullWidth ? '100%' : 50,
             backgroundColor: rawStatus.color,
             color: getContrastColor(rawStatus.color, 0.3),
+            '& .MuiSelect-select': {
+              color: 'inherit',
+            },
+            '& .MuiSvgIcon-root': {
+              color: 'inherit',
+            },
             '& .css-6hp17o-MuiList-root-MuiMenu-list': {
               paddingTop: 0,
               paddingBottom: 0,

@@ -126,7 +126,12 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: isLoading ? "#f5f5f5" : "transparent",
+              backgroundColor: (theme) =>
+                isLoading
+                  ? theme.palette.mode === "dark"
+                    ? theme.palette.grey[800]
+                    : "#f5f5f5"
+                  : "transparent",
             }}
           >
             {isLoading ? (

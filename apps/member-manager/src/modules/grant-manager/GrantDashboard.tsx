@@ -42,7 +42,6 @@ const GrantDashboard = () => {
     setIsEmailSidebarOpen,
     isActivitySidebarOpen,
     isEmailSidebarOpen,
-    isFilterSidebarOpen,
     setResource,
   } = useGrantContext();
 
@@ -114,9 +113,7 @@ const GrantDashboard = () => {
         display: "flex",
         flexDirection: isSmall ? "column" : "row",
         maxWidth:
-          isActivitySidebarOpen || isEmailSidebarOpen || isFilterSidebarOpen
-            ? "90vw"
-            : "96vw",
+          isActivitySidebarOpen || isEmailSidebarOpen ? "90vw" : "96vw",
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
@@ -128,7 +125,13 @@ const GrantDashboard = () => {
             <TabContext value={selectedTab.toString()}>
               <TabList
                 variant="scrollable"
-                sx={{ backgroundColor: "#eee", overflow: "clip" }}
+                sx={{
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === "dark"
+                      ? theme.palette.grey[900]
+                      : theme.palette.grey[100],
+                  overflow: "clip",
+                }}
                 onChange={(event: React.SyntheticEvent, tv) => {
                   setSelectedTab(tv as TabValue);
                   setResource(
@@ -174,17 +177,15 @@ const GrantDashboard = () => {
                 <Box
                   sx={{
                     maxWidth:
-                      isActivitySidebarOpen ||
-                      isEmailSidebarOpen ||
-                      isFilterSidebarOpen
+                      isActivitySidebarOpen || isEmailSidebarOpen
                         ? "90vw"
                         : "96vw",
-                    overflow: "scroll",
+                    overflow: "auto",
                   }}
                 >
                   <TabContext value={selectedTab.toString()}>
                     {dashboardContext === "edit" && (
-                      <Box sx={{ backgroundColor: "#fff" }}>
+                      <Box sx={{ backgroundColor: "background.paper" }}>
                         <TabPanel
                           style={{ marginTop: -15 }}
                           value="summary"

@@ -12,9 +12,9 @@ import {
   useGetOne,
   FilterLiveSearch,
 } from "react-admin";
-import { customDatagridStyle } from "../../../css";
+import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import CustomPagination from "../../_components/CustomPagination";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 
 const ScoreSheetLink = () => {
   const record = useRecordContext();
@@ -38,6 +38,7 @@ const ScoreSheetLink = () => {
 };
 
 const ScoreList = () => {
+  const theme = useTheme();
   return (
     <List
       title={" "}
@@ -68,7 +69,7 @@ const ScoreList = () => {
     >
       <DatagridConfigurable
         bulkActionButtons={false}
-        sx={customDatagridStyle}
+        sx={grantDatagridStyle(theme)}
         expandSingle={true}
         rowClick="expand"
         isRowExpandable={() => true}

@@ -19,6 +19,7 @@ import getExpirationDate, {
   isMembershipActiveByExpiration,
 } from "../../_helpers/getExpirationDate";
 import getExpiryBackground from "../../_helpers/getExpiryBackground";
+import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
 import WaterSystemBulkUpdateButton from "./components/WaterSystemBulkUpdate";
 import { useMembershipContext } from "../../memberships_v2/MembershipsContextProvider";
 import { customDatagridStyle } from "../../../css";
@@ -100,12 +101,11 @@ const WaterSystemList = () => {
 
               return (
                 <Box
-                  sx={{
-                    backgroundColor: active ? backgroundColor : "#ff5555",
+                  sx={coloredSurfaceSx(active ? backgroundColor : "#ff5555", {
                     textAlign: "center",
                     fontWeight: 600,
                     px: 1,
-                  }}
+                  })}
                 >
                   {active ? "Active" : "Inactive"}
                 </Box>
