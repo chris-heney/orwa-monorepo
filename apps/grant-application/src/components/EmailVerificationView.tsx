@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, CircularProgress, TextField } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { requestEditLink } from "../data/API";
 import { useEditSession } from "../providers/EditSessionProvider";
 
@@ -22,7 +22,10 @@ const EmailVerificationView = () => {
   const { setView, sessionError, isLoadingSession } = useEditSession();
   const [email, setEmail] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [result, setResult] = useState<{ text: string; tone: "success" | "error" } | null>(null);
+  const [result, setResult] = useState<{
+    text: string;
+    tone: "success" | "error";
+  } | null>(null);
 
   const handleVerify = async () => {
     if (!email.trim()) return;
@@ -48,68 +51,72 @@ const EmailVerificationView = () => {
   };
 
   return (
-    <main className="flex flex-col items-center text-center px-4 py-12 md:py-20">
-      <div className="max-w-xl w-full">
-        <h1 className="text-3xl font-semibold text-gray-800 mb-4">
-          Modify Your Application
+    <main className="flex flex-col items-center px-4 py-12 text-left md:py-20">
+      <div className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          Modify your application
         </h1>
-        <p className="text-gray-600 mb-8">
-          Enter the email address used on your grant application. If your
-          application is still eligible for changes, we will email you a
-          secure link to modify it.
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          Enter an email address from your grant application (point of contact,
+          board chair, engineer, or any additional contact). If the application
+          is still eligible for changes, we will email a secure edit link.
         </p>
 
         {sessionError && (
-          <p className="mb-6 p-3 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+          <p className="mt-6 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
             {sessionError}
           </p>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-stretch">
-          <TextField
-            type="email"
-            label="Email Address"
-            size="small"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleVerify();
-            }}
-            className="flex-1"
-          />
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="min-w-0 flex-1 text-left text-sm font-medium text-slate-700">
+            Email address
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleVerify();
+              }}
+              className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              placeholder="you@example.com"
+            />
+          </label>
           {isVerifying || isLoadingSession ? (
-            <CircularProgress className="self-center" />
+            <div className="flex h-[42px] items-center justify-center px-4">
+              <CircularProgress size={24} />
+            </div>
           ) : (
-            <Button
-              variant="contained"
-              color="primary"
+            <button
+              type="button"
               onClick={handleVerify}
               disabled={!email.trim()}
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              Verify Email
-            </Button>
+              Verify email
+            </button>
           )}
         </div>
 
         {result && (
           <p
-            className={`mt-6 p-3 rounded-md border ${
+            className={`mt-6 rounded-md border px-3 py-2 text-sm ${
               result.tone === "success"
-                ? "bg-green-50 text-green-800 border-green-200"
-                : "bg-red-50 text-red-800 border-red-200"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-red-200 bg-red-50 text-red-800"
             }`}
           >
             {result.text}
           </p>
         )}
 
-        <Button
-          variant="text"
-          className="mt-8"
+        <button
+          type="button"
+          className="mt-8 text-sm font-medium text-blue-600 hover:underline"
           onClick={() => setView("landing")}
         >
-          &laquo; Back
-        </Button>
+          ← Back
+        </button>
       </div>
     </main>
   );

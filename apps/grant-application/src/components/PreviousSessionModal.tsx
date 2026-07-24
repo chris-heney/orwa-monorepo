@@ -1,15 +1,4 @@
-import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Box,
-} from '@mui/material';
-import { RestoreOutlined, AddCircleOutline } from '@mui/icons-material';
-import { formatSavedDataTimestamp } from '../helpers/formPersistence';
+import { formatSavedDataTimestamp } from "../helpers/formPersistence";
 
 interface PreviousSessionModalProps {
   open: boolean;
@@ -18,99 +7,62 @@ interface PreviousSessionModalProps {
   onStartFresh: () => void;
 }
 
-const PreviousSessionModal: React.FC<PreviousSessionModalProps> = ({
+const PreviousSessionModal = ({
   open,
   savedTimestamp,
   onContinue,
   onStartFresh,
-}) => {
-  return (
-    <Dialog
-      open={open}
-      maxWidth="sm"
-      fullWidth
-      disableEscapeKeyDown
-      sx={{
-        '& .MuiDialog-paper': {
-          borderRadius: 2,
-          bgcolor: 'background.paper',
-        },
-      }}
-    >
-      <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-        <Typography variant="h5" component="h2" fontWeight="bold">
-          Previous Session Found
-        </Typography>
-      </DialogTitle>
-      
-      <DialogContent sx={{ textAlign: 'center', py: 2 }}>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-          We found a previous session where you were filling out this form 
-          (last updated {formatSavedDataTimestamp(savedTimestamp)}). Would you like to 
-          continue where you left off or start fresh?
-        </Typography>
-        
-        <Box 
-          sx={{ 
-            bgcolor: 'success.light', 
-            color: 'success.contrastText', 
-            p: 2, 
-            borderRadius: 1,
-            mb: 1
-          }}
-        >
-          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-            📎 Great news! All your form data and uploaded files will be restored from your previous session.
-          </Typography>
-          <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
-            Please re-check all steps to make sure they are all filled out.
-          </Typography>
-        </Box>
-      </DialogContent>
+}: PreviousSessionModalProps) => {
+  if (!open) return null;
 
-      <DialogActions sx={{ flexDirection: 'column', gap: 1, px: 3, pb: 3 }}>
-        <Button
-          onClick={onContinue}
-          variant="contained"
-          color="primary"
-          fullWidth
-          size="large"
-          startIcon={<RestoreOutlined />}
-          sx={{
-            borderRadius: 2,
-            py: 1.5,
-            fontSize: '1rem',
-            fontWeight: 'medium',
-          }}
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="previous-session-title"
+    >
+      <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl text-left">
+        <h2
+          id="previous-session-title"
+          className="text-xl font-bold tracking-tight text-slate-900"
         >
-          CONTINUE WHERE I LEFT OFF
-        </Button>
-        
-        <Button
-          onClick={onStartFresh}
-          variant="outlined"
-          color="inherit"
-          fullWidth
-          size="large"
-          startIcon={<AddCircleOutline />}
-          sx={{
-            borderRadius: 2,
-            py: 1.5,
-            fontSize: '1rem',
-            fontWeight: 'medium',
-            borderColor: 'grey.400',
-            color: 'text.secondary',
-            '&:hover': {
-              borderColor: 'grey.600',
-              bgcolor: 'grey.50',
-            },
-          }}
-        >
-          START FRESH
-        </Button>
-      </DialogActions>
-    </Dialog>
+          Previous session found
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate-600">
+          We found a previous session where you were filling out this form
+          (last updated {formatSavedDataTimestamp(savedTimestamp)}). Continue
+          where you left off, or start fresh?
+        </p>
+
+        <div className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          <p className="font-medium">
+            Your form data and uploaded files can be restored from that session.
+          </p>
+          <p className="mt-1 text-emerald-800">
+            Please re-check each step to confirm everything is still correct.
+          </p>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={onContinue}
+            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Continue where I left off
+          </button>
+          <button
+            type="button"
+            onClick={onStartFresh}
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Start fresh
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-export default PreviousSessionModal; 
+export default PreviousSessionModal;

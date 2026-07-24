@@ -6,13 +6,16 @@ import { SelectInput } from "./_components/SelectInput";
 import { NumberInput } from "./_components/NumberInput";
 import { countyOptions } from "../data/countyOptions";
 import FormSection from "./_components/FormSection";
+import StepShell from "./_components/StepShell";
 import { stateOptions } from "../data/stateOptions";
 import ZipCodeInput from "./_components/ZipCodeInput";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const SystemAndContactStep = () => {
   const { watch, setValue } = useFormContext();
   const physical_same_as_mailing = watch("physical_same_as_mailing");
   const has_engineer = watch("has_engineer");
+  const additionalContacts = watch("additional_contacts") || [];
 
   const handlePhysicalSameAsMailingChange = (checked: boolean) => {
     if (checked) {
@@ -31,147 +34,207 @@ const SystemAndContactStep = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-       {/* DEQ/ORWA Rural Infrastructure Grant (RIG) Application Form */}
-       <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-        <div className="flex-1 order-2 md:order-1 mb-4 md:mb-0">
-          <h2 className="block mb-3 md:mb-5 text-left text-xl font-bold">
-            DEQ/ORWA Rural Infrastructure Grant (RIG) Application Form
-          </h2>
-          <p className="text-gray-500 text-sm md:text-medium text-left">
+    <StepShell
+      title="System & Contacts"
+      description={
+        <>
+          <p>
             Maximum of $100,000 award to each recipient, with an 80/20 match
-            requirement. For more information about this program, please contact{" "}
-            <a href="mailto:rig@orwa.org" className="text-blue-600 underline">
+            requirement. For more information, contact{" "}
+            <a
+              href="mailto:rig@orwa.org"
+              className="font-medium text-blue-600 hover:underline"
+            >
               rig@orwa.org
             </a>
-            . Documents you will need to submit (if applicable): any engineering
-            reports related to your projects; DEQ notices of violation or consent
-            orders related to your projects; project proposals/bids with the
-            total project costs listed.
+            .
           </p>
-          <p className="text-red-600 text-xs md:text-sm text-left py-2 md:py-5">
-            Fields marked with * are required
+          <p className="mt-2 text-xs text-slate-500">
+            You may need engineering reports, DEQ notices/consent orders, and
+            project proposals/bids. Fields marked with{" "}
+            <span className="font-semibold text-red-600">*</span> are required.
           </p>
-        </div>
-        <div className="flex-shrink-0 w-full md:w-auto order-1 md:order-2">
-          <img
-            src="./rig.webp"
-            alt="RIG Logo"
-            className="w-60 h-auto md:w-40 md:ml-6 object-contain mx-auto md:mx-0 mb-5"
-          />
-        </div>
-      </div>
-
-      <FormSection title="System Information">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <TextInput
-            name="legal_entity_name"
-            label="Public Water System Legal Name"
-            required
-          />
-          <TextInput
-            name="facility_id"
-            label="DEQ Facility ID #"
-            required
-            helperText="PWSID (e.g. OK1234567 or facility id S123456)"
-            requiredMessage="is required (e.g. OK1234567 or facility id S123456)"
-          />
-          <NumberInput
-            name="population_served"
-            label="Population Served"
-            required
-            wholeNumber
-            max={10000}
-            helperText="Population served by the public water system."
-          />
-          <SelectInput
-            source="county"
-            label="County"
-            options={countyOptions}
-            required
-            helperText="Principal county served by the public water system. (select from dropdown)"
-          />
-        </div>
-      </FormSection>
-
-      <FormSection title="Physical Address">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <TextInput name="physical_address_street" label="Street" required />
-          <TextInput name="physical_address_line_two" label="Line Two" />
-          <TextInput name="physical_address_city" label="City" required />
-          <SelectInput
-            source="physical_address_state"
-            label="State"
-            options={stateOptions}
-            required
-            helperText="Choose from dropdown"
-          />
-          <ZipCodeInput source="physical_address_zip" />
-        </div>
-        <CheckboxInput
-          name="physical_same_as_mailing"
-          label="Physical address same as mailing address"
-          onChange={handlePhysicalSameAsMailingChange}
+        </>
+      }
+      aside={
+        <img
+          src="./rig.webp"
+          alt="RIG Logo"
+          className="mx-auto h-auto w-36 object-contain sm:mx-0 sm:w-40"
         />
-      </FormSection>
-
-      {!physical_same_as_mailing && (
-        <FormSection title="Mailing Address">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <TextInput name="mailing_address_street" label="Street/PoBox" required />
-            <TextInput name="mailing_address_line_two" label="Line Two" />
-            <TextInput name="mailing_address_city" label="City" required />
-            <SelectInput
-              source="mailing_address_state"
-              label="State"
-              options={stateOptions}
-              helperText="Choose from dropdown"
+      }
+    >
+      <ValidationHighlight
+        field="system"
+        clearWhen={Boolean(
+          watch("legal_entity_name") &&
+            watch("facility_id") &&
+            watch("population_served") &&
+            watch("county")
+        )}
+      >
+        <FormSection
+          title="System information"
+          description="Identify the public water system applying for this grant."
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <TextInput
+              name="legal_entity_name"
+              label="Public Water System Legal Name"
               required
             />
-            <ZipCodeInput source="mailing_address_zip" />
+            <TextInput
+              name="facility_id"
+              label="DEQ Facility ID #"
+              required
+              helperText="PWSID (e.g. OK1234567 or facility id S123456)"
+              requiredMessage="is required (e.g. OK1234567 or facility id S123456)"
+            />
+            <NumberInput
+              name="population_served"
+              label="Population Served"
+              required
+              wholeNumber
+              max={10000}
+              helperText="Population served by the public water system."
+            />
+            <SelectInput
+              source="county"
+              label="County"
+              options={countyOptions}
+              required
+              helperText="Principal county served (select from dropdown)"
+            />
           </div>
         </FormSection>
+      </ValidationHighlight>
+
+      <ValidationHighlight
+        field="physical_address"
+        clearWhen={Boolean(
+          watch("physical_address_street") &&
+            watch("physical_address_city") &&
+            watch("physical_address_state") &&
+            watch("physical_address_zip")
+        )}
+      >
+        <FormSection title="Physical address">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <TextInput name="physical_address_street" label="Street" required />
+            <TextInput name="physical_address_line_two" label="Line Two" />
+            <TextInput name="physical_address_city" label="City" required />
+            <SelectInput
+              source="physical_address_state"
+              label="State"
+              options={stateOptions}
+              required
+              helperText="Choose from dropdown"
+            />
+            <ZipCodeInput source="physical_address_zip" />
+          </div>
+          <CheckboxInput
+            name="physical_same_as_mailing"
+            label="Physical address same as mailing address"
+            onChange={handlePhysicalSameAsMailingChange}
+          />
+        </FormSection>
+      </ValidationHighlight>
+
+      {!physical_same_as_mailing && (
+        <ValidationHighlight
+          field="mailing_address"
+          clearWhen={Boolean(
+            watch("mailing_address_street") &&
+              watch("mailing_address_city") &&
+              watch("mailing_address_state") &&
+              watch("mailing_address_zip")
+          )}
+        >
+          <FormSection title="Mailing address">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <TextInput
+                name="mailing_address_street"
+                label="Street/PoBox"
+                required
+              />
+              <TextInput name="mailing_address_line_two" label="Line Two" />
+              <TextInput name="mailing_address_city" label="City" required />
+              <SelectInput
+                source="mailing_address_state"
+                label="State"
+                options={stateOptions}
+                helperText="Choose from dropdown"
+                required
+              />
+              <ZipCodeInput source="mailing_address_zip" />
+            </div>
+          </FormSection>
+        </ValidationHighlight>
       )}
 
-      <FormSection title="Contacts">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <ContactArray 
-          source="point_of_contact" 
-          label="Point Of Contact" 
-          helperText="The person to contact for follow-up on the grant application and project oversight."
-          />
-          <ContactArray 
-          source="chairman" 
-          label="Chairman of the Board" 
-          helperText="The chairman of the board of the public water system."
-          />
-          <div>
+      <ValidationHighlight
+        field="contacts"
+        clearWhen={Boolean(
+          watch("point_of_contact.first") &&
+            watch("point_of_contact.last") &&
+            watch("point_of_contact.email") &&
+            watch("chairman.first") &&
+            watch("chairman.last")
+        )}
+      >
+        <FormSection
+          title="Primary contacts"
+          description="Point of contact and board chair are required. Engineer is optional."
+        >
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <ContactArray
+              source="point_of_contact"
+              label="Point of contact"
+              helperText="Person for follow-up on the grant application and project oversight."
+            />
+            <ContactArray
+              source="chairman"
+              label="Chairman of the board"
+              helperText="Chairman of the board of the public water system."
+            />
+          </div>
+          <div className="mt-4">
             <CheckboxInput
               name="has_engineer"
-              label="Do you have an Engineer?"
+              label="Do you have an engineer?"
             />
             {has_engineer && (
-              <ContactArray 
-              source="engineer" 
-              label="Engineer" 
-              helperText="The engineer for the public water system."
+              <ContactArray
+                source="engineer"
+                label="Engineer"
+                helperText="Engineer for the public water system."
               />
             )}
           </div>
-        </div>
-      </FormSection>
+        </FormSection>
+      </ValidationHighlight>
 
-      <FormSection title="Additional Contacts">
-        <div className="max-w-xl">
+      <ValidationHighlight
+        field="additional_contacts"
+        clearWhen={true}
+      >
+        <FormSection
+          title="Additional contacts"
+          description="Optional — add as many people as needed who should be able to follow up on this application (they can also request an edit link by email)."
+        >
           <ContactArray
             source="additional_contacts"
             isArray
-            label="Additional Contacts"
-            helperText="Anyone else who should be able to follow up on this application."
+            label={`Additional contacts${
+              additionalContacts.length
+                ? ` (${additionalContacts.length})`
+                : ""
+            }`}
+            helperText="Include title, phone, and email for each person."
           />
-        </div>
-      </FormSection>
-    </div>
+        </FormSection>
+      </ValidationHighlight>
+    </StepShell>
   );
 };
 

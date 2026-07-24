@@ -1,7 +1,5 @@
-import { Divider } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import FormStepper from "./_components/FormStepper";
-// import StepNavigation from "./StepNavigation";
 import { Form } from "../FormProvider";
 import StepNavigation from "./StepNavigation";
 import {
@@ -13,14 +11,13 @@ import { useUserContext } from "../providers/UserContextProvider";
 import EntryListSidebar from "../entries/EntryListSidebar";
 import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
 import PreviousSessionModal from "./PreviousSessionModal";
-import { 
-  getSavedFormData, 
+import {
+  getSavedFormData,
   clearSavedFormData,
-  restoreFilesFromCache
+  restoreFilesFromCache,
 } from "../helpers/formPersistence";
 import { useEditSession } from "../providers/EditSessionProvider";
-// import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
-// import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
+import { ValidationHighlightProvider } from "../helpers/validationHighlight";
 
 const GrantApplicationForm = () => {
   const { steps, setStepIndex, stepIndex } = useContext(FormSteps);
@@ -29,40 +26,38 @@ const GrantApplicationForm = () => {
   const { isAdminView, isLoggedIn } = useUserContext();
   const { isEditMode, editPayload } = useEditSession();
 
-  const [showPreviousSessionModal, setShowPreviousSessionModal] = useState(false);
+  const [showPreviousSessionModal, setShowPreviousSessionModal] =
+    useState(false);
   const [savedTimestamp, setSavedTimestamp] = useState<number>(0);
-  const [formDefaultValues, setFormDefaultValues] = useState<Record<string, any> | undefined>(
+  const [formDefaultValues, setFormDefaultValues] = useState<
+    Record<string, any> | undefined
+  >(
     (editPayload as Record<string, any> | null) ??
       entryPayload ??
       (payload.grantApplicationFormPayload as Record<string, any>)
   );
-  const [formKey, setFormKey] = useState(0); // Force form re-render when needed
+  const [formKey, setFormKey] = useState(0);
 
-  // Hydrate from the server-provided application when editing
   useEffect(() => {
     if (isEditMode && editPayload) {
       setFormDefaultValues(editPayload as Record<string, any>);
       setStepIndex(0);
-      setFormKey(prev => prev + 1);
+      setFormKey((prev) => prev + 1);
     }
-  }, [isEditMode, editPayload]);
+  }, [isEditMode, editPayload, setStepIndex]);
 
-  // Check for saved form data on component mount
   useEffect(() => {
-    // Clean expired files on mount
     const cleanupFiles = async () => {
       try {
         const { fileCache } = await import("../helpers/fileCache");
         await fileCache.cleanExpiredFiles();
       } catch (error) {
-        console.warn('Failed to clean expired files:', error);
+        console.warn("Failed to clean expired files:", error);
       }
     };
 
     cleanupFiles();
 
-    // Only check for saved data if we're not in admin view, not editing an
-    // existing application, and no entryPayload exists
     if (!isAdminView && !entryPayload && !isEditMode) {
       const savedData = getSavedFormData();
       if (savedData) {
@@ -70,23 +65,21 @@ const GrantApplicationForm = () => {
         setShowPreviousSessionModal(true);
       }
     }
-  }, []);
+  }, [isAdminView, entryPayload, isEditMode]);
 
   const handleContinuePreviousSession = async () => {
-    const savedData = getSavedFormData(); 
+    const savedData = getSavedFormData();
     if (savedData) {
       try {
-        // Restore files from cache before setting form data
         const restoredData = await restoreFilesFromCache(savedData.data);
         setFormDefaultValues(restoredData);
         setStepIndex(savedData.stepIndex || 0);
-        setFormKey(prev => prev + 1); // Force form re-render with new data
+        setFormKey((prev) => prev + 1);
       } catch (error) {
-        console.warn('Failed to restore files from cache:', error);
-        // Fallback to data without files
+        console.warn("Failed to restore files from cache:", error);
         setFormDefaultValues(savedData.data);
         setStepIndex(savedData.stepIndex || 0);
-        setFormKey(prev => prev + 1);
+        setFormKey((prev) => prev + 1);
       }
     }
     setShowPreviousSessionModal(false);
@@ -95,13 +88,15 @@ const GrantApplicationForm = () => {
   const handleStartFresh = () => {
     clearSavedFormData();
     setShowPreviousSessionModal(false);
-    // Reset to default values
     setFormDefaultValues(
-      entryPayload ?? (payload.grantApplicationFormPayload as Record<string, any>)
+      entryPayload ??
+        (payload.grantApplicationFormPayload as Record<string, any>)
     );
     setStepIndex(0);
-    setFormKey(prev => prev + 1); // Force form re-render with fresh data
+    setFormKey((prev) => prev + 1);
   };
+
+  const activeStep = steps.filter((step) => step.active)[stepIndex];
 
   return (
     <>
@@ -111,30 +106,30 @@ const GrantApplicationForm = () => {
         onContinue={handleContinuePreviousSession}
         onStartFresh={handleStartFresh}
       />
-      <main className="flex flex-col text-center">
-        {/* Form Stepper */}
-
+      <main className="flex min-h-0 flex-col text-left">
         <FormStepper stepIndex={stepIndex} setStepIndex={setStepIndex} />
 
-        <Divider />
-
-        {/* Active Step */}
-        <section className="min-h-96 p-3 md:py-6">
+        <section className="min-h-96 flex-1">
           <Form
             key={formKey}
             defaultValues={formDefaultValues}
             autoSave={!isEditMode}
           >
-            <div className="gap-4 grid grid-cols-12 align-middle p-5">
-              <div className={`${(isLoggedIn  && isAdminView)  ? "col-span-9" : "col-span-12"}`}>
-                {steps.filter((step) => step.active)[stepIndex].component}
+            <ValidationHighlightProvider clearOn={stepIndex}>
+              <div className="mx-auto grid max-w-6xl grid-cols-12 gap-4 px-4 py-2">
+                <div
+                  className={
+                    isLoggedIn && isAdminView ? "col-span-9" : "col-span-12"
+                  }
+                >
+                  {activeStep?.component}
+                </div>
+                {isLoggedIn && isAdminView && <EntryListSidebar />}
               </div>
-              {(isLoggedIn  && isAdminView) && <EntryListSidebar />}
-            </div>
-            <StepNavigation />
-            {(isLoggedIn  && isAdminView) && <ManualUploadTest/>}
+              <StepNavigation />
+              {isLoggedIn && isAdminView && <ManualUploadTest />}
+            </ValidationHighlightProvider>
           </Form>
-          {/* <DevTool control={form.control} placement='top-right' /> */}
         </section>
       </main>
     </>

@@ -55,17 +55,17 @@ export const TextInput = ({
           ...validation,
         })}
         onChange={handleChange}
-        className={`input-field text-left p-2 w-full border rounded-md focus:outline-none ${
+        className={`w-full rounded-md border bg-white px-3 py-2.5 text-left text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
           getError(name)
-            ? "border-red-500 focus:ring-2 focus:ring-red-500"
-            : "border-gray-300 focus:ring-2 focus:ring-blue-800"
+            ? "border-red-500 focus:border-red-500 focus:ring-red-500/20"
+            : "border-slate-300 focus:border-blue-500 focus:ring-blue-500/20"
         }`}
       />
       {helperText && !getError(name) && (
-        <p className="text-gray-500 text-sm mt-1 text-left">{helperText}</p>
+        <p className="mt-1 text-left text-xs text-slate-500">{helperText}</p>
       )}
       {getError(name) && (
-        <p className="text-red-500 text-sm mt-1 text-left">{`${getError(name)}*`}</p>
+        <p className="mt-1 text-left text-sm text-red-500">{`${getError(name)}*`}</p>
       )}
     </div>
   );

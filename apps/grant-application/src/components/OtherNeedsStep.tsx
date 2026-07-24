@@ -1,33 +1,33 @@
 import { TextAreaInput } from "./_components/TextAreaInput";
 import FormSection from "./_components/FormSection";
+import StepShell from "./_components/StepShell";
 import FileInput from "./_components/FileInput";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const OtherNeedsStep = () => {
-
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      <FormSection title="Additional Details">
-        <div className="flex flex-wrap -mx-3 mb-6">
-          <div className="w-full md:w-1/2 px-3 mb-6 md:mb-0">
+    <StepShell
+      title="Other Needs"
+      description="Optional — share anything else that should be considered with this application."
+    >
+      <ValidationHighlight field="other">
+        <FormSection title="Additional details">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <TextAreaInput
               label="Other Needs"
               name="additional_information"
-              helperText="Please describe any other needs or additional information you would like to include in your application."
-              
+              helperText="Describe any other needs or information to include."
+            />
+            <FileInput
+              label="Additional Files"
+              name="uploaded_additional_files"
+              multiple
+              helperText="Upload any additional supporting files."
             />
           </div>
-          <div className="w-full md:w-1/2 px-3">
-            <FileInput 
-            label="Additional Files" 
-            name="uploaded_additional_files" 
-            multiple
-            helperText="Please upload any additional files you would like to include in your application."
-            />
-          </div>
-        </div>
-           
-      </FormSection>
-    </div>
+        </FormSection>
+      </ValidationHighlight>
+    </StepShell>
   );
 };
 

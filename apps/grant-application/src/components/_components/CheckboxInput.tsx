@@ -1,12 +1,11 @@
 import { useFormContext } from "react-hook-form";
 
-// Checkbox Input Component
 interface CheckboxInputProps {
   name: string;
   label: string;
   required?: boolean;
   helperText?: string;
-  onChange?: (checked: boolean) => void; // Allow passing an onChange function
+  onChange?: (checked: boolean) => void;
 }
 
 export const CheckboxInput = ({
@@ -23,39 +22,38 @@ export const CheckboxInput = ({
     formState: { errors },
   } = useFormContext();
 
-  // Get the current value of the checkbox
   const isChecked = watch(name);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
-    setValue(name, checked); // Update the form state
-    if (onChange) {
-      onChange(checked); // Trigger the custom onChange handler
-    }
+    setValue(name, checked, { shouldValidate: true });
+    onChange?.(checked);
   };
 
   return (
-    <div className="mb-4">
-      <div className="flex items-center">
+    <div className="mb-4 text-left">
+      <label className="flex cursor-pointer items-start gap-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 hover:bg-slate-100">
         <input
           {...register(name, { required })}
           type="checkbox"
-          checked={isChecked}
+          checked={Boolean(isChecked)}
           onChange={handleChange}
-          className={`mr-2 h-4 w-4 ${
-            errors[name] ? "border-red-500" : "border-gray-300"
+          className={`mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500 ${
+            errors[name] ? "border-red-500" : ""
           }`}
         />
-        <label className="block text-left text-sm font-semibold">
+        <span className="text-sm font-medium text-slate-800">
           {label}
-          {required && <span className="text-red-500 ml-0.5">*</span>}
-        </label>
-      </div>
+          {required && <span className="ml-0.5 text-red-500">*</span>}
+        </span>
+      </label>
       {helperText && (
-        <p className="text-gray-500 text-sm mt-1 text-left">{helperText}</p>
+        <p className="mt-1 text-xs text-slate-500">{helperText}</p>
       )}
       {errors[name] && (
-        <p className="text-red-500 text-sm mt-1 text-left">{`${errors[name]?.message}*`}</p>
+        <p className="mt-1 text-left text-sm text-red-500">
+          {`${errors[name]?.message}*`}
+        </p>
       )}
     </div>
   );

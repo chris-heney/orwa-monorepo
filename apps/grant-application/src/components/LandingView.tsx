@@ -1,4 +1,4 @@
-import { Button, CircularProgress } from "@mui/material";
+import { CircularProgress } from "@mui/material";
 import { useEditSession } from "../providers/EditSessionProvider";
 
 const LandingView = () => {
@@ -6,43 +6,39 @@ const LandingView = () => {
     useEditSession();
 
   return (
-    <main className="flex flex-col items-center text-center px-4 py-12 md:py-20">
-      <div className="max-w-2xl">
-        <h1 className="text-3xl md:text-4xl font-semibold text-gray-800 mb-4">
+    <main className="flex flex-col items-center px-4 py-12 text-left md:py-20">
+      <div className="w-full max-w-2xl rounded-lg border border-slate-200 bg-white p-8 shadow-sm">
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
           ORWA Grant Application
         </h1>
-        <p className="text-gray-600 mb-10">
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
           Welcome to the Oklahoma Rural Water Association grant application
-          portal. Start a new application, or make changes to an application
-          you have already submitted &mdash; applications can be modified up
-          until they enter processing.
+          portal. Start a new application, or make changes to one you have
+          already submitted — applications can be modified until they enter
+          processing.
         </p>
 
         {isLoadingSession ? (
-          <div className="flex flex-col items-center gap-3">
-            <CircularProgress />
-            <p className="text-gray-500">Loading your application...</p>
+          <div className="mt-10 flex flex-col items-center gap-3">
+            <CircularProgress size={28} />
+            <p className="text-sm text-slate-500">Loading your application…</p>
           </div>
         ) : (
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              variant="contained"
-              color="primary"
-              size="large"
-              className="w-full sm:w-64"
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
               onClick={startNewApplication}
+              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-1"
             >
               Start New Application
-            </Button>
-            <Button
-              variant="outlined"
-              color="primary"
-              size="large"
-              className="w-full sm:w-64"
+            </button>
+            <button
+              type="button"
               onClick={beginModify}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:flex-1"
             >
               Modify Existing Application
-            </Button>
+            </button>
           </div>
         )}
       </div>

@@ -187,10 +187,57 @@ export async function generatePDF(
       font: timesRomanFont,
     });
 
-    yPosition -= lineHeight ; // Adjust yPosition after adding these two fields
+    yPosition -= lineHeight * 1.5;
 
-    yPosition = lastContactYPosition - lineHeight; // Update yPosition for the next section
-    yPosition -= lineHeight * 2 ; // Add space after the Contact Information section
+    const chairman = payload.chairman;
+    if (chairman?.first || chairman?.last) {
+      page.drawText(
+        `Board Chair: ${chairman.first ?? ""} ${chairman.last ?? ""}`.trim() +
+          (chairman.title ? ` (${chairman.title})` : "") +
+          (chairman.email ? ` — ${chairman.email}` : ""),
+        {
+          x: margin,
+          y: yPosition,
+          size: fontSize,
+          font: timesRomanFont,
+          maxWidth: width - 2 * margin,
+        }
+      );
+      yPosition -= lineHeight;
+    }
+
+    const additionalContacts = payload.additional_contacts ?? [];
+    if (additionalContacts.length > 0) {
+      page.drawText("Additional Contacts", {
+        x: margin,
+        y: yPosition,
+        size: fontSize,
+        font: timesRomanBoldFont,
+      });
+      yPosition -= lineHeight;
+
+      for (const contact of additionalContacts) {
+        const line = [
+          `${contact.first ?? ""} ${contact.last ?? ""}`.trim(),
+          contact.title,
+          contact.phone,
+          contact.email,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+        if (!line) continue;
+        page.drawText(line, {
+          x: margin,
+          y: yPosition,
+          size: fontSize,
+          font: timesRomanFont,
+          maxWidth: width - 2 * margin,
+        });
+        yPosition -= lineHeight;
+      }
+    }
+
+    yPosition -= lineHeight; // space before Funding Request
 
     // Funding Request Section
     page.drawText(`Funding Request (${payload.drinking_or_wastewater})`, {

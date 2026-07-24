@@ -4,23 +4,25 @@ import { TextInput } from "./_components/TextInput";
 import { CheckboxInput } from "./_components/CheckboxInput";
 import { SelectInput } from "./_components/SelectInput";
 import FormSection from "./_components/FormSection";
+import StepShell from "./_components/StepShell";
 import FileInput from "./_components/FileInput";
 import { NumberInput } from "./_components/NumberInput";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const StatusImpactStep = () => {
-
   const { watch } = useFormContext();
   const hasEngineeringReport = watch("engineering_report");
   const resolvesViolation = watch("resolves_violation");
-
   const satisfyDeqIssue = watch("satisfy_deq_issued_order");
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 ">
-      <h2 className="text-2xl  mb-6 ">Status and Impact Details</h2>
-
-      <FormSection title="Engineering Report">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-3 ">
+    <StepShell
+      title="Status & Impact"
+      description="Tell us about engineering reports, DEQ orders, and how this project improves system status."
+    >
+      <ValidationHighlight field="status">
+      <FormSection title="Engineering report">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* <CheckboxInput
             label="Has an engineering report been prepared?"
             name="engineering_report"
@@ -46,7 +48,7 @@ const StatusImpactStep = () => {
           {/* engineering_report_deq_approved */}
           {hasEngineeringReport === "Yes" && (
              <SelectInput
-             label="as the engineering report been approved by DEQ?"
+             label="Has the engineering report been approved by DEQ?"
              source="engineering_report_deq_approved"
              options={[
                { value: "Yes", label: "Yes" },
@@ -146,7 +148,8 @@ const StatusImpactStep = () => {
           />
         </div>}
       </FormSection>
-    </div>
+      </ValidationHighlight>
+    </StepShell>
   );
 };
 

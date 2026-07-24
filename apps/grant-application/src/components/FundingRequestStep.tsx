@@ -5,7 +5,9 @@ import { IProject } from "../types/types";
 import { TextAreaInput } from "./_components/TextAreaInput";
 import { SelectInput } from "./_components/SelectInput";
 import FormSection from "./_components/FormSection";
+import StepShell from "./_components/StepShell";
 import Loading from "./Loading";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const FundingRequestStep = () => {
   const { data: wastewaterProjects, isLoading } = useGetProjects();
@@ -21,10 +23,16 @@ const FundingRequestStep = () => {
     return project && project.name === "Other Describe (1)";
   });
 
-  return isLoading ? <Loading/> : (
-    <div className="container mx-auto max-w-6xl px-4 py-8">
-      <FormSection title="Funding Request">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+  return isLoading ? (
+    <Loading />
+  ) : (
+    <StepShell
+      title="Funding Request"
+      description="Choose the system type and select all projects that apply. Separate applications are required for drinking water vs wastewater."
+    >
+      <ValidationHighlight field="funding">
+        <FormSection title="Project selection">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="col-span-1">
             <SelectInput
               source="drinking_or_wastewater"
@@ -115,9 +123,10 @@ const FundingRequestStep = () => {
             </div>
           )}
         </div>
-      </FormSection>
-    </div>
-  )
+        </FormSection>
+      </ValidationHighlight>
+    </StepShell>
+  );
 };
 
 export default FundingRequestStep;
