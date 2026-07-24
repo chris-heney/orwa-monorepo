@@ -124,6 +124,7 @@
     "@tiptap/extension-image": "^3.4.1",
     "@tiptap/extension-paragraph": "^3.4.1",
     "@tiptap/extension-text-style": "^3.4.1",
+    "@turf/boolean-point-in-polygon": "^7.3.5",
     "@turf/helpers": "^7.1.0",
     "@turf/turf": "^7.0.0",
     "@types/mapbox-gl": "^3.1.0",

@@ -1,142 +1,175 @@
 import {
   Box,
-  Divider,
   InputBase,
   Typography,
-  alpha,
-  styled,
   useMediaQuery,
 } from "@mui/material"
-import { ChangeEvent, useEffect, useRef, useState } from "react"
-import { Filter } from "../types/Filter"
+import { ChangeEvent, useState } from "react"
 import SearchIcon from "@mui/icons-material/Search"
-import { useGetGrantApplications } from "../helpers/APIService"
 import { useAppContext } from "../providers/AppContext"
 import { useMapContext } from "../providers/MapContext"
-
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.black, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.black, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: -10,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(1),
-    width: "auto",
-  },
-}))
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-}))
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-
-  width: "70%",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    transition: theme.transitions.create("width"),
-    width: "100%",
-  },
-}))
+import { T, display, money } from "../theme/tokens"
+import { stageColorForApplication } from "../helpers/stages"
 
 const GappList = () => {
-  const map = useRef<mapboxgl.Map>()
   const [searchKeyword, setSearchKeyword] = useState<string>("")
-  const [total, setTotal] = useState<number>(0)
-  const getGrantApplications = useGetGrantApplications()
 
-  const { applications } = useAppContext()
+  const { applications, allApplications } = useAppContext()
   const { setIsSidebarOpen } = useAppContext()
 
-  const { setCurrentApplication } = useMapContext()
+  const { mapRef, setCurrentApplication } = useMapContext()
 
   // Filter applications based on the search keyword
   const filteredApplications = applications.filter((gapp) =>
     gapp.legal_entity_name.toLowerCase().includes(searchKeyword.toLowerCase())
   )
 
-  // Update the applications state with filtered results
   const handleSearchInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchKeyword(e.target.value)
   }
 
-  const getLength = async (searchFilters: Filter[]): Promise<number> => {
-    const data = await getGrantApplications(searchFilters)
-    return data.length
-  }
-
-  useEffect(() => {
-    getLength([]).then((data) => setTotal(data))
-  }, [])
-
   const isSmall = useMediaQuery("(max-width:900px)")
 
   return (
-    <>
+    <Box sx={{ p: 1.5 }}>
+      <Typography
+        sx={{
+          ...display,
+          fontSize: 12,
+          fontWeight: 600,
+          letterSpacing: "0.18em",
+          textTransform: "uppercase",
+          color: T.textLo,
+          textAlign: "left",
+          mb: 1,
+        }}
+      >
+        Applications{" "}
+        <Box component="span" sx={{ color: T.textFaint }}>
+          {applications.length} / {allApplications.length}
+        </Box>
+      </Typography>
+
+      {/* Search */}
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-start",
+          alignItems: "center",
+          gap: 1,
+          px: 1.25,
+          py: 0.5,
+          borderRadius: "10px",
+          backgroundColor: T.panel,
+          border: `1px solid ${T.line}`,
+          mb: 1.5,
+          "&:focus-within": { borderColor: T.water },
         }}
       >
-        <Typography variant="h6" textAlign={"left"} ml={1}>
-          Grant Applications ({applications.length}/ {total})
-        </Typography>
-        <Search>
-          <SearchIconWrapper>
-            <SearchIcon />
-          </SearchIconWrapper>
-          <StyledInputBase
-            placeholder="Search…"
-            inputProps={{ "aria-label": "search" }}
-            value={searchKeyword}
-            onChange={handleSearchInputChange}
-          />
-        </Search>
+        <SearchIcon sx={{ fontSize: 18, color: T.textLo }} />
+        <InputBase
+          placeholder="Search systems…"
+          inputProps={{ "aria-label": "search" }}
+          value={searchKeyword}
+          onChange={handleSearchInputChange}
+          sx={{ color: T.textHi, fontSize: 14, width: "100%" }}
+        />
       </Box>
-      <Divider sx={{ mt: 1, mb: 2 }} />
-      <Box sx={{}}>
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
         {filteredApplications.map((gapp) => (
           <Box
             onClick={() => {
-              map?.current?.setCenter({
-                lat: gapp.location.lat,
-                lng: gapp.location.lng,
-              })
-
+              if (gapp.location != null) {
+                mapRef.current?.getMap().flyTo({
+                  center: { lat: gapp.location.lat, lng: gapp.location.lng },
+                  zoom: 10,
+                })
+              }
               setCurrentApplication(gapp)
-
-              isSmall ? setIsSidebarOpen(false) : null
-
+              if (isSmall) setIsSidebarOpen(false)
             }}
             key={gapp.id}
             sx={{
-              p: 1,
+              px: 1.25,
+              py: 1,
               cursor: "pointer",
+              borderRadius: "10px",
+              border: `1px solid transparent`,
               "&:hover": {
-                backgroundColor: "#f0f0f0",
+                backgroundColor: T.panelSoft,
+                borderColor: T.line,
               },
-              maxWidth: 350,
             }}
           >
-            <Typography textAlign={"left"}>{gapp.legal_entity_name}</Typography>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 1,
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.9, minWidth: 0 }}>
+                <Box
+                  sx={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: stageColorForApplication(gapp),
+                    flexShrink: 0,
+                  }}
+                />
+                <Typography
+                  sx={{
+                    fontSize: 13.5,
+                    color: T.textHi,
+                    textAlign: "left",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {gapp.legal_entity_name}
+                </Typography>
+              </Box>
+              {(gapp.award_amount || 0) > 0 && (
+                <Typography
+                  sx={{
+                    ...display,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: T.committed,
+                    fontVariantNumeric: "tabular-nums",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {money(gapp.award_amount, true)}
+                </Typography>
+              )}
+            </Box>
+            <Typography
+              sx={{
+                fontSize: 11,
+                color: T.textFaint,
+                textAlign: "left",
+                ml: 2.1,
+              }}
+            >
+              {gapp.county ? `${gapp.county} County` : "—"}
+              {gapp.drinking_or_wastewater
+                ? ` · ${gapp.drinking_or_wastewater}`
+                : ""}
+            </Typography>
           </Box>
         ))}
+
+        {filteredApplications.length === 0 && (
+          <Typography sx={{ fontSize: 12.5, color: T.textFaint, py: 2 }}>
+            No applications match the current filters.
+          </Typography>
+        )}
       </Box>
-    </>
+    </Box>
   )
 }
 

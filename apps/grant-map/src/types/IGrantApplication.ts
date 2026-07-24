@@ -55,6 +55,8 @@ export default interface IGrantApplication {
   grant: IGrant;
   committee_date: Date;
   application_date: Date;
+  closed_out?: boolean;
+  createdAt?: string;
   status: IGrantApplicationStatus;
   sub_status: IGrantApplicationStatus | null;
   payouts: {

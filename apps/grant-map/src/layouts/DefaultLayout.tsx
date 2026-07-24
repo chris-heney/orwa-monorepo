@@ -1,32 +1,40 @@
-import { Box, Paper } from "@mui/material"
+import { Box } from "@mui/material"
 import { useMediaQuery } from "@uidotdev/usehooks"
 import GappBar from "../components/AppBar"
 import GappList from "../components/GappList"
 import GappMap from "../components/GappMap"
 import MobileBar from "../components/MobileBar"
-import Statistics from "../components/Statistics"
+import InsightsPanel from "../components/insights/InsightsPanel"
 import { useRef } from "react"
 import { useAppContext } from "../providers/AppContext"
 import LayoutContextProvider from "../providers/LayoutContext"
+import { T } from "../theme/tokens"
 
 
 
 const InnerLayout = () => {
 
-  const {isSidebarOpen } = useAppContext()
+  const { isSidebarOpen } = useAppContext()
 
-  const paperRef = useRef<HTMLDivElement>(null)
+  const asideRef = useRef<HTMLDivElement>(null)
   const isSmall = useMediaQuery("(max-width:900px)")
 
   return (
     /* Main Layout: Header / Content Wrapper */
-    <Box sx={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        backgroundColor: T.ink,
+      }}
+    >
       {/* Header */}
       <Box>
         <GappBar />
       </Box>
 
-      {/* Content Wrapper: Sidebar (collapsable) / Main Content */}
+      {/* Content Wrapper: Sidebar (collapsable) / Map / Insights */}
       <Box
         sx={{
           display: "flex",
@@ -35,21 +43,28 @@ const InnerLayout = () => {
         }}
       >
         {/* Sidebar */}
-        <Paper
+        <Box
           component="aside"
-          ref={paperRef}
+          ref={asideRef}
           sx={{
             position: "relative",
-            borderRadius: 0,
-            width: isSidebarOpen ? 350 : 0, // Fixed width for the sidebar
-            transition: "width 0.5s ease-in-out", // Smooth transition when collapsing
+            width: isSidebarOpen ? 340 : 0, // Fixed width for the sidebar
+            flexShrink: 0,
+            transition: "width 0.4s ease-in-out", // Smooth transition when collapsing
             overflowY: "auto", // Enables scrolling if the content exceeds the sidebar height
-            boxShadow: isSmall ? "" : "1px 1px 5px rgba(0, 0, 0, 0.25)",
+            overflowX: "hidden",
+            backgroundColor: T.ink,
+            borderRight: isSidebarOpen ? `1px solid ${T.line}` : "none",
             zIndex: 1,
+            "&::-webkit-scrollbar": { width: 8 },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: T.panelSoft,
+              borderRadius: 4,
+            },
           }}
         >
           <GappList />
-        </Paper>
+        </Box>
 
         {/* Main Content */}
         <Box
@@ -62,9 +77,10 @@ const InnerLayout = () => {
         >
           <GappMap />
         </Box>
-      </Box>
 
-      <Statistics />
+        {/* Financial insights sidecar */}
+        <InsightsPanel />
+      </Box>
 
       {isSmall && <MobileBar />}
     </Box>

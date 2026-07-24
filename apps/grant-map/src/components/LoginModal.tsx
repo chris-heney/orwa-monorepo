@@ -33,6 +33,9 @@ const LoginModal = () => {
 
         if (credentials.jwt) {
           setLoggedIn(true)
+          // Data fetches ran (and were skipped) before auth existed; reload so
+          // the session-wide dataset loads with the new JWT (mirrors logout).
+          window.location.reload()
           return
         }
 
@@ -52,10 +55,12 @@ const LoginModal = () => {
   return ( loggedIn ? null :
     <div id="modal-overlay">
       {loading ? <Loading /> : <div id="modal-content">
-        <input type="text" onChange={handleEmailChange} placeholder="login" />
-        <input type="password" onChange={handlePasswordChange} placeholder="password" />
-        {authFail ? <p style={{color: 'red', fontWeight: 800}}>Authentication failed</p> : null}
-        <button onClick={handleLogin}>Login</button>
+        <p className="modal-eyebrow">Rural Infrastructure Grant</p>
+        <h1 className="modal-title">Grant Map</h1>
+        <input type="text" onChange={handleEmailChange} placeholder="Email" />
+        <input type="password" onChange={handlePasswordChange} placeholder="Password" />
+        {authFail ? <p style={{color: '#F16A5D', fontWeight: 700, margin: 0}}>Authentication failed</p> : null}
+        <button onClick={handleLogin}>Sign In</button>
       </div>}
     </div>
   );

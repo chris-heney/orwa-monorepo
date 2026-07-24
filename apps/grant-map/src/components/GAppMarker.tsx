@@ -5,6 +5,7 @@ import { useMapContext } from "../providers/MapContext";
 import IGrantApplication from "../types/IGrantApplication";
 import { getOverlappingMarkers } from "../helpers/getOverlappingMarkers";
 import { useAppContext } from "../providers/AppContext";
+import { stageColorForApplication } from "../helpers/stages";
 
 interface GAppMarkerProps {
   position: {
@@ -38,18 +39,20 @@ const GAppMarker = ({ position, currentApplication}: GAppMarkerProps) => {
     markerElement.style.alignItems = "center";
     markerElement.style.cursor = "pointer"; // Ensures the cursor changes to a pointer for the whole marker
 
-    // Create price tag
+    const stageColor = stageColorForApplication(currentApplication);
+
+    // Create price tag (ink-ledger style: dark panel, stage-colored accent)
     const priceTag = document.createElement("div");
     priceTag.style.borderRadius = "8px";
-    priceTag.style.border = "1px solid #000000";
+    priceTag.style.border = `1.5px solid ${stageColor}`;
     priceTag.style.fontSize = "12px";
-    priceTag.style.padding = "5px 10px";
-    priceTag.style.backgroundColor =
-      currentApplication.status.color;
-    priceTag.style.color =
-      currentApplication.status.color === "#FFFFFF"
-        ? "black"
-        : "white";
+    priceTag.style.fontWeight = "700";
+    priceTag.style.fontFamily =
+      "'Barlow Semi Condensed', 'Roboto Condensed', sans-serif";
+    priceTag.style.padding = "4px 9px";
+    priceTag.style.backgroundColor = "rgba(21, 31, 41, 0.92)";
+    priceTag.style.color = "#EAF3FA";
+    priceTag.style.boxShadow = "0 2px 8px rgba(0,0,0,0.45)";
     priceTag.style.userSelect = "none";
     priceTag.textContent = `$${formatNumberCompact(
       currentApplication.award_amount
@@ -64,7 +67,7 @@ const GAppMarker = ({ position, currentApplication}: GAppMarkerProps) => {
     arrow.style.height = "0";
     arrow.style.borderLeft = "8px solid transparent";
     arrow.style.borderRight = "8px solid transparent";
-    arrow.style.borderTop = `8px solid ${currentApplication.status.color}`;
+    arrow.style.borderTop = `8px solid ${stageColor}`;
     markerElement.appendChild(arrow);
 
     // Initialize marker

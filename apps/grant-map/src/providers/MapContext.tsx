@@ -18,6 +18,8 @@ interface MapContextProps {
   toggleClusteredView: () => void;
   mapStyle: string; 
   setMapStyle: React.Dispatch<React.SetStateAction<string>>;
+  showChoropleth: boolean;
+  setShowChoropleth: React.Dispatch<React.SetStateAction<boolean>>;
   isApplicationSelectModalOpen: boolean;
   setIsApplicationSelectModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   overlappingApplications: IGrantApplication[];
@@ -41,7 +43,9 @@ const MapContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [isInfoWindowOpen, setIsInfoWindowOpen] = useState<boolean>(false);
   const [currentApplication, setCurrentApplication] = useState<IGrantApplication | null>(null);
   const [isClusteredView, setIsClusteredView] = useState<boolean>(true);
-  const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/streets-v9'); // Default to street view
+  // Night canvas by default — matches the ink-ledger UI around the map
+  const [mapStyle, setMapStyle] = useState<string>('mapbox://styles/mapbox/dark-v11');
+  const [showChoropleth, setShowChoropleth] = useState<boolean>(true);
   const [isApplicationSelectModalOpen, setIsApplicationSelectModalOpen] = useState<boolean>(false);
   const [overlappingApplications, setOverlappingApplications] = useState<IGrantApplication[]>([]);
 
@@ -64,6 +68,8 @@ const MapContextProvider: React.FC<PropsWithChildren> = ({ children }) => {
         toggleClusteredView,
         mapStyle,
         setMapStyle,
+        showChoropleth,
+        setShowChoropleth,
         isApplicationSelectModalOpen,
         setIsApplicationSelectModalOpen,
         overlappingApplications,

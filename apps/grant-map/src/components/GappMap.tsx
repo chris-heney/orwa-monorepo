@@ -7,9 +7,10 @@ import { useAppContext } from "../providers/AppContext"
 import { useMapContext } from "../providers/MapContext"
 import MapStyleButton from "./MapStyleButton"
 import { Box } from "@mui/material"
-import ActiveMapLayer from "./ActiveMapLayer"
-import SelectMapLayer from "./SelectMapLayer"
-import SelectMapRegion from "./SelectMapRegion"
+import CountyChoroplethLayer from "./CountyChoroplethLayer"
+import MapLegend from "./MapLegend"
+import MetricsBand from "./insights/MetricsBand"
+import { T } from "../theme/tokens"
 
 
 const GappMap = () => {
@@ -29,7 +30,8 @@ const GappMap = () => {
   return (
     <Box id="map-wrapper" sx={{
       flexGrow: 1,
-      position: 'relative'  // Ensure the map can stretch to fill available space
+      position: 'relative',  // Ensure the map can stretch to fill available space
+      backgroundColor: T.ink,
     }}>
     <Map
       {...mapState}
@@ -38,21 +40,10 @@ const GappMap = () => {
       onMove={onMove}
       mapStyle={mapStyle}
     >
+      <CountyChoroplethLayer />
       <GAppLayer />
-     <ActiveMapLayer />
-      {/* Overlay Buttons */}
-      <Box sx={{
-        position: 'absolute',
-        top: 10,
-        left: 10,
-        zIndex: 900,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 1
-      }}>
-      <SelectMapLayer />
-      <SelectMapRegion />
-      </Box>
+      <MetricsBand />
+      <MapLegend />
       <ToggleClusterViewButton />
       <MapStyleButton />
     </Map>

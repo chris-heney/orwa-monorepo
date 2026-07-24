@@ -5,13 +5,20 @@ import {
   SetStateAction,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
-import { useGetGrantApplications } from "../helpers/APIService";
+import { useGetGrants } from "../helpers/APIService";
+import {
+  fetchAllGrantApplications,
+  filterApplications,
+} from "../helpers/gappDataService";
 import { Filter } from "../types/Filter";
+import IGrant from "../types/IGrant";
 import IGrantApplication from "../types/IGrantApplication";
 import updateSpatialData from "../helpers/updateSpatialData";
 import { MapLayer } from "../types/MapLayer";
+import { fiscalYearOfApplication } from "../helpers/fiscalYear";
 
 interface UIState {
   drawerOpen?: boolean;
@@ -31,14 +38,22 @@ interface AppContext {
   layers: MapLayer[];
   dimensions: any[];
   summary: Record<string, any>;
+  /** Applications on the map: filters + fiscal-year scope (derived in memory). */
   applications: IGrantApplication[];
-  setApplications: Dispatch<SetStateAction<IGrantApplication[]>>;
+  /** Every application the account can see, unfiltered — feeds the metrics. */
+  allApplications: IGrantApplication[];
+  /** allApplications scoped by fiscal year + geography/type filters (not status). */
+  reportApplications: IGrantApplication[];
+  grant: IGrant | null;
+  fiscalYear: number | null;
+  setFiscalYear: Dispatch<SetStateAction<number | null>>;
+  fyOptions: number[];
   selectedApplicationIndex: number;
   setSelectedApplicationIndex: Dispatch<SetStateAction<number>>;
   filters: Filter[];
   setFilters: Dispatch<SetStateAction<Filter[]>>;
-  openStatistics: boolean;
-  setOpenStatistics: Dispatch<SetStateAction<boolean>>;
+  insightsOpen: boolean;
+  setInsightsOpen: Dispatch<SetStateAction<boolean>>;
   isSidebarOpen: boolean;
   setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
   activeLayer: MapLayer | null;
@@ -72,7 +87,12 @@ const initialContext: AppContext = {
   mapState: JSON.parse(initialMapState),
   setMapState: () => {},
   applications: [],
-  setApplications: () => {},
+  allApplications: [],
+  reportApplications: [],
+  grant: null,
+  fiscalYear: null,
+  setFiscalYear: () => {},
+  fyOptions: [],
   selectedApplicationIndex: -1,
   setSelectedApplicationIndex: () => {},
   filters: [],
@@ -80,8 +100,8 @@ const initialContext: AppContext = {
   layers: [],
   dimensions: [],
   summary: {},
-  openStatistics: false,
-  setOpenStatistics: () => {},
+  insightsOpen: false,
+  setInsightsOpen: () => {},
   isSidebarOpen: false,
   setIsSidebarOpen: () => {},
   activeLayer: null,
@@ -94,6 +114,30 @@ const AppContext = createContext(initialContext);
 
 export const useAppContext = () => useContext(AppContext);
 
+/** Geography/type filters the reporting panel honors (status is a lifecycle
+ * dimension the report enumerates itself, so it is deliberately excluded). */
+const matchesScopeFilters = (
+  app: IGrantApplication,
+  filters: Filter[]
+): boolean => {
+  for (const filter of filters) {
+    const values = Array.isArray(filter.value)
+      ? filter.value.map(String)
+      : [String(filter.value)];
+    if (!values.length) continue;
+
+    if (filter.key === "county") {
+      if (!values.includes(app.county?.trim() ?? "")) return false;
+    } else if (filter.key === "drinking_or_wastewater") {
+      if (!values.includes(app.drinking_or_wastewater)) return false;
+    } else if (filter.key === "approved_projects") {
+      const ids = (app.approved_projects ?? []).map((p) => String(p.id));
+      if (!values.some((v) => ids.includes(v))) return false;
+    }
+  }
+  return true;
+};
+
 const AppContextProvider = ({ children }: PropsWithChildren) => {
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const [uiState, setUiState] = useState<UIState>(initialUiState);
@@ -102,67 +146,115 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
   );
   const [selectedApplicationIndex, setSelectedApplicationIndex] =
     useState<number>(-1);
-  const [applications, setApplications] = useState<IGrantApplication[]>([]);
+  const [allApplications, setAllApplications] = useState<IGrantApplication[]>(
+    []
+  );
+  const [grant, setGrant] = useState<IGrant | null>(null);
+  const [fiscalYear, setFiscalYear] = useState<number | null>(null);
   const [filters, setFilters] = useState<Filter[]>(initialFilter);
-  const [openStatistics, setOpenStatistics] = useState<boolean>(false);
+  const [insightsOpen, setInsightsOpen] = useState<boolean>(
+    window.innerWidth >= 1280
+  );
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [activeLayer, setActiveLayer] = useState<MapLayer | null>(null); // Initialize with a default layer
+  const [activeLayer, setActiveLayer] = useState<MapLayer | null>(null);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
 
-  const getGrantApplications = useGetGrantApplications();
+  const getGrants = useGetGrants();
 
+  // ONE bulk fetch per session feeds everything: the map (filtered in memory
+  // below), the financial reporting (lifecycle stages need every status, and
+  // the FY rollover chain needs every fiscal year), and the toolbar counts
+  // (via gappDataService). Filter changes no longer refetch from Strapi.
   useEffect(() => {
-    // Fetch grant applications every xtime the filters change
-    // Find the status filter
-    const statusFilter = filters.find((filter) => filter.key === "status");
+    fetchAllGrantApplications().then(setAllApplications);
+    getGrants().then(setGrant);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    // Check if the status filter exists and if its value array is empty
+  // In-memory equivalent of the server-side filter query the map used to
+  // re-issue on every filter change.
+  const serverApplications = useMemo(() => {
+    const statusFilter = filters.find((filter) => filter.key === "status");
     const isStatusFilterEmpty =
       statusFilter &&
       Array.isArray(statusFilter.value) &&
       statusFilter.value.length === 0;
 
-    if (selectedRegions.length === 0) {
-      getGrantApplications(
-        (filters.length === 0 || isStatusFilterEmpty) &&
-          user.email === "rig@orwa.org"
-          ? [
-              {
-                key: "status",
-                value: [3, 6, 8, 12, 13, 14],
-              },
-            ]
-          : filters
-      ).then((data) => {
-        setApplications(data);
-      });
-    } else {
-      getGrantApplications(filters).then((data) => {
-        setApplications(
-          data.filter((application) => {
-            if (!activeLayer) return true;
-            if (!application.regions) return false;
-            return selectedRegions.includes(
-              application.regions[activeLayer?.title]
-            );
-          })
-        );
-      });
+    const effectiveFilters =
+      (filters.length === 0 || isStatusFilterEmpty) &&
+      user.email === "rig@orwa.org"
+        ? [{ key: "status", value: [3, 6, 8, 12, 13, 14] }]
+        : filters;
+
+    let result = filterApplications(allApplications, effectiveFilters);
+
+    if (selectedRegions.length > 0 && activeLayer) {
+      result = result.filter(
+        (application) =>
+          application.regions != null &&
+          selectedRegions.includes(application.regions[activeLayer.title])
+      );
     }
+    return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, selectedRegions]);
+  }, [allApplications, filters, selectedRegions, activeLayer]);
 
   useEffect(() => {
-    if (applications.length > 0) {
-      updateSpatialData(applications, 0);
+    if (serverApplications.length > 0) {
+      updateSpatialData(serverApplications);
     }
-  }, [applications]);
+  }, [serverApplications]);
+
+  const fyOptions = useMemo(() => {
+    const years = new Set<number>();
+    for (const app of allApplications) {
+      const fy = fiscalYearOfApplication(app);
+      if (fy != null) years.add(fy);
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [allApplications]);
+
+  // The map shows the server-filtered set, additionally scoped to the
+  // selected fiscal year so the map and the report always agree.
+  const applications = useMemo(
+    () =>
+      fiscalYear == null
+        ? serverApplications
+        : serverApplications.filter(
+            (app) => fiscalYearOfApplication(app) === fiscalYear
+          ),
+    [serverApplications, fiscalYear]
+  );
+
+  const reportApplications = useMemo(() => {
+    let scoped = allApplications.filter((app) =>
+      matchesScopeFilters(app, filters)
+    );
+    if (fiscalYear != null) {
+      scoped = scoped.filter(
+        (app) => fiscalYearOfApplication(app) === fiscalYear
+      );
+    }
+    if (selectedRegions.length > 0 && activeLayer) {
+      scoped = scoped.filter(
+        (app) =>
+          app.regions != null &&
+          selectedRegions.includes(app.regions[activeLayer.title])
+      );
+    }
+    return scoped;
+  }, [allApplications, filters, fiscalYear, selectedRegions, activeLayer]);
 
   return (
     <AppContext.Provider
       value={{
         applications,
-        setApplications,
+        allApplications,
+        reportApplications,
+        grant,
+        fiscalYear,
+        setFiscalYear,
+        fyOptions,
         uiState,
         mapState,
         setUiState,
@@ -171,8 +263,8 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
         setSelectedApplicationIndex,
         filters,
         setFilters,
-        openStatistics,
-        setOpenStatistics,
+        insightsOpen,
+        setInsightsOpen,
         layers: [],
         dimensions: [],
         summary: {},

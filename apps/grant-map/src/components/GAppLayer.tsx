@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMap } from "react-map-gl/mapbox";
 import { useAppContext } from "../providers/AppContext";
 import { useMapContext } from "../providers/MapContext";
 import UpdateLocationModal from "./UpdateLocationModal";
@@ -6,10 +7,31 @@ import GAppMarker from "./GAppMarker";
 import GappInfoWindow from "./GappInfoWindow";
 import debounce from "lodash.debounce";
 import { useUpdateGrantApplication } from "../helpers/APIService";
-import mapboxSdk from "@mapbox/mapbox-sdk";
-import Geocoding from "@mapbox/mapbox-sdk/services/geocoding";
 import GappApplicationList from "./ApplicationSelectModal";
 import { getOverlappingMarkers } from "../helpers/getOverlappingMarkers";
+import { stageColorForApplication } from "../helpers/stages";
+import buildApplicationsGeoJson from "../helpers/buildApplicationsGeoJson";
+import IGrantApplication from "../types/IGrantApplication";
+import { T } from "../theme/tokens";
+
+/** Marker size scales with award amount (sqrt-ish, so mid awards read). */
+const AWARD_RADIUS: mapboxgl.Expression = [
+  "interpolate",
+  ["linear"],
+  ["get", "award_amount"],
+  0,
+  5,
+  50000,
+  7,
+  250000,
+  10,
+  1000000,
+  14,
+];
+
+const SOURCE_ID = "applications";
+/** Zoom at or above which the detailed DOM price-tag markers appear. */
+const DETAIL_ZOOM = 8;
 
 const GAppLayer = () => {
   const { applications } = useAppContext();
@@ -24,34 +46,63 @@ const GAppLayer = () => {
     setOverlappingApplications,
     overlappingApplications,
   } = useMapContext();
-  const [zoomedOut, setIsZoomedOut] = useState(true);
+  // Re-render when the map instance becomes available (GAppLayer mounts as a
+  // child of <Map>, but data can arrive before the map finishes loading).
+  const { current: mapHandle } = useMap();
+
+  const [viewport, setViewport] = useState<{
+    zoom: number;
+    bounds: mapboxgl.LngLatBounds | null;
+  }>({ zoom: 0, bounds: null });
 
   const updateGrantApplication = useUpdateGrantApplication();
 
-  const mapboxClient = mapboxSdk({
-    accessToken: import.meta.env.VITE_MAPBOX_TOKEN,
-  });
-  const geocodingService = Geocoding(mapboxClient);
+  // Latest applications for map event handlers registered once per style.
+  const applicationsRef = useRef(applications);
+  applicationsRef.current = applications;
 
+  // Single memoized FeatureCollection: the one GeoJSON source drives
+  // clustering, counts and point styling on the GPU.
+  const geojsonData = useMemo(
+    () => buildApplicationsGeoJson(applications, stageColorForApplication),
+    [applications]
+  );
+  const geojsonRef = useRef(geojsonData);
+  geojsonRef.current = geojsonData;
+
+  // Geocode-and-persist pass for records that still lack coordinates. Runs
+  // sequentially (the old unbounded forEach fired one request per record at
+  // once) and loads the mapbox-sdk geocoder on demand so the ~100 KB client
+  // stays out of the startup bundle for the common all-geocoded case.
   useEffect(() => {
-    if (typeof applications === "undefined" || !applications.length) return;
+    const missing = applications.filter(
+      (gapp) => !(gapp.location?.lat && gapp.location?.lng)
+    );
+    if (!missing.length) return;
 
-    applications.forEach(async (gapp) => {
-      if ((gapp.location ?? false) && gapp.location.lat && gapp.location.lng)
-        return;
+    let cancelled = false;
+    (async () => {
+      const [{ default: mapboxSdk }, { default: Geocoding }] =
+        await Promise.all([
+          import("@mapbox/mapbox-sdk"),
+          import("@mapbox/mapbox-sdk/services/geocoding"),
+        ]);
+      const geocodingService = Geocoding(
+        mapboxSdk({ accessToken: import.meta.env.VITE_MAPBOX_TOKEN })
+      );
 
-      const address = `${gapp.physical_address_street} ${
-        gapp.physical_address_city
-      }, ${gapp.physical_address_state ?? "Oklahoma"} ${
-        gapp.physical_address_zip
-      }`;
+      for (const gapp of missing) {
+        if (cancelled) return;
 
-      if (address.length > 4) {
+        const address = `${gapp.physical_address_street} ${
+          gapp.physical_address_city
+        }, ${gapp.physical_address_state ?? "Oklahoma"} ${
+          gapp.physical_address_zip
+        }`;
+        if (address.length <= 4) continue;
+
         const response = await geocodingService
-          .forwardGeocode({
-            query: address,
-            limit: 1,
-          })
+          .forwardGeocode({ query: address, limit: 1 })
           .send();
 
         const match = response.body.features[0];
@@ -60,224 +111,216 @@ const GAppLayer = () => {
             lat: match.geometry.coordinates[1],
             lng: match.geometry.coordinates[0],
           };
-
           await updateGrantApplication(gapp.id, {
             location: { ...gapp.location },
           });
         }
       }
-    });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [applications]);
 
+  // Source + layers lifecycle. Rebuilt only when the style or cluster mode
+  // changes — data updates go through setData below instead of tearing the
+  // source down on every state change.
   useEffect(() => {
-    if (!mapRef.current || applications.length === 0) {
-      return;
-    }
+    const map = mapRef.current?.getMap();
+    if (!map) return;
 
-    const map = mapRef.current.getMap();
+    const handlePointClick = (e: mapboxgl.MapLayerMouseEvent) => {
+      const clickedFeature = (e.features ?? [])[0];
+      if (!clickedFeature?.properties) return;
+      const currentApplications = applicationsRef.current;
+      const clickedApplication = currentApplications.find(
+        (app) => app.id === clickedFeature.properties?.id
+      );
+      if (!clickedApplication) return;
 
-    // Convert applications to GeoJSON format
-    const geojsonData = {
-      type: "FeatureCollection",
-      features: applications
-        .filter((app) => app.location)
-        .map((app) => ({
-          type: "Feature",
-          properties: {
-            id: app.id,
-            award_amount: app.award_amount,
-            color: app.status.color,
-          },
-          geometry: {
-            type: "Point",
-            coordinates: [app.location.lng, app.location.lat],
-          },
-        })),
+      const overlapping = getOverlappingMarkers(
+        currentApplications,
+        clickedApplication
+      );
+      setOverlappingApplications(overlapping);
+      if (overlapping.length > 1) {
+        setIsApplicationSelectModalOpen(true);
+        setCurrentApplication(null);
+      } else {
+        setOverlappingApplications([]);
+        setCurrentApplication(clickedApplication);
+      }
     };
 
-    // Debounced data update function
-    const updateSourceData = debounce(() => {
-      const source = map.getSource("applications") as mapboxgl.GeoJSONSource;
-      if (source) {
-        source.setData(geojsonData as GeoJSON.FeatureCollection);
-      }
-    }, 200);
-
-    // Add or update the source for cluster data
-    if (!map.getSource("applications")) {
-      map.addSource("applications", {
-        type: "geojson",
-        data: geojsonData as GeoJSON.FeatureCollection,
-        cluster: true,
-        clusterMaxZoom: 9, // Max zoom to cluster points on
-        clusterRadius: 9, // Radius of each cluster when clustering points
+    // Standard GIS UX: clicking a cluster zooms to its expansion level.
+    const handleClusterClick = (e: mapboxgl.MapLayerMouseEvent) => {
+      const feature = (e.features ?? [])[0];
+      const clusterId = feature?.properties?.cluster_id;
+      const source = map.getSource(SOURCE_ID) as mapboxgl.GeoJSONSource;
+      if (clusterId == null || !source) return;
+      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err || zoom == null) return;
+        map.easeTo({
+          center: (feature.geometry as GeoJSON.Point).coordinates as [
+            number,
+            number
+          ],
+          zoom,
+        });
       });
-    } else {
-      updateSourceData();
-    }
+    };
 
-    if (isClusteredView) {
-      // Add cluster layer
-      if (!map.getLayer("clusters")) {
-        map.addLayer({
-          id: "clusters",
-          type: "circle",
-          source: "applications",
-          filter: ["has", "point_count"],
-          paint: {
-            "circle-color": [
-              "step",
-              ["get", "point_count"],
-              "#0300b9",
-              100,
-              "#f1f075",
-              750,
-              "#f28cb1",
-            ],
-            "circle-radius": [
-              "step",
-              ["get", "point_count"],
-              15,
-              100,
-              25,
-              750,
-              35,
-            ],
-            "circle-opacity": 0.75,
-            "text-color": "#fff",
-          },
+    const setup = () => {
+      if (!map.getSource(SOURCE_ID)) {
+        map.addSource(SOURCE_ID, {
+          type: "geojson",
+          data: geojsonRef.current,
+          cluster: isClusteredView,
+          clusterMaxZoom: 9, // Max zoom to cluster points on
+          clusterRadius: 9, // Radius of each cluster when clustering points
         });
       }
 
-      // Add cluster count layer
-      if (!map.getLayer("cluster-count")) {
-        map.addLayer({
-          id: "cluster-count",
-          type: "symbol",
-          source: "applications",
-          filter: ["has", "point_count"],
-          layout: {
-            "text-field": "{point_count_abbreviated}",
-            "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
-            "text-size": 16,
-            // set the text to white
-          },
-          paint: {
-            "text-color": "#fff",
-          },
-        });
+      if (isClusteredView) {
+        if (!map.getLayer("clusters")) {
+          map.addLayer({
+            id: "clusters",
+            type: "circle",
+            source: SOURCE_ID,
+            filter: ["has", "point_count"],
+            paint: {
+              "circle-color": [
+                "step",
+                ["get", "point_count"],
+                T.water,
+                25,
+                T.deepWater,
+                100,
+                T.committed,
+              ],
+              "circle-radius": [
+                "step",
+                ["get", "point_count"],
+                15,
+                25,
+                22,
+                100,
+                30,
+              ],
+              "circle-opacity": 0.85,
+              "circle-stroke-width": 1.5,
+              "circle-stroke-color": "rgba(234, 243, 250, 0.55)",
+              "circle-emissive-strength": 1,
+            },
+          });
+        }
+
+        if (!map.getLayer("cluster-count")) {
+          map.addLayer({
+            id: "cluster-count",
+            type: "symbol",
+            source: SOURCE_ID,
+            filter: ["has", "point_count"],
+            layout: {
+              "text-field": "{point_count_abbreviated}",
+              "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+              "text-size": 14,
+            },
+            paint: {
+              "text-color": "#EAF3FA",
+            },
+          });
+        }
       }
 
-      // Add unclustered point layer
       if (!map.getLayer("unclustered-point")) {
         map.addLayer({
           id: "unclustered-point",
           type: "circle",
-          source: "applications",
-          filter: ["!", ["has", "point_count"]],
+          source: SOURCE_ID,
+          ...(isClusteredView
+            ? { filter: ["!", ["has", "point_count"]] }
+            : {}),
           paint: {
-            "circle-color": "#0300b9",
-            "circle-radius": 6,
-            "circle-stroke-width": 2,
-            "circle-stroke-color": "#fff",
+            "circle-color": ["get", "color"],
+            "circle-radius": AWARD_RADIUS,
+            "circle-opacity": 0.9,
+            "circle-stroke-width": 1.5,
+            "circle-stroke-color": "rgba(234, 243, 250, 0.85)",
+            "circle-emissive-strength": 1,
           },
         });
-
-        // Add click event listener for unclustered points
-        map.on("click", "unclustered-point", (e: any) => {
-          const features = e.features || [];
-          const clickedFeature = features[0];
-          if (clickedFeature && clickedFeature.properties) {
-            const clickedApplication = applications.find(
-              (app) => app.id === clickedFeature.properties?.id
-            );
-
-            if (clickedApplication) {
-              setOverlappingApplications(
-                getOverlappingMarkers(applications, clickedApplication)
-              );
-              if (getOverlappingMarkers(applications, clickedApplication).length > 1) {
-                setIsApplicationSelectModalOpen(true);
-                setCurrentApplication(null);
-              } else {
-                setOverlappingApplications([]);
-                setCurrentApplication(clickedApplication);
-              }
-            }
-          }
-        });
       }
-    }
+    };
 
-    if (!isClusteredView) {
-      map.addLayer({
-        id: "unclustered-point",
-        type: "circle",
-        source: "applications",
-        paint: {
-          "circle-color": "#11b4da",
-          "circle-radius": 6,
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#fff",
-        },
-      });
+    // The style may still be loading on first mount; in that case the
+    // style.load listener below performs the initial setup.
+    if (map.isStyleLoaded()) setup();
+    // A style switch wipes custom sources/layers; re-add them when the new
+    // style finishes loading.
+    map.on("style.load", setup);
+    map.on("click", "unclustered-point", handlePointClick);
+    map.on("click", "clusters", handleClusterClick);
 
-      // Add click event listener for unclustered points
-      map.on("click", "unclustered-point", (e: any) => {
-        const features = e.features || [];
-        const clickedFeature = features[0];
-        if (clickedFeature && clickedFeature.properties) {
-          const clickedApplication = applications.find(
-            (app) => app.id === clickedFeature.properties?.id
-          );
-          if (clickedApplication) {
-            setOverlappingApplications(
-              getOverlappingMarkers(applications, clickedApplication)
-            );
-            if (getOverlappingMarkers(applications, clickedApplication).length > 1) {
-              setIsApplicationSelectModalOpen(true);
-              setCurrentApplication(null);
-            } else {
-              // setOverlappingApplications([]);
-              setCurrentApplication(clickedApplication);
-            }
-          }
-        }
-      });
-    }
-
-    // Event listener for zoom level to toggle between clusters and individual markers
-    const checkZoomLevel = debounce(() => {
-      const zoomLevel = map.getZoom();
-      setIsZoomedOut(zoomLevel < 8); // Toggle clustered view based on zoom level
+    // Track zoom/bounds so the detailed DOM markers render only for the
+    // visible viewport instead of every application at once.
+    const syncViewport = debounce(() => {
+      setViewport({ zoom: map.getZoom(), bounds: map.getBounds() });
     }, 100);
-
-    map.on("zoomend", checkZoomLevel);
+    syncViewport();
+    map.on("moveend", syncViewport);
 
     return () => {
-      // Ensure map is valid before cleaning up layers and sources
-      if (mapRef.current) {
-        const map = mapRef.current.getMap();
+      map.off("style.load", setup);
+      map.off("click", "unclustered-point", handlePointClick);
+      map.off("click", "clusters", handleClusterClick);
+      map.off("moveend", syncViewport);
+      syncViewport.cancel();
 
-        if (map.getLayer("clusters")) {
-          map.removeLayer("clusters");
+      if (mapRef.current && map.style) {
+        for (const layerId of ["clusters", "cluster-count", "unclustered-point"]) {
+          if (map.getLayer(layerId)) map.removeLayer(layerId);
         }
-        if (map.getLayer("cluster-count")) {
-          map.removeLayer("cluster-count");
-        }
-        if (map.getLayer("unclustered-point")) {
-          map.removeLayer("unclustered-point");
-        }
-        if (map.getSource("applications")) {
-          map.removeSource("applications");
-        }
+        if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
       }
-
-      map.off("zoomend", checkZoomLevel);
     };
-  }, [mapRef, applications, isClusteredView, mapStyle]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mapRef, mapHandle, isClusteredView, mapStyle]);
 
-  // Function to find overlapping markers
+  // Data-only updates: push new features into the existing source.
+  useEffect(() => {
+    const map = mapRef.current?.getMap();
+    const source = map?.getSource(SOURCE_ID) as
+      | mapboxgl.GeoJSONSource
+      | undefined;
+    if (source) source.setData(geojsonData);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geojsonData]);
+
+  // Detailed price-tag markers are DOM elements — cull them to the current
+  // viewport (with a half-screen buffer) so zooming in renders dozens, not
+  // the whole dataset.
+  const visibleApplications = useMemo((): IGrantApplication[] => {
+    const zoomedOut = viewport.zoom < DETAIL_ZOOM;
+    if (zoomedOut && isClusteredView) return [];
+    if (!viewport.bounds) return [];
+
+    const sw = viewport.bounds.getSouthWest();
+    const ne = viewport.bounds.getNorthEast();
+    const lngPad = (ne.lng - sw.lng) / 2;
+    const latPad = (ne.lat - sw.lat) / 2;
+
+    return applications.filter(
+      (app) =>
+        app.location != null &&
+        app.location.lng >= sw.lng - lngPad &&
+        app.location.lng <= ne.lng + lngPad &&
+        app.location.lat >= sw.lat - latPad &&
+        app.location.lat <= ne.lat + latPad
+    );
+  }, [applications, viewport, isClusteredView]);
 
   return (
     <div>
@@ -286,15 +329,14 @@ const GAppLayer = () => {
       {/* Render GappInfoWindow if an currentApplication is selected */}
       {currentApplication && <GappInfoWindow />}
 
-      {/* Render custom GAppMarkers if not in clustered view */}
-      {(!zoomedOut || !isClusteredView) &&
-        applications.map((app) => (
-          <GAppMarker
-            key={app.id}
-            position={app.location}
-            currentApplication={app}
-          />
-        ))}
+      {/* Detailed markers for the visible viewport only */}
+      {visibleApplications.map((app) => (
+        <GAppMarker
+          key={app.id}
+          position={app.location}
+          currentApplication={app}
+        />
+      ))}
 
       {/* Modal for showing overlapping applications */}
       {isApplicationSelectModalOpen && (

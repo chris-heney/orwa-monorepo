@@ -11,6 +11,12 @@ export default defineConfig(() => ({
   server: {
     port: 4203,
     host: 'localhost',
+    // Windows-side processes (e.g. Cursor.exe) can hold 4203; let vite hop to the next free port
+    strictPort: false,
+    fs: {
+      // Nx dev-server executor computes an incorrect allow list; permit the workspace root
+      allow: ['../..'],
+    },
   },
   preview: {
     port: 4203,

@@ -1,32 +1,27 @@
-import { Badge, Box, Button, Typography } from '@mui/material'
-import { Filter } from '../types/Filter'
+import { Badge, Box, Button } from '@mui/material'
 import { Poop } from './Poop'
 import React from 'react'
-import { useGetGrantApplications } from '../helpers/APIService'
 import { handleSelectFilter, removeFilter } from '../helpers/FiltersService'
 import ProjectTypeButton from './ProjectTypeButton'
 import WaterDrop from './WaterDrop'
 import { useAppContext } from '../providers/AppContext'
+import { T } from '../theme/tokens'
 
 const MobileBar = () => {
 
+    const { filters, setFilters, allApplications } = useAppContext()
 
-    const { filters, setFilters } = useAppContext()
-
-    const [wastewater, setWastewater] = React.useState(0)
-    const [drinkingWater, setDrinkingWater] = React.useState(0)
-    const getGrantApplications = useGetGrantApplications()
     const [poop, setPoop] = React.useState(false)
     const [waterDrop, setWaterDrop] = React.useState(false)
-    const getLength = async (searchFilters: Filter[]): Promise<number> => {
-        const data = await getGrantApplications(searchFilters);
-        return data.length;
-    }
 
-    React.useEffect(() => {
-        getLength([{ key: 'drinking_or_wastewater', value: 'Wastewater' }]).then((data) => setWastewater(data))
-        getLength([{ key: 'drinking_or_wastewater', value: 'Drinking Water' }]).then((data) => setDrinkingWater(data))
-    }, [])
+    const wastewater = React.useMemo(
+        () => allApplications.filter((a) => a.drinking_or_wastewater === 'Wastewater').length,
+        [allApplications]
+    )
+    const drinkingWater = React.useMemo(
+        () => allApplications.filter((a) => a.drinking_or_wastewater === 'Drinking Water').length,
+        [allApplications]
+    )
 
     return (
         <Box
@@ -35,14 +30,14 @@ const MobileBar = () => {
                 bottom: 0,
                 left: 0,
                 width: '100%',
-                backgroundColor: 'black',
+                backgroundColor: T.ink,
+                borderTop: `1px solid ${T.line}`,
                 zIndex: 1000,
                 display: 'flex',
                 justifyContent: 'flex-start',
                 alignItems: 'center',
             }}
         >
-            
 
             <Button size='small' onClick={() => {
                 poop
@@ -53,6 +48,7 @@ const MobileBar = () => {
                 sx={{
                     mr: poop ? 2 : null,
                     filter: poop ? null : 'grayscale(100%)',
+                    opacity: poop ? 1 : 0.65,
                 }}
             >
                 <Badge badgeContent={wastewater} color="primary" max={1000}>
@@ -72,6 +68,7 @@ const MobileBar = () => {
                 sx={{
                     mr: waterDrop ? 2 : null,
                     filter: waterDrop ? null : 'grayscale(100%)',
+                    opacity: waterDrop ? 1 : 0.65,
                 }}
             >
                 <Badge badgeContent={drinkingWater} color='primary' max={1000}>
@@ -81,7 +78,6 @@ const MobileBar = () => {
 
             {waterDrop && <ProjectTypeButton classification='Drinking Water' setFilters={setFilters} filters={filters} />}
             <Box sx={{ flexGrow: 1 }} />
-            <Typography sx={{ color: 'white', fontSize: '0.4rem' }}>Developer : Marcos Jimenez</Typography>
         </Box>
     )
 }
