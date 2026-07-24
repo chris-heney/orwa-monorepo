@@ -1,5 +1,5 @@
 import Map, { ViewStateChangeEvent } from "react-map-gl/mapbox"
-import { useCallback } from "react"
+import { useCallback, useEffect } from "react"
 import "mapbox-gl/dist/mapbox-gl.css"
 import GAppLayer from "./GAppLayer"
 import ToggleClusterViewButton from "./ToggleClusterViewButton"
@@ -20,6 +20,20 @@ const GappMap = () => {
 
   const { mapState, setMapState } = useAppContext()
   const { mapRef, mapStyle } = useMapContext()
+
+  // Mapbox only re-measures on window resize, so when a side panel animates
+  // open/closed the canvas keeps its old size and leaves an ink-colored bar
+  // where the panel was. Observe the wrapper itself: any container size
+  // change (panel transitions included) keeps the canvas in sync.
+  useEffect(() => {
+    const wrapper = document.getElementById("map-wrapper")
+    if (!wrapper) return
+    const observer = new ResizeObserver(() => {
+      mapRef.current?.getMap()?.resize()
+    })
+    observer.observe(wrapper)
+    return () => observer.disconnect()
+  }, [mapRef])
 
   const onMove = useCallback(
     ({ viewState: newMapState }: ViewStateChangeEvent) => {
