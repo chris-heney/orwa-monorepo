@@ -10,6 +10,7 @@ export default defineConfig(() => ({
   server: {
     port: 4204,
     host: 'localhost',
+    strictPort: true,
     fs: {
       // Nx dev-server executor computes an incorrect allow list; permit the workspace root
       allow: ['../..'],

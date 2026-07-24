@@ -54,3 +54,7 @@ apps/*/.env
 apps/*/.env.development
 apps/*/.env.production
 !apps/*/.env.example
+
+# Headless browser test artifacts
+.playwright-mcp/
+.cursor/hooks/state/

@@ -25,19 +25,20 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "nx:run-commands",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "grant-scoring:build"
+        "command": "npm run dev",
+        "cwd": "apps/grant-scoring"
       },
       "configurations": {
         "development": {
-          "buildTarget": "grant-scoring:build:development",
-          "hmr": true
+          "command": "npm run dev",
+          "cwd": "apps/grant-scoring"
         },
         "production": {
-          "buildTarget": "grant-scoring:build:production",
-          "hmr": false
+          "command": "npm run preview",
+          "cwd": "apps/grant-scoring"
         }
       }
     },
