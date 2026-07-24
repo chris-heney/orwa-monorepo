@@ -88,22 +88,25 @@ const InsightsPanel: React.FC = () => {
   );
   const { stages, exits, pool, insights, breakdown } = metrics;
 
-  if (!insightsOpen) return null;
-
   return (
+    /* Outer shell animates width so the panel slides like the left sidebar */
     <Box
       component="aside"
       sx={{
-        width: { xs: "100%", sm: 440 },
+        width: insightsOpen ? { xs: "100%", sm: 440 } : 0,
         flexShrink: 0,
         height: "100%",
         overflowY: "auto",
+        overflowX: "hidden",
+        transition: "width 0.4s ease-in-out, padding 0.4s ease-in-out",
         backgroundColor: T.ink,
-        borderLeft: `1px solid ${T.line}`,
-        p: 2,
+        borderLeft: insightsOpen ? `1px solid ${T.line}` : "none",
+        p: insightsOpen ? 2 : 0,
         display: "flex",
         flexDirection: "column",
         gap: 2.5,
+        // keep the content at full width while sliding so it doesn't squish
+        "& > *": { minWidth: { xs: "calc(100vw - 32px)", sm: 440 - 32 } },
         // slim scrollbar on the night canvas
         "&::-webkit-scrollbar": { width: 8 },
         "&::-webkit-scrollbar-thumb": {
