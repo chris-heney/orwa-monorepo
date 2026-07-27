@@ -678,6 +678,16 @@ export interface IRegistrationPayload {
   online?: boolean;
   error?: boolean;
   contestants: IContestantPayload[] | [];
+  /** Populated on GET conference-registrations for person picker. */
+  attendees?: Array<{
+    id: Identifier;
+    first?: string;
+    last?: string;
+    email?: string;
+    phone?: string;
+    license?: string;
+    type?: string;
+  }>;
   team?: string;
   vendor_participation_acknowledgement?: boolean;
   /** Skip booth step when editing a previous registration ("Yes" | "No"). */
