@@ -21,6 +21,10 @@ import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
 import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
 import { allowedContestantTickets } from "../../helpers/contestantTicketTiers";
+import {
+  formatExtrasConfirmList,
+  getUncheckedOptionalExtras,
+} from "../../helpers/getUncheckedOptionalExtras";
 
 interface ITicketModalProps {
   setIsOpen: React.Dispatch<
@@ -81,6 +85,11 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   const tickets = watch("tickets") || [];
   const ticket = tickets[ticketIndex] || {};
   const [noEmail, setNoEmail] = useState(false);
+  const [extrasConfirmOpen, setExtrasConfirmOpen] = useState(false);
+  const [highlightExtras, setHighlightExtras] = useState(false);
+  const [pendingUncheckedExtras, setPendingUncheckedExtras] = useState<
+    IExtraOption[]
+  >([]);
 
   // If Training Type leaves None, force a real email: clear no-email / anonymous state.
   useEffect(() => {
@@ -114,6 +123,21 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     // Intentionally once on mount for this modal open.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Clear the "choose extras" highlight once the user selects an optional extra.
+  useEffect(() => {
+    if (!highlightExtras) return;
+    if (type !== "Attendee" && type !== "Vendor") return;
+    const unchecked = getUncheckedOptionalExtras({
+      ticket,
+      extras: ExtraOptions,
+      context: type,
+    });
+    if (unchecked.length === 0) {
+      setHighlightExtras(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightExtras, ticket?.extras, ticket?.ticket_type?.id, type, ExtraOptions]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -263,10 +287,29 @@ const TicketModal: React.FC<ITicketModalProps> = ({
       return;
     }
 
+    if (type === "Attendee" || type === "Vendor") {
+      const unchecked = getUncheckedOptionalExtras({
+        ticket,
+        extras: ExtraOptions,
+        context: type,
+      });
+      if (unchecked.length > 0) {
+        setPendingUncheckedExtras(unchecked);
+        setExtrasConfirmOpen(true);
+        return;
+      }
+    }
+
+    commitSave();
+  };
+
+  const commitSave = () => {
     const updatedTicket = { ...ticket, price: calculateSubtotal() };
     if (ticketIndex === -1) append(updatedTicket);
     else update(ticketIndex, updatedTicket);
-
+    setExtrasConfirmOpen(false);
+    setHighlightExtras(false);
+    setPendingUncheckedExtras([]);
     setIsOpen({
       open: false,
       context: "create",
@@ -277,6 +320,9 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     if (isOpen.context === "create") {
       remove(ticketIndex);
     }
+    setExtrasConfirmOpen(false);
+    setHighlightExtras(false);
+    setPendingUncheckedExtras([]);
     setIsOpen({
       open: false,
       context: "create",
@@ -284,6 +330,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   };
 
   return (
+    <>
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-4 sm:p-8">
       <div
         role="dialog"
@@ -545,6 +592,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
               field={"tickets"}
               fieldIndex={ticketIndex}
               context={type}
+              highlightInvalid={highlightExtras}
             />
           </section>
         </div>
@@ -590,6 +638,55 @@ const TicketModal: React.FC<ITicketModalProps> = ({
         </div>
       </div>
     </div>
+    {extrasConfirmOpen && (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="extras-confirm-title"
+          className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
+        >
+          <h2
+            id="extras-confirm-title"
+            className="text-lg font-semibold text-slate-900"
+          >
+            Extras
+          </h2>
+          <p className="mt-3 text-base text-slate-700">
+            Are you sure you do not want to add:{" "}
+            {formatExtrasConfirmList(
+              pendingUncheckedExtras.map((e) => e.name)
+            )}
+            ?
+          </p>
+          <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              onClick={() => {
+                setExtrasConfirmOpen(false);
+                setHighlightExtras(true);
+                requestAnimationFrame(() => {
+                  document
+                    .querySelector('[data-validation-field="ticket-extras"]')
+                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                });
+              }}
+            >
+              Go back and choose
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
+              onClick={commitSave}
+            >
+              Continue without extras
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
