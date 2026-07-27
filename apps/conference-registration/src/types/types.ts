@@ -607,6 +607,10 @@ export interface ITicketPayload {
   price: number;
   extras: Identifier[];
   ticket_type: ITicketOption;
+  /** Contestant attach: existing Attendee/Vendor registration id. */
+  previous_registration_id?: Identifier;
+  /** Contestant attach: source attendee/vendor ticket or attendee row id. */
+  source_ticket_id?: Identifier;
   [key: string]: unknown;
 }
 
