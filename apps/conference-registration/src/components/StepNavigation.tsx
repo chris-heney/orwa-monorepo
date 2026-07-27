@@ -94,30 +94,50 @@ const StepNavigation = () => {
       );
     }
 
-    if (
-      payload.registration_type === "Contestant" &&
-      payload.contestant_already_registered === "Yes" &&
-      !payload.previous_registration_id &&
-      onContestantStep
-    ) {
-      return fail(
-        "Select the existing Attendee or Vendor registration",
-        ["previous_registration_id"],
-        { toast }
-      );
-    }
+    const contestantTickets = (payload.tickets ?? []).filter(
+      (ticket) => ticket.type === "Contestant"
+    );
 
     if (
       payload.registration_type === "Contestant" &&
       onContestantStep &&
-      (payload.tickets ?? []).filter((ticket) => ticket.type === "Contestant")
-        .length === 0
+      contestantTickets.length === 0
     ) {
-      return fail(
-        "Please add at least one contestant",
-        ["contestants"],
-        { toast }
-      );
+      return fail("Please add at least one contestant", ["contestants"], {
+        toast,
+      });
+    }
+
+    if (!onContestantStep) return true;
+
+    for (const ticket of contestantTickets) {
+      const isFishAddonAttach =
+        Boolean(ticket.previous_registration_id) ||
+        (/fish/i.test(ticket.ticket_type?.name ?? "") &&
+          !/contestant\s*only/i.test(ticket.ticket_type?.name ?? "") &&
+          payload.registration_type === "Contestant");
+
+      if (isFishAddonAttach) {
+        if (!ticket.previous_registration_id || !ticket.source_ticket_id) {
+          return fail(
+            "Each reduced-price fisher must select an organization and person",
+            ["contestants"],
+            { toast }
+          );
+        }
+      }
+
+      if (
+        (payload.registration_type === "Attendee" ||
+          payload.registration_type === "Vendor") &&
+        !ticket.source_ticket_id
+      ) {
+        return fail(
+          "Each contestant must be linked to an attendee or vendor on this registration",
+          ["contestants"],
+          { toast }
+        );
+      }
     }
 
     return true;

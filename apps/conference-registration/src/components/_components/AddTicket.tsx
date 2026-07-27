@@ -10,7 +10,7 @@ import { ITicketPayload } from "../../types/types";
 import { isExtraIncluded } from "../../helpers/isExtraIncluded";
 import { fetchSingleTicket } from "../../helpers/fetchSingleTicket";
 import { getExtraData } from "../../helpers/getExtraData";
-import { allowedContestantTickets } from "../../helpers/contestantTicketTiers";
+import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
 
 interface IAddTicketComponentProps {
   setIsModalOpen: Dispatch<
@@ -43,12 +43,12 @@ const AddTicketComponent = ({
   );
 
   const registrationType = watch("registration_type");
-  const alreadyRegistered = watch("contestant_already_registered") === "Yes";
-  // Contestant tickets are tiered ($75 add-on vs $150 standalone); offer only
-  // the tier that matches this registration.
+  // ContestantModal resolves Golfer vs Fisher (and Fisher tier) itself.
   const optionsForType =
     type === "Contestant"
-      ? allowedContestantTickets(TicketOptions, registrationType, alreadyRegistered)
+      ? (TicketOptions ?? []).filter((ticket) =>
+          ticketMatchesContext(ticket, "Contestant")
+        )
       : TicketOptions;
 
   const boothCount = watch("booths")?.length || 0;
