@@ -21,6 +21,7 @@ export type ValidationField =
   | "vendors"
   | "contestants"
   | "contestant_already_registered"
+  | "previous_registration_id"
   | "organization"
   | "sponsor_details"
   | "billing"
@@ -175,6 +176,8 @@ export function mapFormErrorsToValidationFields(
       fields.add("agency");
     } else if (path === "vendor_participation_acknowledgement") {
       fields.add("vendor_acknowledgement");
+    } else if (path === "previous_registration_id") {
+      fields.add("previous_registration_id");
     } else if (path === "organization" || path.startsWith("organization.")) {
       fields.add("organization");
     } else if (path === "logo" || path.startsWith("logo.")) {

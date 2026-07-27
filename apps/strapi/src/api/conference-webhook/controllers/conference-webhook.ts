@@ -8,6 +8,11 @@ import {
 } from "../types";
 import { findOneById } from "../../../utils/document-compat";
 import { coerceToSchema } from "../../../utils/coerce-to-schema";
+import { shouldUseAuthorizeNetTestMode } from "../helpers/payment-mode";
+import {
+  assertEligiblePreviousRegistration,
+  buildAttachedRegistrationUpdate,
+} from "../helpers/previous-registration";
 
 /**
  * Conference webhook controller
@@ -65,26 +70,53 @@ export default ({ strapi }) => {
           secondary_email,
           vendor_participation_acknowledgement,
           accepted_terms,
+          contestant_already_registered,
+          previous_registration_id,
+          test,
         } = ctx.request.body;
 
         // Get conference data
         const conferenceData = await findOneById("api::conference.conference", conference, {
           populate: "*"
         });
+        const attachesToPreviousRegistration =
+          registration_type === "Contestant" &&
+          contestant_already_registered === "Yes";
+        const previousRegistration = attachesToPreviousRegistration
+          ? assertEligiblePreviousRegistration(
+              await findOneById(
+                "api::conference-registration.conference-registration",
+                previous_registration_id,
+                { populate: "*" }
+              ),
+              conference,
+              currentYear
+            )
+          : null;
+
+        if (previousRegistration) {
+          // The selected record is authoritative; do not permit organization
+          // text to drift from the registration the contestant is attached to.
+          ctx.request.body.organization = previousRegistration.organization;
+        }
 
         // Only proceed with new registration if not a resubmission or no admin options
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
           // Log form data
           await service.logFormData(ctx.request.body, "conference-registration");
-          console.log("- Request Body:", JSON.stringify(ctx.request.body));
-          console.log("-------------------------------------------------------------");
 
           // Process payment if payment type is Card
           if (paymentType === "Card") {
+            const testMode = shouldUseAuthorizeNetTestMode({
+              nodeEnv: strapi.config.environment ?? process.env.NODE_ENV,
+              email: registrant?.email,
+              test,
+            });
             const authorizeNetResponse = await service.processPayment(
               paymentData, 
               registrant, 
-              organization
+              previousRegistration?.organization ?? organization,
+              testMode
             );
 
             if (authorizeNetResponse.messages.resultCode !== "Ok") {
@@ -170,34 +202,64 @@ export default ({ strapi }) => {
 
           const items = extras.concat(registrationAddons);
 
-          // Create registration
-          const newRegistration = await strapi.documents("api::conference-registration.conference-registration").create({
-            // Strapi 5 validates payload types strictly (v4 silently coerced);
-            // kiosk/admin flows send strings for numeric fields and vice versa.
-            data: coerceToSchema("api::conference-registration.conference-registration", {
-              conference,
-              year: currentYear,
-              registration_date: new Date(),
-              registrant: registrantContact.id,
-              total: paymentData.amount,
-              payment_method: paymentType === "Card" ? "Card" : paymentType,
-              type: registration_type,
-              organization: organization,
-              sponsorships: sponsors.map((sponsor: ISponsorEntity) => sponsor.id),
-              address: {
-                street: paymentData?.billingAddress?.address,
-                city: paymentData?.billingAddress?.city,
-                state: paymentData?.billingAddress?.state,
-                zip: paymentData?.billingAddress?.zip,
-              },
-              non_member_fee: nonMemberFee ? true : false,
-              vendor_participation_acknowledgement:
-                vendor_participation_acknowledgement ? true : false,
-              accepted_terms: Array.isArray(accepted_terms) ? accepted_terms : [],
-              items: items,
-              registration_source: registrationSource ?? "online",
-            }),
-          });
+          // The reduced contestant tier is an add-on to an existing
+          // Attendee/Vendor registration. Only standalone Contestant purchases
+          // create a new parent registration.
+          const newRegistration = previousRegistration
+            ? await strapi
+                .documents(
+                  "api::conference-registration.conference-registration"
+                )
+                .update({
+                  documentId: previousRegistration.documentId,
+                  data: coerceToSchema(
+                    "api::conference-registration.conference-registration",
+                    buildAttachedRegistrationUpdate(
+                      previousRegistration,
+                      paymentData.amount,
+                      items
+                    )
+                  ),
+                })
+            : await strapi
+                .documents(
+                  "api::conference-registration.conference-registration"
+                )
+                .create({
+                  // Strapi 5 validates payload types strictly (v4 silently coerced);
+                  // kiosk/admin flows send strings for numeric fields and vice versa.
+                  data: coerceToSchema(
+                    "api::conference-registration.conference-registration",
+                    {
+                      conference,
+                      year: currentYear,
+                      registration_date: new Date(),
+                      registrant: registrantContact.id,
+                      total: paymentData.amount,
+                      payment_method:
+                        paymentType === "Card" ? "Card" : paymentType,
+                      type: registration_type,
+                      organization,
+                      sponsorships: sponsors.map(
+                        (sponsor: ISponsorEntity) => sponsor.id
+                      ),
+                      address: {
+                        street: paymentData?.billingAddress?.address,
+                        city: paymentData?.billingAddress?.city,
+                        state: paymentData?.billingAddress?.state,
+                        zip: paymentData?.billingAddress?.zip,
+                      },
+                      non_member_fee: nonMemberFee ? true : false,
+                      vendor_participation_acknowledgement:
+                        vendor_participation_acknowledgement ? true : false,
+                      accepted_terms: Array.isArray(accepted_terms)
+                        ? accepted_terms
+                        : [],
+                      items,
+                      registration_source: registrationSource ?? "online",
+                    }
+                  ),
+                });
 
           console.log("- Registration:", JSON.stringify(newRegistration));
           console.log("-------------------------------------------------------------");
@@ -209,7 +271,7 @@ export default ({ strapi }) => {
             registrationAddons, 
             registrant, 
             conference, 
-            organization, 
+            previousRegistration?.organization ?? organization,
             watersystem, 
             registrationId
           );
@@ -221,7 +283,7 @@ export default ({ strapi }) => {
               conference, 
               registrationId, 
               registrant, 
-              organization, 
+              previousRegistration?.organization ?? organization,
               logo
             );
           }
@@ -232,7 +294,7 @@ export default ({ strapi }) => {
             conference, 
             registrationId, 
             registrationSource, 
-            organization
+            previousRegistration?.organization ?? organization
           );
 
           // Handle Booths
@@ -240,7 +302,7 @@ export default ({ strapi }) => {
             booths, 
             conference, 
             registrationId, 
-            organization, 
+            previousRegistration?.organization ?? organization,
             secondary_email,
             conferenceData
           );
@@ -251,7 +313,7 @@ export default ({ strapi }) => {
             conference, 
             registrationId, 
             registrationSource, 
-            organization,
+            previousRegistration?.organization ?? organization,
             conferenceData
           );
 

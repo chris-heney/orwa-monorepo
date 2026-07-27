@@ -641,6 +641,8 @@ export interface entryPayload {
 }
 
 export interface IRegistrationPayload {
+  id?: Identifier;
+  documentId?: string;
   adminOptions?: AdminOptions;
   type: "Attendee" | "Vendor" | "Contestant" | null;
   conference: Identifier;
@@ -657,6 +659,10 @@ export interface IRegistrationPayload {
   registration_type?: "Attendee" | "Vendor" | "Contestant" | null;
   /** Contestant-only flow: buyer self-identifies as already/concurrently registered ($75 tier). */
   contestant_already_registered?: "Yes" | "No";
+  /** Stable Conference Registration id selected for the reduced contestant tier. */
+  previous_registration_id?: Identifier;
+  /** Opt-in safe-test token: MD5 of trimmed, lowercased registrant email. */
+  test?: string;
   organization: string; // in case they are an agency
   associate?: Identifier | null;
   watersystem?: Identifier | null;

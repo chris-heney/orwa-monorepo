@@ -4,6 +4,7 @@ import { TextInput } from "mj-react-form-builder";
 import AddTicketComponent from "../components/_components/AddTicket";
 import {
   RegistrationOptions,
+  useConferenceId,
   useRegistrationSource,
   useTicketIndex,
 } from "../AppContextProvider";
@@ -19,14 +20,21 @@ import {
   tierMinPrice,
 } from "../helpers/contestantTicketTiers";
 import { ValidationHighlight } from "../helpers/validationHighlight";
+import { useGetRegistrations } from "../data/API";
 
 const StepContestants = () => {
   const { ticketIndex } = useTicketIndex();
+  const conferenceId = useConferenceId();
   const { ConferenceOptions, ExtraOptions, TicketOptions } = useContext(
     RegistrationOptions
   );
   const registrationSource = useRegistrationSource();
-  const { watch, setValue } = useFormContext();
+  const {
+    watch,
+    setValue,
+    register,
+    formState: { errors },
+  } = useFormContext();
 
   const [isModalOpen, setIsModalOpen] = useState({
     open: false,
@@ -38,6 +46,13 @@ const StepContestants = () => {
   const organization = watch("organization");
   const registrationType = watch("registration_type");
   const alreadyRegistered = watch("contestant_already_registered");
+  const previousRegistrationId = watch("previous_registration_id");
+  const { data: registrations, isLoading: registrationsLoading } =
+    useGetRegistrations(String(conferenceId), new Date().getFullYear());
+  const eligibleRegistrations = (registrations ?? []).filter(
+    (registration) =>
+      registration.type === "Attendee" || registration.type === "Vendor"
+  );
 
   const isContestantOnly = registrationType === "Contestant";
 
@@ -94,6 +109,9 @@ const StepContestants = () => {
   const handleTierChange = (value: "Yes" | "No") => {
     if (alreadyRegistered === value) return;
     setValue("contestant_already_registered", value);
+    if (value === "No") {
+      setValue("previous_registration_id", undefined);
+    }
 
     // Drop contestant tickets priced for the other tier so carts never mix
     // $75 and $150 fishing tickets.
@@ -112,6 +130,18 @@ const StepContestants = () => {
     });
     if (pruned.length !== tickets.length) {
       setValue("tickets", pruned);
+    }
+  };
+
+  const handlePreviousRegistrationChange = (value: string) => {
+    const selected = eligibleRegistrations.find(
+      (registration) => String(registration.id) === value
+    );
+    if (selected) {
+      setValue("organization", selected.organization, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
     }
   };
 
@@ -217,6 +247,59 @@ const StepContestants = () => {
         </ValidationHighlight>
       )}
 
+      {isContestantOnly && alreadyRegistered === "Yes" && (
+        <ValidationHighlight
+          field="previous_registration_id"
+          className="mb-6 rounded-lg border border-slate-200 bg-white p-5"
+          clearWhen={Boolean(previousRegistrationId)}
+        >
+          <label
+            htmlFor="previous_registration_id"
+            className="mb-1.5 block text-sm font-semibold text-slate-800"
+          >
+            Existing conference registration
+          </label>
+          <p className="mb-3 text-xs leading-relaxed text-slate-500">
+            Select the Attendee or Vendor registration these contestants should
+            be attached to.
+          </p>
+          <select
+            id="previous_registration_id"
+            {...register("previous_registration_id", {
+              required: "Select an existing conference registration",
+              valueAsNumber: true,
+              onChange: (event) =>
+                handlePreviousRegistrationChange(event.target.value),
+            })}
+            disabled={registrationsLoading}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+          >
+            <option value="">
+              {registrationsLoading
+                ? "Loading registrations…"
+                : "Select an organization…"}
+            </option>
+            {eligibleRegistrations.map((registration) => (
+              <option key={String(registration.id)} value={registration.id}>
+                {registration.organization} — {registration.type}
+              </option>
+            ))}
+          </select>
+          {(errors.previous_registration_id as { message?: string } | undefined)
+            ?.message && (
+            <span className="mt-1.5 block text-sm text-red-600">
+              {
+                (
+                  errors.previous_registration_id as {
+                    message?: string;
+                  }
+                ).message
+              }
+            </span>
+          )}
+        </ValidationHighlight>
+      )}
+
       <ValidationHighlight
         field="organization"
         className="mb-6 rounded-lg border border-slate-200 bg-white p-5"
@@ -226,9 +309,17 @@ const StepContestants = () => {
           Organization
         </h3>
         <p className="mb-4 text-xs leading-relaxed text-slate-500">
-          Shown with your tournament participants.
+          {isContestantOnly && alreadyRegistered === "Yes"
+            ? "Organization is taken from the selected conference registration."
+            : "Shown with your tournament participants."}
         </p>
-        <TextInput source="organization" label="Organization" required />
+        {isContestantOnly && alreadyRegistered === "Yes" ? (
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800">
+            {organization || "Select a registration above"}
+          </p>
+        ) : (
+          <TextInput source="organization" label="Organization" required />
+        )}
       </ValidationHighlight>
 
       {needsTeamName && (

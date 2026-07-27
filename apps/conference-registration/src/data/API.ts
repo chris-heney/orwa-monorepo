@@ -121,7 +121,7 @@ export const useGetRegistrations = (conference_id: string, year: number): {
   data: IRegistrationPayload[] | undefined,
   isLoading: boolean
 } => {
-  return useQuery({ queryKey: ['conference-registrations'], queryFn: async () => _get('conference-registrations', `?filters[conference]=${conference_id}&filters[year]=${year}&pagination[limit]=1000&populate=*&sort=organization:ASC`) })
+  return useQuery({ queryKey: ['conference-registrations', conference_id, year], queryFn: async () => _get('conference-registrations', `?filters[conference]=${conference_id}&filters[year]=${year}&pagination[limit]=1000&populate=*&sort=organization:ASC`) })
 }
 
 // form submit handler:

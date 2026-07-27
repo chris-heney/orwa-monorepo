@@ -9,6 +9,9 @@ import {
   state_map,
 } from "../types";
 import { findOneById, updateById } from "../../../utils/document-compat";
+import {
+  authorizeNetMode,
+} from "../helpers/payment-mode";
 
 // Constants
 const PAYMENT_GATEWAY_API = "https://api.authorize.net/xml/v1/request.api";
@@ -220,12 +223,13 @@ export default ({ strapi }) => {
 
     // Logging
     logFormData: async (data: any, resource: string) => {
+      const { test: _testToken, ...safeData } = data;
       await strapi.documents("api::log.log").create({
         data: {
           data: {
-            ...data,
-            paymentData: data.paymentData ? {
-              ...data.paymentData,
+            ...safeData,
+            paymentData: safeData.paymentData ? {
+              ...safeData.paymentData,
               cardNumber: null,
               expirationDate: null,
               cardCode: null,
@@ -237,19 +241,31 @@ export default ({ strapi }) => {
     },
 
     // Payment Processing
-    processPayment: async (paymentData, registrant, organization) => {
+    processPayment: async (
+      paymentData,
+      registrant,
+      organization,
+      testMode = false
+    ) => {
       const { billingAddress, amount, cardNumber, expirationDate, cardCode } = paymentData;
       const billingEmail =
         billingAddress?.email?.trim() || registrant?.email || "";
       const billingPhone =
         billingAddress?.phone?.trim() || registrant?.phone || "";
+      const gateway = authorizeNetMode(testMode, {
+        live: {
+          name: PAYMENT_GATEWAY_LOGIN,
+          transactionKey: PAYMENT_GATEWAY_KEY,
+        },
+        sandbox: {
+          name: PAYMENT_GATEWAY_LOGIN_SANDBOX,
+          transactionKey: PAYMENT_GATEWAY_KEY_SANDBOX,
+        },
+      });
 
       const createTransactionRequest = {
         createTransactionRequest: {
-          merchantAuthentication: {
-            name: PAYMENT_GATEWAY_LOGIN,
-            transactionKey: PAYMENT_GATEWAY_KEY,
-          },
+          merchantAuthentication: gateway.credentials,
           transactionRequest: {
             transactionType: "authCaptureTransaction",
             amount,
@@ -279,11 +295,14 @@ export default ({ strapi }) => {
               faxNumber: billingPhone,
               phoneNumber: billingPhone,
             },
+            ...(gateway.transactionSettings
+              ? { transactionSettings: gateway.transactionSettings }
+              : {}),
           },
         },
       };
 
-      const response = await fetch(PAYMENT_GATEWAY_API, {
+      const response = await fetch(gateway.endpoint, {
         method: "POST",
         body: JSON.stringify(createTransactionRequest),
         headers: {

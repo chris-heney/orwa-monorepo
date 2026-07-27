@@ -96,6 +96,19 @@ const StepNavigation = () => {
 
     if (
       payload.registration_type === "Contestant" &&
+      payload.contestant_already_registered === "Yes" &&
+      !payload.previous_registration_id &&
+      onContestantStep
+    ) {
+      return fail(
+        "Select the existing Attendee or Vendor registration",
+        ["previous_registration_id"],
+        { toast }
+      );
+    }
+
+    if (
+      payload.registration_type === "Contestant" &&
       onContestantStep &&
       (payload.tickets ?? []).filter((ticket) => ticket.type === "Contestant")
         .length === 0
