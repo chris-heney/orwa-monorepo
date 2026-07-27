@@ -18,6 +18,7 @@
     ".tmp/",
     "src/admin/",
     "**/*.test.*",
+    "**/*.spec.*",
     "src/plugins/**"
   ]
 }
