@@ -13,6 +13,11 @@ import {
   assertEligiblePreviousRegistration,
   buildAttachedRegistrationUpdate,
 } from "../helpers/previous-registration";
+import {
+  assertSourcePersonOnRegistration,
+  partitionContestantLines,
+  sharePaymentAmount,
+} from "../helpers/contestant-fanout";
 
 /**
  * Conference webhook controller
@@ -79,26 +84,62 @@ export default ({ strapi }) => {
         const conferenceData = await findOneById("api::conference.conference", conference, {
           populate: "*"
         });
-        const attachesToPreviousRegistration =
-          registration_type === "Contestant" &&
-          contestant_already_registered === "Yes";
-        const previousRegistration = attachesToPreviousRegistration
-          ? assertEligiblePreviousRegistration(
+
+        const isContestantOnlyCheckout = registration_type === "Contestant";
+        const contestantTickets: ITicketPayload[] = (tickets ?? []).filter(
+          (ticket: ITicketPayload) => isContestantTicket(ticket)
+        );
+
+        // Legacy cart-level attach → stamp onto lines missing per-line ids.
+        if (
+          isContestantOnlyCheckout &&
+          contestant_already_registered === "Yes" &&
+          previous_registration_id != null
+        ) {
+          for (const ticket of contestantTickets) {
+            if (ticket.previous_registration_id == null) {
+              ticket.previous_registration_id = previous_registration_id;
+            }
+          }
+        }
+
+        const { attachGroups, standalone: standaloneContestants } =
+          partitionContestantLines(contestantTickets);
+
+        // Validate all attach targets before charging.
+        const loadedAttachRegistrations = new Map<string, any>();
+        if (isContestantOnlyCheckout) {
+          for (const [attachId, lines] of attachGroups) {
+            const previousRegistration = assertEligiblePreviousRegistration(
               await findOneById(
                 "api::conference-registration.conference-registration",
-                previous_registration_id,
+                attachId,
                 { populate: "*" }
               ),
               conference,
               currentYear
-            )
-          : null;
+            );
+            for (const line of lines) {
+              // Legacy attach without source_ticket_id still allowed until UI ships.
+              if (line.source_ticket_id != null) {
+                assertSourcePersonOnRegistration(
+                  previousRegistration,
+                  line.source_ticket_id
+                );
+              }
+            }
+            loadedAttachRegistrations.set(attachId, previousRegistration);
+          }
 
-        if (previousRegistration) {
-          // The selected record is authoritative; do not permit organization
-          // text to drift from the registration the contestant is attached to.
-          ctx.request.body.organization = previousRegistration.organization;
+          const firstAttach = loadedAttachRegistrations.values().next().value;
+          if (firstAttach?.organization) {
+            ctx.request.body.organization = firstAttach.organization;
+          }
         }
+
+        const paymentOrganization =
+          loadedAttachRegistrations.values().next().value?.organization ??
+          organization;
 
         // Only proceed with new registration if not a resubmission or no admin options
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
@@ -115,7 +156,7 @@ export default ({ strapi }) => {
             const authorizeNetResponse = await service.processPayment(
               paymentData, 
               registrant, 
-              previousRegistration?.organization ?? organization,
+              paymentOrganization,
               testMode
             );
 
@@ -202,11 +243,27 @@ export default ({ strapi }) => {
 
           const items = extras.concat(registrationAddons);
 
-          // The reduced contestant tier is an add-on to an existing
-          // Attendee/Vendor registration. Only standalone Contestant purchases
-          // create a new parent registration.
-          const newRegistration = previousRegistration
-            ? await strapi
+          let registrationId: number | string | undefined;
+          let contestantIds: number[] = [];
+
+          if (isContestantOnlyCheckout) {
+            // Mixed cart: attach groups update existing regs; standalone lines
+            // create one Contestant registration. Reg-level extras ride with
+            // standalone, or the first attach group if there is no standalone.
+            let regLevelItems = items;
+            for (const [attachId, lines] of attachGroups) {
+              const previousRegistration =
+                loadedAttachRegistrations.get(attachId);
+              const attachItems =
+                standaloneContestants.length === 0 &&
+                regLevelItems.length > 0 &&
+                attachId === [...attachGroups.keys()][0]
+                  ? regLevelItems
+                  : [];
+              if (attachItems === regLevelItems) {
+                regLevelItems = [];
+              }
+              await strapi
                 .documents(
                   "api::conference-registration.conference-registration"
                 )
@@ -216,12 +273,88 @@ export default ({ strapi }) => {
                     "api::conference-registration.conference-registration",
                     buildAttachedRegistrationUpdate(
                       previousRegistration,
-                      paymentData.amount,
-                      items
+                      sharePaymentAmount(lines),
+                      attachItems
                     )
                   ),
-                })
-            : await strapi
+                });
+              const ids = await handleContestants(
+                lines,
+                conference,
+                previousRegistration.id,
+                registrationSource,
+                previousRegistration.organization,
+                conferenceData
+              );
+              contestantIds = contestantIds.concat(ids);
+              registrationId = previousRegistration.id;
+            }
+
+            if (standaloneContestants.length > 0) {
+              const newRegistration = await strapi
+                .documents(
+                  "api::conference-registration.conference-registration"
+                )
+                .create({
+                  data: coerceToSchema(
+                    "api::conference-registration.conference-registration",
+                    {
+                      conference,
+                      year: currentYear,
+                      registration_date: new Date(),
+                      registrant: registrantContact.id,
+                      total: sharePaymentAmount(standaloneContestants),
+                      payment_method:
+                        paymentType === "Card" ? "Card" : paymentType,
+                      type: registration_type,
+                      organization,
+                      sponsorships: sponsors.map(
+                        (sponsor: ISponsorEntity) => sponsor.id
+                      ),
+                      address: {
+                        street: paymentData?.billingAddress?.address,
+                        city: paymentData?.billingAddress?.city,
+                        state: paymentData?.billingAddress?.state,
+                        zip: paymentData?.billingAddress?.zip,
+                      },
+                      non_member_fee: nonMemberFee ? true : false,
+                      vendor_participation_acknowledgement:
+                        vendor_participation_acknowledgement ? true : false,
+                      accepted_terms: Array.isArray(accepted_terms)
+                        ? accepted_terms
+                        : [],
+                      items: regLevelItems,
+                      registration_source: registrationSource ?? "online",
+                    }
+                  ),
+                });
+              console.log("- Registration:", JSON.stringify(newRegistration));
+              console.log("-------------------------------------------------------------");
+              registrationId = newRegistration.id;
+              const ids = await handleContestants(
+                standaloneContestants,
+                conference,
+                registrationId,
+                registrationSource,
+                organization,
+                conferenceData
+              );
+              contestantIds = contestantIds.concat(ids);
+            }
+
+            if (team && contestantIds.length > 0 && registrationId != null) {
+              await handleTeamCreation(
+                team,
+                conference,
+                registrationId,
+                contestantIds
+              );
+            }
+          } else {
+          // The reduced contestant tier is an add-on to an existing
+          // Attendee/Vendor registration. Only standalone Contestant purchases
+          // create a new parent registration.
+          const newRegistration = await strapi
                 .documents(
                   "api::conference-registration.conference-registration"
                 )
@@ -264,14 +397,14 @@ export default ({ strapi }) => {
           console.log("- Registration:", JSON.stringify(newRegistration));
           console.log("-------------------------------------------------------------");
 
-          const registrationId = newRegistration.id;
+          registrationId = newRegistration.id;
 
           // Handle Water Taste Test Contestants
           await handleWaterTasteTestContestants(
             registrationAddons, 
             registrant, 
             conference, 
-            previousRegistration?.organization ?? organization,
+            organization,
             watersystem, 
             registrationId
           );
@@ -283,7 +416,7 @@ export default ({ strapi }) => {
               conference, 
               registrationId, 
               registrant, 
-              previousRegistration?.organization ?? organization,
+              organization,
               logo
             );
           }
@@ -294,7 +427,7 @@ export default ({ strapi }) => {
             conference, 
             registrationId, 
             registrationSource, 
-            previousRegistration?.organization ?? organization
+            organization
           );
 
           // Handle Booths
@@ -302,18 +435,18 @@ export default ({ strapi }) => {
             booths, 
             conference, 
             registrationId, 
-            previousRegistration?.organization ?? organization,
+            organization,
             secondary_email,
             conferenceData
           );
 
           // Handle Contestants
-          const contestantIds = await handleContestants(
+          contestantIds = await handleContestants(
             tickets, 
             conference, 
             registrationId, 
             registrationSource, 
-            previousRegistration?.organization ?? organization,
+            organization,
             conferenceData
           );
 
@@ -325,6 +458,7 @@ export default ({ strapi }) => {
               registrationId, 
               contestantIds
             );
+          }
           }
         }
 

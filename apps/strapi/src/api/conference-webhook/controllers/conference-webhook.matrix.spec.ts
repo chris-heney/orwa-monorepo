@@ -71,12 +71,12 @@ describe("conference registration matrix", () => {
     updated = {};
     nextId = 1000;
     findOneById.mockReset();
-    findOneById.mockImplementation(async (uid: string, id: number) => {
+    findOneById.mockImplementation(async (uid: string, id: number | string) => {
       if (uid === "api::conference.conference") return conference;
       if (
         uid ===
           "api::conference-registration.conference-registration" &&
-        id === 500
+        Number(id) === 500
       ) {
         return {
           id: 500,
@@ -87,6 +87,38 @@ describe("conference registration matrix", () => {
           organization: "ORWA Matrix Vendor",
           total: "400.00",
           items: [],
+          attendees: [
+            {
+              id: 901,
+              first: "Linked",
+              last: "Fisher",
+              email: "linked-fisher@example.invalid",
+            },
+          ],
+        };
+      }
+      if (
+        uid ===
+          "api::conference-registration.conference-registration" &&
+        Number(id) === 501
+      ) {
+        return {
+          id: 501,
+          documentId: "existing-attendee",
+          conference: { id: 3 },
+          year,
+          type: "Attendee",
+          organization: "ORWA Matrix Attendee Org",
+          total: "200.00",
+          items: [],
+          attendees: [
+            {
+              id: 902,
+              first: "Other",
+              last: "Fisher",
+              email: "other-fisher@example.invalid",
+            },
+          ],
         };
       }
       return null;
@@ -246,8 +278,6 @@ describe("conference registration matrix", () => {
     await submit({
       ...basePayload("Linked"),
       registration_type: "Contestant",
-      contestant_already_registered: "Yes",
-      previous_registration_id: 500,
       tickets: [
         {
           first: "Linked",
@@ -257,9 +287,11 @@ describe("conference registration matrix", () => {
           type: "Contestant",
           price: 75,
           extras: [],
+          previous_registration_id: 500,
+          source_ticket_id: 901,
           ticket_type: {
             id: 24,
-            name: "Fisher",
+            name: "Fishing Tournament",
             context: "Contestant",
           },
         },
@@ -279,6 +311,76 @@ describe("conference registration matrix", () => {
     expect(created["api::conference-contestant.conference-contestant"][0].registration).toBe(
       500
     );
+  });
+
+  it("fans out a mixed cart across two orgs plus a standalone contestant", async () => {
+    await submit({
+      ...basePayload("Mixed"),
+      registration_type: "Contestant",
+      tickets: [
+        {
+          first: "Linked",
+          last: "Fisher",
+          email: "linked-fisher@example.invalid",
+          phone: "4055550104",
+          type: "Contestant",
+          price: 75,
+          extras: [],
+          previous_registration_id: 500,
+          source_ticket_id: 901,
+          ticket_type: {
+            id: 24,
+            name: "Fishing Tournament",
+            context: "Contestant",
+          },
+        },
+        {
+          first: "Other",
+          last: "Fisher",
+          email: "other-fisher@example.invalid",
+          phone: "4055550105",
+          type: "Contestant",
+          price: 75,
+          extras: [],
+          previous_registration_id: 501,
+          source_ticket_id: 902,
+          ticket_type: {
+            id: 24,
+            name: "Fishing Tournament",
+            context: "Contestant",
+          },
+        },
+        {
+          first: "Solo",
+          last: "Golfer",
+          email: "solo-golfer@example.invalid",
+          phone: "4055550106",
+          type: "Contestant",
+          price: 125,
+          extras: [],
+          ticket_type: {
+            id: 37,
+            name: "Golfer",
+            context: "Contestant",
+          },
+        },
+      ],
+      paymentData: {
+        ...basePayload("Mixed").paymentData,
+        amount: 275,
+      },
+    });
+
+    expect(updated["api::conference-registration.conference-registration"]).toHaveLength(2);
+    expect(
+      created["api::conference-registration.conference-registration"]
+    ).toHaveLength(1);
+    expect(
+      created["api::conference-registration.conference-registration"][0]
+    ).toMatchObject({ type: "Contestant", total: 125 });
+    expect(
+      created["api::conference-contestant.conference-contestant"]
+    ).toHaveLength(3);
   });
 
   it.each([
