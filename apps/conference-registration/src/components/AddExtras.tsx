@@ -3,7 +3,7 @@ import InfoIcon from "@mui/icons-material/Info";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import { formatMoneyOrIncluded } from "../helpers/currencyFormat";
-import { ITicketOption, IExtraOption } from "../types/types";
+import { IExtraOption } from "../types/types";
 import {
   useExtraDetails,
   useRegistrationOptions,
@@ -11,6 +11,7 @@ import {
 } from "../AppContextProvider";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { isExtraIncluded } from "../helpers/isExtraIncluded";
+import { filterVisibleExtras } from "../helpers/filterVisibleExtras";
 import { useState, useEffect } from "react";
 
 const AddExtras = ({
@@ -130,26 +131,17 @@ const AddExtras = ({
     return isSelected ? 'yes' : 'no';
   };
 
-  const extraMatchesContext = (extra: IExtraOption) => {
-    if (extra.context === context) return true;
-    // Strapi has "Contestants" (plural) on Mulligan; UI context is "Contestant"
-    if (context === "Contestant" && extra.context === "Contestants") return true;
-    return false;
-  };
+  const visibleExtras = filterVisibleExtras({
+    extras: ExtraOptions,
+    context,
+    registrationSource,
+    ticketTypeId: ticket?.ticket_type?.id,
+  }).sort((a, b) => {
+    if (!a.order || !b.order) return 0;
+    return a.order - b.order;
+  });
 
-  return ExtraOptions.filter((extra) => {
-    const excluded = extra.excluded;
-    const isExcluded = Array.isArray(excluded)
-      ? excluded.some((excludedTicket: ITicketOption) => {
-          return (
-            String(excludedTicket.id) === String(ticket?.ticket_type?.id) &&
-            context !== "Booth"
-          );
-        })
-      : false;
-
-    return !isExcluded && extraMatchesContext(extra);
-  }).length > 0 ? (
+  return visibleExtras.length > 0 ? (
     <div>
       <div className="mb-3">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -160,26 +152,7 @@ const AddExtras = ({
         </p>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {ExtraOptions.sort((a,b) => {
-          if (!a.order || !b.order) return 0;
-          return a.order - b.order;
-        }).filter((extra) => {
-          const excluded = extra.excluded;
-          const isExcluded = Array.isArray(excluded)
-            ? excluded.some((excludedTicket: ITicketOption) => {
-                return (
-                  String(excludedTicket.id) ===
-                    String(ticket?.ticket_type?.id) && context !== "Booth"
-                );
-              })
-            : false;
-
-          return !isExcluded && extraMatchesContext(extra);
-        }).filter((extra) => {
-          return registrationSource === "kiosk"
-            ? (extra.price_event ?? 0) > 0
-            : true;
-        }).map((extra) => {
+        {visibleExtras.map((extra) => {
           const currentQuantity =
             ticket?.extras?.filter((id: string) => id === extra.id).length || 0;
 

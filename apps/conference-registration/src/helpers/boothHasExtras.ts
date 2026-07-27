@@ -1,25 +1,24 @@
 import { IExtraOption } from "../types/types";
+import { filterVisibleExtras } from "./filterVisibleExtras";
 
 /**
  * Returns booth-context extras that would be shown in the booth modal / AddExtras.
- * Matches AddExtras filtering: context === "Booth", and for kiosk only priced extras.
+ * Same rule as AddExtras: context + excluded only (no kiosk price gate).
  */
 export const getBoothExtras = (
   extraOptions: IExtraOption[] | undefined,
-  registrationSource: "online" | "kiosk" | string
-): IExtraOption[] => {
-  if (!extraOptions?.length) return [];
-
-  return extraOptions.filter((extra) => {
-    if (extra.context !== "Booth") return false;
-    if (registrationSource === "kiosk") {
-      return (extra.price_event ?? 0) > 0;
-    }
-    return true;
+  registrationSource?: "online" | "kiosk" | string,
+  ticketTypeId?: string | number | null
+): IExtraOption[] =>
+  filterVisibleExtras({
+    extras: extraOptions,
+    context: "Booth",
+    registrationSource,
+    ticketTypeId,
   });
-};
 
 export const boothHasExtras = (
   extraOptions: IExtraOption[] | undefined,
-  registrationSource: "online" | "kiosk" | string
-): boolean => getBoothExtras(extraOptions, registrationSource).length > 0;
+  registrationSource?: "online" | "kiosk" | string,
+  ticketTypeId?: string | number | null
+): boolean => getBoothExtras(extraOptions, registrationSource, ticketTypeId).length > 0;

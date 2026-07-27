@@ -8,6 +8,8 @@ const boothExtra = {
   name: "Table",
   price_online: 50,
   price_event: 40,
+  included: [],
+  excluded: [],
 } as unknown as IExtraOption;
 
 const attendeeExtra = {
@@ -16,6 +18,8 @@ const attendeeExtra = {
   name: "Meal",
   price_online: 25,
   price_event: 20,
+  included: [],
+  excluded: [],
 } as unknown as IExtraOption;
 
 const freeKioskBoothExtra = {
@@ -24,6 +28,8 @@ const freeKioskBoothExtra = {
   name: "Free sign",
   price_online: 10,
   price_event: 0,
+  included: [],
+  excluded: [],
 } as unknown as IExtraOption;
 
 describe("boothHasExtras", () => {
@@ -37,9 +43,9 @@ describe("boothHasExtras", () => {
     expect(boothHasExtras([boothExtra, attendeeExtra], "online")).toBe(true);
   });
 
-  it("hides zero-priced booth extras in kiosk mode", () => {
-    expect(getBoothExtras([freeKioskBoothExtra], "kiosk")).toHaveLength(0);
-    expect(boothHasExtras([freeKioskBoothExtra], "kiosk")).toBe(false);
+  it("shows $0 booth extras in kiosk (no price_event gate)", () => {
+    expect(getBoothExtras([freeKioskBoothExtra], "kiosk")).toHaveLength(1);
+    expect(boothHasExtras([freeKioskBoothExtra], "kiosk")).toBe(true);
     expect(boothHasExtras([boothExtra], "kiosk")).toBe(true);
   });
 });
