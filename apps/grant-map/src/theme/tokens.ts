@@ -82,12 +82,16 @@ export const display = {
 } as const;
 
 export const money = (value: number, compact = false): string => {
-  if (compact) {
-    const abs = Math.abs(value);
-    if (abs >= 1_000_000)
-      return `${value < 0 ? "-" : ""}$${(abs / 1_000_000).toFixed(1)}M`;
-    if (abs >= 1_000)
-      return `${value < 0 ? "-" : ""}$${(abs / 1_000).toFixed(0)}K`;
+  const sign = value < 0 ? "-" : "";
+  const abs = Math.abs(value);
+  if (compact && abs >= 1_000) {
+    // Below the switch point the thousands figure would round to "1000K".
+    const millions = abs >= 999_500;
+    const scaled = abs / (millions ? 1_000_000 : 1_000);
+    // Keep a decimal while it still changes the figure ($1.5K, never $2K for
+    // $1,500) and drop it once the magnitude makes it noise ($124K).
+    const text = scaled.toFixed(scaled < 10 ? 1 : 0).replace(/\.0$/, "");
+    return `${sign}$${text}${millions ? "M" : "K"}`;
   }
-  return `${value < 0 ? "-" : ""}$${Math.round(Math.abs(value)).toLocaleString()}`;
+  return `${sign}$${Math.round(abs).toLocaleString()}`;
 };
