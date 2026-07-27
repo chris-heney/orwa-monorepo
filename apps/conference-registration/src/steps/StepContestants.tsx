@@ -196,14 +196,14 @@ const StepContestants = () => {
                   value: "Yes" as const,
                   title: "Already registered",
                   detail:
-                    "My organization is registered (or registering separately) as an Attendee or Vendor",
+                    "Contestant is already registered as an Attendee or Vendor",
                   price: addOnPrice,
                 },
                 {
                   value: "No" as const,
                   title: "Contestant only",
                   detail:
-                    "My organization is not otherwise registered for this conference",
+                    "This contestant is not currently registered for this conference",
                   price: standalonePrice,
                 },
               ]
