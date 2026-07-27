@@ -1,260 +1,256 @@
-import React, { useEffect } from "react";
-import DateStatusWidget from "../../grant-manager/_components/DateStatusWidget";
-import { Box, Grid, Typography } from "@mui/material";
-import BreakfastIcon from "@mui/icons-material/EggAlt";
-import LunchIcon from "@mui/icons-material/LunchDining";
-import DinnerIcon from "@mui/icons-material/Restaurant";
-import BoothIcon from "@mui/icons-material/StoreMallDirectory";
-import BuildCircleIcon from "@mui/icons-material/BuildCircle";
-import httpClient from "../../../helpers/ra-strapi-data-provider/src/httpClient";
-import { Loading, RaRecord, useListContext } from "react-admin";
-import ucwords from "../../_helpers/ucwords";
-import ResponsiveListItem from "../../_components/ResponsiveListItem";
-import { getFilterYear, getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import React from "react";
+import { Box, Typography } from "@mui/material";
+import { Loading, useListContext } from "react-admin";
+import dayjs from "dayjs";
+import { money, useSummaryTokens } from "./summary/tokens";
+import { MetricChip, StatCard } from "./summary/cards";
+import { useConferenceMetrics } from "./summary/useConferenceMetrics";
+import ConferenceSummaryHeader from "./summary/ConferenceSummaryHeader";
+import RegistrationMomentum from "./summary/RegistrationMomentum";
+import RevenueMix from "./summary/RevenueMix";
+import CrowdPanel from "./summary/CrowdPanel";
+import LogisticsBoard from "./summary/LogisticsBoard";
+import SponsorSpotlight from "./summary/SponsorSpotlight";
 
-interface IHeadCount {
-  type: string;
-  count: number;
-}
-
-interface IMetric {
-  name: string;
-  count: number;
-  key: string;
-  icon: string;
-}
-
-// conference,
-// boothCount: boothCountSummary,
-// itemCounts: itemCountsSummary,
-// headCountsAttendees: headCountsSummary,
-// headCountsContestants: confestantCountSummary
-
-interface IConferenceSummary {
-  conference?: RaRecord;
-  boothCount: number;
-  headCountAttendees: IHeadCount[];
-  headCountContestants: IHeadCount[];
-  itemCounts: Array<[number, IMetric]>; // Updated interface
-}
-
+/**
+ * Conference Event Command Center — the Grant Manager summary treatment
+ * applied to event operations: ink canvas, duotone stat cards, water-ledger
+ * tokens in light and dark, zero-value widgets staying out of the way.
+ */
 const ConferenceSummary = () => {
+  const T = useSummaryTokens();
   const { filterValues } = useListContext();
+  const metrics = useConferenceMetrics(filterValues);
+  const { showtime, revenue, booths, sponsors, contest } = metrics;
 
-  const [conferenceSummary, setConferenceSummary] =
-    React.useState<IConferenceSummary>({
-      boothCount: 0,
-      headCountAttendees: [],
-      headCountContestants: [],
-      itemCounts: [],
-      conference: undefined,
-    });
+  if (metrics.isLoading) return <Loading />;
 
-  const [totalHeadCount, setTotalHeadCount] = React.useState(0);
-  useEffect(() => {
-    setTotalHeadCount(0);
+  const eventDates =
+    showtime?.startDate &&
+    `${dayjs(showtime.startDate).format("MMM D")} – ${dayjs(
+      showtime.endDate
+    ).format("MMM D, YYYY")}`;
 
-    const confId = getPrimaryConferenceId(filterValues);
-    const y = getFilterYear(filterValues);
-
-    // Determine the API endpoint based on available filters
-    let apiUrl = `${import.meta.env.VITE_API_ENDPOINT}/api/conference-summary`;
-    
-    if (confId != null && y != null) {
-      // Both conference and year are provided
-      apiUrl += `/${confId}/${y}`;
-    } else if (confId != null) {
-      // Only conference is provided
-      apiUrl += `/${confId}/-1`;
-    } else if (y != null) {
-      // Only year is provided
-      apiUrl += `/-1/${y}`;
-    }
-    // else - use the base endpoint with no parameters for unfiltered data
-
-    httpClient(apiUrl).then((response) => {
-      const responseData = JSON.parse(response.body);
-      let newTotal = 0;
-      
-      // Calculate total from all non-voter attendees
-      if (responseData.headCountAttendees) {
-        responseData.headCountAttendees
-          .filter((item: any) => item.type !== "Voter Only")
-          .forEach((item: IMetric) => {
-            newTotal += parseInt(item.count.toString());
-          });
-      }
-
-      setTotalHeadCount(newTotal);
-      setConferenceSummary({
-        ...(responseData as IConferenceSummary),
-      });
-    });
-  }, [filterValues]);
-
-  const mealIcons = [LunchIcon, DinnerIcon, BuildCircleIcon];
-
-  const getItemCount = (metric: IMetric) => metric?.count.toString() || "0";
   return (
-    <Box sx={{ p: 2 }}>
-      {!conferenceSummary.conference ? (
-        <Loading />
-      ) : (
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <Typography
-              component="h3"
-              sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}
-            >
-              Attendee Summary
-            </Typography>
-            {conferenceSummary.headCountAttendees
-              .filter((headCount) => {
-                return headCount.type !== "Voter Only";
-              })
-              .map((metric, index) => (
-                <ResponsiveListItem
-                  key={index}
-                  label={ucwords(metric.type)}
-                  value={`${metric.count}`}
-                  sx={{ borderBottom: "1px solid", borderColor: "divider" }}
-                />
-              ))}
-            <ResponsiveListItem
-              key="last"
-              label="Total"
-              value={`${totalHeadCount}`}
-              sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+    <Box
+      sx={{
+        position: "relative",
+        width: "100%",
+        backgroundColor: T.ink,
+        borderRadius: "0 0 18px 18px",
+        p: { xs: 2, md: 3 },
+        overflow: "hidden",
+        isolation: "isolate",
+      }}
+    >
+      {/* Ambient wash, same recipe as the membership summary */}
+      <Box
+        aria-hidden
+        sx={{
+          position: "absolute",
+          inset: 0,
+          pointerEvents: "none",
+          background: `
+            radial-gradient(ellipse 70% 50% at 10% 0%, ${T.water}14 0%, transparent 55%),
+            radial-gradient(ellipse 50% 40% at 90% 20%, ${T.committed}10 0%, transparent 50%)
+          `,
+          zIndex: 0,
+        }}
+      />
+
+      <Box
+        sx={{
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 3,
+        }}
+      >
+        <ConferenceSummaryHeader
+          conference={metrics.conference}
+          year={metrics.year}
+          showtime={showtime}
+        />
+
+        {/* Showtime rail */}
+        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+          {showtime?.mode === "countdown" && (
+            <StatCard
+              label="Doors Open"
+              value={String(showtime.days)}
+              valueSuffix={showtime.days === 1 ? "day out" : "days out"}
+              caption={eventDates || ""}
+              color={T.water}
+              progress={showtime.regWindowProgress ?? undefined}
+              footer={
+                showtime.regWindowOpen && showtime.regDaysLeft != null
+                  ? `Online registration closes in ${showtime.regDaysLeft} days`
+                  : undefined
+              }
+              hint="Days until the event begins"
             />
+          )}
+          {showtime?.mode === "live" && (
+            <StatCard
+              label="Live Now"
+              value={`Day ${showtime.days}`}
+              valueSuffix={`of ${showtime.eventLengthDays}`}
+              caption={eventDates || ""}
+              color={T.inflow}
+              progress={showtime.days / showtime.eventLengthDays}
+            />
+          )}
+          {showtime?.mode === "wrapped" && (
+            <StatCard
+              label="Wrapped"
+              value={String(showtime.days)}
+              valueSuffix="days ago"
+              caption={eventDates || ""}
+              color={T.committed}
+            />
+          )}
 
-            {conferenceSummary.headCountAttendees.filter((headCount: any) => {
-              return headCount.type === "Voter Only";
-            }).length > 0 && (
-              <Typography
-                component="h3"
-                sx={{ fontSize: 18, fontWeight: 900, ml: 1, mt: 1 }}
-              >
-                Voters Summary
-              </Typography>
-            )}
-            {conferenceSummary.headCountAttendees
-              .filter((headCount: any) => {
-                return headCount.type === "Voter Only";
-              })
-              .map((metric, index) => (
-                <ResponsiveListItem
-                  key={index}
-                  label={ucwords(metric.type)}
-                  value={`${metric.count}`}
-                  sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+          <StatCard
+            label="Registrations"
+            value={metrics.registrationCount.toLocaleString()}
+            caption="Checkouts for this selection"
+            footer={`${metrics.attendeeRegistrations} attendee · ${metrics.vendorRegistrations} vendor`}
+            color={T.water}
+          />
+          <StatCard
+            label="Headcount"
+            value={metrics.headcount.toLocaleString()}
+            caption="People through the door"
+            footer={
+              metrics.voterOnly > 0
+                ? `+${metrics.voterOnly} voter only`
+                : undefined
+            }
+            color={T.inflow}
+            hint="Every attendee except Voter Only badges"
+          />
+          <StatCard
+            label="Revenue"
+            value={money(revenue.total, true)}
+            caption="All checkout dollars"
+            footer={
+              revenue.sponsorships > 0
+                ? `incl. ${money(revenue.sponsorships, true)} sponsorships`
+                : undefined
+            }
+            color={T.committed}
+          />
+          {(booths.sold > 0 || booths.capacity != null) && (
+            <StatCard
+              label="Booths"
+              value={String(booths.sold)}
+              valueSuffix={booths.capacity != null ? `of ${booths.capacity}` : "sold"}
+              caption={
+                booths.remaining != null
+                  ? `${booths.remaining} still on the floor`
+                  : "Vendor booths sold"
+              }
+              footer={booths.revenue > 0 ? money(booths.revenue) : undefined}
+              color={T.deepWater}
+              progress={
+                booths.capacity != null
+                  ? booths.sold / Math.max(booths.capacity, 1)
+                  : undefined
+              }
+            />
+          )}
+          {sponsors.count > 0 && (
+            <StatCard
+              label="Sponsors"
+              value={money(sponsors.dollars, true)}
+              caption="Sponsorship dollars raised"
+              footer={`${sponsors.count} sponsor${sponsors.count === 1 ? "" : "s"}`}
+              color={T.violet}
+            />
+          )}
+        </Box>
+
+        {/* Pace + take */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "7fr 5fr" },
+            gap: 2.5,
+            alignItems: "stretch",
+          }}
+        >
+          <RegistrationMomentum
+            registrations={metrics.registrations}
+            priorRegistrations={metrics.priorRegistrations}
+            year={metrics.year}
+            showtime={showtime}
+          />
+          <RevenueMix metrics={metrics} />
+        </Box>
+
+        {/* Crowd + logistics */}
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", lg: "6fr 6fr" },
+            gap: 2.5,
+            alignItems: "stretch",
+          }}
+        >
+          <CrowdPanel metrics={metrics} />
+          <LogisticsBoard metrics={metrics} />
+        </Box>
+
+        {/* Contest corner (tournament conferences only) */}
+        {(contest.contestants > 0 || contest.tasteTest > 0) && (
+          <Box>
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: T.textLo,
+                mb: 1,
+              }}
+            >
+              Contest Corner
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
+              {contest.byType.map((c) => (
+                <MetricChip
+                  key={c.name}
+                  label={c.name}
+                  value={c.count}
+                  tone={T.water}
                 />
               ))}
-            {conferenceSummary.headCountContestants.length > 0 && (
-              <Typography
-                component="h3"
-                sx={{ fontSize: 18, fontWeight: 900, ml: 1, mt: 1 }}
-              >
-                Contestant Summary
-              </Typography>
-            )}
-            {conferenceSummary.headCountContestants.map((metric, index) => (
-              <ResponsiveListItem
-                key={index}
-                label={ucwords(metric.type)}
-                value={`${metric.count}`}
-                sx={{ borderBottom: "1px solid", borderColor: "divider" }}
+              <MetricChip label="Teams" value={contest.teams} tone={T.inflow} />
+              <MetricChip
+                label="Taste Test Entries"
+                value={contest.tasteTest}
+                tone={T.violet}
               />
-            ))}
-          </Grid>
-
-          <Grid item xs={12} md={5}>
-            {" "}
-            {/* Updated grid sizing */}
-            <Typography
-              component="h3"
-              sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}
-            >
-              Head Counts
-            </Typography>
-            <Grid container spacing={2}>
-              {filterValues?.conference === 1 && filterValues?.year === 2024 && (
-                <Grid item xs={12} sm={6}>
-                  {" "}
-                  {/* Grid item for each widget */}
-                  <DateStatusWidget
-                    WidgetIcon={BreakfastIcon}
-                    heading={totalHeadCount.toString()}
-                    subheading="Breakfast"
-                    key="widget-00"
-                  />
-                </Grid>
-              )}
-
-              {conferenceSummary.itemCounts.map(([index, metric]) => (
-                <Grid item xs={12} sm={6} key={`grid-${index}-${metric.key}`}>
-                  {" "}
-                  {/* Responsive grid items */}
-                  <DateStatusWidget
-                    WidgetIcon={
-                      metric.icon
-                        ? () => (
-                            <img
-                              height={31}
-                              src={metric.icon}
-                              alt={metric.name}
-                              // Uploaded meal icons are black SVGs/PNGs; invert to match white MUI icons
-                              style={{
-                                height: 31,
-                                width: 31,
-                                objectFit: "contain",
-                                filter: "brightness(0) invert(1)",
-                              }}
-                            />
-                          )
-                        : mealIcons[index % mealIcons.length]
-                    }
-                    heading={getItemCount(metric)}
-                    subheading={metric.name}
-                  />
-                </Grid>
-              ))}
-
-              {filterValues?.conference === 1 && filterValues?.year === 2024 && (
-                <Grid item xs={12} sm={6}>
-                  <DateStatusWidget
-                    WidgetIcon={BreakfastIcon}
-                    heading={totalHeadCount.toString()}
-                    subheading="Vendor Social"
-                    key="widget-99"
-                  />
-                </Grid>
-              )}
-            </Grid>
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <Typography
-              component="h3"
-              sx={{ fontSize: 18, fontWeight: 900, ml: 1 }}
-            >
-              Booth Summary
-            </Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <DateStatusWidget
-                WidgetIcon={BoothIcon}
-                heading={conferenceSummary.boothCount.toString()}
-                subheading="Booths Purchased"
+              <MetricChip
+                label="Contest Fees"
+                value={contest.fees}
+                format="money"
+                tone={T.committed}
               />
-              {conferenceSummary.conference.booths_available < 5000 && (
-                <DateStatusWidget
-                  WidgetIcon={BoothIcon}
-                  heading={`${conferenceSummary.conference.booths_available}`}
-                  subheading="Booths Remaining"
-                />
-              )}
             </Box>
-          </Grid>
-        </Grid>
-      )}
+          </Box>
+        )}
+
+        <SponsorSpotlight metrics={metrics} />
+
+        <Typography sx={{ fontSize: 11, color: T.textFaint, fontStyle: "italic" }}>
+          Figures reflect the selected conference and year as of right now.
+          Revenue splits booth, sponsorship, and contest dollars off their own
+          records; the remainder of each checkout is attributed to tickets &
+          extras. Headcounts exclude Voter Only badges.
+        </Typography>
+      </Box>
     </Box>
   );
 };

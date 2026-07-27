@@ -258,6 +258,8 @@ const ConferenceTabs = () => {
               key={`panel-${index}`}
               value={tab.value}
               {...a11yTabPanelProps(index)}
+              // Summary's ink canvas sits flush under the tab bar — no gutter.
+              sx={tab.value === "summary" ? { p: 0 } : undefined}
             >
               {getTabComponent(tab.value)}
             </TabPanel>
