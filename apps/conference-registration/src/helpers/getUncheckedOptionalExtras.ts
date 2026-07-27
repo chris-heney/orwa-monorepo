@@ -38,7 +38,12 @@ export const getUncheckedOptionalExtras = ({
   );
   if (hasOptionalPick) return [];
 
-  return optionals.filter((extra) => !isSelected(ticket.extras, extra.id));
+  return optionals
+    .filter((extra) => !isSelected(ticket.extras, extra.id))
+    .sort((a, b) => {
+      if (!a.order || !b.order) return 0;
+      return a.order - b.order;
+    });
 };
 
 export const formatExtrasConfirmList = (names: string[]): string => {

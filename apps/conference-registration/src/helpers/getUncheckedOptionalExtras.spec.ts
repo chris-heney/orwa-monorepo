@@ -115,6 +115,22 @@ describe("getUncheckedOptionalExtras", () => {
     });
     expect(result).toEqual([]);
   });
+
+  it("sorts unchecked optionals by extra.order, same as AddExtras", () => {
+    const orderedLunch = { ...lunch, order: 2 };
+    const orderedDinner = { ...dinner, order: 1 };
+    const orderedReception = { ...reception, order: 3 };
+    const result = getUncheckedOptionalExtras({
+      ticket: baseTicket,
+      extras: [orderedLunch, orderedDinner, orderedReception],
+      context: "Attendee",
+    });
+    expect(result.map((e) => e.name)).toEqual([
+      "Dinner",
+      "Lunch",
+      "Reception",
+    ]);
+  });
 });
 
 describe("formatExtrasConfirmList", () => {

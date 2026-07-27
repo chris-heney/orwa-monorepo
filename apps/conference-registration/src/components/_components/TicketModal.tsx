@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   TextInput,
   MaskedPhoneInput,
@@ -90,6 +90,20 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   const [pendingUncheckedExtras, setPendingUncheckedExtras] = useState<
     IExtraOption[]
   >([]);
+  const extrasConfirmOpenRef = useRef(extrasConfirmOpen);
+  const goBackButtonRef = useRef<HTMLButtonElement>(null);
+  const saveButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    extrasConfirmOpenRef.current = extrasConfirmOpen;
+  }, [extrasConfirmOpen]);
+
+  // Focus the safer action ("Go back and choose") when the nested confirm opens.
+  useEffect(() => {
+    if (extrasConfirmOpen) {
+      goBackButtonRef.current?.focus();
+    }
+  }, [extrasConfirmOpen]);
 
   // If Training Type leaves None, force a real email: clear no-email / anonymous state.
   useEffect(() => {
@@ -144,15 +158,22 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     document.body.style.overflow = "hidden";
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (isOpen.context === "create") {
-          remove(ticketIndex);
-        }
-        setIsOpen({
-          open: false,
-          context: "create",
-        });
+      if (event.key !== "Escape") return;
+
+      // While the nested "skip extras" confirm is open, Escape means
+      // "go back and choose" — never close/destroy the ticket underneath it.
+      if (extrasConfirmOpenRef.current) {
+        goBackToExtras();
+        return;
       }
+
+      if (isOpen.context === "create") {
+        remove(ticketIndex);
+      }
+      setIsOpen({
+        open: false,
+        context: "create",
+      });
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -161,6 +182,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Calculate ticket subtotal
@@ -313,6 +335,19 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     setIsOpen({
       open: false,
       context: "create",
+    });
+  };
+
+  // "Go back and choose": dismiss the confirm without touching the ticket,
+  // highlight the extras section, and restore focus there.
+  const goBackToExtras = () => {
+    setExtrasConfirmOpen(false);
+    setHighlightExtras(true);
+    saveButtonRef.current?.focus();
+    requestAnimationFrame(() => {
+      document
+        .querySelector('[data-validation-field="ticket-extras"]')
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
     });
   };
 
@@ -628,6 +663,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
               </button>
             )}
             <button
+              ref={saveButtonRef}
               type="button"
               className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
               onClick={handleSave}
@@ -644,6 +680,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
           role="alertdialog"
           aria-modal="true"
           aria-labelledby="extras-confirm-title"
+          aria-describedby="extras-confirm-description"
           className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl"
         >
           <h2
@@ -652,7 +689,10 @@ const TicketModal: React.FC<ITicketModalProps> = ({
           >
             Extras
           </h2>
-          <p className="mt-3 text-base text-slate-700">
+          <p
+            id="extras-confirm-description"
+            className="mt-3 text-base text-slate-700"
+          >
             Are you sure you do not want to add:{" "}
             {formatExtrasConfirmList(
               pendingUncheckedExtras.map((e) => e.name)
@@ -661,17 +701,10 @@ const TicketModal: React.FC<ITicketModalProps> = ({
           </p>
           <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button
+              ref={goBackButtonRef}
               type="button"
               className="rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100"
-              onClick={() => {
-                setExtrasConfirmOpen(false);
-                setHighlightExtras(true);
-                requestAnimationFrame(() => {
-                  document
-                    .querySelector('[data-validation-field="ticket-extras"]')
-                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                });
-              }}
+              onClick={goBackToExtras}
             >
               Go back and choose
             </button>
