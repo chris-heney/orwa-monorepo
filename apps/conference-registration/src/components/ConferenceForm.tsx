@@ -21,6 +21,7 @@ import { useEntryList } from "../providers/EntryListProvider";
 import { loadWizardDraft } from "../helpers/wizardPersistence";
 import WizardStateSync from "./WizardStateSync";
 import { ValidationHighlightProvider } from "../helpers/validationHighlight";
+import { isRegistrationOpen } from "../helpers/isRegistrationOpen";
 
 const ConferenceForm = () => {
   const { steps, setStepIndex, stepIndex } = useStepContext();
@@ -61,9 +62,7 @@ const ConferenceForm = () => {
         conference: conferenceId,
       };
 
-  return ConferenceOptions.status === "Online Registration" ||
-    (ConferenceOptions.status === "Kiosk Registration" &&
-      registrationSource === "kiosk") ||
+  return isRegistrationOpen(ConferenceOptions.status, registrationSource) ||
     isAdminView ? (
     <NotifyProvider>
       <main className="flex flex-col text-center">
