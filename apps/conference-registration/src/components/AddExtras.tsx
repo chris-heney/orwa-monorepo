@@ -12,6 +12,7 @@ import {
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { isExtraIncluded } from "../helpers/isExtraIncluded";
 import { filterVisibleExtras } from "../helpers/filterVisibleExtras";
+import { validationHighlightClassName } from "../helpers/validationHighlight";
 import { useState, useEffect } from "react";
 
 const AddExtras = ({
@@ -19,11 +20,13 @@ const AddExtras = ({
   fieldIndex,
   context,
   useYesNo = false,
+  highlightInvalid = false,
 }: {
   field: string;
   fieldIndex?: number;
   context: "Attendee" | "Vendor" | "Registration" | "Contestant" | "Booth";
   useYesNo?: boolean;
+  highlightInvalid?: boolean;
 }) => {
   const { control, watch, setValue, register, formState: { errors } } = useFormContext();
   const [selections, setSelections] = useState<Record<string, boolean>>({});
@@ -142,7 +145,10 @@ const AddExtras = ({
   });
 
   return visibleExtras.length > 0 ? (
-    <div>
+    <div
+      data-validation-field="ticket-extras"
+      className={highlightInvalid ? validationHighlightClassName : undefined}
+    >
       <div className="mb-3">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
           Extras
