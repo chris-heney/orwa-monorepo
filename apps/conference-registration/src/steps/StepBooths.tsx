@@ -1,5 +1,4 @@
 import React, { useContext, useEffect } from "react";
-import { Checkbox } from "@mui/material";
 import AddBoothsComponent from "../components/AddBoothsComponent";
 import AddBoothModal from "../components/_components/ModalBooth";
 import {
@@ -12,7 +11,7 @@ import { IBoothPayload, IRegistrationOptions } from "../types/types";
 import SelectOrganization from "../components/_components/SelectOrganization";
 import currencyFormatter from "../helpers/currencyFormat";
 import AddExtras from "../components/AddExtras";
-import { EmailInput, TextInput } from "mj-react-form-builder";
+import { TextInput } from "mj-react-form-builder";
 import SkipBoothStep from "../components/SkipBoothStep";
 import Loading from "../components/Loading";
 import { getExtraData } from "../helpers/getExtraData";
@@ -75,7 +74,6 @@ const StepBooths = () => {
   const agencyType = watch("agency") ?? "";
   const booths = (watch("booths") || []) as IBoothPayload[];
   const registrationExtras = (watch("registrationExtras") || []) as number[];
-  const acknowledgement = watch("vendor_participation_acknowledgement") === true;
 
   const [boothCheckout, setBoothCheckout] = React.useState(0);
 
@@ -137,8 +135,7 @@ const StepBooths = () => {
             Booth Information
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-600">
-            Confirm member status, add booths, and acknowledge vendor guidelines
-            to continue.
+            Confirm member status and add booths.
           </p>
         </header>
 
@@ -309,20 +306,6 @@ const StepBooths = () => {
           </section>
         </ValidationHighlight>
 
-        <section className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
-          <h3 className="mb-1 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Secondary email
-          </h3>
-          <p className="mb-4 text-sm text-slate-600">
-            Used for email notifications about this booth registration.
-          </p>
-          <EmailInput
-            source="secondary_email"
-            label="Secondary Email"
-            helperText="Used for email notifications"
-          />
-        </section>
-
         <div className="mb-6">
           <AddExtras
             useYesNo
@@ -330,74 +313,6 @@ const StepBooths = () => {
             context="Registration"
           />
         </div>
-
-        <ValidationHighlight
-          field="vendor_acknowledgement"
-          className="rounded-lg border border-slate-200 bg-slate-50/80 p-5"
-          clearWhen={acknowledgement}
-        >
-          <h3 className="mb-1 text-base font-semibold text-slate-900">
-            Vendor Participation Guideline &amp; Acknowledgement
-          </h3>
-          <p className="mb-4 text-sm leading-relaxed text-slate-600">
-            Membership and vendor participation are limited to individuals and
-            organizations that align with the mission, values, and service
-            objectives of ORWA and meet established eligibility criteria. All
-            applications are subject to review and approval, and ORWA reserves
-            the right to approve, deny, or revoke participation at its
-            discretion to ensure alignment with ORWA standards and the best
-            interests of its members. Participation may be limited or denied in
-            cases where an applicant&rsquo;s services or activities present a
-            direct conflict or competition with the programs or interests of
-            ORWA.
-          </p>
-          <button
-            type="button"
-            className={`flex w-full cursor-pointer items-start gap-3 rounded-lg border px-4 py-3 text-left transition ${
-              acknowledgement
-                ? "border-blue-600 bg-blue-50"
-                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-            }`}
-            onClick={() =>
-              setValue(
-                "vendor_participation_acknowledgement",
-                !acknowledgement,
-                { shouldValidate: true }
-              )
-            }
-          >
-            <Checkbox
-              {...register("vendor_participation_acknowledgement", {
-                required:
-                  "You must acknowledge the Vendor Participation Guideline & Acknowledgement",
-              })}
-              checked={acknowledgement}
-              onChange={(e) =>
-                setValue(
-                  "vendor_participation_acknowledgement",
-                  e.target.checked,
-                  { shouldValidate: true }
-                )
-              }
-              onClick={(e) => e.stopPropagation()}
-              className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-              sx={{ p: 0, mt: "2px" }}
-            />
-            <span className="text-sm text-slate-800">
-              I acknowledge the Vendor Participation Guideline &amp;
-              Acknowledgement. <span className="text-red-500">*</span>
-            </span>
-          </button>
-          {errors.vendor_participation_acknowledgement && (
-            <p className="mt-2 text-sm text-red-500">
-              *
-              {
-                errors.vendor_participation_acknowledgement
-                  .message as string
-              }
-            </p>
-          )}
-        </ValidationHighlight>
 
         <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-4">
           <span className="text-sm text-slate-500">

@@ -11,12 +11,13 @@ import {
 import ConferenceForm from "./components/ConferenceForm";
 import Header from "./components/Header";
 import LoginModal from "./components/LoginModal";
+import TestModeBanner from "./components/TestModeBanner";
 import EntryList from "./entries/EntryList";
 import EntryListProvider from "./providers/EntryListProvider";
 import { isRegistrationOpen } from "./helpers/isRegistrationOpen";
 
 function App() {
-  const { viewingEntries } = useUserContext();
+  const { viewingEntries, isTestMode } = useUserContext();
   const conferenceId = useConferenceId() ?? "2";
   const registrationSource = useRegistrationSource();
   const { isLoading, ConferenceOptions } = useRegistrationOptions();
@@ -26,13 +27,16 @@ function App() {
     [conferenceId]
   );
 
-  const showTermsGate =
-    !isLoading &&
-    isRegistrationOpen(ConferenceOptions?.status, registrationSource);
+  const formAvailable =
+    isRegistrationOpen(ConferenceOptions?.status, registrationSource) ||
+    isTestMode;
+
+  const showTermsGate = !isLoading && formAvailable;
 
   const content: ReactNode = (
     <>
       <LoginModal />
+      <TestModeBanner />
       <Header />
 
       <EntryListProvider>

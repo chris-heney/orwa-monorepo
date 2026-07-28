@@ -11,7 +11,7 @@ import { useFormContext } from "react-hook-form";
 import { useSubmitRegistration2 } from "../data/API";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useNotify } from "mj-react-form-builder";
-import { IRegistrationPayload } from "../types/types";
+import { IRegistrationPayload, ITicketPayload } from "../types/types";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import {
@@ -24,13 +24,17 @@ import {
   useValidationHighlight,
   type ValidationField,
 } from "../helpers/validationHighlight";
+import { buildSandboxTestToken } from "../helpers/buildSandboxTestToken";
+import { hasSelectedId } from "../helpers/hasSelectedId";
+import { isContestantLinkedToCart } from "../helpers/isContestantLinkedToCart";
+import { isStandaloneContestantTicket } from "../helpers/contestantTicketTiers";
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useStepContext();
   const { ConferenceOptions, ExtraOptions, RegistrationAddons } =
     useRegistrationOptions();
   const { setSubmitted } = useFormSubmitted();
-  const { isAdminView, isLoggedIn } = useUserContext();
+  const { isAdminView, isLoggedIn, isTestMode } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const registrationSource = useRegistrationSource();
   const conferenceId = useConferenceId() ?? "2";
@@ -118,7 +122,10 @@ const StepNavigation = () => {
           payload.registration_type === "Contestant");
 
       if (isFishAddonAttach) {
-        if (!ticket.previous_registration_id || !ticket.source_ticket_id) {
+        if (
+          !hasSelectedId(ticket.previous_registration_id) ||
+          !hasSelectedId(ticket.source_ticket_id)
+        ) {
           return fail(
             "Each reduced-price fisher must select an organization and person",
             ["contestants"],
@@ -127,10 +134,17 @@ const StepNavigation = () => {
         }
       }
 
+      // "Add Unregistered Contestant" tickets are priced at the standalone/
+      // contestant-only tier and intentionally have no cart attach.
+      const isUnregisteredParticipant = isStandaloneContestantTicket(
+        ticket.ticket_type
+      );
+
       if (
         (payload.registration_type === "Attendee" ||
           payload.registration_type === "Vendor") &&
-        !ticket.source_ticket_id
+        !isUnregisteredParticipant &&
+        !isContestantLinkedToCart(ticket, payload.tickets)
       ) {
         return fail(
           "Each contestant must be linked to an attendee or vendor on this registration",
@@ -192,6 +206,23 @@ const StepNavigation = () => {
     return true;
   };
 
+  // Promotional Emails Consent is collected once at checkout and only
+  // required when the registration includes an Attendee ticket — never for
+  // Vendor-only or Contestant-only checkouts.
+  const promotionalEmailsValid = (toast = true): boolean => {
+    const hasAttendeeTicket = (payload.tickets ?? []).some(
+      (ticket) => ticket.type === "Attendee"
+    );
+    if (hasAttendeeTicket && payload.promotional_emails === undefined) {
+      return fail(
+        "Please make a selection for Promotional Emails Consent",
+        ["promotional_emails"],
+        { toast }
+      );
+    }
+    return true;
+  };
+
   const isRegistrationStepValid = (toast = true): boolean => {
     const registrationType = payload.registration_type;
     const hasValidType =
@@ -229,7 +260,6 @@ const StepNavigation = () => {
       registration_type: "registration_type",
       member_status: "member_status",
       agency: "agency",
-      vendor_participation_acknowledgement: "vendor_acknowledgement",
       organization: "organization",
       logo: "sponsor_details",
       "registrant.first": "contact",
@@ -323,9 +353,26 @@ const StepNavigation = () => {
       return;
     }
 
+    if (!promotionalEmailsValid()) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     const processedPayload = await processAndUploadFiles(payload, notify);
+
+    // Apply the checkout-level Promotional Emails Consent to Attendee
+    // tickets only. Vendor/Contestant tickets never require (or send) this
+    // consent — the webhook's per-ticket `promotional_emails` field is left
+    // undefined for them, consistent with the existing schema (optional
+    // boolean on conference-attendee).
+    processedPayload.tickets = (
+      (processedPayload.tickets ?? []) as ITicketPayload[]
+    ).map((ticket) =>
+      ticket.type === "Attendee"
+        ? { ...ticket, promotional_emails: payload.promotional_emails }
+        : { ...ticket, promotional_emails: undefined }
+    );
 
     // Format card expiration from MM/YY to YYYY-MM
     const cardExpiration = (() => {
@@ -334,6 +381,10 @@ const StepNavigation = () => {
       const [month, year] = expirationDate.split("/"); // Split into MM and YY
       return `20${year}-${month}`; // Combine into YYYY-MM
     })();
+
+    const sandboxToken = isTestMode
+      ? buildSandboxTestToken(processedPayload.registrant?.email)
+      : undefined;
 
     const updatedRegistrationPayload = {
       ...processedPayload,
@@ -355,6 +406,11 @@ const StepNavigation = () => {
         getValues("secondary_email") && getValues("secondary_email").length > 0
           ? getValues("secondary_email")
           : null,
+      // Vendor Participation Guideline & Acknowledgement UI was removed in
+      // favor of the app-wide TermsGate (see App.tsx), which already blocks
+      // access to the form until terms are accepted. Send true so the
+      // backend's boolean field doesn't block/flag submission.
+      vendor_participation_acknowledgement: true,
       nonMemberFee:
         getValues("agency") === "false" &&
         getValues("member_status") === "Non Member",
@@ -362,6 +418,7 @@ const StepNavigation = () => {
       registrationSource,
       // organization: getValues("organization"),
       team: getValues("team"),
+      ...(sandboxToken ? { test: sandboxToken } : {}),
     };
 
     const submitResponse = await useSubmitRegistration2(

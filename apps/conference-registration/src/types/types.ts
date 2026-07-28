@@ -698,6 +698,12 @@ export interface IRegistrationPayload {
     updatedAt: string;
     agreedAt: string;
   }[];
+  /**
+   * Checkout-level Promotional Emails Consent (collected once on the Billing
+   * step). Applied to each Attendee ticket's `promotional_emails` field on
+   * submit — never required/sent for Vendor or Contestant tickets.
+   */
+  promotional_emails?: boolean;
 }
 
 export interface EntryPayloadContext {
@@ -719,6 +725,8 @@ export interface UserContext {
   setIsAdminView: Dispatch<SetStateAction<boolean>>;
   viewingEntries: boolean;
   setViewingEntries: Dispatch<SetStateAction<boolean>>;
+  /** Presence-only `&test` — public UX + sandbox payment; not admin. */
+  isTestMode: boolean;
 }
 
 export interface TicketIndexContext {

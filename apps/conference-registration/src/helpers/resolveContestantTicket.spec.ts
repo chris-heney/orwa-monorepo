@@ -13,6 +13,12 @@ const ticket = (
   }) as ITicketOption;
 
 const golfer = ticket({ id: 37, name: "Golfer", price_online: 125, price_event: 125 });
+const golferStandalone = ticket({
+  id: 47,
+  name: "Golfer - Contestant Only",
+  price_online: 125,
+  price_event: 125,
+});
 const fishAddon = ticket({
   id: 44,
   name: "Fishing Tournament",
@@ -26,59 +32,83 @@ const fishStandalone = ticket({
   price_event: 175,
 });
 
-const all = [golfer, fishAddon, fishStandalone];
+const all = [golfer, golferStandalone, fishAddon, fishStandalone];
 
 describe("resolveContestantTicket", () => {
-  it("returns the single Golfer ticket for golf", () => {
+  it("returns the add-on Golfer ticket when no tier is requested", () => {
     expect(
       resolveContestantTicket({
         ticketOptions: all,
         sport: "golf",
-        registrationType: "Contestant",
       })?.id
     ).toBe(37);
   });
 
-  it("returns fish add-on for Contestant + addon tier", () => {
+  it("returns the standalone Golfer ticket when standalone tier is requested (Add Unregistered Contestant)", () => {
+    expect(
+      resolveContestantTicket({
+        ticketOptions: all,
+        sport: "golf",
+        tier: "standalone",
+      })?.id
+    ).toBe(47);
+  });
+
+  it("falls back to the add-on Golfer ticket when no standalone golf ticket exists", () => {
+    expect(
+      resolveContestantTicket({
+        ticketOptions: [golfer, fishAddon, fishStandalone],
+        sport: "golf",
+        tier: "standalone",
+      })?.id
+    ).toBe(37);
+  });
+
+  it("returns fish add-on for the default (addon) tier", () => {
     expect(
       resolveContestantTicket({
         ticketOptions: all,
         sport: "fish",
-        fisherTier: "addon",
-        registrationType: "Contestant",
+        tier: "addon",
       })?.id
     ).toBe(44);
   });
 
-  it("returns fish standalone for Contestant + standalone tier", () => {
+  it("returns fish standalone for the standalone tier", () => {
     expect(
       resolveContestantTicket({
         ticketOptions: all,
         sport: "fish",
-        fisherTier: "standalone",
-        registrationType: "Contestant",
+        tier: "standalone",
       })?.id
     ).toBe(45);
   });
 
-  it("never returns standalone fish for Attendee checkout", () => {
+  it("returns standalone fish ticket when standalone tier is explicitly requested, even for an Attendee/Vendor checkout (Add Unregistered Contestant)", () => {
     expect(
       resolveContestantTicket({
         ticketOptions: all,
         sport: "fish",
-        fisherTier: "standalone",
-        registrationType: "Attendee",
+        tier: "standalone",
+      })?.id
+    ).toBe(45);
+  });
+
+  it("returns fish add-on when no tier is requested", () => {
+    expect(
+      resolveContestantTicket({
+        ticketOptions: all,
+        sport: "fish",
       })?.id
     ).toBe(44);
   });
 
-  it("returns fish add-on for Vendor without needing tier", () => {
+  it("returns null when the sport has no matching tickets", () => {
     expect(
       resolveContestantTicket({
-        ticketOptions: all,
-        sport: "fish",
-        registrationType: "Vendor",
-      })?.id
-    ).toBe(44);
+        ticketOptions: [fishAddon],
+        sport: "golf",
+      })
+    ).toBeNull();
   });
 });

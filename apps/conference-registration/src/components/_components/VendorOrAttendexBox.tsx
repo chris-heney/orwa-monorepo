@@ -13,10 +13,10 @@ interface ApprovalProps {
 
 const DESCRIPTIONS: Record<ApprovalProps["registrationType"], string> = {
   Attendee:
-    "Register people attending sessions and events; optionally sponsor",
-  Vendor: "Reserve booth space, register vendor reps, and optionally sponsor",
-  Contestant:
-    "Tournament contestants only — not attending conference sessions",
+    "Register people attending sessions and events, and optionally participate as contestants and/or sponsor the conference.",
+  Vendor:
+    "Reserve booth space, register vendor reps, and optionally participate as contestants and/or sponsor the conference.",
+  Contestant: "For golf or Bass Tournament Participants",
 };
 
 const VendorOrAttendeeBox = ({
@@ -34,14 +34,14 @@ const VendorOrAttendeeBox = ({
       type="button"
       onClick={setRegistrationType}
       aria-pressed={isSelected}
-      className={`group flex w-full cursor-pointer flex-col items-center rounded-xl border-2 px-4 py-5 text-center transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`group flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 px-4 py-4 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isSelected
           ? "border-blue-600 bg-blue-50 shadow-sm"
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
       }`}
     >
       <div
-        className={`mb-3 flex h-14 w-14 items-center justify-center rounded-full ${
+        className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full ${
           isSelected ? "bg-blue-100" : "bg-slate-100 group-hover:bg-slate-200/80"
         }`}
       >
@@ -55,22 +55,24 @@ const VendorOrAttendeeBox = ({
           )}
         </div>
       </div>
-      <span
-        className={`text-base font-bold ${
-          isSelected ? "text-blue-700" : "text-slate-800"
-        }`}
-      >
-        {label ?? registrationType}
-      </span>
-      <span
-        className={`mt-1 text-xs leading-snug ${
-          isSelected ? "text-blue-700/80" : "text-slate-500"
-        }`}
-      >
-        {description}
-      </span>
+      <div className="min-w-0 flex-1">
+        <span
+          className={`block text-base font-bold ${
+            isSelected ? "text-blue-700" : "text-slate-800"
+          }`}
+        >
+          {label ?? registrationType}
+        </span>
+        <span
+          className={`mt-0.5 block text-xs leading-snug ${
+            registrationType === "Contestant" ? "italic" : ""
+          } ${isSelected ? "text-blue-700/80" : "text-slate-500"}`}
+        >
+          {description}
+        </span>
+      </div>
       {isSelected && (
-        <span className="mt-3 inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+        <span className="ml-2 inline-flex shrink-0 items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
           Selected
         </span>
       )}

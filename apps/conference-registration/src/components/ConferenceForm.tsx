@@ -31,7 +31,7 @@ const ConferenceForm = () => {
   const conferenceId = useContext(ConferenceId);
   const { isLoading, ConferenceOptions, ExtraOptions } =
     useRegistrationOptions();
-  const { isAdminView, isLoggedIn } = useUserContext();
+  const { isAdminView, isLoggedIn, isTestMode } = useUserContext();
   const { submitted } = useFormSubmitted();
   const { entryPayload } = useEntryPayload();
   const { sidebarVisible, setSidebarVisible } = useEntryList();
@@ -62,8 +62,12 @@ const ConferenceForm = () => {
         conference: conferenceId,
       };
 
-  return isRegistrationOpen(ConferenceOptions.status, registrationSource) ||
-    isAdminView ? (
+  const formAvailable =
+    isRegistrationOpen(ConferenceOptions.status, registrationSource) ||
+    isTestMode ||
+    isAdminView;
+
+  return formAvailable ? (
     <NotifyProvider>
       <main className="flex flex-col text-center">
         {/* Form Stepper */}

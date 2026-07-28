@@ -1,7 +1,7 @@
 # Conference Registration Test Mode (`&test`) — Design
 
 **Date:** 2026-07-27  
-**Status:** Approved (brainstorming)  
+**Status:** Implemented (2026-07-27)  
 **Apps touched:** `apps/conference-registration` only  
 **Related:** Authorize.NET sandbox token already implemented in `apps/strapi` (`payment-mode.ts`)
 

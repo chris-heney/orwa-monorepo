@@ -11,6 +11,7 @@ import { isExtraIncluded } from "../helpers/isExtraIncluded";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { getExtraData } from "../helpers/getExtraData";
 import { boothBasePrice } from "../helpers/boothBasePrice";
+import { formatTicketLineLabel } from "../helpers/formatTicketLineLabel";
 import {
   IRegistrationPayload,
   ITicketPayload,
@@ -118,6 +119,20 @@ const CheckoutReceipt = () => {
 
       {expanded && (
         <div className="max-h-[500px] overflow-auto border-t border-slate-200 px-4 py-4">
+          {booths?.length > 0 && (
+            <Section title={`Booths (${booths.length})`}>
+              {booths.map((booth, index) => (
+                <LineItem
+                  index={index}
+                  key={index + booth.subtotal || 0}
+                  label={`Booth ${index + 1}`}
+                  value={currencyFormatter.format(
+                    boothBasePrice(ConferenceOptions, index)
+                  )}
+                />
+              ))}
+            </Section>
+          )}
           {member_status === "Non Member" && agency === "false" && (
             <LineItem
               label="Non Member Fee"
@@ -130,7 +145,7 @@ const CheckoutReceipt = () => {
                 <div key={ticket.email} className="mb-2 last:mb-0">
                   <LineItem
                     index={index}
-                    label={`${ticket.first} ${ticket.last}`}
+                    label={formatTicketLineLabel(ticket)}
                     value={
                       ticket.ticket_type.context === "Vendor" &&
                       freeVendors() > 0
@@ -158,20 +173,6 @@ const CheckoutReceipt = () => {
                     );
                   })}
                 </div>
-              ))}
-            </Section>
-          )}
-          {booths?.length > 0 && (
-            <Section title={`Booths (${booths.length})`}>
-              {booths.map((booth, index) => (
-                <LineItem
-                  index={index}
-                  key={index + booth.subtotal || 0}
-                  label={`Booth ${index + 1}`}
-                  value={currencyFormatter.format(
-                    boothBasePrice(ConferenceOptions, index)
-                  )}
-                />
               ))}
             </Section>
           )}

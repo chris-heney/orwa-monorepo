@@ -4,7 +4,7 @@ import authProvider from "../providers/authProvider";
 import { useUserContext } from "../AppContextProvider";
 
 const LoginModal = () => {
-  const { isLoggedIn, setIsLoggedIn } = useUserContext();
+  const { isLoggedIn, setIsLoggedIn, isTestMode } = useUserContext();
   const [authFail, setAuthFail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -16,10 +16,15 @@ const LoginModal = () => {
   const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
+    // `&test` wins over `&admin` — keep public UX (no login modal).
+    if (isTestMode) {
+      setShowModal(false);
+      return;
+    }
     const urlParams = new URLSearchParams(window.location.search);
     const isAdminRoute = urlParams.has("admin");
     setShowModal(isAdminRoute);
-  }, []);
+  }, [isTestMode]);
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);

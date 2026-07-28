@@ -11,11 +11,13 @@ import ContestantModal from "../components/_components/ContestantModal";
 import { ITicketPayload } from "../types/types";
 import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 import { ValidationHighlight } from "../helpers/validationHighlight";
+import { hasSelectedId } from "../helpers/hasSelectedId";
+import { resolveCartAttachIndex } from "../helpers/isContestantLinkedToCart";
 
 const StepContestants = () => {
   const { ticketIndex } = useTicketIndex();
   const { ConferenceOptions } = useContext(RegistrationOptions);
-  const { watch } = useFormContext();
+  const { watch, getValues, setValue } = useFormContext();
 
   const [isModalOpen, setIsModalOpen] = useState({
     open: false,
@@ -45,6 +47,25 @@ const StepContestants = () => {
     );
     setSubtotal(ticketPrice || 0);
   }, [tickets]);
+
+  // Repair contestant attach ids wiped by older Golfer-save (name kept, id cleared).
+  useEffect(() => {
+    if (registrationType !== "Attendee" && registrationType !== "Vendor") {
+      return;
+    }
+    const all = (getValues("tickets") as ITicketPayload[]) || [];
+    all.forEach((row, index) => {
+      if (row.type !== "Contestant") return;
+      if (hasSelectedId(row.source_ticket_id)) return;
+      const repaired = resolveCartAttachIndex(row, all);
+      if (repaired != null) {
+        setValue(`tickets.${index}.source_ticket_id`, repaired, {
+          shouldDirty: true,
+        });
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [registrationType, contestantCount]);
 
   if (!ConferenceOptions) {
     return (

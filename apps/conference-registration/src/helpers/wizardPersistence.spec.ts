@@ -103,14 +103,14 @@ describe("wizardPersistence", () => {
     expect(loadWizardDraft("2", "kiosk")).toBeNull();
   });
 
-  it("reads and writes the step URL param without dropping admin flags", () => {
+  it("reads and writes the step URL param without dropping admin/test flags", () => {
     expect(getStepKeyFromUrl("?admin=&step=booth_registration")).toBe(
       "booth_registration"
     );
     expect(getStepKeyFromUrl("?conference_id=2")).toBeNull();
 
     let href =
-      "http://localhost:4202/?admin=&conference_id=2&source=online";
+      "http://localhost:4202/?admin=&test=&conference_id=2&source=online";
     const history = {
       state: null as unknown,
       replaceState: (_state: unknown, _title: string, next?: string) => {
@@ -138,6 +138,7 @@ describe("wizardPersistence", () => {
       "booth_registration"
     );
     expect(withStep.searchParams.has("admin")).toBe(true);
+    expect(withStep.searchParams.has("test")).toBe(true);
     expect(withStep.searchParams.get("conference_id")).toBe("2");
     expect(withStep.searchParams.get("source")).toBe("online");
 
@@ -145,6 +146,7 @@ describe("wizardPersistence", () => {
     const cleared = new URL(href);
     expect(cleared.searchParams.has(WIZARD_STEP_PARAM)).toBe(false);
     expect(cleared.searchParams.has("admin")).toBe(true);
+    expect(cleared.searchParams.has("test")).toBe(true);
   });
 
   it("resolves preferred active step index", () => {

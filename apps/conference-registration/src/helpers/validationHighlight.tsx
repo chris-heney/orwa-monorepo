@@ -16,7 +16,6 @@ export type ValidationField =
   | "booths"
   | "member_status"
   | "agency"
-  | "vendor_acknowledgement"
   | "attendees"
   | "vendors"
   | "contestants"
@@ -25,7 +24,8 @@ export type ValidationField =
   | "organization"
   | "sponsor_details"
   | "billing"
-  | "contact";
+  | "contact"
+  | "promotional_emails";
 
 type ValidationHighlightContextValue = {
   invalidFields: ReadonlySet<ValidationField>;
@@ -174,8 +174,6 @@ export function mapFormErrorsToValidationFields(
       fields.add("member_status");
     } else if (path === "agency") {
       fields.add("agency");
-    } else if (path === "vendor_participation_acknowledgement") {
-      fields.add("vendor_acknowledgement");
     } else if (path === "previous_registration_id") {
       fields.add("previous_registration_id");
     } else if (path === "organization" || path.startsWith("organization.")) {

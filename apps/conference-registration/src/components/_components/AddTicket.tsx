@@ -31,7 +31,7 @@ const AddTicketComponent = ({
   const { setTicketIndex } = useTicketIndex();
   const { TicketOptions, ExtraOptions } = useRegistrationOptions();
   const { watch, control, getValues } = useFormContext();
-  const { append } = useFieldArray({
+  const { append, remove } = useFieldArray({
     control,
     name: "tickets",
   });
@@ -57,20 +57,30 @@ const AddTicketComponent = ({
     return boothCount === 1 ? 2 : boothCount >= 2 ? 3 : 0;
   };
 
-  const handleEdit = (ticketIndex: number) => {
-    const allTickets = getValues("tickets");
+  const resolveAbsoluteIndex = (typedIndex: number) => {
+    const allTickets = getValues("tickets") as ITicketPayload[];
     const filteredTickets = allTickets.filter(
       (ticket: ITicketPayload) => ticket.type === type
     );
-    const actualIndex = allTickets.findIndex(
-      (ticket: ITicketPayload) => ticket === filteredTickets[ticketIndex]
+    return allTickets.findIndex(
+      (ticket: ITicketPayload) => ticket === filteredTickets[typedIndex]
     );
+  };
 
+  const handleEdit = (typedIndex: number) => {
+    const actualIndex = resolveAbsoluteIndex(typedIndex);
+    if (actualIndex < 0) return;
     setTicketIndex(actualIndex);
     setIsModalOpen({
       open: true,
       context: "edit",
     });
+  };
+
+  const handleRemove = (typedIndex: number) => {
+    const actualIndex = resolveAbsoluteIndex(typedIndex);
+    if (actualIndex < 0) return;
+    remove(actualIndex);
   };
 
   const handleAddTicket = () => {
@@ -137,6 +147,15 @@ const AddTicketComponent = ({
                         >
                           Edit
                         </button>
+                        {type === "Contestant" && (
+                          <button
+                            type="button"
+                            className="text-sm font-medium text-red-600 hover:text-red-800"
+                            onClick={() => handleRemove(ticketIndex)}
+                          >
+                            Remove
+                          </button>
+                        )}
                       </div>
                       <p className="mt-0.5 text-sm text-slate-500">
                         {ticket.ticket_type?.name || "Ticket type not set"}
