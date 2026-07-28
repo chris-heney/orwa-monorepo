@@ -1,51 +1,88 @@
 import React from "react";
-import ActivityFeed from "../activity/ActivityFeed";
-import { Grid, Box } from "@mui/material";
+import { Box } from "@mui/material";
 import NextConferencsCard from "./_components/ConferencesCard";
 import PeopleCard from "./_components/PeopleCard";
 import AssetsCard from "./_components/AssetsCard";
 import MembershipCard from "./_components/MembershipsCard";
+import DashboardActivityCard from "./_components/DashboardActivityCard";
 
 export interface DashboardStateFilter {
   entity: string;
   entity_id: string;
 }
 
+const COL_H = { xs: "auto", md: 820 };
+
 /**
- * Home dashboard — tall People directory on the left; glance cards in a 2×2
- * on the right (Memberships + Conference / Activity + Assets).
+ * Home dashboard — 25% | 50% | 25%:
+ * People + Assets | Memberships | Conference + Activity.
  */
 const Dashboard = () => {
   return (
-    <Grid container spacing={2} mt={2} alignItems="stretch">
-      {/* Tall people directory — spans both visual rows on md+ */}
-      <Grid item xs={12} md={5} lg={4}>
-        <Box sx={{ height: { xs: 480, md: 812 } }}>
+    <Box
+      sx={{
+        mt: 2,
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        alignItems: "stretch",
+        gap: 2,
+        height: COL_H,
+        maxHeight: COL_H,
+      }}
+    >
+      {/* Left 25% — People over Assets */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: "25%" },
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          minWidth: 0,
+          minHeight: 0,
+          height: { xs: 560, md: "100%" },
+        }}
+      >
+        <Box sx={{ flex: "1 1 62%", minHeight: 0, overflow: "hidden" }}>
           <PeopleCard />
         </Box>
-      </Grid>
+        <Box sx={{ flex: "0 0 32%", minHeight: 0, overflow: "hidden" }}>
+          <AssetsCard />
+        </Box>
+      </Box>
 
-      <Grid item xs={12} md={7} lg={8}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} height={400}>
-            <MembershipCard />
-          </Grid>
-          <Grid item xs={12} sm={6} height={400}>
-            <NextConferencsCard />
-          </Grid>
-          <Grid item xs={12} sm={6} height={390}>
-            <ActivityFeed
-              admin={true}
-              sx={{ height: "100%", width: "100%", borderRadius: "10px" }}
-              title="Admin Dashboard"
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} height={390}>
-            <AssetsCard />
-          </Grid>
-        </Grid>
-      </Grid>
-    </Grid>
+      {/* Center 50% — Memberships */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: "50%" },
+          minWidth: 0,
+          minHeight: 0,
+          height: { xs: 420, md: "100%" },
+          overflow: "hidden",
+        }}
+      >
+        <MembershipCard />
+      </Box>
+
+      {/* Right 25% — Conference over Activity */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: "25%" },
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          minWidth: 0,
+          minHeight: 0,
+          height: { xs: 640, md: "100%" },
+        }}
+      >
+        <Box sx={{ flex: "1 1 48%", minHeight: 0, overflow: "hidden" }}>
+          <NextConferencsCard />
+        </Box>
+        <Box sx={{ flex: "1 1 48%", minHeight: 0, overflow: "hidden" }}>
+          <DashboardActivityCard />
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

@@ -15,11 +15,14 @@ type Props = {
   metrics?: MembershipMetrics;
   /** Compact layout for home dashboard cards (~400px). */
   compact?: boolean;
+  /** When true, omit the in-panel title (DashboardCard already shows it). */
+  hideTitle?: boolean;
 };
 
 const RosterPanel: React.FC<Props> = ({
   metrics: metricsProp,
   compact = false,
+  hideTitle = false,
 }) => {
   const T = useSummaryTokens();
   const hooked = useMembershipMetrics();
@@ -38,9 +41,8 @@ const RosterPanel: React.FC<Props> = ({
     return {
       chart: {
         backgroundColor: "transparent",
-        // Compact dashboard: chart sits beside the legend, so use most of the
-        // ~400px tile height (title + paddings leave ~300px).
-        height: compact ? 300 : 320,
+        // Compact dashboard: fill the taller center column without overflowing.
+        height: compact ? 520 : 320,
         style: { fontFamily: display.fontFamily },
       },
       title: { text: undefined },
@@ -86,7 +88,21 @@ const RosterPanel: React.FC<Props> = ({
             },
           ],
           data: [
-            { id: "root", parent: "", name: "Members", color: T.panelSoft },
+            {
+              id: "root",
+              parent: "",
+              name: "Members",
+              color: T.panelSoft,
+              // Center sits on panelSoft (light in light mode) — use theme text,
+              // not the white slice labels used on saturated ring fills.
+              dataLabels: {
+                style: {
+                  color: T.textHi,
+                  textOutline: "none",
+                  fontWeight: "700",
+                },
+              },
+            },
             {
               id: "systems",
               parent: "root",
@@ -151,18 +167,20 @@ const RosterPanel: React.FC<Props> = ({
           gap: 1,
         }}
       >
-        <Typography
-          sx={{
-            ...display,
-            fontSize: 11,
-            fontWeight: 600,
-            letterSpacing: "0.14em",
-            textTransform: "uppercase",
-            color: T.water,
-          }}
-        >
-          Memberships
-        </Typography>
+        {!hideTitle ? (
+          <Typography
+            sx={{
+              ...display,
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: T.water,
+            }}
+          >
+            Memberships
+          </Typography>
+        ) : null}
         <Box
           sx={{
             flex: 1,
