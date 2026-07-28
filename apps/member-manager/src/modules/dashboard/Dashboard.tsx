@@ -1,44 +1,89 @@
-import React from 'react'
-import ActivityFeed from '../activity/ActivityFeed'
-import { Grid } from '@mui/material'
-import NextConferencsCard from './_components/ConferencesCard'
-import StaffCard from './_components/StaffCard'
-import InstructorsCard from './_components/TrainingInstructorCard'
-import AssetsCard from './_components/AssetsCard'
-import MembershipCard from './_components/MembershipsCard'
-
+import React from "react";
+import { Box } from "@mui/material";
+import NextConferencsCard from "./_components/ConferencesCard";
+import PeopleCard from "./_components/PeopleCard";
+import AssetsCard from "./_components/AssetsCard";
+import MembershipCard from "./_components/MembershipsCard";
+import DashboardActivityCard from "./_components/DashboardActivityCard";
 
 export interface DashboardStateFilter {
-  entity: string
-  entity_id: string
+  entity: string;
+  entity_id: string;
 }
 
+const COL_H = { xs: "auto", md: 820 };
 
+/**
+ * Home dashboard — 25% | 50% | 25%:
+ * People + Assets | Memberships | Conference + Activity.
+ */
 const Dashboard = () => {
-  
   return (
-    <Grid  justifyContent={'center'} mt={2} container spacing={2}> 
-      <Grid item height={400} xs={12} sm={12} md={6} lg={4}>
-        <StaffCard />
-      </Grid>
-      <Grid height={400} item xs={12} sm={12} md={6} lg={4}>
-        <MembershipCard/>   
-      </Grid>
-      <Grid height={400} item xs={12} sm={12} md={6} lg={4  }>
-        <NextConferencsCard />
-      </Grid>
-      <Grid height={390} item xs={12} sm={12} md={6} lg={4}>
-        <ActivityFeed admin={true} sx={{height:'100%', width:'100%', borderRadius : '10px'}} title="Admin Dashboard" />
-      </Grid>
-      <Grid height={390} item xs={12} sm={12} md={6} lg={4}>
-        <InstructorsCard/>
-      </Grid>
-      <Grid height={390} item xs={12} sm={12} md={6} lg={4}>
-        <AssetsCard />
-      </Grid>  
-    </Grid>  
-  )
-}
+    <Box
+      sx={{
+        mt: 2,
+        display: "flex",
+        flexDirection: { xs: "column", md: "row" },
+        alignItems: "stretch",
+        gap: 2,
+        height: COL_H,
+        maxHeight: COL_H,
+      }}
+    >
+      {/* Left 25% — People over Assets */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: "25%" },
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          minWidth: 0,
+          minHeight: 0,
+          height: { xs: 560, md: "100%" },
+        }}
+      >
+        <Box sx={{ flex: "1 1 62%", minHeight: 0, overflow: "hidden" }}>
+          <PeopleCard />
+        </Box>
+        <Box sx={{ flex: "0 0 32%", minHeight: 0, overflow: "hidden" }}>
+          <AssetsCard />
+        </Box>
+      </Box>
 
+      {/* Center 50% — Memberships */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: "50%" },
+          minWidth: 0,
+          minHeight: 0,
+          height: { xs: 420, md: "100%" },
+          overflow: "hidden",
+        }}
+      >
+        <MembershipCard />
+      </Box>
 
-export default Dashboard
+      {/* Right 25% — Conference over Activity */}
+      <Box
+        sx={{
+          width: { xs: "100%", md: "25%" },
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          minWidth: 0,
+          minHeight: 0,
+          height: { xs: 640, md: "100%" },
+        }}
+      >
+        <Box sx={{ flex: "1 1 48%", minHeight: 0, overflow: "hidden" }}>
+          <NextConferencsCard />
+        </Box>
+        <Box sx={{ flex: "1 1 48%", minHeight: 0, overflow: "hidden" }}>
+          <DashboardActivityCard />
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+export default Dashboard;

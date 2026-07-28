@@ -1,28 +1,27 @@
 import React from "react";
-import { Box } from "@mui/material";
+import Groups2OutlinedIcon from "@mui/icons-material/Groups2Outlined";
 import RosterPanel from "../../memberships_v2/summary/RosterPanel";
-import { useSummaryTokens } from "../../memberships_v2/summary/tokens";
+import { useMembershipMetrics } from "../../memberships_v2/summary/useMembershipMetrics";
+import DashboardCard from "./DashboardCard";
 
 /**
- * Home-dashboard membership widget — compact roster language matching
- * Membership Summary (fits the ~400px dashboard tile).
+ * Home-dashboard membership widget — sunburst + legend inside the
+ * standard DashboardCard shell.
  */
 const MembershipsCard = () => {
-  const T = useSummaryTokens();
+  const metrics = useMembershipMetrics();
+
   return (
-    <Box
-      sx={{
-        width: "100%",
-        height: "100%",
-        borderRadius: "14px",
-        border: `1px solid ${T.line}`,
-        backgroundColor: T.ink,
-        p: 1.5,
-        overflow: "hidden",
-      }}
+    <DashboardCard
+      icon={<Groups2OutlinedIcon />}
+      title="Memberships"
+      count={metrics.isLoading ? undefined : metrics.total}
+      loading={metrics.isLoading}
+      disableBodyScroll
+      bodySx={{ p: 1.25 }}
     >
-      <RosterPanel compact />
-    </Box>
+      <RosterPanel compact hideTitle metrics={metrics} />
+    </DashboardCard>
   );
 };
 

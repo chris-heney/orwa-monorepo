@@ -5,7 +5,7 @@ import ProfileMenu from "./ProfileMenu";
 
 export const Header = () => {
   const { ConferenceOptions } = useContext(RegistrationOptions);
-  const { isLoggedIn } = useUserContext();
+  const { isLoggedIn, isTestMode } = useUserContext();
 
   return (
     <header className="bg-black p-3">
@@ -23,8 +23,8 @@ export const Header = () => {
           {/* Logo */}
           <img src="./orwa.png" className="max-h-16 sm:max-h-20 object-contain" alt="ORWA Logo" />
 
-          {/* Profile Menu */}
-          {isLoggedIn && (
+          {/* Profile Menu — suppressed in `&test` (public UX only) */}
+          {isLoggedIn && !isTestMode && (
             <div className="flex items-center">
               <ProfileMenu />
             </div>

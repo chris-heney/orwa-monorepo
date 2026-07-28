@@ -1,102 +1,58 @@
-import React from 'react'
-import { Card, Box, Typography, Tooltip, Grid, Avatar } from '@mui/material'
-import { Loading, useGetList, useRedirect } from 'react-admin'
-import InventoryIcon from '@mui/icons-material/Inventory'
+import React, { useMemo } from "react";
+import { Typography } from "@mui/material";
+import { useGetList, useRedirect } from "react-admin";
+import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
+import DirectoryRow from "./DirectoryRow";
+import DashboardCard from "./DashboardCard";
+import { mediaUrl } from "./mediaUrl";
+import { useSummaryTokens } from "../../memberships_v2/summary/tokens";
 
-
-
+/** Assets directory — list rows matching the People card language. */
 const AssetsCard = () => {
-  const redirect = useRedirect()
-  const { data: assets, isLoading } = useGetList('assets', {
-    meta: {
-      raw: true,
-    },
+  const T = useSummaryTokens();
+  const redirect = useRedirect();
+  const { data: assets, isLoading } = useGetList("assets", {
+    meta: { raw: true },
     pagination: { page: 1, perPage: 1000 },
-  })
+  });
 
-  return isLoading ? (
-    <Loading />
-  ) : (
-    <Card
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        width: '100%',
-        position: 'relative',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
-        borderRadius: '15px',
-        backgroundColor: (theme) =>
-          theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#2C3238',
-        color: '#ffffff',
-        padding: '20px',
-      }}
+  const sorted = useMemo(
+    () =>
+      [...(assets ?? [])].sort((a, b) =>
+        String(a?.name ?? "").localeCompare(String(b?.name ?? ""))
+      ),
+    [assets]
+  );
+
+  return (
+    <DashboardCard
+      icon={<InventoryOutlinedIcon />}
+      title="Assets Tracked"
+      count={isLoading ? undefined : sorted.length}
+      loading={isLoading}
+      bodySx={{ px: 1, py: 1, gap: 0.15 }}
     >
-      <Typography
-        variant='h6'
-        fontSize={20}
-        sx={{
-          justifyContent: 'center',
-          position: 'absolute',
-          top: -10,
-          right: -3,
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#4C535A',
-          padding: '10px',
-          borderRadius: '50%',
-          width: '50px',
-          height: '50px',
-          display: 'flex',
-          alignItems: 'center',
-          fontWeight: 'bold',
-        }}
-      >
-        {assets?.length}
-      </Typography>
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          margin: '8px',
-          display: 'flex',
-        }}
-      >
-        <InventoryIcon sx={{ fontSize: 30, marginRight: '8px' }} />
-        <Typography variant='h5'>Assets Tracked</Typography>
-      </Box>
+      {sorted.length === 0 ? (
+        <Typography sx={{ px: 1, py: 1.5, fontSize: 12, color: T.textFaint }}>
+          No assets tracked
+        </Typography>
+      ) : (
+        sorted.map((asset) => (
+          <DirectoryRow
+            key={asset.id}
+            primary={asset?.name || "Untitled asset"}
+            secondary={
+              [asset?.make, asset?.model].filter(Boolean).join(" · ") ||
+              undefined
+            }
+            imageUrl={mediaUrl(asset?.images)}
+            square
+            onClick={() => redirect(`/assets/${asset.id}/show`)}
+          />
+        ))
+      )}
+    </DashboardCard>
+  );
+};
 
-      <Grid container spacing={2} maxWidth={'100%'} mt={2} overflow={'scroll'} >
-        {assets?.map((asset, index) => (
-          <Grid key={index} item lg={3} xs={4} sm={3} md={4}>
-            <Box
-              sx={{
-                display: 'flex',
-                width: '100%',
-                my: 1,
-              }}
-            >
-              <Tooltip title={`${asset?.name}`}>
-                <Avatar
-                  onClick={() => redirect(`/assets/${asset.id}/show`)}
-                  style={{
-                    width: 70,
-                    height: 70,
-                    transition: 'transform 0.3s ease-in-out',
-                    cursor: 'pointer',
-                    objectFit: 'cover',
-                    border: '2px solid #cccccc',
-                    borderRadius: '15px',
-                  }}
-                  src={`${import.meta.env.VITE_API_ENDPOINT}${asset.images?.[0]?.url || ''}`}
-                />
-              </Tooltip>
-            </Box>
-          </Grid>
-        ))}
-      </Grid>
-    </Card>
-  )
-}
-
-export default AssetsCard
+export default AssetsCard;

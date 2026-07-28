@@ -6,7 +6,7 @@ import {
   useNotify,
   EmailInput,
 } from "mj-react-form-builder";
-import { Checkbox, FormControlLabel, RadioGroup, Radio } from "@mui/material";
+import { Checkbox } from "@mui/material";
 import CustomSecondaryHeader from "./CustomSecondaryHeader";
 import { formatCurrency } from "../../helpers/currencyFormat";
 import { useFormContext, useFieldArray, useWatch } from "react-hook-form";
@@ -19,8 +19,6 @@ import {
 import { IExtraOption, ITicketOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
-import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
-import { allowedContestantTickets } from "../../helpers/contestantTicketTiers";
 import {
   formatExtrasConfirmList,
   getUncheckedOptionalExtras,
@@ -281,13 +279,11 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     }
 
     const isValid = await trigger(`tickets[${ticketIndex}]`);
-    
-    // Check if promotional emails choice is made
-    if (watch(`tickets[${ticketIndex}].promotional_emails`) === undefined) {
-      notify("Please make a selection for Promotional Emails Consent", "error");
-      return;
-    }
-    
+
+    // Promotional Emails Consent is now collected once at checkout (Billing
+    // step) and applied to Attendee tickets on submit — see StepBilling.tsx
+    // and StepNavigation.tsx.
+
     if (!isValid) {
       notify("Please fix the errors before saving.", "error");
       return;
@@ -391,28 +387,21 @@ const TicketModal: React.FC<ITicketModalProps> = ({
             </div>
 
             <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
-              <SelectInput
-                source={`tickets[${ticketIndex}].ticket_type.name`}
-                label="Ticket Type"
-                options={TicketOptions.filter((ticketOption) => {
-                  if (isAdminView) return true;
-                  if (type === "Contestant") {
-                    // Tiered contestant pricing: only offer the tier matching
-                    // this registration ($75 add-on vs $150 contestant-only).
-                    return allowedContestantTickets(
-                      TicketOptions,
-                      watch("registration_type"),
-                      watch("contestant_already_registered") === "Yes"
-                    ).some((allowed) => String(allowed.id) === String(ticketOption.id));
-                  }
-                  return ticketMatchesContext(ticketOption, type);
-                }).map((t) => ({
-                  value: t.name,
-                  label: t.name,
-                }))}
-                required
-                onChange={(e) => handleTicketTypeChange(e)}
-              />
+              {/* Public users already chose Attendee/Vendor on step 1;
+                  ticket_type is auto-set via fetchSingleTicket. Admins can
+                  override (Guest/VIP/Staff/etc.). */}
+              {isAdminView && (
+                <SelectInput
+                  source={`tickets[${ticketIndex}].ticket_type.name`}
+                  label="Ticket Type"
+                  options={TicketOptions.map((t) => ({
+                    value: t.name,
+                    label: t.name,
+                  }))}
+                  required
+                  onChange={(e) => handleTicketTypeChange(e)}
+                />
+              )}
               {isAdminView && type === "Attendee" && (
                 <SelectInput
                   source={`tickets[${ticketIndex}].orwa_voting_status`}
@@ -486,42 +475,6 @@ const TicketModal: React.FC<ITicketModalProps> = ({
                   </>
                 )}
 
-              <div className="sm:col-span-2 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
-                <p className="mb-2 text-sm font-medium text-slate-800">
-                  Promotional Emails Consent{" "}
-                  <span className="text-red-500">*</span>
-                </p>
-                <RadioGroup
-                  name={`tickets[${ticketIndex}].promotional_emails`}
-                  value={watch(`tickets[${ticketIndex}].promotional_emails`)}
-                  onChange={(e) =>
-                    setValue(
-                      `tickets[${ticketIndex}].promotional_emails`,
-                      e.target.value === "true" ? true : false
-                    )
-                  }
-                >
-                  <FormControlLabel
-                    value={true}
-                    control={<Radio />}
-                    label="I consent to receive informational and promotional emails from select conference vendors."
-                    className="items-start text-sm"
-                  />
-                  <FormControlLabel
-                    value={false}
-                    control={<Radio />}
-                    label="I DO NOT consent to receive informational and promotional emails from select conference vendors."
-                    className="items-start text-sm"
-                  />
-                </RadioGroup>
-                {!watch(`tickets[${ticketIndex}].promotional_emails`) &&
-                  watch(`tickets[${ticketIndex}].promotional_emails`) !==
-                    false && (
-                    <p className="mt-1 text-xs text-red-500">
-                      Please select an option
-                    </p>
-                  )}
-              </div>
             </div>
           </section>
 

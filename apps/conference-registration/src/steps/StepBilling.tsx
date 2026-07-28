@@ -7,6 +7,7 @@ import {
   EmailInput,
   MaskedPhoneInput as _MaskedPhoneInput,
 } from "mj-react-form-builder";
+import { FormControlLabel, RadioGroup, Radio } from "@mui/material";
 import PaymentTypeOptions from "../components/_components/PaymentTypeOptions";
 import CheckoutReciept from "../components/CheckoutReciept";
 import CardForm from "../components/CardForm";
@@ -17,7 +18,7 @@ import {
   useRegistrationSource,
 } from "../AppContextProvider";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
-import { IRegistrationPayload } from "../types/types";
+import { IRegistrationPayload, ITicketPayload } from "../types/types";
 import { ValidationHighlight } from "../helpers/validationHighlight";
 
 // Type fix for React 19 compatibility
@@ -34,6 +35,15 @@ const BillingStep = () => {
   const registrationSource = useRegistrationSource();
 
   const { agency, member_status } = getValues() as IRegistrationPayload;
+
+  // Promotional Emails Consent is only relevant when this registration has
+  // at least one Attendee ticket — never for Vendor-only or Contestant-only
+  // checkouts.
+  const tickets = (watch("tickets") as ITicketPayload[]) || [];
+  const needsPromotionalEmailsConsent = tickets.some(
+    (ticket) => ticket.type === "Attendee"
+  );
+  const promotionalEmailsConsent = watch("promotional_emails");
 
   const totalAmount = calculateSubtotal(
     getValues() as IRegistrationPayload,
@@ -207,6 +217,43 @@ const BillingStep = () => {
           )}
         </div>
       </ValidationHighlight>
+
+      {needsPromotionalEmailsConsent && (
+        <ValidationHighlight
+          field="promotional_emails"
+          className="mt-6 rounded-lg border border-slate-200 bg-slate-50/80 p-4"
+          clearWhen={promotionalEmailsConsent !== undefined}
+        >
+          <p className="mb-2 text-sm font-medium text-slate-800">
+            Promotional Emails Consent <span className="text-red-500">*</span>
+          </p>
+          <RadioGroup
+            name="promotional_emails"
+            value={promotionalEmailsConsent ?? null}
+            onChange={(e) =>
+              setValue("promotional_emails", e.target.value === "true", {
+                shouldDirty: true,
+              })
+            }
+          >
+            <FormControlLabel
+              value={true}
+              control={<Radio />}
+              label="I consent to receive informational and promotional emails from select conference vendors."
+              className="items-start text-sm"
+            />
+            <FormControlLabel
+              value={false}
+              control={<Radio />}
+              label="I DO NOT consent to receive informational and promotional emails from select conference vendors."
+              className="items-start text-sm"
+            />
+          </RadioGroup>
+          {promotionalEmailsConsent === undefined && (
+            <p className="mt-1 text-xs text-red-500">Please select an option</p>
+          )}
+        </ValidationHighlight>
+      )}
     </div>
   );
 };

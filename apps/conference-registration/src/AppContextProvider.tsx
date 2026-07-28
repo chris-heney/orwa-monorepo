@@ -40,6 +40,7 @@ import {
   loadAdminView,
   saveAdminView,
 } from "./helpers/adminViewPersistence";
+import { detectTestMode } from "./helpers/detectTestMode";
 
 export const ConferenceId = createContext<string | null>(null);
 export const PassportId = createContext<string | null>(null);
@@ -93,6 +94,7 @@ export const User = createContext<UserContext>({
   setIsAdminView: () => {},
   viewingEntries: false,
   setViewingEntries: () => {},
+  isTestMode: false,
 });
 
 export const EntryPayload = createContext<EntryPayloadContext>({
@@ -118,6 +120,8 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
     new URLSearchParams(window.location.search).get("passport_id") ?? null;
   const registrationSource =
     new URLSearchParams(window.location.search).get("source") ?? "online"; // online or kiosk
+  // Presence-only `&test` — read once; public UX wins over admin chrome.
+  const isTestMode = detectTestMode();
 
   const [submitted, setSubmitted] = useState<boolean>(false);
 
@@ -227,10 +231,12 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
       value={{
         isLoggedIn,
         setIsLoggedIn,
-        isAdminView,
+        // Test mode forces public UX — never expose admin view/entries.
+        isAdminView: isTestMode ? false : isAdminView,
         setIsAdminView,
-        viewingEntries,
+        viewingEntries: isTestMode ? false : viewingEntries,
         setViewingEntries,
+        isTestMode,
       }}
     >
       <EntryPayload.Provider value={{ entryPayload, setEntryPayload }}>

@@ -16,6 +16,7 @@ const storageKey = (conferenceId: string, source: string) =>
 /** Query params that must never be wiped when syncing step. */
 const PRESERVED_PARAMS = [
   "admin",
+  "test",
   "conference_id",
   "source",
   "passport_id",

@@ -194,11 +194,7 @@ const RegistrationStep = () => {
               registrationType === "Contestant"
             }
           >
-            <div
-              className={`grid gap-3 ${
-                offerContestantOnly ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-2"
-              }`}
-            >
+            <div className="flex flex-col gap-3">
               <VendorOrAttendeeBox
                 {...register("registration_type")}
                 registrationType="Attendee"
@@ -228,7 +224,7 @@ const RegistrationStep = () => {
                 <VendorOrAttendeeBox
                   {...register("registration_type")}
                   registrationType="Contestant"
-                  label="Contestant Only"
+                  label="Tournament Contestant Onlys"
                   checked={registrationType}
                   setRegistrationType={() => {
                     if (registrationType !== "Contestant") {

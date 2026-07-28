@@ -5,7 +5,6 @@ import {
   EmailInput,
   useNotify,
 } from "mj-react-form-builder";
-import { FormControlLabel, RadioGroup, Radio } from "@mui/material";
 import CustomSecondaryHeader from "./CustomSecondaryHeader";
 import currencyFormatter, { formatCurrency } from "../../helpers/currencyFormat";
 import { useFormContext, useFieldArray } from "react-hook-form";
@@ -15,23 +14,27 @@ import {
   useRegistrationSource,
   useTicketIndex,
 } from "../../AppContextProvider";
-import { ITicketPayload } from "../../types/types";
+import { IExtraOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
 import {
   availableContestantSports,
   ContestantSport,
+  contestantSportOf,
 } from "../../helpers/contestantSport";
 import {
-  FisherTier,
+  ContestantTier,
   resolveContestantTicket,
 } from "../../helpers/resolveContestantTicket";
+import { isStandaloneContestantTicket } from "../../helpers/contestantTicketTiers";
 import {
   contactFieldsFromPerson,
   emailAutoSelect,
 } from "../../helpers/copyContestantPerson";
 import { useGetRegistrations } from "../../data/API";
-import { isStandaloneContestantTicket } from "../../helpers/contestantTicketTiers";
+import { hasSelectedId } from "../../helpers/hasSelectedId";
+import { availableCartParticipants } from "../../helpers/availableCartParticipants";
+import { resolveCartAttachIndex } from "../../helpers/isContestantLinkedToCart";
 
 interface ContestantModalProps {
   setIsOpen: React.Dispatch<
@@ -48,7 +51,7 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
   const conferenceId = useConferenceId();
   const { TicketOptions, ExtraOptions } = useRegistrationOptions();
   const registrationSource = useRegistrationSource();
-  const { control, watch, setValue, trigger } = useFormContext();
+  const { control, watch, setValue, trigger, getValues } = useFormContext();
   const { update, remove } = useFieldArray({ control, name: "tickets" });
   const { notify } = useNotify();
 
@@ -62,7 +65,11 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
 
   const sports = availableContestantSports(TicketOptions);
   const [sport, setSport] = useState<ContestantSport | null>(null);
-  const [fisherTier, setFisherTier] = useState<FisherTier | null>(null);
+  const [fisherTier, setFisherTier] = useState<ContestantTier | null>(null);
+  // Attendee/Vendor checkout: is this participant on the cart, or an
+  // "Add Unregistered Contestant" entry priced at the standalone tier?
+  const [participantTier, setParticipantTier] =
+    useState<ContestantTier | null>(null);
   const [autoSelectDone, setAutoSelectDone] = useState(false);
 
   const { data: registrations, isLoading: registrationsLoading } =
@@ -77,64 +84,110 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
       String(registration.id) === String(ticket.previous_registration_id)
   );
 
-  const cartPeople = (tickets as ITicketPayload[]).filter(
-    (row) => row.type === "Attendee" || row.type === "Vendor"
-  );
+  // Same person may golf AND fish — only same-sport attaches are excluded.
+  const cartPeople = availableCartParticipants({
+    tickets: tickets as ITicketPayload[],
+    currentContestantIndex: ticketIndex,
+    currentSourceTicketId: ticket.source_ticket_id,
+    sport,
+  });
 
   const needsFisherTier = sport === "fish" && isContestantOnly;
   const isFishAddon =
     sport === "fish" &&
     (isAttendeeVendorCheckout || fisherTier === "addon");
   const showOrgPersonPicker = isContestantOnly && isFishAddon;
-  const showCartPersonPicker = isAttendeeVendorCheckout && sport != null;
+
+  const resolveTierTicket = (
+    targetSport: ContestantSport,
+    tier: ContestantTier
+  ) =>
+    resolveContestantTicket({
+      ticketOptions: TicketOptions,
+      sport: targetSport,
+      tier,
+    });
+
+  // Attendee/Vendor carts may add a participant who isn't on this
+  // registration ("Add Unregistered Contestant") at the standalone/
+  // contestant-only price — offered for both Golfer and Fisher, but only
+  // when the conference actually defines a distinct ticket for that tier.
+  const sportHasUnregisteredOption = (targetSport: ContestantSport): boolean => {
+    const standaloneTicket = resolveTierTicket(targetSport, "standalone");
+    return !!standaloneTicket && isStandaloneContestantTicket(standaloneTicket);
+  };
+
+  const needsParticipantTier =
+    isAttendeeVendorCheckout &&
+    sport != null &&
+    sportHasUnregisteredOption(sport);
+
+  const showCartPersonPicker =
+    isAttendeeVendorCheckout &&
+    sport != null &&
+    (!needsParticipantTier || participantTier === "addon");
+
   const showContactFields =
     sport != null &&
     !showOrgPersonPicker &&
     !showCartPersonPicker &&
-    (!needsFisherTier || fisherTier != null);
+    (!needsFisherTier || fisherTier != null) &&
+    (!needsParticipantTier || participantTier != null);
 
   const priceOf = (ticketOption: { price_online?: number; price_event?: number } | null) =>
     registrationSource === "kiosk"
       ? ticketOption?.price_event
       : ticketOption?.price_online;
 
+  const effectiveTier: ContestantTier | undefined = needsFisherTier
+    ? (fisherTier ?? undefined)
+    : needsParticipantTier
+      ? (participantTier ?? undefined)
+      : undefined;
+
   const resolvedTicket = useMemo(() => {
     if (!sport) return null;
     if (needsFisherTier && !fisherTier) return null;
+    if (needsParticipantTier && !participantTier) return null;
     return resolveContestantTicket({
       ticketOptions: TicketOptions,
       sport,
-      fisherTier: fisherTier ?? undefined,
-      registrationType,
+      tier: effectiveTier,
     });
-  }, [sport, fisherTier, needsFisherTier, TicketOptions, registrationType]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    sport,
+    fisherTier,
+    participantTier,
+    needsFisherTier,
+    needsParticipantTier,
+    TicketOptions,
+  ]);
 
-  const fishAddonTicket = resolveContestantTicket({
-    ticketOptions: TicketOptions,
-    sport: "fish",
-    fisherTier: "addon",
-    registrationType: "Contestant",
-  });
-  const fishStandaloneTicket = resolveContestantTicket({
-    ticketOptions: TicketOptions,
-    sport: "fish",
-    fisherTier: "standalone",
-    registrationType: "Contestant",
-  });
+  const fishAddonTicket = resolveTierTicket("fish", "addon");
+  const fishStandaloneTicket = resolveTierTicket("fish", "standalone");
 
-  const applyResolvedTicket = (nextSport: ContestantSport, tier?: FisherTier) => {
+  const applyResolvedTicket = (
+    nextSport: ContestantSport,
+    tier?: ContestantTier
+  ) => {
     const option = resolveContestantTicket({
       ticketOptions: TicketOptions,
       sport: nextSport,
-      fisherTier: tier,
-      registrationType,
+      tier,
     });
     if (!option) return;
+    // Always read fresh row — stale `ticket` from render can drop attach fields.
+    const fresh =
+      (getValues(`tickets.${ticketIndex}`) as ITicketPayload | undefined) ||
+      ticket;
+    const allTickets = (getValues("tickets") as ITicketPayload[]) || [];
+    const preservedAttach = resolveCartAttachIndex(fresh, allTickets);
     const base =
       registrationSource === "kiosk"
         ? Number(option.price_event) || 0
         : Number(option.price_online) || 0;
-    const extrasPrice = (ticket.extras || [])
+    const extrasPrice = (fresh.extras || [])
       .map((extraId) => getExtraData(ExtraOptions, extraId))
       .filter(Boolean)
       .reduce((sum, extra) => {
@@ -152,26 +205,92 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
             : Number(extra?.price_event) || 0)
         );
       }, 0);
+
+    // Standalone/contestant-only tickets never attach to a cart or another
+    // registration. Contestant-only-checkout golf never attaches either
+    // (it has no cart of its own).
+    const clearOrgAttach =
+      tier === "standalone" ||
+      (!isAttendeeVendorCheckout && nextSport === "golf");
+
     update(ticketIndex, {
-      ...ticket,
+      ...fresh,
       ticket_type: option,
       type: "Contestant",
       price: base + extrasPrice,
-      ...(nextSport === "golf" || tier === "standalone"
+      // Attendee/Vendor carts must keep (or repair) source_ticket_id unless
+      // this is an unregistered ("standalone") participant.
+      ...(clearOrgAttach
         ? {
             previous_registration_id: undefined,
             source_ticket_id: undefined,
           }
-        : {}),
+        : isAttendeeVendorCheckout && preservedAttach != null
+          ? { source_ticket_id: preservedAttach }
+          : {}),
     });
   };
+
+  // Hydrate Golfer/Fisher (and tier) when opening edit, reset on create.
+  useEffect(() => {
+    if (!isOpen.open) return;
+    if (isOpen.context === "edit") {
+      const fromTicket = contestantSportOf(ticket.ticket_type);
+      setSport(fromTicket);
+      if (fromTicket === "fish" && isContestantOnly) {
+        setFisherTier(
+          isStandaloneContestantTicket(ticket.ticket_type)
+            ? "standalone"
+            : "addon"
+        );
+      } else {
+        setFisherTier(null);
+      }
+      if (isAttendeeVendorCheckout) {
+        setParticipantTier(
+          isStandaloneContestantTicket(ticket.ticket_type)
+            ? "standalone"
+            : "addon"
+        );
+      } else {
+        setParticipantTier(null);
+      }
+      setAutoSelectDone(true);
+      return;
+    }
+    // create
+    setSport(null);
+    setFisherTier(null);
+    setParticipantTier(null);
+    setAutoSelectDone(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen.open, isOpen.context, ticketIndex]);
 
   useEffect(() => {
     if (!resolvedTicket) return;
     if (String(ticket.ticket_type?.id) === String(resolvedTicket.id)) return;
-    applyResolvedTicket(sport!, fisherTier ?? undefined);
+    applyResolvedTicket(sport!, effectiveTier);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolvedTicket?.id]);
+
+  // Repair attach ids wiped by older Golfer-save bug (names kept, source cleared).
+  useEffect(() => {
+    if (!isOpen.open || !isAttendeeVendorCheckout) return;
+    const fresh =
+      (getValues(`tickets.${ticketIndex}`) as ITicketPayload | undefined) ||
+      ticket;
+    if (hasSelectedId(fresh.source_ticket_id)) return;
+    const repaired = resolveCartAttachIndex(
+      fresh,
+      (getValues("tickets") as ITicketPayload[]) || []
+    );
+    if (repaired != null) {
+      setValue(`tickets.${ticketIndex}.source_ticket_id`, repaired, {
+        shouldDirty: true,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen.open, ticketIndex, isAttendeeVendorCheckout]);
 
   useEffect(() => {
     if (autoSelectDone || isOpen.context !== "create" || !showOrgPersonPicker) {
@@ -231,17 +350,25 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
       notify("Select Already registered or Contestant only", "error");
       return;
     }
+    if (needsParticipantTier && !participantTier) {
+      notify(
+        "Select from this registration, or Add Unregistered Contestant",
+        "error"
+      );
+      return;
+    }
     if (showOrgPersonPicker) {
-      if (!ticket.previous_registration_id) {
+      if (!hasSelectedId(ticket.previous_registration_id)) {
         notify("Select an existing conference registration", "error");
         return;
       }
-      if (!ticket.source_ticket_id) {
+      if (!hasSelectedId(ticket.source_ticket_id)) {
         notify("Select a person from that registration", "error");
         return;
       }
     }
-    if (showCartPersonPicker && !ticket.source_ticket_id) {
+    // Cart person index can be 0 — must not use truthiness.
+    if (showCartPersonPicker && !hasSelectedId(ticket.source_ticket_id)) {
       notify("Select an attendee or vendor from this registration", "error");
       return;
     }
@@ -257,15 +384,13 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
         return;
       }
     }
-    if (ticket.promotional_emails === undefined) {
-      notify("Please make a selection for Promotional Emails Consent", "error");
-      return;
-    }
+    // Promotional Emails Consent is only collected on Attendee tickets —
+    // Contestants never need it, so no consent check happens here.
     if (!ticket.ticket_type) {
       notify("Could not resolve contestant ticket type", "error");
       return;
     }
-    applyResolvedTicket(sport, fisherTier ?? undefined);
+    applyResolvedTicket(sport, effectiveTier);
     setIsOpen({ open: false, context: "create" });
   };
 
@@ -275,6 +400,17 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
         ? "border-blue-600 bg-blue-50"
         : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-white"
     }`;
+
+  const extrasSubtotal = (ticket.extras || [])
+    .map((extraId: string | number) => getExtraData(ExtraOptions, extraId))
+    .filter((extra: IExtraOption | undefined): extra is IExtraOption => !!extra)
+    .reduce(
+      (sum: number, extra: IExtraOption) =>
+        sum + Number(priceOf(extra) || 0),
+      0
+    );
+  const lineSubtotal =
+    Number(priceOf(resolvedTicket) || 0) + extrasSubtotal;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-black/50 p-4 sm:p-8">
@@ -310,8 +446,14 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                     onClick={() => {
                       setSport(option);
                       setFisherTier(null);
-                      if (option === "golf") {
-                        applyResolvedTicket("golf");
+                      setParticipantTier(null);
+                      const willAskFisherTier =
+                        option === "fish" && isContestantOnly;
+                      const willAskParticipantTier =
+                        isAttendeeVendorCheckout &&
+                        sportHasUnregisteredOption(option);
+                      if (!willAskFisherTier && !willAskParticipantTier) {
+                        applyResolvedTicket(option);
                       }
                     }}
                   >
@@ -340,14 +482,14 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                       value: "addon" as const,
                       title: "Already registered",
                       detail:
-                        "My organization is registered (or registering separately) as an Attendee or Vendor",
+                        "I have already registered for the conference as an Attendee or Vendor.",
                       price: priceOf(fishAddonTicket),
                     },
                     {
                       value: "standalone" as const,
                       title: "Contestant only",
                       detail:
-                        "My organization is not otherwise registered for this conference",
+                        "I have not registered for the conference as an Attendee or Vendor.",
                       price: priceOf(fishStandaloneTicket),
                     },
                   ] as const
@@ -362,6 +504,68 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                       onClick={() => {
                         setFisherTier(option.value);
                         applyResolvedTicket("fish", option.value);
+                      }}
+                    >
+                      <span
+                        className={`text-sm font-bold ${
+                          selected ? "text-blue-700" : "text-slate-800"
+                        }`}
+                      >
+                        {option.title}
+                        {option.price != null && (
+                          <span className="ml-2 tabular-nums">
+                            {currencyFormatter.format(Number(option.price))}
+                          </span>
+                        )}
+                      </span>
+                      <span
+                        className={`mt-1 text-xs leading-snug ${
+                          selected ? "text-blue-700/80" : "text-slate-500"
+                        }`}
+                      >
+                        {option.detail}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
+          {needsParticipantTier && sport != null && (
+            <section className="mt-6 space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+                Participant type
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    {
+                      value: "addon" as const,
+                      title: "Select from this registration",
+                      detail:
+                        "Choose an Attendee or Vendor already added to this registration.",
+                      price: priceOf(resolveTierTicket(sport, "addon")),
+                    },
+                    {
+                      value: "standalone" as const,
+                      title: "Add Unregistered Contestant",
+                      detail:
+                        "Register a participant who isn't otherwise attending this conference.",
+                      price: priceOf(resolveTierTicket(sport, "standalone")),
+                    },
+                  ] as const
+                ).map((option) => {
+                  const selected = participantTier === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      aria-pressed={selected}
+                      className={selectCardClass(selected)}
+                      onClick={() => {
+                        setParticipantTier(option.value);
+                        applyResolvedTicket(sport, option.value);
                       }}
                     >
                       <span
@@ -511,37 +715,50 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                 <select
                   className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
                   value={
-                    ticket.source_ticket_id != null
+                    hasSelectedId(ticket.source_ticket_id)
                       ? String(ticket.source_ticket_id)
                       : ""
                   }
                   onChange={(event) => {
-                    const index = Number(event.target.value);
-                    const selected = cartPeople[index];
+                    const absoluteIndex = Number(event.target.value);
+                    if (!Number.isFinite(absoluteIndex)) return;
+                    const selected = cartPeople.find(
+                      (row) => row.absoluteIndex === absoluteIndex
+                    )?.person;
                     if (!selected) return;
+                    const fresh =
+                      (getValues(`tickets.${ticketIndex}`) as
+                        | ITicketPayload
+                        | undefined) || ticket;
                     update(ticketIndex, {
-                      ...ticket,
+                      ...fresh,
                       ...contactFieldsFromPerson({
-                        id: index,
+                        id: absoluteIndex,
                         first: selected.first,
                         last: selected.last,
                         email: selected.email,
                         phone: selected.phone,
                         license: selected.license,
                       }),
+                      // Absolute tickets[] index — never a filtered dropdown index.
+                      source_ticket_id: absoluteIndex,
                       previous_registration_id: undefined,
-                      promotional_emails: ticket.promotional_emails,
-                      ticket_type: ticket.ticket_type,
+                      // Inherit consent from the Attendee/Vendor ticket already chosen.
+                      promotional_emails: selected.promotional_emails,
+                      ticket_type: fresh.ticket_type,
                       type: "Contestant",
-                      extras: ticket.extras ?? [],
+                      extras: fresh.extras ?? [],
                     });
                   }}
                 >
                   <option value="">Select a person…</option>
-                  {cartPeople.map((person, index) => (
-                    <option key={`cart-person-${index}`} value={index}>
+                  {cartPeople.map(({ person, absoluteIndex }) => (
+                    <option
+                      key={`cart-person-${absoluteIndex}`}
+                      value={absoluteIndex}
+                    >
                       {[person.first, person.last].filter(Boolean).join(" ") ||
-                        `Person ${index + 1}`}{" "}
+                        `Person ${absoluteIndex + 1}`}{" "}
                       ({person.type})
                     </option>
                   ))}
@@ -608,62 +825,47 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
             </section>
           )}
 
-          <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50/80 p-4">
-            <p className="mb-2 text-sm font-medium text-slate-800">
-              Promotional Emails Consent <span className="text-red-500">*</span>
-            </p>
-            <RadioGroup
-              name={`tickets[${ticketIndex}].promotional_emails`}
-              value={watch(`tickets[${ticketIndex}].promotional_emails`)}
-              onChange={(e) =>
-                setValue(
-                  `tickets[${ticketIndex}].promotional_emails`,
-                  e.target.value === "true" ? true : false
-                )
-              }
-            >
-              <FormControlLabel
-                value={true}
-                control={<Radio />}
-                label="I consent to receive informational and promotional emails from select conference vendors."
-                className="items-start text-sm"
-              />
-              <FormControlLabel
-                value={false}
-                control={<Radio />}
-                label="I DO NOT consent to receive informational and promotional emails from select conference vendors."
-                className="items-start text-sm"
-              />
-            </RadioGroup>
-          </section>
-
-          {resolvedTicket && (
-            <p className="mt-4 text-right text-sm text-slate-600">
-              Ticket:{" "}
-              <span className="font-semibold text-slate-900">
-                {resolvedTicket.name}{" "}
-                {formatCurrency(Number(priceOf(resolvedTicket) || 0))}
-              </span>
-              {isStandaloneContestantTicket(resolvedTicket) ? "" : ""}
-            </p>
-          )}
         </div>
 
-        <div className="flex justify-end gap-3 border-t border-slate-200 px-5 py-4 sm:px-6">
-          <button
-            type="button"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            onClick={closeModal}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            onClick={handleSave}
-          >
-            Save Contestant
-          </button>
+        <div className="flex shrink-0 flex-col gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <p className="text-center text-base font-semibold text-slate-900 sm:text-left">
+            {resolvedTicket ? (
+              <>
+                Subtotal:{" "}
+                <span className="tabular-nums">
+                  {formatCurrency(lineSubtotal)}
+                </span>
+                {extrasSubtotal > 0 && (
+                  <span className="mt-0.5 block text-xs font-normal text-slate-500 sm:mt-0 sm:ml-2 sm:inline">
+                    ({resolvedTicket.name}{" "}
+                    {formatCurrency(Number(priceOf(resolvedTicket) || 0))}
+                    {" + extras "}
+                    {formatCurrency(extrasSubtotal)})
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="font-normal text-slate-500">
+                {sport != null ? "Select a participant type" : "Select a tournament"}
+              </span>
+            )}
+          </p>
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <button
+              type="button"
+              className="rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+              onClick={closeModal}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              onClick={handleSave}
+            >
+              Save Contestant
+            </button>
+          </div>
         </div>
       </div>
     </div>
