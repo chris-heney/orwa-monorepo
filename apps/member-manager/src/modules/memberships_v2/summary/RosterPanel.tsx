@@ -38,7 +38,9 @@ const RosterPanel: React.FC<Props> = ({
     return {
       chart: {
         backgroundColor: "transparent",
-        height: compact ? 220 : 320,
+        // Compact dashboard: chart sits beside the legend, so use most of the
+        // ~400px tile height (title + paddings leave ~300px).
+        height: compact ? 300 : 320,
         style: { fontFamily: display.fontFamily },
       },
       title: { text: undefined },
@@ -161,54 +163,76 @@ const RosterPanel: React.FC<Props> = ({
         >
           Memberships
         </Typography>
-        <Box sx={{ flex: 1, minHeight: 0 }}>
-          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
-        </Box>
         <Box
           sx={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 0.75,
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "stretch",
+            gap: 1.25,
           }}
         >
-          {metrics.roster.map((slice) => (
-            <Box
-              key={slice.key}
-              sx={{
-                px: 1,
-                py: 0.75,
-                borderRadius: "8px",
-                border: `1px solid ${T.line}`,
-                borderLeft: `3px solid ${slice.color}`,
-                backgroundColor: T.panel,
-              }}
-            >
-              <Typography
+          <Box
+            sx={{
+              flex: "1 1 58%",
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+          </Box>
+          <Box
+            sx={{
+              flex: "0 0 38%",
+              minWidth: 112,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              gap: 0.75,
+            }}
+          >
+            {metrics.roster.map((slice) => (
+              <Box
+                key={slice.key}
                 sx={{
-                  fontSize: 9.5,
-                  fontWeight: 600,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  color: T.textLo,
-                  lineHeight: 1.2,
+                  px: 1,
+                  py: 0.7,
+                  borderRadius: "8px",
+                  border: `1px solid ${T.line}`,
+                  borderLeft: `3px solid ${slice.color}`,
+                  backgroundColor: T.panel,
                 }}
               >
-                {slice.label}
-              </Typography>
-              <Typography
-                sx={{
-                  ...display,
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: T.textHi,
-                  fontVariantNumeric: "tabular-nums",
-                  lineHeight: 1.1,
-                }}
-              >
-                {slice.count.toLocaleString()}
-              </Typography>
-            </Box>
-          ))}
+                <Typography
+                  sx={{
+                    fontSize: 9.5,
+                    fontWeight: 600,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: T.textLo,
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {slice.label}
+                </Typography>
+                <Typography
+                  sx={{
+                    ...display,
+                    fontSize: 18,
+                    fontWeight: 700,
+                    color: T.textHi,
+                    fontVariantNumeric: "tabular-nums",
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {slice.count.toLocaleString()}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
         </Box>
       </Box>
     );

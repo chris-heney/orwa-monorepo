@@ -1,102 +1,158 @@
-import React from 'react'
-import { Card, Box, Typography, Tooltip, Grid, Avatar } from '@mui/material'
-import { Loading, useGetList, useRedirect } from 'react-admin'
-import InventoryIcon from '@mui/icons-material/Inventory'
+import React, { useMemo } from "react";
+import { Box, Typography } from "@mui/material";
+import { Loading, useGetList, useRedirect } from "react-admin";
+import InventoryOutlinedIcon from "@mui/icons-material/InventoryOutlined";
+import DirectoryRow from "./DirectoryRow";
+import {
+  display,
+  useSummaryTokens,
+} from "../../memberships_v2/summary/tokens";
 
+const mediaUrl = (media: unknown): string | undefined => {
+  if (media == null) return undefined;
+  const file = Array.isArray(media) ? media[0] : media;
+  const url = (file as { url?: string } | null)?.url;
+  if (!url) return undefined;
+  if (url.startsWith("http")) return url;
+  return `${import.meta.env.VITE_API_ENDPOINT}${url}`;
+};
 
-
+/**
+ * Assets directory — list rows matching the People card language.
+ */
 const AssetsCard = () => {
-  const redirect = useRedirect()
-  const { data: assets, isLoading } = useGetList('assets', {
-    meta: {
-      raw: true,
-    },
+  const T = useSummaryTokens();
+  const redirect = useRedirect();
+  const { data: assets, isLoading } = useGetList("assets", {
+    meta: { raw: true },
     pagination: { page: 1, perPage: 1000 },
-  })
+  });
 
-  return isLoading ? (
-    <Loading />
-  ) : (
-    <Card
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        width: '100%',
-        position: 'relative',
-        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
-        borderRadius: '15px',
-        backgroundColor: (theme) =>
-          theme.palette.mode === 'dark' ? theme.palette.grey[800] : '#2C3238',
-        color: '#ffffff',
-        padding: '20px',
-      }}
-    >
-      <Typography
-        variant='h6'
-        fontSize={20}
-        sx={{
-          justifyContent: 'center',
-          position: 'absolute',
-          top: -10,
-          right: -3,
-          backgroundColor: (theme) =>
-            theme.palette.mode === 'dark' ? theme.palette.grey[700] : '#4C535A',
-          padding: '10px',
-          borderRadius: '50%',
-          width: '50px',
-          height: '50px',
-          display: 'flex',
-          alignItems: 'center',
-          fontWeight: 'bold',
-        }}
-      >
-        {assets?.length}
-      </Typography>
+  const sorted = useMemo(
+    () =>
+      [...(assets ?? [])].sort((a, b) =>
+        String(a?.name ?? "").localeCompare(String(b?.name ?? ""))
+      ),
+    [assets]
+  );
+
+  if (isLoading) {
+    return (
       <Box
         sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          margin: '8px',
-          display: 'flex',
+          height: "100%",
+          borderRadius: "14px",
+          border: `1px solid ${T.line}`,
+          backgroundColor: T.ink,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
       >
-        <InventoryIcon sx={{ fontSize: 30, marginRight: '8px' }} />
-        <Typography variant='h5'>Assets Tracked</Typography>
+        <Loading />
+      </Box>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        height: "100%",
+        borderRadius: "14px",
+        border: `1px solid ${T.line}`,
+        backgroundColor: T.ink,
+        color: T.textHi,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1,
+          px: 1.75,
+          pt: 1.5,
+          pb: 1,
+          borderBottom: `1px solid ${T.line}`,
+          flexShrink: 0,
+        }}
+      >
+        <InventoryOutlinedIcon sx={{ fontSize: 22, color: T.water }} />
+        <Typography
+          sx={{
+            ...display,
+            fontSize: 15,
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: T.textHi,
+            flex: 1,
+          }}
+        >
+          Assets Tracked
+        </Typography>
+        <Box
+          sx={{
+            minWidth: 28,
+            height: 28,
+            px: 0.75,
+            borderRadius: "999px",
+            backgroundColor: T.panelSoft,
+            border: `1px solid ${T.line}`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            ...display,
+            fontSize: 12,
+            fontWeight: 700,
+            color: T.textLo,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {sorted.length}
+        </Box>
       </Box>
 
-      <Grid container spacing={2} maxWidth={'100%'} mt={2} overflow={'scroll'} >
-        {assets?.map((asset, index) => (
-          <Grid key={index} item lg={3} xs={4} sm={3} md={4}>
-            <Box
-              sx={{
-                display: 'flex',
-                width: '100%',
-                my: 1,
-              }}
-            >
-              <Tooltip title={`${asset?.name}`}>
-                <Avatar
-                  onClick={() => redirect(`/assets/${asset.id}/show`)}
-                  style={{
-                    width: 70,
-                    height: 70,
-                    transition: 'transform 0.3s ease-in-out',
-                    cursor: 'pointer',
-                    objectFit: 'cover',
-                    border: '2px solid #cccccc',
-                    borderRadius: '15px',
-                  }}
-                  src={`${import.meta.env.VITE_API_ENDPOINT}${asset.images?.[0]?.url || ''}`}
-                />
-              </Tooltip>
-            </Box>
-          </Grid>
-        ))}
-      </Grid>
-    </Card>
-  )
-}
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          px: 1,
+          py: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.15,
+          scrollbarWidth: "thin",
+          scrollbarColor: `${T.line} transparent`,
+        }}
+      >
+        {sorted.length === 0 ? (
+          <Typography
+            sx={{ px: 1, py: 1.5, fontSize: 12, color: T.textFaint }}
+          >
+            No assets tracked
+          </Typography>
+        ) : (
+          sorted.map((asset) => (
+            <DirectoryRow
+              key={asset.id}
+              primary={asset?.name || "Untitled asset"}
+              secondary={
+                [asset?.make, asset?.model].filter(Boolean).join(" · ") ||
+                undefined
+              }
+              imageUrl={mediaUrl(asset?.images)}
+              square
+              onClick={() => redirect(`/assets/${asset.id}/show`)}
+            />
+          ))
+        )}
+      </Box>
+    </Box>
+  );
+};
 
-export default AssetsCard
+export default AssetsCard;
