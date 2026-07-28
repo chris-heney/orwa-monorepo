@@ -184,7 +184,7 @@ const SystemAndContactStep = () => {
       >
         <FormSection
           title="Primary contacts"
-          description="Point of contact and board chair are required. Engineer is optional."
+          description="Point of contact, board chair, and at least one additional contact are required. Engineer is optional."
         >
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <ContactArray
@@ -220,11 +220,12 @@ const SystemAndContactStep = () => {
       >
         <FormSection
           title="Additional contacts"
-          description="Optional — add as many people as needed who should be able to follow up on this application (they can also request an edit link by email)."
+          description="At least one additional contact is required — people who should be able to follow up on this application (they can also request an edit link by email)."
         >
           <ContactArray
             source="additional_contacts"
             isArray
+            minItems={1}
             label={`Additional contacts${
               additionalContacts.length
                 ? ` (${additionalContacts.length})`
