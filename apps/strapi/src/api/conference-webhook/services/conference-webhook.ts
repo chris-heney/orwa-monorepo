@@ -276,8 +276,10 @@ export default ({ strapi }) => {
                 cardCode,
               },
             },
-            // Match membership-forms Auth.net shape: email + phone on billTo
-            // (phone via faxNumber — same production pattern as membership).
+            // billTo schema order: … country, phoneNumber, faxNumber.
+            // Do NOT send faxNumber — Anet rejects it as an invalid billTo child
+            // when email is also present (E00003). Phone goes in phoneNumber;
+            // email belongs on customer (and optionally billTo.email).
             customer: billingEmail ? { email: billingEmail } : undefined,
             billTo: {
               firstName: registrant.first,
@@ -291,9 +293,8 @@ export default ({ strapi }) => {
                 ] ?? billingAddress?.state,
               zip: billingAddress?.zip || "",
               country: "US",
-              email: billingEmail,
-              faxNumber: billingPhone,
-              phoneNumber: billingPhone,
+              ...(billingPhone ? { phoneNumber: billingPhone } : {}),
+              ...(billingEmail ? { email: billingEmail } : {}),
             },
             ...(gateway.transactionSettings
               ? { transactionSettings: gateway.transactionSettings }
