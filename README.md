@@ -17,6 +17,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 - **grant-scoring** (Port 4206) - Committee/ORWA/DEQ evaluation tool (`/grant-administration`)
 - **associate-directory** (Port 4205) - Member directory
 - **member-manager** (Port 4205/nearby) - Admin (react-admin)
+- **conference-hub** (Port 4208) - Public conference hub / kiosk (`/conference-hub`)
 
 ### Tech Stack
 - **Monorepo**: NX 21.4.0
@@ -59,6 +60,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
    npx nx serve grant-scoring-directory
    npx nx serve grant-scoring
    npx nx serve associate-directory
+   npx nx serve conference-hub
    ```
 
 ### Access URLs
@@ -71,6 +73,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 - **Grant Scoring Directory**: http://localhost:4204 (prod: `https://orwa.org/application-search/`)
 - **Associate Directory**: http://localhost:4205
 - **Grant Scoring (Eval)**: http://localhost:4206 (prod: `https://orwa.org/grant-administration/`)
+- **Conference Hub**: http://localhost:4208 (prod: `https://orwa.org/conference-hub/`)
 
 > **Build note:** Prefer `npx vite build` from each app directory for production bundles. `nx build` can bake localhost API endpoints from tracked `.env` files. Always `grep -c 'localhost:1337' dist/assets/*.js` before rsync.
 
@@ -87,6 +90,7 @@ orwa-monorepo/
 │   ├── grant-application/      # React frontend apps
 │   ├── membership-application/
 │   ├── conference-registration/
+│   ├── conference-hub/           # public conference hub / kiosk
 │   ├── grant-map/
 │   ├── grant-scoring-directory/  # application-search viewer
 │   ├── grant-scoring/            # grant-administration eval tool

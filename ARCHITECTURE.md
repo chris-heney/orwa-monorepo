@@ -151,6 +151,7 @@ CMD ["pnpm", "run", "develop"]
 | grant-scoring-directory | 4204 | React/Vite | Monorepo-Aware (`/application-search`) |
 | associate-directory | 4205 | React/Vite | Monorepo-Aware |
 | grant-scoring | 4206 | React/Vite | Monorepo-Aware (`/grant-administration`) |
+| conference-hub | 4208 | React/Vite | Monorepo-Aware (`/conference-hub`) |
 
 ### **Backend Services (Pattern 2)**
 | Service | Port | Type | Build Pattern |
@@ -272,6 +273,7 @@ npm run build:docker      # Build Docker images only
 - **Grant Scoring Directory**: http://localhost:4204 (`https://orwa.org/application-search/`)
 - **Associate Directory**: http://localhost:4205
 - **Grant Scoring (Eval)**: http://localhost:4206 (`https://orwa.org/grant-administration/`)
+- **Conference Hub**: http://localhost:4208 (`https://orwa.org/conference-hub/`)
 
 ---
 

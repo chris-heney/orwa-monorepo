@@ -1,0 +1,5 @@
+# App-local ignores (root .gitignore also covers apps/*/.env*)
+dist
+node_modules
+*.local
+.DS_Store
