@@ -17,6 +17,7 @@
     "start:conference": "nx serve conference-registration",
     "start:grant-map": "nx serve grant-map",
     "start:scoring": "nx serve grant-scoring",
+    "start:scoring-directory": "nx serve grant-scoring-directory",
     "start:directory": "nx serve associate-directory",
     "start:member-manager": "nx serve member-manager",
     "start:scholarship": "nx serve scholarship-application"

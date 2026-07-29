@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { FormControlLabel, Switch, FormControlLabelProps } from '@mui/material'
+import { ApplicationScoringContext } from '../AppContextProvider'
 
 interface BooleanInputProps extends Omit<FormControlLabelProps, 'control' | 'onChange'> {
   value: boolean | undefined;
@@ -8,6 +9,18 @@ interface BooleanInputProps extends Omit<FormControlLabelProps, 'control' | 'onC
 
 const CustomBooleanInput: React.FC<BooleanInputProps> = ({ label, value, onChange, ...props }) => {
   const [isChecked, setChecked] = useState(value || false)
+  
+  const {
+    applications,
+    applicationIndex,
+  } = useContext(ApplicationScoringContext)
+
+
+  useEffect(() => {
+    if (applications[applicationIndex]) {
+      isChecked !== value && setChecked(value || false)
+    }
+  }, [applications[applicationIndex]])
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.checked;

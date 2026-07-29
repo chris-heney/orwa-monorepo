@@ -21,7 +21,8 @@ orwa-monorepo/
 │   ├── membership-application/     # ⚛️ React/Vite app  
 │   ├── conference-registration/    # ⚛️ React/Vite app
 │   ├── grant-map/                  # ⚛️ React/Vite app
-│   ├── grant-scoring/              # ⚛️ React/Vite app
+│   ├── grant-scoring-directory/    # ⚛️ Scoresheet viewer (/application-search)
+│   ├── grant-scoring/              # ⚛️ Eval tool (/grant-administration)
 │   ├── associate-directory/        # ⚛️ React/Vite app
 │   └── strapi/                  # 🚀 Strapi CMS (standalone)
 └── dist/                           # 📦 Build outputs
@@ -147,8 +148,9 @@ CMD ["pnpm", "run", "develop"]
 | membership-application | 4201 | React/Vite | Monorepo-Aware |
 | conference-registration | 4202 | React/Vite | Monorepo-Aware |
 | grant-map | 4203 | React/Vite | Monorepo-Aware |
-| grant-scoring | 4204 | React/Vite | Monorepo-Aware |
+| grant-scoring-directory | 4204 | React/Vite | Monorepo-Aware (`/application-search`) |
 | associate-directory | 4205 | React/Vite | Monorepo-Aware |
+| grant-scoring | 4206 | React/Vite | Monorepo-Aware (`/grant-administration`) |
 
 ### **Backend Services (Pattern 2)**
 | Service | Port | Type | Build Pattern |
@@ -267,8 +269,9 @@ npm run build:docker      # Build Docker images only
 - **Membership Application**: http://localhost:4201
 - **Conference Registration**: http://localhost:4202
 - **Grant Map**: http://localhost:4203
-- **Grant Scoring**: http://localhost:4204
+- **Grant Scoring Directory**: http://localhost:4204 (`https://orwa.org/application-search/`)
 - **Associate Directory**: http://localhost:4205
+- **Grant Scoring (Eval)**: http://localhost:4206 (`https://orwa.org/grant-administration/`)
 
 ---
 

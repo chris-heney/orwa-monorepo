@@ -1,13 +1,17 @@
 import { Box, Divider, Typography } from "@mui/material";
 import ResponsiveListItem from "./components/ResponsiveListItem";
 import { formatNumber } from "./helpers/formatNumbers";
-import { useContext } from "react";
-import { DirectoryContext } from "./helpers/AppContextProvider";
-import DisplayStrapiFiles from "./components/DisplayStrapiFiles";
 import DisplayStringLinks from "./components/DisplayStringLinks";
+import { useContext } from "react";
+import { ApplicationScoringContext } from "./AppContextProvider";
+import DisplayStrapiFiles from "./components/DisplayStrapiFiles";
 
 const ApplicationInformation = () => {
-  const { applications, applicationIndex } = useContext(DirectoryContext);
+  const { applications, applicationIndex, token } = useContext(
+    ApplicationScoringContext
+  );
+
+  console.log(applications[applicationIndex]);
 
   return !applications ? (
     <>No Application in Queue</>
@@ -100,14 +104,16 @@ const ApplicationInformation = () => {
           divider
         />
       )}
-      <ResponsiveListItem
-        label="Expected Utility Match"
-        value={formatNumber(
-          applications[applicationIndex]?.expected_utility_match ?? 0
-        )}
-        divider
-      />
 
+      {token.name !== "Committee" && (
+        <ResponsiveListItem
+          label="Expected Utility Match"
+          value={formatNumber(
+            applications[applicationIndex]?.expected_utility_match ?? 0
+          )}
+          divider
+        />
+      )}
       <ResponsiveListItem
         label="Drinking Water or Wastewater"
         value={applications[applicationIndex]?.drinking_or_wastewater}
@@ -141,7 +147,7 @@ const ApplicationInformation = () => {
             component={"ul"}
             sx={{ display: "flex", flexDirection: "column" }}
           >
-            {applications[applicationIndex]?.selected_projects?.map(
+            {applications[applicationIndex]?.selected_projects.map(
               (project, index) => (
                 <Typography sx={{ textAlign: "right" }} key={index}>
                   {project.name}
@@ -152,24 +158,26 @@ const ApplicationInformation = () => {
         }
       />
 
-      <ResponsiveListItem
-        label="Projects Approved"
-        divider
-        value={
-          <Box
-            component={"ul"}
-            sx={{ display: "flex", flexDirection: "column" }}
-          >
-            {applications[applicationIndex]?.approved_projects?.map(
-              (project, index) => (
-                <Typography sx={{ textAlign: "right" }} key={index}>
-                  {project.name}
-                </Typography>
-              )
-            )}
-          </Box>
-        }
-      />
+      {(token.name === "ORWA" || token.name === "DEQ") && (
+        <ResponsiveListItem
+          label="Projects Approved"
+          divider
+          value={
+            <Box
+              component={"ul"}
+              sx={{ display: "flex", flexDirection: "column" }}
+            >
+              {applications[applicationIndex]?.approved_projects.map(
+                (project, index) => (
+                  <Typography sx={{ textAlign: "right" }} key={index}>
+                    {project.name}
+                  </Typography>
+                )
+              )}
+            </Box>
+          }
+        />
+      )}
 
       {/* Violation Resolution */}
       <ResponsiveListItem
@@ -179,19 +187,25 @@ const ApplicationInformation = () => {
       />
 
       {/* Financial Additional Information */}
+      {token.name !== "Committee" && (
+        <>
+          <ResponsiveListItem
+            label="Approved Project Cost"
+            value={formatNumber(
+              applications[applicationIndex]?.approved_project_cost ?? 0
+            )}
+            divider
+          />
+          <ResponsiveListItem
+            label="Award Amount"
+            value={formatNumber(
+              applications[applicationIndex]?.award_amount ?? 0
+            )}
+            divider
+          />
+        </>
+      )}
 
-      <ResponsiveListItem
-        label="Approved Project Cost"
-        value={formatNumber(
-          applications[applicationIndex]?.approved_project_cost ?? 0
-        )}
-        divider
-      />
-      <ResponsiveListItem
-        label="Award Amount"
-        value={formatNumber(applications[applicationIndex]?.award_amount ?? 0)}
-        divider
-      />
       <ResponsiveListItem
         label="Change Order Request"
         value={applications[applicationIndex]?.change_order_request}
@@ -322,7 +336,7 @@ const ApplicationInformation = () => {
           title="Project Proposal Bids"
         />
       )}
-      {!!applications[applicationIndex]?.proposals?.length && (
+      {applications[applicationIndex]?.proposals && (
         <DisplayStrapiFiles
           strapiFiles={applications[applicationIndex]?.proposals}
           title="Project Proposal Bids"
@@ -336,7 +350,7 @@ const ApplicationInformation = () => {
           title="Additional Files"
         />
       )}
-      {!!applications[applicationIndex]?.uploaded_additional_files?.length && (
+      {applications[applicationIndex]?.uploaded_additional_files && (
         <DisplayStrapiFiles
           strapiFiles={
             applications[applicationIndex]?.uploaded_additional_files
@@ -385,7 +399,7 @@ const ApplicationInformation = () => {
               title="Engineering Report"
             />
           )}
-          {!!applications[applicationIndex]?.uploaded_engineering_report?.length && (
+          {applications[applicationIndex]?.uploaded_engineering_report && (
             <DisplayStrapiFiles
               strapiFiles={
                 applications[applicationIndex]?.uploaded_engineering_report
@@ -403,7 +417,7 @@ const ApplicationInformation = () => {
           title="Notice of Violation"
         />
       )}
-      {!!applications[applicationIndex]?.uploaded_notice_of_violation?.length && (
+      {applications[applicationIndex]?.uploaded_notice_of_violation && (
         <DisplayStrapiFiles
           strapiFiles={
             applications[applicationIndex]?.uploaded_notice_of_violation

@@ -13,8 +13,10 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 - **membership-application** (Port 4201) - Membership management
 - **conference-registration** (Port 4202) - Conference registration system
 - **grant-map** (Port 4203) - Geographic grant visualization
-- **grant-scoring** (Port 4204) - Grant evaluation and scoring
+- **grant-scoring-directory** (Port 4204) - Grant scoresheet / Ranking Packet viewer (`/application-search`)
+- **grant-scoring** (Port 4206) - Committee/ORWA/DEQ evaluation tool (`/grant-administration`)
 - **associate-directory** (Port 4205) - Member directory
+- **member-manager** (Port 4205/nearby) - Admin (react-admin)
 
 ### Tech Stack
 - **Monorepo**: NX 21.4.0
@@ -54,6 +56,7 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
    npx nx serve membership-application
    npx nx serve conference-registration
    npx nx serve grant-map
+   npx nx serve grant-scoring-directory
    npx nx serve grant-scoring
    npx nx serve associate-directory
    ```
@@ -65,8 +68,11 @@ A modern full-stack monorepo built with NX, featuring a Strapi CMS backend and m
 - **Membership**: http://localhost:4201
 - **Conference**: http://localhost:4202
 - **Grant Map**: http://localhost:4203
-- **Grant Scoring**: http://localhost:4204
+- **Grant Scoring Directory**: http://localhost:4204 (prod: `https://orwa.org/application-search/`)
 - **Associate Directory**: http://localhost:4205
+- **Grant Scoring (Eval)**: http://localhost:4206 (prod: `https://orwa.org/grant-administration/`)
+
+> **Build note:** Prefer `npx vite build` from each app directory for production bundles. `nx build` can bake localhost API endpoints from tracked `.env` files. Always `grep -c 'localhost:1337' dist/assets/*.js` before rsync.
 
 ## 📁 Project Structure
 
@@ -82,7 +88,8 @@ orwa-monorepo/
 │   ├── membership-application/
 │   ├── conference-registration/
 │   ├── grant-map/
-│   ├── grant-scoring/
+│   ├── grant-scoring-directory/  # application-search viewer
+│   ├── grant-scoring/            # grant-administration eval tool
 │   ├── associate-directory/
 │   └── grant-application-e2e/  # E2E tests
 ├── docker-compose.yml          # Development environment
@@ -107,7 +114,8 @@ npm run start:grant-app        # Start grant application
 npm run start:membership       # Start membership application
 npm run start:conference       # Start conference registration
 npm run start:grant-map        # Start grant map
-npm run start:scoring          # Start grant scoring
+npm run start:scoring-directory # Start grant scoring directory (application-search)
+npm run start:scoring          # Start grant scoring eval (grant-administration)
 npm run start:directory        # Start associate directory
 
 # Testing & Quality

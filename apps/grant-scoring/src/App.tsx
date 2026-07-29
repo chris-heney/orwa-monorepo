@@ -8,11 +8,12 @@ import { containerClass } from './helpers/utilities'
 import Footer from './grant-scoring/components/Footer'
 import { Box } from '@mui/material'
 import GrantApplicationScoring from './grant-scoring/GrantApplicationScoring'
-import LoginPage from './Login'
+import LoginPage from './grant-scoring/Login'
 import StickyHeader from './grant-scoring/components/StickyHeader'
-import AppContextProvider from './grant-scoring/helpers/AppContextProvider'
+import AppContextProvider from './grant-scoring/AppContextProvider'
 
 function App() {
+
   const theme = createTheme({
     breakpoints: {
       values: {
@@ -25,7 +26,6 @@ function App() {
     },
   })
 
-
   return (
     <HashRouter>
       <AppContextProvider>
@@ -36,7 +36,7 @@ function App() {
           <Box className={`${containerClass} App text-xl`}>
             <Routes>
               <Route path={'/'} element={<LoginPage />} />
-              <Route path={'/grant-directory'} element={<GrantApplicationScoring />} />
+              <Route path={`/grant-application-scoring`} element={<GrantApplicationScoring />} />
             </Routes>
           </Box>
           <Box sx={{ flexGrow: 1 }} />
