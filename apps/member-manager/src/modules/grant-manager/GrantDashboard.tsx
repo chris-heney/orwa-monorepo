@@ -29,6 +29,7 @@ import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
 import { Map } from "@mui/icons-material";
 import ReimbursementPayoutsList from "./payouts/PayoutsList";
 import AdministrativePayoutsList from "./payouts/AdministrativePayoutList";
+import GrantMapEmbed from "./_components/GrantMapEmbed";
 
 const GrantDashboard = () => {
   
@@ -170,7 +171,13 @@ const GrantDashboard = () => {
           {/* ASIDE MOBILE Flex-Column DESKTOP FLEX-ROW make select buttons a dropdown */}
           {/* MAIN */}
           {
-            <Box sx={{ pb: 2, overflow: "hidden", flexGrow: "1" }}>
+            <Box
+              sx={{
+                pb: selectedTab === "map" ? 0 : 2,
+                overflow: "hidden",
+                flexGrow: "1",
+              }}
+            >
               {isSettingsOpen ? (
                 <GrantManagementSettings />
               ) : (
@@ -236,14 +243,12 @@ const GrantDashboard = () => {
                         <TabPanel value="tokens" {...a11yTabPanelProps(3)}>
                           <GrantScoringPublicKeyTokens />
                         </TabPanel>
-                        <TabPanel value="map" {...a11yTabPanelProps(3)}>
-                          <iframe
-                            src="https://orwa.org/gapp-map/"
-                            title="GAPP Map"
-                            width="100%"
-                            height="600"
-                            allowFullScreen
-                          />
+                        <TabPanel
+                          value="map"
+                          {...a11yTabPanelProps(3)}
+                          sx={{ p: 0, pb: 0 }}
+                        >
+                          <GrantMapEmbed />
                         </TabPanel>
                       </Box>
                     )}

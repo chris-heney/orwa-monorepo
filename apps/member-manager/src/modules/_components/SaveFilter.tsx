@@ -111,6 +111,12 @@ const SaveFilterModal = ({
                 />
               }
               label="Make Public"
+              sx={{
+                color: "text.primary",
+                "& .MuiFormControlLabel-label": {
+                  color: "text.primary",
+                },
+              }}
             />
             <Button
               variant="contained"
