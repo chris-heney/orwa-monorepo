@@ -9,7 +9,6 @@ import {
   NumberField,
   NumberInput,
   RaRecord,
-  ReferenceArrayField,
   ReferenceArrayInput,
   SelectInput,
   SimpleForm,
@@ -39,6 +38,8 @@ import { createRecord } from "../../_helpers/createRecord";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
+import SafeReferenceArrayField from "./SafeReferenceArrayField";
+import { normalizeRecordArrays } from "../helpers/normalizeRecordArrays";
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 
@@ -322,6 +323,11 @@ const RegistrationAddons = () => {
               redirect={false}
             >
               <SimpleForm
+                record={normalizeRecordArrays(record, [
+                  "conferences",
+                  "included",
+                  "excluded",
+                ])}
                 onSubmit={(formData) =>
                   updateRecord(
                     formData,
@@ -340,7 +346,7 @@ const RegistrationAddons = () => {
           );
         }}
       >
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="conferences"
           reference="conferences"
           label="Conference"
@@ -348,7 +354,7 @@ const RegistrationAddons = () => {
           <SingleFieldList linkType={false}>
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
 
         <TextField source="name" label="Name" />
         <TextField source="description" label="Description" />

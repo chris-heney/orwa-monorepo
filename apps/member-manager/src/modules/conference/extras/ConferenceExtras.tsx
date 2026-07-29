@@ -4,7 +4,6 @@ import {
   Create,
   DatagridConfigurable,
   NumberField,
-  ReferenceArrayField,
   SimpleForm,
   SingleFieldList,
   TextField,
@@ -19,6 +18,7 @@ import { createRecord } from "../../_helpers/createRecord";
 import { customDatagridStyle } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
 import ConferenceExtraForm from "./ConferenceExtraForm";
+import SafeReferenceArrayField from "../components/SafeReferenceArrayField";
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 const ConferenceExtras = () => {
@@ -66,7 +66,7 @@ const ConferenceExtras = () => {
         rowClick="edit"
         sx={customDatagridStyle}
       >
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="conferences"
           reference="conferences"
           label="Conference"
@@ -74,7 +74,7 @@ const ConferenceExtras = () => {
           <SingleFieldList linkType={false}>
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
 
         <TextField source="name" label="Name" />
         <TextField source="description" label="Description" />
@@ -89,7 +89,7 @@ const ConferenceExtras = () => {
           options={CurrencyOptions}
         />
 
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="included"
           label="Included"
           reference="conference-tickets"
@@ -102,9 +102,9 @@ const ConferenceExtras = () => {
           >
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
 
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="excluded"
           label="Excluded"
           reference="conference-tickets"
@@ -117,7 +117,7 @@ const ConferenceExtras = () => {
           >
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
 
         <NumberField source="order" label="Order" />
       </DatagridConfigurable>

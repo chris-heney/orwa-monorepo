@@ -8,7 +8,6 @@ import {
   NumberField,
   NumberInput,
   RaRecord,
-  ReferenceArrayField,
   ReferenceArrayInput,
   SelectInput,
   SimpleForm,
@@ -39,6 +38,8 @@ import { createRecord } from "../../_helpers/createRecord";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import CustomPagination from "../../_components/CustomPagination";
+import SafeReferenceArrayField from "./SafeReferenceArrayField";
+import { normalizeRecordArrays } from "../helpers/normalizeRecordArrays";
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 
@@ -241,6 +242,11 @@ const ConferenceTickets = () => {
               redirect={false}
             >
               <SimpleForm
+                record={normalizeRecordArrays(record, [
+                  "conferences",
+                  "includes",
+                  "excludes",
+                ])}
                 onSubmit={(formData) =>
                   updateRecord(
                     formData,
@@ -259,7 +265,7 @@ const ConferenceTickets = () => {
           );
         }}
       >
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="conferences"
           reference="conferences"
           label="Conference"
@@ -267,7 +273,7 @@ const ConferenceTickets = () => {
           <SingleFieldList linkType={false}>
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
 
         <TextField source="name" label="Name" />
         <NumberField
@@ -281,7 +287,7 @@ const ConferenceTickets = () => {
           options={CurrencyOptions}
         />
 
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="includes"
           label="Includes"
           reference="conference-extras"
@@ -291,9 +297,9 @@ const ConferenceTickets = () => {
           }} linkType={false}>
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
 
-        <ReferenceArrayField
+        <SafeReferenceArrayField
           source="excludes"
           label="Excludes"
           reference="conference-extras"
@@ -303,7 +309,7 @@ const ConferenceTickets = () => {
           }} linkType={false}>
             <ChipField source="name" />
           </SingleFieldList>
-        </ReferenceArrayField>
+        </SafeReferenceArrayField>
       </DatagridConfigurable>
       <CustomPagination />
     </>

@@ -27,15 +27,20 @@ const SponsorFormFields = () => {
         record
           ? {
               ...record,
-              sponsorship_items: record.sponsorship_items.map((item: any) => ({
-                sponsorship:
-                  item.sponsorship?.id ??
-                  item.sponsorship?.data?.id ??
-                  item.sponsorship,
-                label: item.label,
-                value: item.value,
-                key: item.key,
-              })),
+              // Strapi 5 returns `null` for a repeatable component with no
+              // items instead of `[]` (see AGENTS.md Strapi 5 notes) — guard
+              // so `.map` doesn't crash the form for sponsors with no items.
+              sponsorship_items: (record.sponsorship_items ?? []).map(
+                (item: any) => ({
+                  sponsorship:
+                    item.sponsorship?.id ??
+                    item.sponsorship?.data?.id ??
+                    item.sponsorship,
+                  label: item.label,
+                  value: item.value,
+                  key: item.key,
+                })
+              ),
             }
           : {}
       }

@@ -19,7 +19,7 @@ const EditSponsor = () => {
 
     return {
       ...data,
-      sponsorship_items: data.sponsorship_items.map(
+      sponsorship_items: (data.sponsorship_items ?? []).map(
         (item: any, index: number) => {
           const sponsorship = sponsorships.find(
             (s: any) => s.id === item.sponsorship

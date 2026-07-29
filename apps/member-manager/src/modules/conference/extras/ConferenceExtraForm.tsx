@@ -7,7 +7,7 @@ import {
   Typography,
   Button,
 } from "@mui/material";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   NumberInput,
   TextInput,
@@ -21,17 +21,21 @@ import { required } from "ra-core";
 import HelpIcon from "@mui/icons-material/Help";
 import FileUploadField from "../../_components/FileUploadField";
 import { RichTextInput } from "ra-input-rich-text";
-import { useFormContext } from "react-hook-form";
+import { useWatch } from "react-hook-form";
 
 const ConferenceExtraForm = () => {
 
   const [showExtrasHelp, setShowExtrasHelp] = useState(false);
 
-  const { getValues } = useFormContext();
+  const conferences = useWatch({ name: "conferences" });
 
-  const conferences = getValues("conferences");
-
-  console.log(conferences);
+  // Stabilize the filter object identity so nested ReferenceArrayInputs
+  // don't refetch/re-render on every keystroke elsewhere in the form.
+  const ticketsFilter = useMemo(
+    () => ({ conferences }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(conferences)]
+  );
 
   return (
     <Grid container spacing={2}>
@@ -141,7 +145,7 @@ const ConferenceExtraForm = () => {
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
               <ReferenceArrayInput
-                filter={{ conferences: conferences }}
+                filter={ticketsFilter}
                 reference="conference-tickets"
                 source="included"
                 label="Included"
@@ -155,7 +159,7 @@ const ConferenceExtraForm = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <ReferenceArrayInput
-                filter={{ conferences: conferences }}
+                filter={ticketsFilter}
                 reference="conference-tickets"
                 source="excluded"
                 label="Excluded"
