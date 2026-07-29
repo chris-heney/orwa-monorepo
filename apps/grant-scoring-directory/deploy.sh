@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Deploy grant-scoring (GApp Eval) to WP Engine grant-administration path.
+# Deploy grant-scoring-directory (scoresheet / Ranking Packet viewer)
+# to WP Engine application-search path.
 # Build with vite from this app dir (NOT nx build) to avoid baking localhost.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-APP_DIR="$ROOT/apps/grant-scoring"
-DIST="$ROOT/dist/apps/grant-scoring"
-REMOTE="orwa@orwa.ssh.wpengine.net:sites/orwa/grant-administration/"
+APP_DIR="$ROOT/apps/grant-scoring-directory"
+DIST="$ROOT/dist/apps/grant-scoring-directory"
+REMOTE="orwa@orwa.ssh.wpengine.net:sites/orwa/application-search/"
 SSH=(ssh -o IdentitiesOnly=yes -i "${HOME}/.ssh/id_ed25519")
 
 cd "$APP_DIR"
@@ -36,6 +37,6 @@ rsync -avz \
 
 echo "Deployed to $REMOTE"
 echo "--- live ---"
-curl -sS "https://orwa.org/grant-administration/?v=$(date +%s)" \
+curl -sS "https://orwa.org/application-search/?v=$(date +%s)" \
   | grep -oE 'index-[A-Za-z0-9_-]+\.js' \
   | head -3

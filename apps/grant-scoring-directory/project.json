@@ -75,6 +75,13 @@
       "options": {
         "command": "docker push ghcr.io/chris-heney/orwa-monorepo/grant-scoring-directory:latest"
       }
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bash ./deploy.sh",
+        "cwd": "apps/grant-scoring-directory"
+      }
     }
   }
 }
