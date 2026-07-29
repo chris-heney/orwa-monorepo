@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --max-height-well: 540px;
+}
+
 body {
     background-color: #FFFFFF;
 }

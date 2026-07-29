@@ -1,65 +1,70 @@
-import { Box, Button, Divider, Grid, Typography } from '@mui/material'
-import ScoringComponent from './ScoringComponent'
-import ApplicationInformation from './ApplicationInformation'
-import { useContext } from 'react'
-import { DirectoryContext, useScoringCriterias } from './helpers/AppContextProvider'
-import DownloadIcon from '@mui/icons-material/Download'
-import { YearMonthDayMinute } from './types'
-import { generatePDF } from '../helpers/generateScoringPacket'
+import { Box, Button, Divider, Grid, Typography } from '@mui/material';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
+import ScoringComponent from '../grant-scoring/ScoringComponent';
+import ApplicationInformation from '../grant-scoring/ApplicationInformation';
+import { useGetApplications } from '../helpers/API';
+import { useContext, useEffect } from 'react';
+import { ApplicationScoringContext } from '../grant-scoring/AppContextProvider';
+import { Margin, Resolution, usePDF } from 'react-to-pdf';
+import DownloadIcon from '@mui/icons-material/Download';
 
 const GrantApplicationScoring = () => {
+  const getApplications = useGetApplications();
 
-  const { applications, applicationIndex, score } = useContext(DirectoryContext)
-  const {scoringCriterias} = useScoringCriterias();
+  const {
+    token,
+    applications,
+    applicationIndex,
+    setApplicationIndex,
+    setApplications,
+    status
+  } = useContext(ApplicationScoringContext);
 
+  if (applications.length === 0) return <Box>No Applications in Queue</Box>;
+  if (!ApplicationScoringContext) return <Box>Missing Context</Box>;
 
-  if (applications.length === 0) return <Box>Missing Applications</Box>
+  const { toPDF, targetRef } = usePDF({
+    filename: `${applications[applicationIndex].legal_entity_name}-Grant-Application.pdf`,
+    page: {
+      margin: Margin.MEDIUM,
+      format: "letter",
+    },
+    resolution: Resolution.HIGH,
+    method: "save",
+    overrides: {
+      pdf: {
+        compress: true,
+      }
+    }
+  });
 
+  useEffect(() => {
+    getApplications(status).then(apps => {
+      if (!apps) return;
+      setApplications(apps);
+    });
+  }, []);
 
-  const getApprovedCriterias = (selectedProjects: string[]) => {
-    return scoringCriterias
-      .filter((criteria) => {
-        return (
-          criteria.project_type && selectedProjects.includes(
-            criteria.project_type.id.toString()
-          )
-        );
-      })
-      .map((criteria) => {
-        return [criteria.order, criteria.label, criteria.score];
-      });
-  }
+  const handleDownload = () => {
+    const applicantPdf = applications[applicationIndex]?.applicant_pdf;
+    if (applicantPdf) {
+      const fullUrl = `${import.meta.env.VITE_API_ENDPOINT.replace('/api', '')}${applicantPdf.url}`;
+      window.open(fullUrl, '_blank');
+    } else {
+      toPDF();
+    }
+  };
 
-  const handleGeneratePDF = async (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    event.preventDefault();
-    console.log("Generating PDF...");
-    try {
-      const pdfBytes = await generatePDF(
-        applications[applicationIndex], 
-        getApprovedCriterias((applications[applicationIndex].approved_projects ?? []).map((project) => project.id.toString()))
-      )
-    
-      const generatedFile = new File([pdfBytes], `${applications[applicationIndex].legal_entity_name}.pdf`, {
-        type: "application/pdf",
-      });
+  const nextApplication = () => {
+    if (applications[applicationIndex + 1]) {
+      setApplicationIndex(applicationIndex + 1);
+    }
+  };
 
-      const url = URL.createObjectURL(generatedFile);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${applications[applicationIndex].legal_entity_name}-Ranking-Packet-${new Date().toLocaleDateString("en-US", {
-        day: "numeric",
-        month: "numeric",
-        year: "numeric",
-      })}.pdf`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      // Download the PDF
-    } catch (error) {
-      console.error("Error generating PDF:", error);
+  const previousApplication = () => {
+    if (applications?.[applicationIndex - 1]) {
+      setApplicationIndex(applicationIndex - 1);
     }
   };
 
@@ -69,30 +74,39 @@ const GrantApplicationScoring = () => {
     </Box>
   ) : (
     <Box>
-      <Box className="flex justify-center">
-       
-          <Button
-            variant="contained" onClick={(e) => handleGeneratePDF(e)}>Download Ranking Packet<DownloadIcon sx={{ ml: 1 }} fontSize='small' />
-          </Button>
+      <Box className="flex items-center justify-between mt-4">
+        <Button
+          size="large"
+          onClick={previousApplication}
+          className="white"
+          variant="contained"
+          disabled={applicationIndex === 0}
+        >
+          <KeyboardArrowLeftIcon />
+        </Button>
 
-        {/* <ManualUploadTest/> */}
+        {token.name === 'Committee' &&
+          <Button
+            variant="contained" onClick={handleDownload}>Download PDF <DownloadIcon sx={{ ml: 1 }} fontSize='small' />
+          </Button>
+        }
+
+        <Button
+          size="large"
+          onClick={nextApplication}
+          className="white"
+          variant="contained"
+          disabled={applicationIndex === applications.length - 1}
+        >
+          <KeyboardArrowRightIcon />
+        </Button>
       </Box>
       <Divider sx={{ mb: 3, mt: 1 }} />
 
-      <Box>
-        <Box display={'flex'} flexDirection={'column'}>
-        <Typography variant='h5' textAlign={'center'} mb={1}>
-          #{applications[applicationIndex]?.application_id} - {applications[applicationIndex]?.legal_entity_name} - {applications[applicationIndex]?.application_date?.toLocaleString('en-US', YearMonthDayMinute)}
+      <Box ref={targetRef}>
+        <Typography variant='h5' textAlign={'center'} mb={3}>
+        #{applications[applicationIndex]?.application_id} - {applications[applicationIndex]?.legal_entity_name} - {new Date(applications[applicationIndex]?.application_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric'})}
         </Typography>
-        {/* committee date */}
-        {applications[applicationIndex]?.committee_date && <Typography variant='h6' textAlign={'center'} mb={1}>
-        Committee Date: {applications[applicationIndex]?.committee_date.toLocaleString('en-US', YearMonthDayMinute)}
-        </Typography>}
-        {/* Score */}
-        {score.score && <Typography variant='h6' textAlign={'center'} mb={3}>
-          Score: {score.score}
-        </Typography>}
-        </Box>
         <Divider sx={{
           mb: 4,
         }} />
@@ -112,7 +126,7 @@ const GrantApplicationScoring = () => {
         )}
       </Box>
     </Box>
-  )
+  );
 }
 
-export default GrantApplicationScoring
+export default GrantApplicationScoring;

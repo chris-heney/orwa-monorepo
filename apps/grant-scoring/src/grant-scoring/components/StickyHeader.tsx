@@ -1,30 +1,31 @@
 import { Typography } from '@mui/material'
 import { containerClass } from '../../helpers/utilities'
+import { ApplicationScoringContext } from '../AppContextProvider'
 import { useContext } from 'react'
-import { DirectoryContext } from '../helpers/AppContextProvider'
 
 const StickyHeader = () => {
-    const {score, applications} = useContext(DirectoryContext)
 
-    return (applications?.length === 0) ? <></>  : (
-        <header className="bg-black" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-            <div className={`${containerClass} flex justify-center items-baseline`}>
-                <div
-                className='flex items-center justify-center gap-4 border px-2 bg-white rounded-lg'
-                >
-                <Typography 
-                    variant="h1"
-                    className={`${score.approved ? 'text-green-500' : 'text-red-700'} relative uppercase `}
-                    sx={{ fontWeight: 900, fontSize: ['1rem', '1.635rem', '1.8rem'] }}
-                >  
-                {score.approved ? 'Approved' : 'Not Approved'} 
-                </Typography>
+    const {
+        applications,
+        status,
+        applicationIndex,
+        score
+      } = useContext(ApplicationScoringContext)
+
+      
+    return (!status || applications?.length === 0) ? <></>  : (
+        <header className="bg-black p-0.5 items-center" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
+            <div className={`${containerClass} flex justify-between items-baseline`}>
                 <Typography
                     variant="h1"
-                    className="relative uppercase"
-                    sx={{ fontWeight: 900, fontSize: ['1rem', '1.635rem', '1.8rem'] }}
-                > - Score: {score.score > 0 ? score.score : ' Awaiting'} </Typography>
-                </div>
+                    className="text-white relative -top-0.5"         
+                    sx={{ fontWeight: 500, fontStyle: 'italic', fontSize: ['1rem', '1.635rem', '2rem'] }}   
+                > {applications?.length > 0 ? applicationIndex + 1 : 0} of {applications?.length} </Typography>
+                <Typography
+                    variant="h1"
+                    className="text-white relative uppercase -top-0.5"
+                    sx={{ fontWeight: 900, fontSize: ['1rem', '1.635rem', '2rem'] }}
+                > Score: {`${score > 0 ? score : 0}`} </Typography>
             </div>
         </header>
     )

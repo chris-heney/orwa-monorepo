@@ -6,9 +6,10 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
+  base: './',
   cacheDir: '../../node_modules/.vite/apps/grant-scoring',
   server: {
-    port: 4204,
+    port: 4206,
     host: 'localhost',
     strictPort: true,
     fs: {
@@ -17,20 +18,25 @@ export default defineConfig(() => ({
     },
   },
   preview: {
-    port: 4204,
+    port: 4206,
     host: 'localhost',
   },
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [ nxViteTsPaths() ],
-  // },
   build: {
     outDir: '../../dist/apps/grant-scoring',
     emptyOutDir: true,
     reportCompressedSize: true,
+    chunkSizeWarningLimit: 100,
     commonjsOptions: {
       transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.code === 'MODULE_LEVEL_DIRECTIVE') {
+          return;
+        }
+        warn(warning);
+      },
     },
   },
 }));

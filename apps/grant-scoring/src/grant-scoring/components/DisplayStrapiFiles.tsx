@@ -2,14 +2,14 @@ import { Box, Typography, Divider, Link } from '@mui/material';
 import { StrapiFile, StrapiFiles } from '../types';
 
 interface DisplayStrapiFilesProps {
-  strapiFiles: StrapiFile | StrapiFiles;
+  strapiFiles: StrapiFile | StrapiFiles[] | null;
   title: string;
 }
 
 const DisplayStrapiFiles = ({ strapiFiles, title }: DisplayStrapiFilesProps) => {
-  if (!strapiFiles) return null;
+  if (!strapiFiles || strapiFiles === null) return null;
 
-  // Strapi v5: media is flat — either a single file object or an array of files
+  // Strapi 5: media is a flat object (single) or a flat array (multiple)
   const filesArray = Array.isArray(strapiFiles) ? strapiFiles : [strapiFiles];
 
   const linkElements = filesArray.map((file: any, index: number) => {

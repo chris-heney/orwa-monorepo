@@ -1,7 +1,7 @@
 import { Box, ListItem, SxProps, Typography } from '@mui/material'
 import { ReactNode } from 'react'
 
-export const labelStyle = {
+const labelStyle = {
   fontWeight: 'bold',
   marginRight: '5px',
   whiteSpace: 'nowrap',

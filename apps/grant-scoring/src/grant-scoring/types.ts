@@ -1,26 +1,25 @@
-import { Dispatch, SetStateAction } from "react"
-
+import { Dispatch, SetStateAction } from "react";
 
 interface IStatus {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
-// Strapi v5 media: flat objects, null when empty
-export interface StrapiMediaFile {
+export interface StrapiFiles {
   id: number
-  documentId?: string
+  name: string;
+  url: string;
+}
+
+export interface StrapiFile {
+  [x: string]: any;
+  id: number
   name: string
   url: string
 }
 
-export type StrapiFiles = StrapiMediaFile[] | null
-
-export type StrapiFile = StrapiMediaFile | null
-
 export interface IGrantApplication {
   id: number;
-  documentId?: string;
   legal_entity_name: string;
   facility_id: string;
   population_served: number
@@ -36,11 +35,11 @@ export interface IGrantApplication {
   mailing_address_city: string;
   mailing_address_state: string;
   mailing_address_zip: string;
-  point_of_contact: IContact | null;
-  chairman: IContact | null;
+  point_of_contact: IContact;
+  chairman: IContact;
   chairman_also_mayer_of_municipal_city: boolean;
   has_engineer: boolean;
-  engineer: IContact | null;
+  engineer: IContact;
   drinking_or_wastewater: "Drinking Water" | "Wastewater";
   drinking_water_projects_selected?: string;
   wastewater_projects_selected?: string;
@@ -70,14 +69,14 @@ export interface IGrantApplication {
   change_order_request: "Yes" | "No" 
   original_application_number: string;
   grant: Identifier | IGrant;
-  committee_date: Date;
+  committee_date?: Date;
   application_date: Date | string;
-  status: Identifier | IStatus | null;
-  selected_projects: IProject[];
-  proposals: StrapiFiles
-  uploaded_engineering_report: StrapiFiles;
-  uploaded_notice_of_violation:  StrapiFiles;
-  uploaded_additional_files: StrapiFiles;
+  status: Identifier | IStatus;
+  selected_projects: IProjects[];
+  proposals: StrapiFiles[] | null
+  uploaded_engineering_report: StrapiFiles[] | null;
+  uploaded_notice_of_violation:  StrapiFiles[] | null;
+  uploaded_additional_files: StrapiFiles[] | null;
   satisfy_deq_issued_order: boolean;
   consent_order: StrapiFile;
   consent_order_number: string;
@@ -87,108 +86,119 @@ export interface IGrantApplication {
   lrsp_plan: boolean;
   more_info_lrsp: boolean;
   project_proposal_birds: string;
-  approved_projects: IProject[];
+  grant_application_score: {
+    id: number;
+    other_describe_2?: string;
+    other_describe: string;
+    score: number;
+    approved: boolean;
+  } | null;
+  approved_projects: IProjects[];
   application_id: number;
   createdAt: Date;
   // Files
   award_letter?: StrapiFile;
   applicant_pdf?: StrapiFile;
-  grant_application_score: IGrantApplicationScore | null;
 }
+export type Identifier = number;
 
-export interface IGrantApplicationScore {
-  id: number
-  documentId?: string
-  score: number
-  approved: boolean
-  other_describe: string
-  other_describe_2: string
-  orwa_signature: string
-  orwa_member_name: string
-  deq_signature: string
-  deq_member_name: string
-  createdAt: Date
-}
-
-export type Identifier = number
-
-export interface IProject {
-    id: number
-    name: string
-    description: string
-    classification: 'Drinking Water' | 'Wastewater'
-    context: 'Project Type' | 'Project Status and Impact'
+export interface IProjects {
+  id: number;
+  name: string;
+  description: string;
+  classification: "Drinking Water" | "Wastewater";
 }
 
 export interface IApplicationScore {
-  approved: boolean
-  score: number
+  approved: boolean;
+  score: number;
 }
 
 export interface IGrant {
-  name: string
-  status: string
-  reimbursement_type: string
-  opens: Date
-  closes: Date
-  type: IGrantType
-  grant_amount: number
-  funds_approved: number
-  funds_provided: number
+  name: string;
+  status: string;
+  reimbursement_type: string;
+  opens: Date;
+  closes: Date;
+  type: IGrantType;
+  grant_amount: number;
+  funds_approved: number;
+  funds_provided: number;
 }
 
 export interface IGrantType {
-  id: number
-  name: string
-  description: string
+  id: number;
+  name: string;
+  description: string;
 }
 
 export default interface IContact {
-  id: Identifier
-  documentId?: string
-  avatar: IAvatar[]
-  first: string
-  last: string
-  email: string
-  phone: string
-  title: string
-  contact_type: string
-}
-
-export interface IScoringCriteria {
   id: number;
-  order: string;
-  label: string;
-  score: number;
-  project_type: IProject | null
+  avatar: IAvatar[];
+  first: string;
+  last: string;
+  email: string;
+  phone: string;
+  title: string;
+  contact_type: string;
 }
 
 interface IAvatar {
-  url: string
+  url: string;
 }
 
 export interface IScoring {
-  order: string // 1.1 ect this allowing me to sort by 1.20 by removing period and number before it and then sorting by the number
-  label: string
-  score: number
-  grant: IGrant
+  order: string; // 1.1 ect this allowing me to sort by 1.20 by removing period and number before it and then sorting by the number
+  label: string;
+  score: number;
+  grant: IGrant;
 }
 
-export interface DirectoryContextProvider {
-  user: IContact
-  setUser: Dispatch<SetStateAction<IContact>>
-  // grant: IGrant for the future when we have multiple grants
-  // setGrant: Dispatch<SetStateAction<IGrant>>
-  applications: IGrantApplication[]
-  setApplications: Dispatch<SetStateAction<IGrantApplication[]>>
-  setApplicationIndex: Dispatch<SetStateAction<number>>
-  applicationIndex: number
-  score: IApplicationScore
-  setScore: Dispatch<SetStateAction<IApplicationScore>>
-  // token: string
+export interface IToken {
+  name: string;
+  public_key: string;
+  private_key: string;
+  /** Strapi v5 flat relation (or legacy numeric id) */
+  application_status: { id: number; name?: string } | Identifier;
+  order: number;
+  next_status: { id: number; name?: string };
+  default_member_name: string;
+  default_member_email: string;
 }
 
-export const YearMonthDayMinute: Intl.DateTimeFormatOptions = {
-  year: 'numeric',
-  month: 'long',
+export interface StepData {
+  id: number; // Token ID
+  statusId: number; // Status ID
+  color: string;
+  description: string;
+  label: string;
+  name: string;
+  order: number;
+}
+
+export interface ApplicationScoringContextProvider {
+  user: IContact;
+  setUser: Dispatch<SetStateAction<IContact>>;
+  applications: IGrantApplication[];
+  setApplications: Dispatch<SetStateAction<IGrantApplication[]>>;
+  applicationIndex: number;
+  setApplicationIndex: Dispatch<SetStateAction<number>>;
+  score: number;
+  setScore: Dispatch<SetStateAction<number>>;
+  token: IToken;
+  setToken: Dispatch<SetStateAction<IToken>>;
+  steps: StepData[];
+  setSteps: Dispatch<SetStateAction<StepData[]>>;
+  status: Identifier;
+  setStatus: Dispatch<SetStateAction<Identifier>>;
+  notApprovedId: Identifier;
+  identity: any;
+  setIdentity: Dispatch<SetStateAction<any>>;
+}
+
+export interface EmailPayload {
+  to: string;
+  from: string;
+  html: string;
+  subject: string;
 }

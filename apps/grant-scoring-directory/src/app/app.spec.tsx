@@ -20,7 +20,7 @@ describe('App', () => {
       </BrowserRouter>
     );
     expect(
-      getAllByText(new RegExp('Welcome grant-scoring', 'gi')).length > 0
+      getAllByText(new RegExp('Welcome grant-scoring-directory', 'gi')).length > 0
     ).toBeTruthy();
   });
 });

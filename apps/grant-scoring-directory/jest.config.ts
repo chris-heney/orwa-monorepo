@@ -1,10 +1,10 @@
 export default {
-  displayName: 'grant-scoring',
+  displayName: 'grant-scoring-directory',
   preset: '../../jest.preset.js',
   transform: {
     '^(?!.*\\.(js|jsx|ts|tsx|css|json)$)': '@nx/react/plugins/jest',
     '^.+\\.[tj]sx?$': ['babel-jest', { presets: ['@nx/react/babel'] }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
-  coverageDirectory: '../../coverage/apps/grant-scoring',
+  coverageDirectory: '../../coverage/apps/grant-scoring-directory',
 };
