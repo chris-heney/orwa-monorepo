@@ -345,7 +345,11 @@ export const useConferenceMetrics = (
       priorRegistrations: priorRegs,
       registrationCount: regs.length,
       vendorRegistrations: regs.filter((r) => r.type === "Vendor").length,
-      attendeeRegistrations: regs.filter((r) => r.type !== "Vendor").length,
+      // Sponsor Only registrations have no attendees/vendors/contestants —
+      // exclude them so they don't inflate the attendee headcount bucket.
+      attendeeRegistrations: regs.filter(
+        (r) => r.type !== "Vendor" && r.type !== "Sponsor"
+      ).length,
 
       headcount,
       voterOnly,

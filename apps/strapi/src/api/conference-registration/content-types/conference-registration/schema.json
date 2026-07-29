@@ -60,7 +60,8 @@
       "enum": [
         "Attendee",
         "Vendor",
-        "Contestant"
+        "Contestant",
+        "Sponsor"
       ]
     },
     "sponsorships": {

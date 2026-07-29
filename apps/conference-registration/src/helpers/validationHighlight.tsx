@@ -23,6 +23,7 @@ export type ValidationField =
   | "previous_registration_id"
   | "organization"
   | "sponsor_details"
+  | "sponsorships"
   | "billing"
   | "contact"
   | "promotional_emails";

@@ -41,7 +41,7 @@ const RegistrationFilter: React.FC<RegistrationFilterProps> = ({
       />
       
       <FilterList label="Registration Type" icon={<GroupIcon />}>
-        {["Attendee", "Vendor", "Contestant"].map((type) => (
+        {["Attendee", "Vendor", "Contestant", "Sponsor"].map((type) => (
           <FilterListItem
             key={`type-${type}`}
             label={type}

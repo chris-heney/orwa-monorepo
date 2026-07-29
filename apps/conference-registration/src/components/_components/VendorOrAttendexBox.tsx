@@ -1,10 +1,11 @@
 import BoothSvg from "./BoothSvg";
 import AttendeeSVG from "./AttendeeSVG";
 import FishSVG from "./FishSVG";
+import SponsorSVG from "./SponsorSVG";
 
 interface ApprovalProps {
-  registrationType: "Vendor" | "Attendee" | "Contestant";
-  checked: "Vendor" | "Attendee" | "Contestant" | null;
+  registrationType: "Vendor" | "Attendee" | "Contestant" | "Sponsor";
+  checked: "Vendor" | "Attendee" | "Contestant" | "Sponsor" | null;
   setRegistrationType: () => void;
   /** Optional display label (e.g. "Contestant Only"); defaults to the type. */
   label?: string;
@@ -17,6 +18,8 @@ const DESCRIPTIONS: Record<ApprovalProps["registrationType"], string> = {
   Vendor:
     "Reserve booth space, register vendor reps, and optionally participate as contestants and/or sponsor the conference.",
   Contestant: "For golf or Bass Tournament Participants",
+  Sponsor:
+    "Sponsor the conference without registering attendees, vendors, or contestants.",
 };
 
 const VendorOrAttendeeBox = ({
@@ -50,6 +53,8 @@ const VendorOrAttendeeBox = ({
             <BoothSvg active={isSelected} />
           ) : registrationType === "Contestant" ? (
             <FishSVG active={isSelected} />
+          ) : registrationType === "Sponsor" ? (
+            <SponsorSVG active={isSelected} />
           ) : (
             <AttendeeSVG active={isSelected} />
           )}
