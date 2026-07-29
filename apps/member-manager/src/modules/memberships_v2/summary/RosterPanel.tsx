@@ -193,19 +193,28 @@ const RosterPanel: React.FC<Props> = ({
         >
           <Box
             sx={{
-              flex: "1 1 58%",
+              flex: "1 1 auto",
               minWidth: 0,
+              width: "100%",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              "& .highcharts-container": { width: "100% !important" },
             }}
           >
-            <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+            <HighchartsReact
+              highcharts={Highcharts}
+              options={chartOptions}
+              containerProps={{ style: { width: "100%", height: "100%" } }}
+            />
           </Box>
           <Box
             sx={{
-              flex: "0 0 38%",
-              minWidth: 112,
+              // Compact legend — size to content, leave the rest for the sunburst.
+              flex: "0 0 auto",
+              width: "max-content",
+              minWidth: 108,
+              maxWidth: 148,
               display: "flex",
               flexDirection: "column",
               justifyContent: "center",
