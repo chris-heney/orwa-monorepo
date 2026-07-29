@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
@@ -19,6 +19,38 @@ type Props = {
   hideTitle?: boolean;
 };
 
+/** Track the chart host box so Highcharts can rebuild at the real panel size. */
+const useHostSize = (enabled: boolean) => {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const el = ref.current;
+    if (!el) return;
+
+    const publish = (width: number, height: number) => {
+      const w = Math.max(0, Math.floor(width));
+      const h = Math.max(0, Math.floor(height));
+      if (w < 40 || h < 40) return;
+      setSize((prev) =>
+        prev && prev.w === w && prev.h === h ? prev : { w, h }
+      );
+    };
+
+    publish(el.clientWidth, el.clientHeight);
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      publish(entry.contentRect.width, entry.contentRect.height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [enabled]);
+
+  return { ref, size };
+};
+
 const RosterPanel: React.FC<Props> = ({
   metrics: metricsProp,
   compact = false,
@@ -27,6 +59,7 @@ const RosterPanel: React.FC<Props> = ({
   const T = useSummaryTokens();
   const hooked = useMembershipMetrics();
   const metrics = metricsProp ?? hooked;
+  const { ref: chartHostRef, size: hostSize } = useHostSize(compact);
 
   // Untyped options object — Highcharts sunburst module typings lag the runtime API
   // (same pattern as grant WidgetFundAllocation).
@@ -38,11 +71,23 @@ const RosterPanel: React.FC<Props> = ({
       inactiveAssociates,
     } = metrics;
 
+    // Compact: size the chart to the host panel so the sunburst diameter is
+    // min(panelW, panelH) — full-bleed in the shorter axis, no viewBox hacks.
+    const compactChart =
+      compact && hostSize
+        ? {
+            width: hostSize.w,
+            height: hostSize.h,
+            spacing: [0, 0, 0, 0] as [number, number, number, number],
+          }
+        : compact
+          ? { height: 320, spacing: [0, 0, 0, 0] as [number, number, number, number] }
+          : { height: 320 };
+
     return {
       chart: {
         backgroundColor: "transparent",
-        // Compact dashboard: fill the taller center column without overflowing.
-        height: compact ? 520 : 320,
+        ...compactChart,
         style: { fontFamily: display.fontFamily },
       },
       title: { text: undefined },
@@ -54,7 +99,11 @@ const RosterPanel: React.FC<Props> = ({
         pointFormat: "<b>{point.name}</b>: {point.value}",
       },
       plotOptions: {
-        sunburst: { allowDrillToNode: true, levelIsConstant: false },
+        sunburst: {
+          allowDrillToNode: true,
+          levelIsConstant: false,
+          size: "100%",
+        },
       },
       series: [
         {
@@ -62,6 +111,7 @@ const RosterPanel: React.FC<Props> = ({
           name: "Membership",
           allowDrillToNode: true,
           cursor: "pointer",
+          size: "100%",
           dataLabels: {
             format: "{point.name}",
             filter: { property: "innerArcLength", operator: ">", value: 16 },
@@ -147,7 +197,7 @@ const RosterPanel: React.FC<Props> = ({
         },
       ],
     };
-  }, [metrics, T, compact]);
+  }, [metrics, T, compact, hostSize]);
 
   if (metrics.isLoading) {
     return (
@@ -192,21 +242,26 @@ const RosterPanel: React.FC<Props> = ({
           }}
         >
           <Box
+            ref={chartHostRef}
             sx={{
               flex: "1 1 auto",
               minWidth: 0,
+              minHeight: 0,
               width: "100%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              "& .highcharts-container": { width: "100% !important" },
+              height: "100%",
+              position: "relative",
+              overflow: "hidden",
             }}
           >
-            <HighchartsReact
-              highcharts={Highcharts}
-              options={chartOptions}
-              containerProps={{ style: { width: "100%", height: "100%" } }}
-            />
+            {hostSize ? (
+              <HighchartsReact
+                highcharts={Highcharts}
+                options={chartOptions}
+                // Remount when the panel size changes so Highcharts rebuilds
+                // the viewBox at the real diameter (no SVG stretch hacks).
+                key={`${hostSize.w}x${hostSize.h}`}
+              />
+            ) : null}
           </Box>
           <Box
             sx={{

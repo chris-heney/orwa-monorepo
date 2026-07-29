@@ -18,7 +18,7 @@ const MembershipsCard = () => {
       count={metrics.isLoading ? undefined : metrics.total}
       loading={metrics.isLoading}
       disableBodyScroll
-      bodySx={{ p: 1.25 }}
+      bodySx={{ p: 0.75 }}
     >
       <RosterPanel compact hideTitle metrics={metrics} />
     </DashboardCard>
