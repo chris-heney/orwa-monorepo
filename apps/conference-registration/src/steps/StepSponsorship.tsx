@@ -186,7 +186,7 @@ const StepSponsorship = () => {
   };
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-6 text-left">
+    <div className="container mx-auto max-w-3xl px-0 py-6 text-left">
       <header className="mb-6 border-b border-slate-200 pb-5">
         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
           Conference Sponsorships

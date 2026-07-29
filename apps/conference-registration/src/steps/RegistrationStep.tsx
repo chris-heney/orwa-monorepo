@@ -140,7 +140,7 @@ const RegistrationStep = () => {
   if (!ConferenceOptions || !ExtraOptions || !TicketOptions) return <Loading />;
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-6 text-left">
+    <div className="container mx-auto max-w-3xl px-0 py-6 text-left sm:px-0">
       <header className="mb-6 border-b border-slate-200 pb-5 text-center">
         <div className="mb-4 flex justify-center">
           <img
@@ -236,7 +236,7 @@ const RegistrationStep = () => {
                 <VendorOrAttendeeBox
                   {...register("registration_type")}
                   registrationType="Contestant"
-                  label="Tournament Contestant Onlys"
+                  label="Tournament Contestant Only"
                   checked={registrationType}
                   setRegistrationType={() => {
                     if (registrationType !== "Contestant") {
