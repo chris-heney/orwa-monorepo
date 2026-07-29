@@ -17,7 +17,7 @@ const DESCRIPTIONS: Record<ApprovalProps["registrationType"], string> = {
     "Register people attending sessions and events, and optionally participate as contestants and/or sponsor the conference.",
   Vendor:
     "Reserve booth space, register vendor reps, and optionally participate as contestants and/or sponsor the conference.",
-  Contestant: "For golf or Bass Tournament Participants",
+  Contestant: "For Golf or Bass Tournament Participants",
   Sponsor:
     "Sponsor the conference without registering attendees, vendors, or contestants.",
 };
