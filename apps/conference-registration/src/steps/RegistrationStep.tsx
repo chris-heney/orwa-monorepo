@@ -54,6 +54,8 @@ const RegistrationStep = () => {
     hasContestantTickets || (hasContestantAddons && showContestantsStep);
   // Contestant-only registration is offered when contestant tickets exist.
   const offerContestantOnly = hasContestantTickets;
+  // Sponsor Only registration only makes sense when there's something to sponsor.
+  const offerSponsorOnly = hasAvailableSponsorships;
 
   useEffect(() => {
     const stepsToHide: string[] = [];
@@ -78,6 +80,15 @@ const RegistrationStep = () => {
           "booth_registration",
           "vendor_registration",
           "sponsorship"
+        );
+        break;
+      case "Sponsor":
+        // Sponsor Only: Type → Sponsorships → Billing.
+        stepsToHide.push(
+          "attendee_registration",
+          "booth_registration",
+          "vendor_registration",
+          "contestant_registration"
         );
         break;
       case "Vendor":
@@ -191,7 +202,8 @@ const RegistrationStep = () => {
             clearWhen={
               registrationType === "Attendee" ||
               registrationType === "Vendor" ||
-              registrationType === "Contestant"
+              registrationType === "Contestant" ||
+              registrationType === "Sponsor"
             }
           >
             <div className="flex flex-col gap-3">
@@ -236,16 +248,39 @@ const RegistrationStep = () => {
                   }}
                 />
               )}
+              {offerSponsorOnly && (
+                <VendorOrAttendeeBox
+                  {...register("registration_type")}
+                  registrationType="Sponsor"
+                  label="Sponsor Only"
+                  checked={registrationType}
+                  setRegistrationType={() => {
+                    if (registrationType !== "Sponsor") {
+                      setValue("registration_type", "Sponsor");
+                      setValue("booths", []);
+                      setValue("tickets", []);
+                      unregister("organization");
+                    }
+                  }}
+                />
+              )}
             </div>
           </ValidationHighlight>
 
           {!registrationType && (
             <p className="mt-3 text-xs font-medium text-amber-700">
-              {offerContestantOnly
-                ? "Select Attendee, Vendor, or Contestant Only to continue."
-                : "Select Attendee or Vendor to continue."}
+              {(() => {
+                const options = ["Attendee", "Vendor"];
+                if (offerContestantOnly) options.push("Contestant Only");
+                if (offerSponsorOnly) options.push("Sponsor Only");
+                if (options.length <= 2) {
+                  return `Select ${options.join(" or ")} to continue.`;
+                }
+                const last = options[options.length - 1];
+                return `Select ${options.slice(0, -1).join(", ")}, or ${last} to continue.`;
+              })()}
               {hasAvailableSponsorships
-                ? " Sponsorship packages are available for any registration type."
+                ? " Sponsorship packages are also available as an add-on to Attendee or Vendor registrations."
                 : ""}
             </p>
           )}

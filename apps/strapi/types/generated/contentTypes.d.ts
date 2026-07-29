@@ -1194,7 +1194,9 @@ export interface ApiConferenceRegistrationConferenceRegistration
       'api::conference-team.conference-team'
     >;
     total: Schema.Attribute.Decimal;
-    type: Schema.Attribute.Enumeration<['Attendee', 'Vendor', 'Contestant']>;
+    type: Schema.Attribute.Enumeration<
+      ['Attendee', 'Vendor', 'Contestant', 'Sponsor']
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;

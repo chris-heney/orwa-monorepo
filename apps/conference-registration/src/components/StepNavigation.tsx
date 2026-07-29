@@ -223,12 +223,28 @@ const StepNavigation = () => {
     return true;
   };
 
+  const sponsorshipValid = (toast = true): boolean => {
+    if (
+      payload.registration_type === "Sponsor" &&
+      currentStepLabel === "Sponsorships" &&
+      (payload.sponsors ?? []).length === 0
+    ) {
+      return fail(
+        "Please select at least one sponsorship package to continue",
+        ["sponsorships"],
+        { toast }
+      );
+    }
+    return true;
+  };
+
   const isRegistrationStepValid = (toast = true): boolean => {
     const registrationType = payload.registration_type;
     const hasValidType =
       registrationType === "Attendee" ||
       registrationType === "Vendor" ||
-      registrationType === "Contestant";
+      registrationType === "Contestant" ||
+      registrationType === "Sponsor";
 
     if (currentStepLabel === "Type") {
       if (hasValidType) {
@@ -319,6 +335,7 @@ const StepNavigation = () => {
       boothValid();
       isRegistrationStepValid();
       contestantValid();
+      sponsorshipValid();
       return;
     }
 
@@ -327,7 +344,8 @@ const StepNavigation = () => {
       ticketVendorValid() &&
       boothValid() &&
       isRegistrationStepValid() &&
-      contestantValid();
+      contestantValid() &&
+      sponsorshipValid();
 
     if (!stepChecksOk) {
       return;
@@ -354,6 +372,14 @@ const StepNavigation = () => {
     }
 
     if (!promotionalEmailsValid()) {
+      return;
+    }
+
+    if (
+      payload.registration_type === "Sponsor" &&
+      (payload.sponsors ?? []).length === 0
+    ) {
+      notify("Please select at least one sponsorship package", "error");
       return;
     }
 
