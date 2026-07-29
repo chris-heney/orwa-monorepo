@@ -16,6 +16,15 @@ export default defineConfig({
   define: {
     'process.env': process.env,
   },
+  // ag-grid-community@36 uses BigInt literals; safari13/default vite3 targets reject them.
+  esbuild: {
+    target: 'es2022',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2022',
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 4205,
@@ -33,6 +42,7 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2022',
     chunkSizeWarningLimit: 100,
     rollupOptions: {
       // external: "highchart",

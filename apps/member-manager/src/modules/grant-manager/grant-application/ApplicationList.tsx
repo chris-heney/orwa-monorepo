@@ -1,10 +1,9 @@
 import React, { useEffect } from "react";
-import { Box, Checkbox, Modal, useMediaQuery, useTheme } from "@mui/material";
+import { Box, Checkbox, Modal, useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
   List,
   TextField,
-  DatagridConfigurable,
   NumberField,
   RaRecord,
   DateField,
@@ -15,6 +14,7 @@ import {
   FilterLiveSearch,
   useNotify,
   useListContext,
+  useStore,
 } from "react-admin";
 import { CurrencyOptions } from "../../../config/Settings";
 import GrantApplicationCreateForm from "./CreateGrantApplication";
@@ -24,9 +24,12 @@ import { getGrantStatus } from "../../emails-magement/Helper";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
 import TotalPayoutsField from "../payouts/components/TotalPayoutField";
-import { grantDatagridStyle } from "../_components/grantDatagridStyle";
+import AgDatagrid from "../../_components/AgDatagrid";
+import type { AgDatagridPrefs } from "../../_components/AgDatagrid";
 import { IProject } from "../types";
 import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
+
+const AG_PREFS_KEY = "agGrid.grant-application-finals";
 
 const PersistentFilterLiveSearch = () => {
   const { applicationSearchFilter, setApplicationSearchFilter } =
@@ -130,7 +133,9 @@ const GrantApplicationList = () => {
   }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
-  const theme = useTheme();
+  const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
+  const listPerPage = agPrefs.pageSize || 50;
+
   return isCreating ? (
     <GrantApplicationCreateForm
       setIsCreating={setIsCreating}
@@ -156,7 +161,7 @@ const GrantApplicationList = () => {
           },
         }}
         sort={{ field: "application_date", order: "DESC" }}
-        perPage={50}
+        perPage={listPerPage}
         pagination={<CustomPagination />}
         sx={{
           ".RaList-actions": {
@@ -166,39 +171,15 @@ const GrantApplicationList = () => {
           },
         }}
       >
-        <DatagridConfigurable
-          sx={{
-            ...grantDatagridStyle(theme),
-            "& .RaDatagrid-row": {
-              padding: "0",
-            },
-            "& .RaDatagrid-cell": {
-              padding: "4px 8px",
-            },
-          }}
-          bulkActionButtons={false}
-          rowClick={(id, resource, record) => {
-            const isCheckboxCell = document
-              .getElementById(`checkbox-cell-${record.id}`)
-              ?.contains(event?.target as Node);
-
-            if (isCheckboxCell) {
-              return false; // Do not expand the row
-            }
-            return "show"; // Expand the row for other cells
-          }}
-        >
+        <AgDatagrid preferenceKey={AG_PREFS_KEY} rowClick="show">
           <FunctionField
             sortBy="closed_out"
             label="Closed"
             render={(record: RaRecord) => (
-              <div
-                id={`checkbox-cell-${record.id}`}
-                onClick={(e) => e.stopPropagation()} // Stop event propagation
-              >
+              <div data-ag-skip-row-click onClick={(e) => e.stopPropagation()}>
                 <Checkbox
                   sx={{
-                    padding: 0, 
+                    padding: 0,
                   }}
                   checked={record.closed_out || false}
                   onChange={(e) =>
@@ -211,30 +192,25 @@ const GrantApplicationList = () => {
           <TextField source="application_id" label="ID" />
           <FunctionField
             label="COR"
+            sortable={false}
             render={(record: RaRecord) => {
               return record.change_order_request ? record.change_order_request.includes("Yes") ? "Yes" : "No" : "No";
             }}
           />
           <FunctionField
             label="Status"
-            sx={{
-              maxWidth: 10,
-              textOverflow: "ellipsis",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-            }}
-            noWrap
+            sortable={false}
             render={(record) => (
               <Box
                 sx={coloredSurfaceSx(record.status?.color || "#cccccc", {
-                  padding: 0.5,
+                  padding: "2px 8px",
                   textOverflow: "ellipsis",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
-                  maxWidth: "40px",
-                  width: "40px",
+                  maxWidth: "100%",
                   display: "inline-block",
                 })}
+                title={record.status?.name}
               >
                 {record.status?.name}
               </Box>
@@ -252,6 +228,7 @@ const GrantApplicationList = () => {
           <TextField source="point_of_contact.phone" label="Phone" noWrap />
           <FunctionField
             label="Total Paid Out"
+            sortable={false}
             sx={{ display: "block", textAlign: "right" }}
             textAlign="right"
             render={(record: RaRecord) => (
@@ -261,6 +238,7 @@ const GrantApplicationList = () => {
           />
           <FunctionField
             label="Balance"
+            sortable={false}
             textAlign="right"
             render={(record: RaRecord) => (
               <BalanceField applicationId={record.id} />
@@ -322,6 +300,7 @@ const GrantApplicationList = () => {
           <TextField source="facility_id" label="Facility ID" noWrap />
           <FunctionField
             label="Selected Projects"
+            sortable={false}
             noWrap
             render={(record: RaRecord) => {
               return displayProjects(record.selected_projects);
@@ -329,12 +308,13 @@ const GrantApplicationList = () => {
           />
           <FunctionField
             label="Projects Approved"
+            sortable={false}
             noWrap
             render={(record: RaRecord) => {
               return displayProjects(record.approved_projects);
             }}
           />
-        </DatagridConfigurable>
+        </AgDatagrid>
       </List>
       <Modal
         open={isModalOpen}
