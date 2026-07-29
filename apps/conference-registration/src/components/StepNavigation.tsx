@@ -31,8 +31,12 @@ import { isStandaloneContestantTicket } from "../helpers/contestantTicketTiers";
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useStepContext();
-  const { ConferenceOptions, ExtraOptions, RegistrationAddons } =
-    useRegistrationOptions();
+  const {
+    ConferenceOptions,
+    ExtraOptions,
+    RegistrationAddons,
+    SponsorshipOptions,
+  } = useRegistrationOptions();
   const { setSubmitted } = useFormSubmitted();
   const { isAdminView, isLoggedIn, isTestMode } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -235,6 +239,26 @@ const StepNavigation = () => {
         { toast }
       );
     }
+
+    if (currentStepLabel === "Sponsorships") {
+      const selected = payload.sponsors ?? [];
+      for (const sponsor of selected) {
+        const catalog = SponsorshipOptions.find(
+          (option) => String(option.id) === String(sponsor.id)
+        );
+        if (!catalog?.allow_custom_amount) continue;
+        const minimum = Number(catalog.amount) || 0;
+        const amount = Number(sponsor.amount);
+        if (!Number.isFinite(amount) || amount < minimum) {
+          return fail(
+            `${catalog.name} requires a minimum of $${minimum.toFixed(2)}`,
+            ["sponsorships"],
+            { toast }
+          );
+        }
+      }
+    }
+
     return true;
   };
 
@@ -381,6 +405,22 @@ const StepNavigation = () => {
     ) {
       notify("Please select at least one sponsorship package", "error");
       return;
+    }
+
+    for (const sponsor of payload.sponsors ?? []) {
+      const catalog = SponsorshipOptions.find(
+        (option) => String(option.id) === String(sponsor.id)
+      );
+      if (!catalog?.allow_custom_amount) continue;
+      const minimum = Number(catalog.amount) || 0;
+      const amount = Number(sponsor.amount);
+      if (!Number.isFinite(amount) || amount < minimum) {
+        fail(
+          `${catalog.name} requires a minimum of $${minimum.toFixed(2)}`,
+          ["sponsorships"]
+        );
+        return;
+      }
     }
 
     setIsSubmitting(true);

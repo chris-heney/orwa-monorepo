@@ -1,9 +1,11 @@
 import React, { useContext } from 'react'
 import {
   AutocompleteInput,
+  BooleanInput,
   Create,
   DatagridConfigurable,
   Edit,
+  FormDataConsumer,
   NumberField,
   NumberInput,
   RaRecord,
@@ -47,13 +49,44 @@ const ConferenceGivingForm = () => (
             <TextInput source="name" label="Name" fullWidth helperText={false} />
           </Grid>
           <Grid item xs={12} md={3}>
-            <NumberInput source="available" label="Available" fullWidth helperText={false} prefix='$' />
+            <NumberInput source="available" label="Available" fullWidth helperText={false} />
           </Grid>
+          <FormDataConsumer>
+            {({ formData }) =>
+              formData?.allow_custom_amount ? null : (
+                <Grid item xs={12} md={3}>
+                  <NumberInput
+                    source="max_purchasable"
+                    label="Max Purchasable"
+                    fullWidth
+                    helperText={'How many of this sponsorship can one person buy'}
+                  />
+                </Grid>
+              )
+            }
+          </FormDataConsumer>
           <Grid item xs={12} md={3}>
-            <NumberInput source="max_purchasable" label="Max Purchasable" fullWidth helperText={'How many of this sponsorship can one person buy'} prefix='$' />
-          </Grid>
-          <Grid item xs={12} md={3}>
-            <NumberInput source="amount" label="Amount" fullWidth helperText={false} prefix='$' />
+            <FormDataConsumer>
+              {({ formData }) => (
+                <NumberInput
+                  source="amount"
+                  label={formData?.allow_custom_amount ? 'Minimum Amount' : 'Amount'}
+                  fullWidth
+                  helperText={
+                    formData?.allow_custom_amount
+                      ? 'Sponsors may enter any amount at or above this minimum'
+                      : false
+                  }
+                  prefix='$'
+                />
+              )}
+            </FormDataConsumer>
+            <BooleanInput
+              source="allow_custom_amount"
+              label="Allow sponsor to donate custom amount."
+              helperText={false}
+              sx={{ mt: 0.5 }}
+            />
           </Grid>
           <Grid item xs={12}>
             <TextInput source="description" label="Description" fullWidth helperText={false} />
@@ -69,6 +102,14 @@ const ConferenceGivingForm = () => (
   </Grid>
 )
 
+const withCustomAmountDefaults = (formData: RaRecord) => {
+  if (!formData?.allow_custom_amount) return formData
+  return {
+    ...formData,
+    max_purchasable: 1,
+  }
+}
+
 const ConferenceGiving = () => {
 
   const {isCreating, setIsCreating} = useContext(ConferenceContext)
@@ -83,7 +124,17 @@ const ConferenceGiving = () => {
       <Create sx={{mt:-2}} title={' '} redirect={false} resource="conference-sponsorships">
         <CustomSecondaryHeader title="Add Sponsorship" />
         <Button onClick={() => isCreating ? setIsCreating(false) : setIsCreating(true)}> Back</Button>
-        <SimpleForm onSubmit={(formData) => createRecord(formData, create, notify, setIsCreating, 'conference-sponsorships')}>
+        <SimpleForm
+          onSubmit={(formData) =>
+            createRecord(
+              withCustomAmountDefaults(formData as RaRecord),
+              create,
+              notify,
+              setIsCreating,
+              'conference-sponsorships'
+            )
+          }
+        >
           <ConferenceGivingForm />
         </SimpleForm>
       </Create>
@@ -105,7 +156,16 @@ const ConferenceGiving = () => {
                 resource="conference-sponsorships"
                 redirect={false}>
                 <SimpleForm 
-                  onSubmit={(formData) => updateRecord(formData, record, update, notify, remove, 'conference-sponsorships')}
+                  onSubmit={(formData) =>
+                    updateRecord(
+                      withCustomAmountDefaults(formData as RaRecord),
+                      record,
+                      update,
+                      notify,
+                      remove,
+                      'conference-sponsorships'
+                    )
+                  }
                   toolbar={<CustomToolBar />}
                 >
                   <ConferenceGivingForm />

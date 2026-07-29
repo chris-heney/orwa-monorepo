@@ -26,6 +26,10 @@
     "amount": {
       "type": "decimal"
     },
+    "allow_custom_amount": {
+      "type": "boolean",
+      "default": false
+    },
     "available": {
       "type": "integer"
     },

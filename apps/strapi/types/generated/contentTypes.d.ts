@@ -1314,6 +1314,8 @@ export interface ApiConferenceSponsorshipConferenceSponsorship
     draftAndPublish: false;
   };
   attributes: {
+    allow_custom_amount: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     amount: Schema.Attribute.Decimal;
     available: Schema.Attribute.Integer;
     conference: Schema.Attribute.Relation<

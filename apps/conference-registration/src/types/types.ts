@@ -528,6 +528,8 @@ export interface ISponsorshipOption {
   available: number;
   amount: number;
   max_purchasable: number;
+  /** When true, `amount` is the minimum and the registrant may enter more. */
+  allow_custom_amount?: boolean;
 }
 
 export interface IExtraOption {
@@ -573,6 +575,8 @@ export interface ISponsorPayload {
   description: string;
   available: number;
   amount: number;
+  allow_custom_amount?: boolean;
+  max_purchasable?: number;
 }
 
 export interface IContactPayload {

@@ -18,6 +18,11 @@ import {
   partitionContestantLines,
   sharePaymentAmount,
 } from "../helpers/contestant-fanout";
+import {
+  normalizeSponsorAmounts,
+  SponsorAmountError,
+  type SponsorshipCatalogRow,
+} from "../helpers/normalizeSponsors";
 
 /**
  * Conference webhook controller
@@ -140,6 +145,61 @@ export default ({ strapi }) => {
         const paymentOrganization =
           loadedAttachRegistrations.values().next().value?.organization ??
           organization;
+
+        // Resolve sponsor amounts against the catalog before charging.
+        // Mutate the original `sponsors` array in place so all downstream
+        // handlers (payment total, handleSponsors, registration relations)
+        // see the resolved amounts.
+        if (Array.isArray(sponsors) && sponsors.length > 0) {
+          try {
+            const catalogById = new Map<string, SponsorshipCatalogRow>();
+            for (const sponsor of sponsors) {
+              const key = String(sponsor.id);
+              if (catalogById.has(key)) continue;
+              const row = await findOneById(
+                "api::conference-sponsorship.conference-sponsorship",
+                sponsor.id
+              );
+              if (row) catalogById.set(key, row as SponsorshipCatalogRow);
+            }
+            const clientSponsorTotal = sponsors.reduce(
+              (sum, s) => sum + (Number(s.amount) || 0),
+              0
+            );
+            const normalizedSponsors = normalizeSponsorAmounts(
+              sponsors,
+              catalogById
+            ) as ISponsorEntity[];
+            sponsors.splice(0, sponsors.length, ...normalizedSponsors);
+            ctx.request.body.sponsors = sponsors;
+
+            const sponsorTotal = sponsors.reduce(
+              (sum, s) => sum + (Number(s.amount) || 0),
+              0
+            );
+            if (
+              paymentData?.amount != null &&
+              Number.isFinite(clientSponsorTotal) &&
+              Number.isFinite(Number(paymentData.amount))
+            ) {
+              const delta = sponsorTotal - clientSponsorTotal;
+              if (Math.abs(delta) > 0.001) {
+                paymentData.amount = Number(
+                  (Number(paymentData.amount) + delta).toFixed(2)
+                );
+              }
+            }
+          } catch (err) {
+            if (err instanceof SponsorAmountError) {
+              ctx.body = {
+                result: "error",
+                message: err.message,
+              };
+              return;
+            }
+            throw err;
+          }
+        }
 
         // Only proceed with new registration if not a resubmission or no admin options
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
