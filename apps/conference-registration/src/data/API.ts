@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { SubmitHandler, FieldValues } from 'react-hook-form'
 import { getAcceptedTerms } from '@orwa/terms-gate'
-import { EmailPayload, IRegistrationPayload } from '../types/types'
+import { EmailPayload, Identifier, IRegistrationPayload } from '../types/types'
 
 
 interface IStrapiResponse {
@@ -105,8 +105,25 @@ export const useGetWatersystems = () => {
   return useQuery({ queryKey: ['watersystems'], queryFn: async () => _get('watersystems', `?filters[payment_last_date][$gt]=${oneYearAgoFormatted}&pagination[limit]=1000&populate=*&sort=name:ASC`) })
 }
 
-export const useGetSubmissions = () => {
-  return useQuery({ queryKey: ['logs'], queryFn: async () => _get('logs', `?filters[resource]=conference-registration&pagination[limit]=1000&populate=*`) })
+// Admin registrant list. `data` is a plain JSON blob in Strapi (not a queryable
+// relation/component), so Strapi rejects server-side filters like
+// `filters[data][conference]=X` (400 "Invalid key ... at data") — filtering by
+// conference has to happen client-side after fetch. Newest-first `sort` is
+// required: without it Strapi defaults to ascending id order, and once the
+// `logs` table holds more conference-registration rows than the pagination
+// limit, the most recent submissions silently fall outside the fetched page
+// (this is what made Admin View look "stuck" on an old conference).
+export const useGetSubmissions = (conference_id?: string | null) => {
+  return useQuery({
+    queryKey: ['logs', conference_id],
+    queryFn: async () => {
+      const submissions = await _get('logs', `?filters[resource]=conference-registration&pagination[limit]=1000&populate=*&sort=createdAt:desc`)
+      if (!conference_id) return submissions
+      return (submissions as unknown as { data?: { conference?: Identifier } }[]).filter(
+        (submission) => String(submission?.data?.conference) === String(conference_id)
+      )
+    }
+  })
 }
 
 export const useGetRegistrationAddons = (conference_id: number) => {

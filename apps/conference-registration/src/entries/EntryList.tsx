@@ -1,14 +1,22 @@
 import { useState } from "react";
 import { useGetSubmissions } from "../data/API";
 import { entryPayload, IRegistrationPayload } from "../types/types";
-import { useEntryPayload, useUserContext } from "../AppContextProvider";
+import {
+  useConferenceId,
+  useEntryPayload,
+  useRegistrationOptions,
+  useUserContext,
+} from "../AppContextProvider";
 import { useEntryList } from "../providers/EntryListProvider";
 import EntryListSidebar from "./EntryListSidebar";
 
 const ITEMS_PER_PAGE = 10;
 
 const EntryList = () => {
-  const { data: submissions, status: submissionsStatus } = useGetSubmissions();
+  const conferenceId = useConferenceId();
+  const { ConferenceOptions } = useRegistrationOptions();
+  const { data: submissions, status: submissionsStatus } =
+    useGetSubmissions(conferenceId);
   const { setEntryPayload } = useEntryPayload();
   const { setSelectedSubmission, sidebarVisible, setSidebarVisible } =
     useEntryList();
@@ -101,6 +109,14 @@ const EntryList = () => {
   return (
     <div className="flex justify-center min-h-screen py-4">
       <div className="w-full max-w-7xl">
+        {/* Current Conference Indicator */}
+        <div className="mb-3 rounded-md bg-blue-50 border border-blue-200 px-4 py-2 text-sm text-blue-800">
+          Viewing registrations for:{" "}
+          <span className="font-semibold">
+            {ConferenceOptions?.name || `Conference #${conferenceId}`}
+          </span>
+        </div>
+
         {/* Search Bar */}
         <div className="mb-4 flex justify-between items-center">
           <input
