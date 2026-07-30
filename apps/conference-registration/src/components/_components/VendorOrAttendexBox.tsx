@@ -37,7 +37,7 @@ const VendorOrAttendeeBox = ({
       type="button"
       onClick={setRegistrationType}
       aria-pressed={isSelected}
-      className={`group flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 px-4 py-4 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+      className={`group relative flex w-full cursor-pointer items-center gap-4 rounded-xl border-2 px-4 py-4 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
         isSelected
           ? "border-blue-600 bg-blue-50 shadow-sm"
           : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
@@ -77,7 +77,7 @@ const VendorOrAttendeeBox = ({
         </span>
       </div>
       {isSelected && (
-        <span className="ml-2 inline-flex shrink-0 items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+        <span className="absolute top-[3px] right-[3px] inline-flex items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
           Selected
         </span>
       )}
