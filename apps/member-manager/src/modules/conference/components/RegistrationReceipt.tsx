@@ -168,7 +168,7 @@ const RegistrationReceipt = () => {
             <Typography variant="body2" color="text.secondary" mb={1}>
               First {freeVendorSlots} Vendor ticket
               {freeVendorSlots === 1 ? "" : "s"} included with booth
-              registration (shown as struck-through list price).
+              (list price struck through; shown as “Included with booth”).
             </Typography>
           )}
           <ReferenceArrayField

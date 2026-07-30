@@ -20,8 +20,8 @@ type Props = {
 };
 
 /**
- * Shows catalog ticket price, with strike-through + $0.00 when the attendee
- * is within the booth-bundled complimentary Vendor allowance.
+ * Shows catalog ticket price, with strike-through + "Included with booth"
+ * when the attendee is within the booth-bundled complimentary Vendor allowance.
  */
 const AttendeeTicketPriceField = ({ boothCount }: Props) => {
   const attendee = useRecordContext<RaRecord>();
@@ -102,7 +102,7 @@ const AttendeeTicketPriceField = ({ boothCount }: Props) => {
           {money(listPrice)}
         </Typography>
         <Typography component="span" variant="body2" fontWeight={600}>
-          {money(0)}
+          Included with booth
         </Typography>
       </Box>
     );
