@@ -42,9 +42,6 @@
     },
     "booth_number": {
       "type": "integer"
-    },
-    "secondary_email": {
-      "type": "email"
     }
   }
 }

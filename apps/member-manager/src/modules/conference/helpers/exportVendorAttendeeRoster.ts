@@ -6,12 +6,11 @@ type RegistrationBundle = {
   registrantFirst: string;
   registrantLast: string;
   registrantEmail: string;
-  boothSecondaryEmails: string;
 };
 
 /**
  * CSV roster for vendor booth staff (attendee rows) plus the registration's
- * primary contact email and optional booth secondary email — for mailing lists.
+ * primary contact email — for mailing lists.
  */
 const exportVendorAttendeeRoster = async (
   records: RaRecord[],
@@ -84,8 +83,7 @@ const exportVendorAttendeeRoster = async (
         meta: {
           raw: true,
           populate: [],
-          customFilter:
-            "populate[booths]=true&populate[registrant]=true",
+          customFilter: "populate[registrant]=true",
         },
       }
     );
@@ -93,38 +91,11 @@ const exportVendorAttendeeRoster = async (
     const { first: registrantFirst, last: registrantLast, email: registrantEmail } =
       await readRegistrantFields(registration);
 
-    const boothsRaw = registration?.booths;
-    const boothsList = Array.isArray(boothsRaw) ? (boothsRaw as RaRecord[]) : [];
-    let boothSecondaryEmails = boothsList
-      .map((b) => {
-        const v = (b as RaRecord).secondary_email ?? (b as RaRecord).secondaryEmail;
-        return typeof v === "string" ? v : "";
-      })
-      .filter(Boolean)
-      .join("; ");
-
-    if (!boothSecondaryEmails && boothsList.length > 0) {
-      const boothIds = boothsList
-        .map((b) => (b as RaRecord)?.id)
-        .filter((id): id is number => typeof id === "number");
-      if (boothIds.length > 0) {
-        const { data: fullBooths = [] } = await dataProvider.getMany(
-          "conference-booths",
-          { ids: boothIds, meta: { raw: true } }
-        );
-        boothSecondaryEmails = (fullBooths as RaRecord[])
-          .map((b) => String(b.secondary_email ?? ""))
-          .filter(Boolean)
-          .join("; ");
-      }
-    }
-
     const bundle: RegistrationBundle = {
       registration: registration ?? {},
       registrantFirst,
       registrantLast,
       registrantEmail,
-      boothSecondaryEmails,
     };
     regBundleCache.set(regId, bundle);
     return bundle;
@@ -169,7 +140,6 @@ const exportVendorAttendeeRoster = async (
         "Vendor registrant first": bundle?.registrantFirst ?? "",
         "Vendor registrant last": bundle?.registrantLast ?? "",
         "Vendor registrant email": bundle?.registrantEmail ?? "",
-        "Booth secondary email": bundle?.boothSecondaryEmails ?? "",
         "Rep first": (record.first as string) ?? "",
         "Rep last": (record.last as string) ?? "",
         "Rep email": (record.email as string) ?? "",

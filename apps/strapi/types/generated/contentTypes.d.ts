@@ -975,7 +975,6 @@ export interface ApiConferenceBoothConferenceBooth
       'manyToOne',
       'api::conference-registration.conference-registration'
     >;
-    secondary_email: Schema.Attribute.Email;
     subtotal: Schema.Attribute.Decimal;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &

@@ -5,8 +5,8 @@ import exportVendorAttendeeRoster from "../helpers/exportVendorAttendeeRoster";
 import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
 /**
- * Attendees tab only: exports vendor ticket rows with primary registrant email,
- * rep (attendee) email/phone, and booth secondary email when present.
+ * Attendees tab only: exports vendor ticket rows with primary registrant email
+ * and rep (attendee) email/phone.
  */
 const VendorAttendeeExportButton = () => {
   const { filterValues, sort, resource } = useListContext();

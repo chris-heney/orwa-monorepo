@@ -239,7 +239,11 @@ export const getRecipientDisplayInfo = (recipient: any, entityType: string) => {
       return {
         primary: recipient.organization || `Booth #${recipient.id}`,
         secondary: `Booth #${recipient.booth_number || "N/A"} | $${recipient.subtotal || 0}`,
-        email: recipient.secondary_email || null,
+        // Booth secondary_email was removed — prefer populated registrant email.
+        email:
+          recipient.registration?.registrant?.email ||
+          recipient.registration?.email ||
+          null,
       };
 
     case "conference-contestants":

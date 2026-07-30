@@ -62,9 +62,6 @@ const AddBoothForm = ({ context }: AddBoothFormProps) => {
         <TextInput source="organization" label="Organization" fullWidth />
       </Grid>
       <Grid item xs={12} md={3}>
-        <TextInput source="secondary_email" label="Secondary Email" fullWidth />
-      </Grid>
-      <Grid item xs={12} md={3}>
         <NumberInput source="subtotal" label="Subtotal" fullWidth />
       </Grid>
       <Grid item xs={12} md={6}>
@@ -195,7 +192,6 @@ const ConferenceBooths = () => {
             <TextField source="email" label="Email" noWrap />
           </ReferenceField>
         </ReferenceField>
-        <TextField source="secondary_email" label="Secondary Email" />
         <ReferenceField
           source="registration"
           reference="conference-registrations"

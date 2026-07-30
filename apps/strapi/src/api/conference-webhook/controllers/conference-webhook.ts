@@ -77,7 +77,6 @@ export default ({ strapi }) => {
           logo,
           watersystem,
           adminOptions,
-          secondary_email,
           vendor_participation_acknowledgement,
           accepted_terms,
           contestant_already_registered,
@@ -496,7 +495,6 @@ export default ({ strapi }) => {
             conference, 
             registrationId, 
             organization,
-            secondary_email,
             conferenceData
           );
 
@@ -712,7 +710,6 @@ export default ({ strapi }) => {
     conference, 
     registrationId, 
     organization, 
-    secondary_email,
     conferenceData
   ) {
     if (!booths || booths.length === 0) return;
@@ -757,7 +754,6 @@ export default ({ strapi }) => {
         // schema type is integer; v4 accepted the stringified value, v5 does not
         booth_number: boothNumber,
         items: boothExtras,
-        secondary_email: secondary_email,
       };
 
       const newBooth = await strapi.documents("api::conference-booth.conference-booth").create({

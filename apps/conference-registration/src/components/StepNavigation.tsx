@@ -468,10 +468,6 @@ const StepNavigation = () => {
           ExtraOptions
         ),
       },
-      secondary_email:
-        getValues("secondary_email") && getValues("secondary_email").length > 0
-          ? getValues("secondary_email")
-          : null,
       // Vendor Participation Guideline & Acknowledgement UI was removed in
       // favor of the app-wide TermsGate (see App.tsx), which already blocks
       // access to the form until terms are accepted. Send true so the
