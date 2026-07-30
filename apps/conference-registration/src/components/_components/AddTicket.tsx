@@ -170,7 +170,7 @@ const AddTicketComponent = ({
                                 : ticket.ticket_type?.price_event || 0
                             )}
                           </span>
-                          <span>{currencyFormatter.format(0)}</span>
+                          <span>Included with booth</span>
                         </span>
                       ) : (
                         formatMoneyOrIncluded(ticket.price)
@@ -192,7 +192,7 @@ const AddTicketComponent = ({
                                   : ticket.ticket_type?.price_event || 0
                               )}
                             </span>
-                            <span>{currencyFormatter.format(0)}</span>
+                            <span>Included with booth</span>
                           </span>
                         ) : (
                           formatMoneyOrIncluded(

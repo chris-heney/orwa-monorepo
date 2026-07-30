@@ -58,7 +58,7 @@ const CompensatedMoney = ({ listPrice }: { listPrice: number }) => (
     <span className="font-normal text-slate-400 line-through">
       {currencyFormatter.format(listPrice)}
     </span>
-    <span>{currencyFormatter.format(0)}</span>
+    <span className="font-semibold text-slate-900">Included with booth</span>
   </span>
 );
 
