@@ -191,7 +191,22 @@ const StepSponsorship = () => {
         <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
           Conference Sponsorships
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600 max-w-2xl">
+
+        <div className="mt-3 max-w-2xl text-sm leading-relaxed text-blue-900">
+          <p className="font-bold underline">All sponsorships include:</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            <li>Recognition through on-site event signage</li>
+            <li>Visibility on the ORWA website</li>
+            <li>Inclusion in the official conference booklet</li>
+            <li>Promotion across ORWA social media channels</li>
+          </ul>
+          <p className="mt-2 font-bold">
+            Partner with ORWA – Reserve your sponsorship by Friday, September
+            11.
+          </p>
+        </div>
+
+        <p className="mt-3 text-sm leading-relaxed text-slate-600 max-w-2xl">
           Optional — select any packages you want to purchase, or click Next to
           continue without sponsoring.
         </p>
