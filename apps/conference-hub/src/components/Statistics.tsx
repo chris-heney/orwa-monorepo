@@ -1,33 +1,31 @@
-import { useGetStats } from '../helpers/API';
-import LoadingIcon from './LoadingIcon';
+import { useGetStats } from "../helpers/API";
+import LoadingIcon from "./LoadingIcon";
+import { ui } from "../ui/tokens";
 
 const Statistics = () => {
   const { data: stats, loading: loadingStats } = useGetStats();
 
+  if (loadingStats) {
+    return (
+      <div className="mt-6 flex justify-center">
+        <LoadingIcon size={50} />
+      </div>
+    );
+  }
+
   return (
-    <div>
-      {loadingStats ? (
-        <div className="mt-6">
-          <LoadingIcon size={50} />
+    <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {stats.map((item) => (
+        <div key={item.name} className={ui.statCard}>
+          <dt className="truncate text-sm font-medium text-slate-500">
+            {item.name}
+          </dt>
+          <dd className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">
+            {item.stat}
+          </dd>
         </div>
-      ) : (
-        <dl className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {stats.map((item) => (
-            <div
-              key={item.name}
-              className="overflow-hidden rounded-lg bg-gray-300 px-4 py-5 shadow-md sm:p-6 shadow-gray-300"
-            >
-              <dt className="truncate text-sm font-bold text-black">
-                {item.name}
-              </dt>
-              <dd className="mt-1 text-3xl font-semibold tracking-tight text-black">
-                {item.stat}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </div>
+      ))}
+    </dl>
   );
 };
 

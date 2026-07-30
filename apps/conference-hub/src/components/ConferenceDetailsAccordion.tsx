@@ -2,6 +2,23 @@ import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useConferenceKioskProvider } from "../ConferenceKioskContextProvider";
 import { parseConferenceDate } from "../helpers/parseConferenceDate";
+import { ui } from "../ui/tokens";
+
+const accordionSx = {
+  px: 0,
+  "& > .MuiAccordionSummary-content": {
+    my: 0,
+    pl: 4,
+  },
+  borderBottom: "1px solid #e2e8f0",
+  ":hover": {
+    backgroundColor: "#f8fafc",
+  },
+  "& > .MuiAccordionSummary-expandIconWrapper": {
+    position: "absolute",
+    left: 8,
+  },
+};
 
 const ConferenceDetailsAccordion = () => {
   const { conference } = useConferenceKioskProvider();
@@ -9,113 +26,80 @@ const ConferenceDetailsAccordion = () => {
   const startDate = parseConferenceDate(conference.start_date);
   const endDate = parseConferenceDate(conference.end_date);
 
+  const sameDay = startDate.toDateString() === endDate.toDateString();
+  const dateLabel = sameDay
+    ? startDate.toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })
+    : `${startDate.toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })} – ${endDate.toLocaleString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-blue-500 text-white p-5 flex flex-col gap-2">
-        <span className="text-4xl font-bold">
+    <section className={ui.panel}>
+      <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-5 text-white">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">
+          Status
+        </p>
+        <h2 className="mt-1 text-2xl font-semibold tracking-tight">
           {conference.status === "Coming Soon"
-            ? conference.status +
-              " " +
-              startDate.toLocaleString("en-US", {
+            ? `${conference.status} · ${startDate.toLocaleString("en-US", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
-              })
+              })}`
             : conference.status}
-        </span>
-        {/* Full venue — Strapi v5 may return null for empty components */}
+        </h2>
         {conference.venue != null && (
-          <span className="font-bold">
-            {conference.venue.name +
-              " " +
-              conference.venue.street +
-              ", " +
-              conference.venue.city +
-              ", " +
-              conference.venue.state +
-              " " +
-              conference.venue.zip}
-          </span>
+          <p className="mt-2 text-sm text-slate-200">
+            {[
+              conference.venue.name,
+              conference.venue.street,
+              `${conference.venue.city}, ${conference.venue.state} ${conference.venue.zip}`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
         )}
-        {/* Conference Date start and end */}
-        <span className="font-bold">
-          {/* If its only one day, show only the start date */}
-          {startDate.getDay() === endDate.getDay() ? (
-            startDate.toLocaleString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })
-          ) : (
-            <>
-            {startDate.toLocaleString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-            {" - "}
-            {endDate.toLocaleString("en-US", {
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
-            </>
-          )}
-          
-        </span>
+        <p className="mt-1 text-sm font-medium text-blue-200">{dateLabel}</p>
       </div>
+
       {(conference.conference_details ?? [])
-        .filter((item) => {
-          return !item.hidden;
-        })
-        .sort((a, b) => {
-          return a.order - b.order;
-        })
-        .map((item, index) => {
-          return (
-            <Accordion disableGutters square key={index}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls={`panel${index}-content`}
-                id={`panel${index}-header`}
-                sx={{
-                  px: 0,
-                  " & > .MuiAccordionSummary-content": {
-                    my: 0,
-                    pl: 4,
-                  },
-                  borderBottom: "1px solid #f0f0f0",
-                  ":hover": {
-                    backgroundColor: "#f9f9f9",
-                  },
-                  " & > .MuiAccordionSummary-expandIconWrapper": {
-                    position: "absolute",
-                    left: 0,
-                  },
-                }}
+        .filter((item) => !item.hidden)
+        .sort((a, b) => a.order - b.order)
+        .map((item, index) => (
+          <Accordion disableGutters elevation={0} key={index}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls={`panel${index}-content`}
+              id={`panel${index}-header`}
+              sx={accordionSx}
+            >
+              <div
+                className={`text-sm font-semibold ${
+                  item.important ? "text-red-600" : "text-slate-800"
+                }`}
               >
-                <div
-                  className={`font-bold ${
-                    item.important ? "text-red-500" : "text-gray-800"
-                  }`}
-                >
-                  {item.title}
-                </div>
-              </AccordionSummary>
-              <AccordionDetails
-                sx={{
-                  p: 0,
-                }}
-              >
-                <div
-                  className="text-justify fetched-html-content"
-                  dangerouslySetInnerHTML={{ __html: item.description }}
-                />
-              </AccordionDetails>
-            </Accordion>
-          );
-        })}
-    </div>
+                {item.title}
+              </div>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 2, pt: 0 }}>
+              <div
+                className="fetched-html-content"
+                dangerouslySetInnerHTML={{ __html: item.description }}
+              />
+            </AccordionDetails>
+          </Accordion>
+        ))}
+    </section>
   );
 };
 

@@ -20,7 +20,7 @@ const ConferenceScheduleCard: React.FC<ConferenceScheduleCardProps> = ({
   const startTime = isNaN(new Date(`${record.date}T${record.start}`).getTime())
     ? "N/A"
     : new Date(`${record.date}T${record.start}`).toLocaleTimeString([], {
-        hour: "numeric",  
+        hour: "numeric",
         minute: "2-digit",
       });
 
@@ -30,9 +30,9 @@ const ConferenceScheduleCard: React.FC<ConferenceScheduleCardProps> = ({
         hour: "numeric",
         minute: "2-digit",
       });
-  const splitContent = (content: string) => {
-    return content ? content.split("\n") : [];
-  };
+
+  const splitContent = (content: string) =>
+    content ? content.split("\n") : [];
 
   const locations = splitContent(record.location);
   const events = splitContent(record.event);
@@ -40,7 +40,6 @@ const ConferenceScheduleCard: React.FC<ConferenceScheduleCardProps> = ({
   const speakers = splitContent(record.speaker);
   const companies = splitContent(record.company);
 
-  // Determine the maximum number of rows required
   const maxRows = Math.max(
     locations.length,
     events.length,
@@ -49,174 +48,179 @@ const ConferenceScheduleCard: React.FC<ConferenceScheduleCardProps> = ({
     companies.length
   );
 
-  // Render a section for each time block
-  const tableCellStyle = {
-    color: "white",
-    fontWeight: 700,
-    borderRight: "1px solid white",
-    borderTop: "1px solid white",
+  const headerCell = {
+    color: "#f8fafc",
+    fontWeight: 600,
+    borderRight: "1px solid rgba(148,163,184,0.35)",
+    fontSize: "0.8rem",
   };
 
-  const tableCellInfoStyle = {
-    // 1px solid rgba(224, 224, 224, 1)
-    borderRight: "1px solid rgba(224, 224, 224, 1)",
+  const bodyCell = {
+    borderRight: "1px solid #e2e8f0",
+    color: "#334155",
+    fontSize: "0.875rem",
   };
 
   return (
     <Box
       sx={{
-        mb: 4,
-        backgroundColor: "#F3F2F2",
-        borderRadius: 2,
+        mb: 3,
+        overflow: "hidden",
+        borderRadius: "0.75rem",
+        border: "1px solid #e2e8f0",
+        backgroundColor: "#ffffff",
+        boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
       }}
     >
-      {/* Time Block Header */}
       <Box
         sx={{
           display: "flex",
+          alignItems: "center",
           justifyContent: "space-between",
-          backgroundColor: "#000",
+          gap: 1,
+          backgroundColor: "#0f172a",
+          px: 1.5,
+          py: 1,
         }}
       >
         <Typography
-          variant="h6"
-          sx={{
-            fontWeight: 700,
-            color: "white",
-            p: 1,
-            borderTopRightRadius: 4,
-            borderTopLeftRadius: 4,
-          }}
+          variant="subtitle1"
+          sx={{ fontWeight: 600, color: "white", fontSize: "0.95rem" }}
         >
-          {startTime} - {endTime}
+          {startTime} – {endTime}
         </Typography>
         {record.training_hours && (
           <Chip
-            label={`Training hours: ${record.training_hours}`}
+            label={`${record.training_hours} hr training`}
+            size="small"
             sx={{
-              backgroundColor: "#3c87d6",
+              backgroundColor: "#2563eb",
               color: "white",
-              fontWeight: 700,
-              minWidth: "50px",
-              minHeight: "10px",
-              mt: 1,
-              mr: 1,
+              fontWeight: 600,
+              height: 24,
             }}
           />
         )}
       </Box>
 
-      {/* Mobile View */}
       <div className="block sm:hidden">
         {locations.map((location, index) => (
           <div
             key={index}
-            className={`p-3 mb-3 ${index % 2 === 0 ?"bg-gray-100" : "bg-gray-300"}`}
+            className={`border-b border-slate-100 px-4 py-3 last:border-b-0 ${
+              index % 2 === 0 ? "bg-white" : "bg-slate-50"
+            }`}
           >
-            <div className="text-left font-bold text-gray-700">Location</div>
-            <div className="text-left text-gray-600">{location}</div>
-            <hr className={`my-2  ${index % 2 === 0 ?"bg-gray-100" : "bg-gray-300"} `} />
-        
+            <div className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Location
+            </div>
+            <div className="text-left text-sm text-slate-700">{location}</div>
+
             {events[index] && (
               <>
-              <div className="text-left font-bold text-gray-700">Event</div>
-              <div className="text-left text-gray-600">{events[index]}</div>
-              <hr className={`my-2  ${index % 2 === 0 ?"bg-gray-100" : "bg-gray-300"} `} />
+                <div className="mt-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Event
+                </div>
+                <div className="text-left text-sm text-slate-700">
+                  {events[index]}
+                </div>
               </>
             )}
 
             {descriptions[index] && (
               <>
-                <div className="text-left font-bold text-gray-700">Description</div>
-                <div className="text-left text-gray-600">
+                <div className="mt-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Description
+                </div>
+                <div className="text-left text-sm text-slate-700">
                   {descriptions[index]}
                 </div>
-                <hr className={`my-2  ${index % 2 === 0 ?"bg-gray-100" : "bg-gray-300"} `} />
               </>
             )}
-         
+
             {speakers[index] && (
               <>
-               <div className="text-left font-bold text-gray-700">Speaker</div>
-                <div className="text-left text-gray-600">{speakers[index]}</div>
-                <hr className={`my-2  ${index % 2 === 0 ?"bg-gray-100" : "bg-gray-300"} `} />
+                <div className="mt-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Speaker
+                </div>
+                <div className="text-left text-sm text-slate-700">
+                  {speakers[index]}
+                </div>
               </>
             )}
+
             {companies[index] && (
               <>
-                <div className="text-left font-bold text-gray-700">Company</div>
-                <div className="text-left text-gray-600">
+                <div className="mt-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Company
+                </div>
+                <div className="text-left text-sm text-slate-700">
                   {companies[index]}
                 </div>
               </>
             )}
-          </div>              
+          </div>
         ))}
       </div>
 
-      {/* Deskton Schedule */}
-
-      {/* Only add columns if the info is present */}
       <div className="hidden sm:block">
         <Table>
           <TableHead>
-            <TableRow
-              sx={{
-                backgroundColor: "#363636",
-                color: "white",
-              }}
-            >
+            <TableRow sx={{ backgroundColor: "#1e293b" }}>
               {locations.length > 0 && (
-                <TableCell sx={tableCellStyle}>Location</TableCell>
+                <TableCell sx={headerCell}>Location</TableCell>
               )}
               {events.length > 0 && (
-                <TableCell sx={tableCellStyle}>Event</TableCell>
+                <TableCell sx={headerCell}>Event</TableCell>
               )}
               {descriptions.length > 0 && (
-                <TableCell sx={tableCellStyle}>Description</TableCell>
+                <TableCell sx={headerCell}>Description</TableCell>
               )}
               {speakers.length > 0 && (
-                <TableCell sx={tableCellStyle}>Speaker</TableCell>
+                <TableCell sx={headerCell}>Speaker</TableCell>
               )}
               {companies.length > 0 && (
-                <TableCell sx={tableCellStyle}>Company</TableCell>
+                <TableCell sx={headerCell}>Company</TableCell>
               )}
             </TableRow>
           </TableHead>
           <TableBody>
             {Array.from({ length: maxRows }).map((_, rowIndex) => (
-              <TableRow key={rowIndex}>
+              <TableRow
+                key={rowIndex}
+                sx={{ backgroundColor: rowIndex % 2 ? "#f8fafc" : "#ffffff" }}
+              >
                 {locations.length > 0 && (
-                  <TableCell sx={tableCellInfoStyle}>
-                    <Typography variant="body1">
+                  <TableCell sx={bodyCell}>
+                    <Typography variant="body2">
                       {locations[rowIndex] || ""}
                     </Typography>
                   </TableCell>
                 )}
                 {events.length > 0 && (
-                  <TableCell sx={tableCellInfoStyle}>
-                    <Typography variant="body1">
+                  <TableCell sx={bodyCell}>
+                    <Typography variant="body2">
                       {events[rowIndex] || ""}
                     </Typography>
                   </TableCell>
                 )}
                 {descriptions.length > 0 && (
-                  <TableCell sx={tableCellInfoStyle}>
-                    <Typography variant="body1">
+                  <TableCell sx={bodyCell}>
+                    <Typography variant="body2">
                       {descriptions[rowIndex] || ""}
                     </Typography>
                   </TableCell>
                 )}
                 {speakers.length > 0 && (
-                  <TableCell sx={tableCellInfoStyle}>
-                    <Typography variant="body1">
+                  <TableCell sx={bodyCell}>
+                    <Typography variant="body2">
                       {speakers[rowIndex] || ""}
                     </Typography>
                   </TableCell>
                 )}
                 {companies.length > 0 && (
-                  <TableCell sx={tableCellInfoStyle}>
-                    <Typography variant="body1">
+                  <TableCell sx={bodyCell}>
+                    <Typography variant="body2">
                       {companies[rowIndex] || ""}
                     </Typography>
                   </TableCell>

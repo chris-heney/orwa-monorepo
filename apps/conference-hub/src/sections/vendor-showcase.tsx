@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useGetVendors } from "../helpers/API";
 import LoadingIcon from "../components/LoadingIcon";
 import IOrganization from "../types/IOrganization";
-import TitleBar from "../components/titlebar";
+import Panel from "../components/Panel";
+import { ui, zebraRow } from "../ui/tokens";
 
 const VendorShowcase = () => {
   const [vendorOrganizations, setVendorOrganizations] = useState<
@@ -11,7 +12,6 @@ const VendorShowcase = () => {
 
   const { data: vendors, loading: loadingVendors } = useGetVendors();
 
-  // Transform Vendors grouping them by organization
   useEffect(() => {
     if (vendorOrganizations.length === 0 && vendors.length > 0) {
       const orgs = vendors.reduce((acc, vendor) => {
@@ -28,66 +28,50 @@ const VendorShowcase = () => {
   }, [vendors, vendorOrganizations]);
 
   return (
-    <div>
-      <div className="text-left grid grid-cols-1 md:grid-cols-2 gap-3">
-        {/* Attendee Forms */}
-        <div className="bg-white p-4 rounded-lg overflow-y-scroll md:max-h-well order-first md:order-last">
-          
-        </div>
-
-        {/* Vendor Showcase */}
-        <div className="bg-white p-4 rounded-lg overflow-y-scroll md:max-h-well order-first md:order-last">
-          <div className="sticky -top-4">
-            <TitleBar>Vendor Showcase</TitleBar>
+    <div className="mx-auto max-w-3xl">
+      <Panel title="Vendor Showcase" scroll bodyClassName="!p-0">
+        {loadingVendors ? (
+          <div className="flex justify-center py-8">
+            <LoadingIcon />
           </div>
-          <div className="text-sm">
-            {loadingVendors ? (
-              <LoadingIcon />
-            ) : (
-              vendorOrganizations.map((org, i) => (
-                <div
-                  key={"v-org-" + i}
-                  className={
-                    "-mx-4 px-4 py-3 bg-gray-" + (i % 2 === 0 ? "100" : "300")
-                  }
-                >
-                  <h3 className="text-xl text-gray-700 font-bold mb-2">
-                    {org.name}
-                  </h3>
-                  {org.attendees.map((vendor) => (
-                    <div className="my-2" key={"vendor-" + vendor.id}>
-                      <p className="font-bold">
-                        {vendor.first} {vendor.last}
-                      </p>
+        ) : vendorOrganizations.length > 0 ? (
+          vendorOrganizations.map((org, i) => (
+            <div key={"v-org-" + i} className={zebraRow(i)}>
+              <h3 className="mb-2 text-base font-semibold text-slate-900">
+                {org.name}
+              </h3>
+              <div className="space-y-2">
+                {org.attendees.map((vendor) => (
+                  <div key={"vendor-" + vendor.id} className="text-sm">
+                    <p className="font-medium text-slate-800">
+                      {vendor.first} {vendor.last}
+                    </p>
+                    {vendor.email && (
                       <p>
-                        <a
-                          href={`mailto:${vendor.email}`}
-                          target="_blank"
-                          className="text-blue-500 underline hover:no-underline"
-                        >
+                        <a href={`mailto:${vendor.email}`} className={ui.link}>
                           {vendor.email}
                         </a>
                       </p>
+                    )}
+                    {vendor.phone && (
                       <p>
                         <a
-                          href={`tel:+1${vendor.phone?.replace(
-                            /[-\s()]/g,
-                            ""
-                          )}`}
-                          target="_blank"
-                          className="text-blue-500 underline hover:no-underline"
+                          href={`tel:+1${vendor.phone.replace(/[-\s()]/g, "")}`}
+                          className={ui.link}
                         >
                           {vendor.phone}
                         </a>
                       </p>
-                    </div>
-                  ))}
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <p className={ui.empty}>No vendors yet registered.</p>
+        )}
+      </Panel>
     </div>
   );
 };

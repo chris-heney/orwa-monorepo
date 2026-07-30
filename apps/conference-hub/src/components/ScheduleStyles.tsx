@@ -122,24 +122,27 @@ export const printStyles = `
 // Common table header style
 export const headerStyle = {
   "& th": {
-    backgroundColor: "#262626",
-    color: "white",
-    fontWeight: 700,
-    border: "1px solid #262626",
-    padding: "6px 8px",
-    fontSize: "11px",
-    height: "24px",
-    verticalAlign: "middle"
+    backgroundColor: "#0f172a",
+    color: "#f8fafc",
+    fontWeight: 600,
+    borderBottom: "1px solid #1e293b",
+    borderRight: "1px solid rgba(148,163,184,0.25)",
+    padding: "10px 12px",
+    fontSize: "12px",
+    letterSpacing: "0.02em",
+    verticalAlign: "middle",
   },
 };
 
 // Common table cell style
 export const cellStyle = {
-  padding: "6px 8px",
+  padding: "10px 12px",
   verticalAlign: "middle",
-  border: "1px solid #ddd",
-  fontSize: "11px",
-  lineHeight: 1.2
+  borderBottom: "1px solid #e2e8f0",
+  borderRight: "1px solid #f1f5f9",
+  fontSize: "13px",
+  lineHeight: 1.4,
+  color: "#334155",
 };
 
 // Get column widths based on visible columns

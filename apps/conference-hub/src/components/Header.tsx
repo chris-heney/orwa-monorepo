@@ -11,65 +11,62 @@ const Header = ({
   const { conference, isLoggedIn, tabs } = useConferenceKioskProvider();
 
   return (
-    <div className="flex items-center justify-between max-w-6xl mx-auto space-y-3 md:space-y-0">
-      <div className="flex items-end space-x-4 ">
-        <div
-          onClick={() => (window.location.href = "https://orwa.org")}
-          className="cursor-pointer transition duration-300 transform hover:scale-105"
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <a
+          href="https://orwa.org"
+          className="shrink-0 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-950"
         >
           <img
             src="./orwa.png"
             alt="ORWA Logo"
-            className="h-30 sm:h-16 object-contain"
+            className="h-12 w-auto object-contain sm:h-14"
           />
-        </div>
-
-        <div>
-          <h1 className="text-white text-2xl md:text-4xl font-bold tracking-wider text-center md:text-left hidden sm:block">
+        </a>
+        <div className="min-w-0 hidden sm:block">
+          <p className="truncate text-lg font-semibold tracking-tight text-white sm:text-2xl">
             {conference?.name || "Fall Conference"}
-          </h1>
+          </p>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-400">
+            Conference Hub
+          </p>
         </div>
       </div>
-      <div className="flex items-center space-x-10">
-        {/* {logoUrl && (
-          <img
-            src={logoUrl}
-            alt="Conference Logo"
-            className="h-10 w-auto sm:h-16 object-contain bg-white rounded-lg p-2"
-          />
-        )} */}
+
+      <div className="flex items-center gap-3">
         {isLoggedIn && <ProfileMenu />}
-      </div>
-      {tabs.length > 0 && <div className="sm:hidden flex justify-end w-full">
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="text-white focus:outline-none"
-        >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+        {tabs.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900 p-2 text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-400 sm:hidden"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
           >
-            {isMobileMenuOpen ? (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            ) : (
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 6h16M4 12h16m-7 6h7"
-              />
-            )}
-          </svg>
-        </button>
-      </div>}
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              {isMobileMenuOpen ? (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              ) : (
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
+              )}
+            </svg>
+          </button>
+        )}
+      </div>
     </div>
   );
 };

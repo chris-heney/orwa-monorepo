@@ -4,32 +4,34 @@ import Footer from "./components/layout-footer";
 import ConferenceStatus from "./components/ConferenceStatus";
 import Sponsors from "./sections/sponsors";
 import { useConferenceKioskProvider } from "./ConferenceKioskContextProvider";
+import { ui } from "./ui/tokens";
 
 function ConferenceKiosk() {
-  const { selectedTab, conference, isAdminView, tabs} = useConferenceKioskProvider();
+  const { selectedTab, conference, isAdminView, tabs } =
+    useConferenceKioskProvider();
 
   const showSponsorMarquee =
-    (conference.status !== "Closed" &&
-      conference.status !== "Coming Soon") ||
+    (conference.status !== "Closed" && conference.status !== "Coming Soon") ||
     isAdminView;
 
   return (
-    <div>
+    <div className={ui.page}>
       <AppBar />
       {showSponsorMarquee && (
         <section
-          className="w-full bg-white shadow-md shadow-gray-300 overflow-hidden"
+          className="sponsors border-b border-slate-200 bg-white"
           aria-label="Sponsor logos"
         >
-          <Sponsors />
+          <div className={ui.container}>
+            <Sponsors />
+          </div>
         </section>
       )}
-      <section className="container mx-auto max-w-6xl px-4 py-8">
+      <main className={`${ui.container} py-8`}>
         <ConferenceStatus conference={conference} isAdminView={isAdminView} />
         {tabs[selectedTab]?.component}
-      </section>
-
-      <footer className="container mx-auto max-w-6xl px-4 py-8">
+      </main>
+      <footer className={`${ui.container} border-t border-slate-200 py-6`}>
         <Footer />
       </footer>
     </div>

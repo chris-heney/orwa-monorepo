@@ -42,8 +42,8 @@ const Schedule = () => {
   };
 
   return (
-    <main className="flex flex-col text-center">
-      <Box sx={{ color: "#000000" }}>
+    <main className="flex flex-col text-left">
+      <Box sx={{ color: "#0f172a" }}>
         <Box
           sx={{
             display: "flex",
@@ -53,14 +53,17 @@ const Schedule = () => {
         >
           <Button
             sx={{
-              backgroundColor: "#262626",
-              borderRadius: "4px",
+              backgroundColor: "#2563eb",
+              borderRadius: "0.5rem",
+              textTransform: "none",
+              fontWeight: 600,
+              boxShadow: "none",
               "&:hover": {
-                backgroundColor: "#F3F2F2",
-                color: "black",
+                backgroundColor: "#1d4ed8",
+                boxShadow: "none",
               },
               px: 2,
-              py: 0.75,
+              py: 0.9,
             }}
             size="small"
             variant="contained"
@@ -92,9 +95,11 @@ const Schedule = () => {
                 <Typography
                   variant="h6"
                   sx={{
-                    textAlign: "center",
-                    fontWeight: 700,
-                    mb: isMobile ? 1 : 0.5,
+                    textAlign: "left",
+                    fontWeight: 600,
+                    fontSize: "1.05rem",
+                    color: "#0f172a",
+                    mb: isMobile ? 1.25 : 1,
                   }}
                 >
                   {dayjs(date).format("dddd, MMMM D")}
@@ -111,16 +116,17 @@ const Schedule = () => {
                   /* Desktop Schedule Table */
                   <Table
                     size="small"
-                    padding="none"
                     sx={{
-                      "& .MuiTableCell-root": {
-                        padding: "1px 4px", // Reduced padding
-                        verticalAlign: "top",
-                      },
-                      borderCollapse: "collapse",
+                      overflow: "hidden",
+                      borderCollapse: "separate",
+                      borderSpacing: 0,
                       width: "100%",
+                      border: "1px solid #e2e8f0",
+                      borderRadius: "0.75rem",
+                      backgroundColor: "#ffffff",
+                      boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
                       "& tbody tr:hover": {
-                        backgroundColor: "rgba(0, 0, 0, 0.04)",
+                        backgroundColor: "#f8fafc",
                       },
                     }}
                   >
@@ -259,7 +265,7 @@ const Schedule = () => {
                                       sx={{
                                         height: "18px",
                                         fontSize: "0.65rem",
-                                        backgroundColor: "#007AFF",
+                                        backgroundColor: "#2563eb",
                                         color: "white",
                                         width: "auto",
                                         maxWidth: "85%",
@@ -346,7 +352,7 @@ const Schedule = () => {
                                     sx={{
                                       height: "18px",
                                       fontSize: "0.65rem",
-                                      backgroundColor: "#007AFF",
+                                      backgroundColor: "#2563eb",
                                       color: "white",
                                       width: "auto",
                                       maxWidth: "85%",

@@ -1,77 +1,73 @@
 import { Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useConferenceKioskProvider } from "../ConferenceKioskContextProvider";
+import { ui } from "../ui/tokens";
+
+const accordionSx = {
+  px: 0,
+  backgroundColor: "#ffffff",
+  "& > .MuiAccordionSummary-content": {
+    my: 0,
+    pl: 4,
+  },
+  borderBottom: "1px solid #e2e8f0",
+  ":hover": {
+    backgroundColor: "#f8fafc",
+  },
+  "& > .MuiAccordionSummary-expandIconWrapper": {
+    position: "absolute",
+    left: 8,
+  },
+};
 
 const VendorInformation = () => {
   const { conference } = useConferenceKioskProvider();
+  const items = (conference.vendor_information ?? [])
+    .filter((item) => !item.hidden)
+    .sort((a, b) => a.order - b.order);
 
   return (
-    <div className="w-full mx-auto my-2 bg-neutral-500 rounded-lg overflow-hidden text-white">
-      <div className="mb-4">
-        <h2 className="text-4xl font-bold text-center mb-2 p-2">Vendor Information</h2>
-      </div>
+    <section className={`${ui.panel} h-full`}>
+      <div className={ui.titleBar}>Vendor Information</div>
 
       {conference.booths_available < 1000 && (
-        <div className="flex flex-col mt-4">
-          <p className="text-xl font-bold">Available Booths</p>
-          <h1 className="text-7xl font-bold mb-1">{conference.booths_available}</h1>
+        <div className="border-b border-slate-100 px-4 py-4 text-left">
+          <p className={ui.subheading}>Available booths</p>
+          <p className="mt-1 text-4xl font-semibold tracking-tight text-slate-900">
+            {conference.booths_available}
+          </p>
         </div>
       )}
-      {conference.vendor_information && conference.vendor_information
-        .filter((item) => {
-          return !item.hidden;
-        })
-        .sort((a, b) => {
-          return a.order - b.order;
-        })
-        .map((item, index) => {
-          return (
-            <Accordion disableGutters square key={index}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon sx={{ color: "white", ml: 1}} />}
-                aria-controls={`panel${index}-content`}
-                id={`panel${index}-header`}
-                sx={{
-                  px: 0,
-                  " & > .MuiAccordionSummary-content": {
-                    my: 0,
-                    pl: 4,
-                  },
-                  color: "white",
-                  ":hover": {
-                    backgroundColor: "#828282",
-                  },
 
-                  backgroundColor: "#707070",
-                  " & > .MuiAccordionSummary-expandIconWrapper": {
-                    position: "absolute",
-                    left: 0,
-                  },
-                }}
+      {items.length === 0 ? (
+        <p className={ui.empty}>No vendor details published yet.</p>
+      ) : (
+        items.map((item, index) => (
+          <Accordion disableGutters elevation={0} key={index}>
+            <AccordionSummary
+              expandIcon={<ExpandMoreIcon />}
+              aria-controls={`vendor-panel${index}-content`}
+              id={`vendor-panel${index}-header`}
+              sx={accordionSx}
+            >
+              <div
+                className={`text-sm font-semibold ${
+                  item.important ? "text-red-600" : "text-slate-800"
+                }`}
               >
-                <div
-                  className={`font-bold ${
-                    item.important ? "text-red-500" : "text-white"
-                  }`}
-                >
-                  {item.title}
-                </div>
-              </AccordionSummary>
-              <AccordionDetails
-                sx={{
-                  backgroundColor: "#707070",
-                  color: "white",
-                }}
-              >
-                <div
-                  className="text-justify fetched-html-content"
-                  dangerouslySetInnerHTML={{ __html: item.description }}
-                />
-              </AccordionDetails>
-            </Accordion>
-          );
-        })}
-    </div>
+                {item.title}
+              </div>
+            </AccordionSummary>
+            <AccordionDetails sx={{ p: 2, pt: 0 }}>
+              <div
+                className="fetched-html-content"
+                dangerouslySetInnerHTML={{ __html: item.description }}
+              />
+            </AccordionDetails>
+          </Accordion>
+        ))
+      )}
+    </section>
   );
 };
 

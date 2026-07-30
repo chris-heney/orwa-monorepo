@@ -122,7 +122,7 @@ const ConferenceStatus: React.FC<ConferenceStatusProps> = ({
               >
                 <button
                   onClick={() => addToCalendar(conference)}
-                  className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   <CalendarIcon className="w-5 h-5 mr-3" />
                   Add to Calendar

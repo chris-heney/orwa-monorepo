@@ -12,44 +12,69 @@ const offlineGolfers: ITeam[] = [];
 
 const offlineFishers: ITeam[] = [];
 
+type RosterKind = "golfer" | "fisher";
+
 /**
- * Fetch data from API endpoint and transform the data into a format that can be used by the component.
- * @returns
+ * Golf/fishing used to live on contestant.type ("Golfer"/"Fisher").
+ * Registration now stores type "Contestant" and puts the sport on
+ * conference_ticket.name (e.g. "Golfer", "Fishing Tournament").
+ * Prefer ticket name; fall back to type for legacy rows.
+ */
+const resolveRosterKind = (record: IContestant): RosterKind | null => {
+  const ticketName =
+    record.conference_ticket != null &&
+    typeof record.conference_ticket === "object"
+      ? record.conference_ticket.name
+      : undefined;
+  const raw = (ticketName || record.type || "").toLowerCase();
+  if (!raw || raw === "contestant") return null;
+  if (raw === "golfer" || raw.includes("golf")) return "golfer";
+  if (raw === "fisher" || raw.includes("fish") || raw.includes("bass"))
+    return "fisher";
+  return null;
+};
+
+/**
+ * Group flat contestant records into golfer/fisher team rosters.
  */
 const transformContestants = (
-  contestants: IContestant[]
+  contestants: IContestant[] | null | undefined
 ): Record<"f" | "g", ITeam[]> => {
-  const roster: any = {
+  const roster: Record<RosterKind, ITeam[]> = {
     golfer: [],
     fisher: [],
   };
 
-  // Since the data is flat, and each record is 1 contestant, we need to group it by team
-  for (const record of contestants) {
+  for (const record of contestants ?? []) {
+    if (record == null) continue;
+
+    const kind = resolveRosterKind(record);
+    // Skip unknown/missing kinds (e.g. bare "Contestant") — never call findIndex on undefined
+    if (!kind) continue;
+
     const contestant: IContestant = {
       first: record.first,
       last: record.last,
       organization: record.organization,
-      team: record.team,
+      team: record.team ?? null,
       year: record.year,
       type: record.type,
       email: record.email,
       phone: record.phone,
       conference: record.conference,
       conference_ticket: record.conference_ticket,
-      items: record.items,
+      items: record.items ?? [],
     };
-    console.log(contestant);
-    const type: string = record.type.toLowerCase();
-    const team: string = record.team ? record.team.name : record.organization;
-    const teamIndex = roster[type].findIndex((t: any) => t.team === team);
+    const team: string =
+      record.team?.name || record.organization || "Unassigned";
+    const teamIndex = roster[kind].findIndex((t) => t.team === team);
     if (teamIndex === -1) {
-      roster[type].push({
+      roster[kind].push({
         team,
         contestants: [contestant],
       });
     } else {
-      roster[type][teamIndex].contestants.push(contestant);
+      roster[kind][teamIndex].contestants.push(contestant);
     }
   }
 
@@ -70,15 +95,11 @@ export default function Tournament() {
 
   const { data: contestants, loading: isContestantsLoading } = useGetContestants();
 
-  console.log(contestants);
   useEffect(() => {
-    if (!isContestantsLoading && contestants) {
-
+    if (!isContestantsLoading) {
       const { g, f } = transformContestants(contestants);
       setGolfers(g);
       setFishers(f);
-
-      console.log(g, f);
     }
   }, [contestants, isContestantsLoading]);
 

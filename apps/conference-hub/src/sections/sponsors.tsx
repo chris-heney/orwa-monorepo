@@ -7,39 +7,34 @@ export default function Sponsors() {
   const { data: sponsors, loading: isSponsorsLoading } = useGetSponsors();
 
   if (isSponsorsLoading) {
-    return <Loading />;
+    return (
+      <div className="flex h-24 items-center justify-center">
+        <Loading />
+      </div>
+    );
   }
 
+  const logos = sponsors.filter((sponsor) => sponsor.logo);
+
+  if (logos.length === 0) return null;
+
   return (
-    <Marquee gradient={false} direction="left" speed={50}>
-      {sponsors
-        .filter((sponsor) => {
-          return sponsor.logo;
-        })
-        .map((sponsor: ISponsor, index: number) => (
-          <div
-            key={`sponsor-${index}`}
-            className="flex justify-center items-center mx-4"
-            style={{
-              height: "200px",
-              width: "250px",
-              overflow: "hidden",
-            }}
-          >
-            <img
-              src={
-                import.meta.env.VITE_API_ENDPOINT.replace("/api", "") +
-                sponsor.logo!.url
-              }
-              alt="Sponsor Logo"
-              style={{
-                maxWidth: "100%",
-                maxHeight: "100%",
-                objectFit: "contain",
-              }}
-            />
-          </div>
-        ))}
+    <Marquee gradient gradientColor="#ffffff" gradientWidth={48} speed={40}>
+      {logos.map((sponsor: ISponsor, index: number) => (
+        <div
+          key={`sponsor-${index}`}
+          className="mx-5 flex h-24 w-40 items-center justify-center"
+        >
+          <img
+            src={
+              import.meta.env.VITE_API_ENDPOINT.replace("/api", "") +
+              sponsor.logo!.url
+            }
+            alt="Sponsor Logo"
+            className="max-h-16 max-w-full object-contain"
+          />
+        </div>
+      ))}
     </Marquee>
   );
 }
