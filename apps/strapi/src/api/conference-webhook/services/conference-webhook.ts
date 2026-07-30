@@ -376,6 +376,25 @@ export default ({ strapi }) => {
         });
       };
 
+      // Quantity extras (e.g. Mulligans) are stored as the same extra id
+      // repeated N times in the raw ids array (see AddExtras.tsx max_qty_each
+      // stepper). fetchExtrasData/fetchRegistrationAddonData dedupe via a
+      // Strapi `$in` filter, so selectedExtras only has one row per extra —
+      // the quantity must be recovered from the raw ids array so line totals
+      // (and not just the overall Total Fee) reflect what was actually charged.
+      const countExtraQty = (rawIds: any[] = [], extraId: any) =>
+        (rawIds || []).filter((id) => String(id) === String(extraId)).length ||
+        1;
+
+      const formatExtraLine = (
+        extra: any,
+        qty: number,
+        unitPrice: number
+      ) => ({
+        label: qty > 1 ? `${extra.name} &times;${qty}` : extra.name,
+        amount: unitPrice * qty,
+      });
+
       const freeVendors = () => {
         if (booths && booths.length === 1) {
           return 2;
@@ -552,14 +571,21 @@ export default ({ strapi }) => {
                 <td style="padding: 8px; border-right: 1px solid #ddd;">
                   <ul style="margin: 0; padding-left: 20px; list-style-type: disc;">
                     ${selectedExtras
-                      .map(
-                        (extra) => `
-                        <li>${extra.name} ${
+                      .map((extra) => {
+                        const qty = countExtraQty(booth.extras, extra.id);
+                        const unitPrice =
                           registrationSource === "online"
-                            ? currencyFormatter.format(extra.price_online)
-                            : currencyFormatter.format(extra.price_event)
-                        }</li>`
-                      )
+                            ? extra.price_online
+                            : extra.price_event;
+                        const { label, amount } = formatExtraLine(
+                          extra,
+                          qty,
+                          unitPrice
+                        );
+                        return `<li>${label} ${currencyFormatter.format(
+                          amount
+                        )}</li>`;
+                      })
                       .join("")}
                   </ul>
                 </td>
@@ -667,22 +693,28 @@ export default ({ strapi }) => {
                     .sort((extra) => {
                       return isExtraIncluded(ticket, extra) ? -1 : 1;
                     })
-                    .map(
-                      (extra) => `
+                    .map((extra) => {
+                      const qty = countExtraQty(ticket.extras, extra.id);
+                      const unitPrice =
+                        registrationSource === "online"
+                          ? extra.price_online
+                          : extra.price_event;
+                      const { label, amount } = formatExtraLine(
+                        extra,
+                        qty,
+                        unitPrice
+                      );
+                      return `
                       <tr>
-                        <td style="padding: 4px; border-bottom: 1px solid #ddd;">${
-                          extra.name
-                        }</td>
+                        <td style="padding: 4px; border-bottom: 1px solid #ddd;">${label}</td>
                         <td style="padding: 4px; text-align: right;">${
                           isExtraIncluded(ticket, extra)
                             ? "Included"
-                            : registrationSource === "online"
-                            ? currencyFormatter.format(extra.price_online)
-                            : currencyFormatter.format(extra.price_event)
+                            : currencyFormatter.format(amount)
                         }</td>
                       </tr>
-                    `
-                    )
+                    `;
+                    })
                     .join("")}
                 </tbody>
               </table>
@@ -713,24 +745,24 @@ export default ({ strapi }) => {
     </thead>
     <tbody>
       ${registrationAddonsDetails
-        .map(
-          (addon, index) => `
+        .map((addon, index) => {
+          const qty = countExtraQty(registrationAddonsIds, addon.id);
+          const unitPrice =
+            registrationSource === "online"
+              ? addon.price_online
+              : addon.price_event;
+          const { label, amount } = formatExtraLine(addon, qty, unitPrice);
+          return `
           <tr style="background-color:${
             index % 2 === 0 ? "#f9f9f9" : "#fff"
           }; border-bottom: 1px solid #ddd;">
-            <td style="padding: 8px; border-right: 1px solid #ddd;">${
-              addon.name
-            }</td>
+            <td style="padding: 8px; border-right: 1px solid #ddd;">${label}</td>
             <td style="padding: 8px;">
-              ${
-                registrationSource === "online"
-                  ? currencyFormatter.format(addon.price_online)
-                  : currencyFormatter.format(addon.price_event)
-              }
+              ${currencyFormatter.format(amount)}
             </td>
           </tr>
-        `
-        )
+        `;
+        })
         .join("")}
     </tbody>
   </table>
@@ -755,24 +787,24 @@ export default ({ strapi }) => {
     </thead>
     <tbody>
       ${registrationExtrasDetails
-        .map(
-          (extra, index) => `
+        .map((extra, index) => {
+          const qty = countExtraQty(registrationExtrasIds, extra.id);
+          const unitPrice =
+            registrationSource === "online"
+              ? extra.price_online
+              : extra.price_event;
+          const { label, amount } = formatExtraLine(extra, qty, unitPrice);
+          return `
           <tr style="background-color:${
             index % 2 === 0 ? "#f9f9f9" : "#fff"
           }; border-bottom: 1px solid #ddd;">
-            <td style="padding: 8px; border-right: 1px solid #ddd;">${
-              extra.name
-            }</td>
+            <td style="padding: 8px; border-right: 1px solid #ddd;">${label}</td>
             <td style="padding: 8px;">
-              ${
-                registrationSource === "online"
-                  ? currencyFormatter.format(extra.price_online)
-                  : currencyFormatter.format(extra.price_event)
-              }
+              ${currencyFormatter.format(amount)}
             </td>
           </tr>
-        `
-        )
+        `;
+        })
         .join("")}
     </tbody>
   </table>
