@@ -11,6 +11,8 @@ import { isExtraIncluded } from "../../helpers/isExtraIncluded";
 import { fetchSingleTicket } from "../../helpers/fetchSingleTicket";
 import { getExtraData } from "../../helpers/getExtraData";
 import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
+import { freeVendorAllowance } from "../../helpers/freeVendorAllowance";
+import currencyFormatter from "../../helpers/currencyFormat";
 
 interface IAddTicketComponentProps {
   setIsModalOpen: Dispatch<
@@ -52,10 +54,7 @@ const AddTicketComponent = ({
       : TicketOptions;
 
   const boothCount = watch("booths")?.length || 0;
-
-  const freeVendors = () => {
-    return boothCount === 1 ? 2 : boothCount >= 2 ? 3 : 0;
-  };
+  const freeVendors = () => freeVendorAllowance(boothCount);
 
   const resolveAbsoluteIndex = (typedIndex: number) => {
     const allTickets = getValues("tickets") as ITicketPayload[];
@@ -162,7 +161,20 @@ const AddTicketComponent = ({
                       </p>
                     </div>
                     <span className="text-base font-bold tabular-nums text-slate-900">
-                      {formatMoneyOrIncluded(ticket.price)}
+                      {type === "Vendor" && ticketIndex < freeVendors() ? (
+                        <span className="inline-flex items-baseline gap-1.5">
+                          <span className="font-normal text-slate-400 line-through">
+                            {currencyFormatter.format(
+                              registrationSource === "online"
+                                ? ticket.ticket_type?.price_online || 0
+                                : ticket.ticket_type?.price_event || 0
+                            )}
+                          </span>
+                          <span>{currencyFormatter.format(0)}</span>
+                        </span>
+                      ) : (
+                        formatMoneyOrIncluded(ticket.price)
+                      )}
                     </span>
                   </div>
 
@@ -171,13 +183,24 @@ const AddTicketComponent = ({
                       <span>{ticket.ticket_type?.name || "N/A"}</span>
                       <span className="tabular-nums text-slate-800">
                         {ticket.ticket_type?.name === "Vendor" &&
-                        ticketIndex + 1 <= freeVendors()
-                          ? "Included"
-                          : formatMoneyOrIncluded(
-                              registrationSource === "online"
-                                ? ticket.ticket_type?.price_online
-                                : ticket.ticket_type?.price_event
-                            )}
+                        ticketIndex < freeVendors() ? (
+                          <span className="inline-flex items-baseline gap-1.5">
+                            <span className="text-slate-400 line-through">
+                              {currencyFormatter.format(
+                                registrationSource === "online"
+                                  ? ticket.ticket_type?.price_online || 0
+                                  : ticket.ticket_type?.price_event || 0
+                              )}
+                            </span>
+                            <span>{currencyFormatter.format(0)}</span>
+                          </span>
+                        ) : (
+                          formatMoneyOrIncluded(
+                            registrationSource === "online"
+                              ? ticket.ticket_type?.price_online
+                              : ticket.ticket_type?.price_event
+                          )
+                        )}
                       </span>
                     </li>
                     {ticket.extras?.map((extra: string | number, extraIndex: number) => {

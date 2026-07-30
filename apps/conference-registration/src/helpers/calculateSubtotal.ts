@@ -5,6 +5,7 @@ import {
   ITicketPayload,
 } from "../types/types";
 import { getExtraData } from "./getExtraData";
+import { applyFreeVendorPricing } from "./applyFreeVendorPricing";
 
 export const calculateSubtotal = (
   payload: IRegistrationPayload,
@@ -24,7 +25,17 @@ export const calculateSubtotal = (
 
   let subtotal = 0;
 
-  tickets.forEach((ticket: ITicketPayload) => {
+  // Re-apply booth-bundled free Vendor pricing from current booth count so
+  // stale ticket.price values (saved before a booth was added) cannot inflate
+  // the charged total.
+  const pricedTickets = applyFreeVendorPricing(
+    tickets ?? [],
+    booths?.length ?? 0,
+    registrationSource,
+    extraOptions
+  );
+
+  pricedTickets.forEach((ticket: ITicketPayload) => {
     subtotal += ticket.price;
   });
 

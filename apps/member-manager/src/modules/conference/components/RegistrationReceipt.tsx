@@ -14,6 +14,8 @@ import { Grid, Typography, Box, Chip } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
 import { ISharedMeta } from "../types/IConference";
 import { formatNumber } from "../../../helpers/Formators";
+import { freeVendorAllowance } from "../helpers/freeVendorAllowance";
+import AttendeeTicketPriceField from "./AttendeeTicketPriceField";
 
 // interface IRegistrant {
 //   id: number;
@@ -58,6 +60,9 @@ const RegistrationReceipt = () => {
   const { record } = useShowContext();
 
   if (!record) return <Typography>Loading...</Typography>;
+
+  const boothCount = Array.isArray(record.booths) ? record.booths.length : 0;
+  const freeVendorSlots = freeVendorAllowance(boothCount);
 
   return (
     <Box p={4} maxWidth="lg" mx="auto">
@@ -159,6 +164,13 @@ const RegistrationReceipt = () => {
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Attendees ({record.attendees.length})
           </Typography>
+          {freeVendorSlots > 0 && (
+            <Typography variant="body2" color="text.secondary" mb={1}>
+              First {freeVendorSlots} Vendor ticket
+              {freeVendorSlots === 1 ? "" : "s"} included with booth
+              registration (shown as struck-through list price).
+            </Typography>
+          )}
           <ReferenceArrayField
             source="attendees"
             reference="conference-attendees"
@@ -178,16 +190,12 @@ const RegistrationReceipt = () => {
               >
                 <TextField source="name" label="Ticket Type" />
               </ReferenceField>
-              <ReferenceField
-                source="conference_ticket"
-                reference="conference-tickets"
-              >
-                <NumberField
-                  source="price_online"
-                  label="Price"
-                  options={CurrencyOptions}
-                />
-              </ReferenceField>
+              <FunctionField
+                label="Price"
+                render={() => (
+                  <AttendeeTicketPriceField boothCount={boothCount} />
+                )}
+              />
               <FunctionField
                 sx={{ display: "flex", gap: "5px" , flexWrap: "wrap" }}
                 label="Items"

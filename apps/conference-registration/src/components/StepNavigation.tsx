@@ -13,6 +13,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { useNotify } from "mj-react-form-builder";
 import { IRegistrationPayload, ITicketPayload } from "../types/types";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
+import { applyFreeVendorPricing } from "../helpers/applyFreeVendorPricing";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import {
   clearWizardDraft,
@@ -432,12 +433,15 @@ const StepNavigation = () => {
     // consent — the webhook's per-ticket `promotional_emails` field is left
     // undefined for them, consistent with the existing schema (optional
     // boolean on conference-attendee).
-    processedPayload.tickets = (
-      (processedPayload.tickets ?? []) as ITicketPayload[]
-    ).map((ticket) =>
-      ticket.type === "Attendee"
-        ? { ...ticket, promotional_emails: payload.promotional_emails }
-        : { ...ticket, promotional_emails: undefined }
+    processedPayload.tickets = applyFreeVendorPricing(
+      ((processedPayload.tickets ?? []) as ITicketPayload[]).map((ticket) =>
+        ticket.type === "Attendee"
+          ? { ...ticket, promotional_emails: payload.promotional_emails }
+          : { ...ticket, promotional_emails: undefined }
+      ),
+      (processedPayload.booths ?? []).length,
+      registrationSource,
+      ExtraOptions
     );
 
     // Format card expiration from MM/YY to YYYY-MM

@@ -23,6 +23,10 @@ import {
   formatExtrasConfirmList,
   getUncheckedOptionalExtras,
 } from "../../helpers/getUncheckedOptionalExtras";
+import {
+  freeVendorAllowance,
+  vendorOrdinalAtIndex,
+} from "../../helpers/freeVendorAllowance";
 
 interface ITicketModalProps {
   setIsOpen: React.Dispatch<
@@ -57,10 +61,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   const { control, watch, setValue, trigger } = useFormContext();
 
   const boothCount = watch("booths")?.length || 0;
-
-  const freeVendors = () => {
-    return boothCount === 1 ? 2 : boothCount >= 2 ? 3 : 0;
-  };
+  const freeVendors = () => freeVendorAllowance(boothCount);
 
   const { append, update, remove } = useFieldArray({
     control,
@@ -190,7 +191,10 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     );
     let ticketPrice = 0;
 
-    if (type === "Vendor" && freeVendors() > 0 && ticketIndex < freeVendors()) {
+    // Use vendor-relative ordinal (not absolute tickets[] index) so mixed
+    // ticket arrays still compensate the first N Vendor reps.
+    const vendorOrdinal = vendorOrdinalAtIndex(tickets, ticketIndex);
+    if (type === "Vendor" && vendorOrdinal < freeVendors()) {
       ticketPrice = 0; // Free ticket
     } else {
       ticketPrice =

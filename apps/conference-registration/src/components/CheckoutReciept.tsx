@@ -13,6 +13,10 @@ import { getExtraData } from "../helpers/getExtraData";
 import { boothBasePrice } from "../helpers/boothBasePrice";
 import { formatTicketLineLabel } from "../helpers/formatTicketLineLabel";
 import {
+  freeVendorAllowance,
+  vendorOrdinalAtIndex,
+} from "../helpers/freeVendorAllowance";
+import {
   IRegistrationPayload,
   ITicketPayload,
   ISponsorPayload,
@@ -38,7 +42,7 @@ const LineItem = ({
   value,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   index?: number;
 }) => (
   <div className="flex items-center justify-between gap-3 py-2">
@@ -49,6 +53,15 @@ const LineItem = ({
   </div>
 );
 
+const CompensatedMoney = ({ listPrice }: { listPrice: number }) => (
+  <span className="inline-flex items-baseline gap-1.5">
+    <span className="font-normal text-slate-400 line-through">
+      {currencyFormatter.format(listPrice)}
+    </span>
+    <span>{currencyFormatter.format(0)}</span>
+  </span>
+);
+
 const CheckoutReceipt = () => {
   const { ConferenceOptions, ExtraOptions, RegistrationAddons } =
     useRegistrationOptions();
@@ -57,10 +70,7 @@ const CheckoutReceipt = () => {
   const [expanded, setExpanded] = useState<boolean>(true);
 
   const boothCount = watch("booths")?.length || 0;
-
-  const freeVendors = () => {
-    return boothCount === 1 ? 2 : boothCount >= 2 ? 3 : 0;
-  };
+  const freeVendorSlots = freeVendorAllowance(boothCount);
 
   if (!ConferenceOptions) return null;
 
@@ -84,6 +94,23 @@ const CheckoutReceipt = () => {
       ExtraOptions
     )
   );
+
+  const ticketLineValue = (ticket: ITicketPayload, index: number) => {
+    const isVendor = ticket.type === "Vendor";
+    const listPrice =
+      registrationSource === "online"
+        ? ticket.ticket_type?.price_online || 0
+        : ticket.ticket_type?.price_event || 0;
+    const compensated =
+      isVendor && vendorOrdinalAtIndex(tickets, index) < freeVendorSlots;
+
+    if (compensated) {
+      return <CompensatedMoney listPrice={listPrice} />;
+    }
+
+    // ticket.price includes paid extras; show that charged amount for the line
+    return formatMoneyOrIncluded(ticket.price);
+  };
 
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -146,12 +173,7 @@ const CheckoutReceipt = () => {
                   <LineItem
                     index={index}
                     label={formatTicketLineLabel(ticket)}
-                    value={
-                      ticket.ticket_type.context === "Vendor" &&
-                      freeVendors() > 0
-                        ? "Included"
-                        : formatMoneyOrIncluded(ticket.price)
-                    }
+                    value={ticketLineValue(ticket, index)}
                   />
                   {ticket.extras.map((extra, extraIndex) => {
                     const currentExtra = getExtraData(ExtraOptions, extra);
