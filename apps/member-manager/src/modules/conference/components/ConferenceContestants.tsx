@@ -18,11 +18,10 @@ import {
   useUpdate,
   useCreate,
   FunctionField,
-  ChipField,
   required,
   useListContext,
 } from "react-admin";
-import { Button, Divider, Grid, Typography } from "@mui/material";
+import { Button, Chip, Divider, Grid, Typography } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
 import { ConferenceContext } from "../ConferenceContext";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
@@ -253,20 +252,35 @@ const ConferenceContestants = () => {
           sortable={false}
         />
         <FunctionField
-          sx={{ display: "flex", gap: "5px" }}
+          sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}
           label="Items"
           sortBy="items.label"
           render={(record: RaRecord) => {
-            return record?.items?.map((item: ISharedMeta, index: number) => {
-              return (
-                <ChipField
-                  key={`item-${record.id}-${item.key + " " + index}`}
-                  record={item}
-                  source="label"
-                  label={item.label}
-                />
-              );
-            });
+            // Quantity extras are stored as one field-meta row per unit —
+            // group by item/label and show Mulligan (x4), etc.
+            const grouped = new Map<
+              string,
+              { label: string; count: number }
+            >();
+            for (const item of (record?.items ?? []) as ISharedMeta[]) {
+              const label = (item.label || item.key || "Item").trim();
+              const itemRef = item.item as { id?: number | string } | number | string | null;
+              const itemId =
+                itemRef != null && typeof itemRef === "object"
+                  ? itemRef.id
+                  : itemRef;
+              const groupKey = String(itemId ?? label);
+              const existing = grouped.get(groupKey);
+              if (existing) existing.count += 1;
+              else grouped.set(groupKey, { label, count: 1 });
+            }
+            return [...grouped.entries()].map(([groupKey, { label, count }]) => (
+              <Chip
+                key={`item-${record.id}-${groupKey}`}
+                size="small"
+                label={`${label} (x${count})`}
+              />
+            ));
           }}
         />
 

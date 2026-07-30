@@ -792,13 +792,27 @@ export default ({ strapi }) => {
         conference,
         contestant.extras
       );
-
-      const contestantExtras = selectedExtras.map((extra, index) => ({
-        key: extra.name + " " + index,
-        value: registrationSource === "online" ? extra.price_online.toString() : extra.price_event.toString(),
-        label: extra.name,
-        item: extra.id,
-      }));
+      // Quantity extras (e.g. Mulligans) arrive as repeated IDs in
+      // contestant.extras. fetchExtrasData de-dupes via $in — expand back to
+      // one field-meta row per unit so the Contestants grid can show (xN).
+      const extrasById = new Map(
+        selectedExtras.map((extra) => [extra.id, extra])
+      );
+      const contestantExtras = (contestant.extras || [])
+        .map((extraId, index) => {
+          const extra = extrasById.get(extraId);
+          if (!extra) return null;
+          return {
+            key: extra.name + " " + index,
+            value:
+              registrationSource === "online"
+                ? extra.price_online.toString()
+                : extra.price_event.toString(),
+            label: extra.name,
+            item: extra.id,
+          };
+        })
+        .filter(Boolean);
 
       const newContestant = {
         conference,
