@@ -129,11 +129,12 @@ export const useGetApplicationId = () => {
 
 export const useGetMemberships = (context: "Watersystem" | "Associate") => {
   return useQuery({
-    queryKey: ["memberships"],
+    queryKey: ["memberships", context],
     queryFn: async () =>
       _get(
         "memberships",
-        `?pagination[limit]=1000&populate=*&filter[context]=${context}`
+        // Strapi 5 flat records — filter server-side; UI also filters by context.
+        `?pagination[limit]=1000&populate=*&filters[context][$eq]=${context}`
       ),
   });
 };

@@ -160,6 +160,27 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
   };
 
   /**
+   * Strapi 5 Draft & Publish: draft and published rows share a documentId but
+   * have different numeric ids. If a getOne/update round-trip returns the
+   * sibling version, react-admin's useEditController throws. Keep the id the
+   * client requested when the document is clearly the same entity.
+   */
+  private alignRecordId = (
+    data: RaRecord,
+    requestedId: Identifier | undefined
+  ): RaRecord => {
+    if (requestedId == null || data == null) return data;
+    if (String(data.id) === String(requestedId)) return data;
+    const asNumber =
+      typeof requestedId === "number"
+        ? requestedId
+        : /^\d+$/.test(String(requestedId))
+        ? Number(requestedId)
+        : requestedId;
+    return { ...data, id: asNumber };
+  };
+
+  /**
    * Provides React Admin compatible response from Strapi response. Handles: Single Relationship, Has Many
    * Relationship, Component, Repeatable Component and Multimedia.
    *
@@ -782,7 +803,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
               ? this.formatResponseRaw(json.data as IStrapiRecord)
               : this.formatResponseRA(json.data as IStrapiRecord);
 
-          return { data };
+          return { data: this.alignRecordId(data, params.id) };
         });
         
         // Cache the result
@@ -933,7 +954,10 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
           });
 
           // Format response
-          const data = this.formatResponseRA(json.data as IStrapiRecord);
+          const data = this.alignRecordId(
+            this.formatResponseRA(json.data as IStrapiRecord),
+            params.id
+          );
           return { data };
         });
       },

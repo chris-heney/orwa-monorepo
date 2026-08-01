@@ -7,7 +7,9 @@ import type { Core } from '@strapi/strapi';
  * pre-migration client (member-manager, grant apps, external integrations)
  * still calls `/api/<plural>/<numericId>`. This middleware transparently
  * rewrites numeric-id detail URLs to the entry's documentId so those clients
- * keep working unchanged.
+ * keep working unchanged. For Draft & Publish types it also pins
+ * `status=draft|published` from the resolved row so the returned numeric id
+ * matches the one requested (draft/published siblings share a documentId).
  *
  * It also rewrites numeric relation ids inside POST/PUT bodies to documentIds,
  * but only for relations targeting draft-and-publish content types. Strapi 5's
@@ -128,6 +130,28 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
     }
   };
 
+  /**
+   * Draft & Publish content types have TWO rows per document (draft + published)
+   * with different numeric `id`s but the same `documentId`. Rewriting
+   * `/api/foo/7` → `/api/foo/<documentId>` without a `status` makes Strapi's
+   * Content API return the published sibling by default — so a request for
+   * draft id 7 comes back as published id 17. react-admin's useEditController
+   * then throws: "Fetched record's id attribute (17) must match requested id (7)".
+   *
+   * Pin `status` from the row we resolved so the returned numeric id matches
+   * what the client asked for. Leave an explicit caller-supplied status alone.
+   */
+  const withStatusFromRow = (search: string, publishedAt: unknown): string => {
+    const params = new URLSearchParams(
+      search.startsWith('?') ? search.slice(1) : search
+    );
+    if (!params.has('status')) {
+      params.set('status', publishedAt ? 'published' : 'draft');
+    }
+    const qs = params.toString();
+    return qs ? `?${qs}` : '';
+  };
+
   return async (ctx: any, next: () => Promise<void>) => {
     const match = ctx.path.match(/^\/api\/([a-z0-9-]+)(?:\/([^/?]+))?(\/.*)?$/i);
 
@@ -141,10 +165,13 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
           try {
             const row = await strapi.db
               .query(uid as any)
-              .findOne({ where: { id: Number(entryId) }, select: ['documentId'] });
+              .findOne({
+                where: { id: Number(entryId) },
+                select: ['documentId', 'publishedAt'],
+              });
 
             if (row?.documentId) {
-              const search = ctx.search || '';
+              const search = withStatusFromRow(ctx.search || '', row.publishedAt);
               ctx.url = `/api/${plural}/${row.documentId}${rest}${search}`;
             }
           } catch {

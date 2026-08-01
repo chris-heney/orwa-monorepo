@@ -20,7 +20,7 @@ const MembershipForm = () => {
               <NumberInput source="price" label="Price" helperText={false} fullWidth />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <ReferenceArrayInput source="items" label="Items" reference="membership-items">
+              <ReferenceArrayInput source="membership_items" label="Items" reference="membership-items">
                 <AutocompleteArrayInput optionText="name" />
               </ReferenceArrayInput>
             </Grid>
