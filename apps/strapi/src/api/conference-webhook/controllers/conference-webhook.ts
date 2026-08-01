@@ -795,8 +795,9 @@ export default ({ strapi }) => {
       // Quantity extras (e.g. Mulligans) arrive as repeated IDs in
       // contestant.extras. fetchExtrasData de-dupes via $in — expand back to
       // one field-meta row per unit so the Contestants grid can show (xN).
-      const extrasById = new Map(
-        selectedExtras.map((extra) => [extra.id, extra])
+      // findMany is untyped here; annotate so Map values aren't `unknown`.
+      const extrasById = new Map<number, any>(
+        selectedExtras.map((extra: any) => [extra.id, extra])
       );
       const contestantExtras = (contestant.extras || [])
         .map((extraId, index) => {
