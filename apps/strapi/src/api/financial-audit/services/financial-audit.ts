@@ -30,11 +30,21 @@ export default ({ strapi }) => ({
         )
       )
       .from(entity)
-      .where("payment_last_date", "<", cutoff)
-      .andWhere(strapi.db.connection.raw(`DATEDIFF('${cutoff}', payment_last_date)`), '<', 365)
-      .orWhere("payment_previous_date", "<", cutoff)
-      .andWhere("payment_previous_date", ">", cutoff)
-      .andWhere(strapi.db.connection.raw(`DATEDIFF('${cutoff}', payment_previous_date)`), '<', 365)
+      .where('payment_last_date', '<', cutoff)
+      .andWhere(
+        strapi.db.connection.raw(`DATEDIFF('${cutoff}', payment_last_date)`),
+        '<',
+        365
+      )
+      .orWhere('payment_previous_date', '<', cutoff)
+      .andWhere('payment_previous_date', '>', cutoff)
+      .andWhere(
+        strapi.db.connection.raw(
+          `DATEDIFF('${cutoff}', payment_previous_date)`
+        ),
+        '<',
+        365
+      );
 
     console.log(result.toSQL().sql);
     return result;

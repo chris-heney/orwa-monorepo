@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
-import { Box, Typography } from "@mui/material";
-import { Loading } from "react-admin";
-import { DateField } from "@mui/x-date-pickers";
-import dayjs, { Dayjs } from "dayjs";
-import httpClient from "../../helpers/ra-strapi-data-provider/src/httpClient";
-import SectionLabel from "./summary/SectionLabel";
-import { MetricChip } from "./summary/MetricChip";
-import { display, money, useSummaryTokens } from "./summary/tokens";
+import React, { useEffect } from 'react';
+import { Box, Typography } from '@mui/material';
+import { Loading } from 'react-admin';
+import { DateField } from '@mui/x-date-pickers';
+import dayjs, { Dayjs } from 'dayjs';
+import httpClient from '../../helpers/ra-strapi-data-provider/src/httpClient';
+import SectionLabel from './summary/SectionLabel';
+import { MetricChip } from './summary/MetricChip';
+import { display, money, useSummaryTokens } from './summary/tokens';
 
 interface IFinancialAudit {
   unearnedTotal: number;
@@ -47,7 +47,11 @@ const FinancialAuditDashboard = () => {
   useEffect(() => {
     setLoadError(null);
     httpClient(
-      `${import.meta.env.VITE_API_ENDPOINT}/api/financial-audit/get-unearned-dues?fromDate=${fromDate.format("YYYY-MM-DD")}`
+      `${
+        import.meta.env.VITE_API_ENDPOINT
+      }/api/financial-audit/get-unearned-dues?fromDate=${fromDate.format(
+        'YYYY-MM-DD'
+      )}`
     )
       .then((response) => {
         setFinancialAuditTotals(
@@ -55,7 +59,7 @@ const FinancialAuditDashboard = () => {
         );
       })
       .catch(() => {
-        setLoadError("Could not load financial audit totals.");
+        setLoadError('Could not load financial audit totals.');
         setFinancialAuditTotals(undefined);
       });
   }, [fromDate]);
@@ -68,63 +72,65 @@ const FinancialAuditDashboard = () => {
     );
   }
 
-  if (typeof financialAuditTotals === "undefined") {
+  if (typeof financialAuditTotals === 'undefined') {
     return <Loading />;
   }
 
-  const rangeLabel = `${fromDate.subtract(1, "year").format("MMM D, YYYY")} – ${fromDate.format("MMM D, YYYY")}`;
+  const rangeLabel = `${fromDate
+    .subtract(1, 'year')
+    .format('MMM D, YYYY')} – ${fromDate.format('MMM D, YYYY')}`;
 
   const slices: AuditSlice[] = [
     {
-      label: "Unearned membership dues",
+      label: 'Unearned membership dues',
       watersystems: financialAuditTotals.watersystems.unearnedTotal,
       associates: financialAuditTotals.associates.unearnedTotal,
       total: financialAuditTotals.total.unearnedTotal,
       toneWs: T.water,
       toneAssoc: T.committed,
       toneTotal: T.exit,
-      hint: "Dues recognized as revenue that still cover future periods (deferred)",
+      hint: 'Dues recognized as revenue that still cover future periods (deferred)',
     },
     {
-      label: "Collected membership dues",
+      label: 'Collected membership dues',
       watersystems: financialAuditTotals.watersystems.collectedTotal,
       associates: financialAuditTotals.associates.collectedTotal,
       total: financialAuditTotals.total.collectedTotal,
       toneWs: T.water,
       toneAssoc: T.committed,
       toneTotal: T.inflow,
-      hint: "Cash collected for membership dues in the attribution window",
+      hint: 'Cash collected for membership dues in the attribution window',
     },
     {
-      label: "Average daily unearned",
+      label: 'Average daily unearned',
       watersystems: financialAuditTotals.watersystems.unearnedDailyAverage,
       associates: financialAuditTotals.associates.unearnedDailyAverage,
       total: financialAuditTotals.total.unearnedDailyAverage,
       toneWs: T.water,
       toneAssoc: T.committed,
       toneTotal: T.violet,
-      hint: "Unearned total spread across days in the attribution window",
+      hint: 'Unearned total spread across days in the attribution window',
     },
     {
-      label: "Average daily collected",
+      label: 'Average daily collected',
       watersystems: financialAuditTotals.watersystems.collectedDailyAverage,
       associates: financialAuditTotals.associates.collectedDailyAverage,
       total: financialAuditTotals.total.collectedDailyAverage,
       toneWs: T.water,
       toneAssoc: T.committed,
       toneTotal: T.inflow,
-      hint: "Collected total spread across days in the attribution window",
+      hint: 'Collected total spread across days in the attribution window',
     },
   ];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       <Box
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
           gap: 2,
         }}
       >
@@ -151,7 +157,7 @@ const FinancialAuditDashboard = () => {
             minWidth: 220,
             px: 1.75,
             py: 1.25,
-            borderRadius: "12px",
+            borderRadius: '12px',
             border: `1px solid ${T.line}`,
             backgroundColor: T.panel,
           }}
@@ -160,8 +166,8 @@ const FinancialAuditDashboard = () => {
             sx={{
               fontSize: 10.5,
               fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               color: T.textLo,
               mb: 0.75,
             }}
@@ -174,14 +180,14 @@ const FinancialAuditDashboard = () => {
             onChange={(d) => d && setFromDate(d as Dayjs)}
             fullWidth
             sx={{
-              "& .MuiOutlinedInput-root": {
+              '& .MuiOutlinedInput-root': {
                 color: T.textHi,
                 backgroundColor: T.panelSoft,
-                "& fieldset": { borderColor: T.line },
-                "&:hover fieldset": { borderColor: T.water },
+                '& fieldset': { borderColor: T.line },
+                '&:hover fieldset': { borderColor: T.water },
               },
-              "& .MuiInputLabel-root": { color: T.textLo },
-              "& .MuiInputLabel-root.Mui-focused": { color: T.water },
+              '& .MuiInputLabel-root': { color: T.textLo },
+              '& .MuiInputLabel-root.Mui-focused': { color: T.water },
             }}
           />
         </Box>
@@ -190,18 +196,18 @@ const FinancialAuditDashboard = () => {
       {/* Hero totals */}
       <Box
         sx={{
-          display: "flex",
+          display: 'flex',
           gap: 1.5,
-          flexWrap: "wrap",
-          alignItems: "stretch",
+          flexWrap: 'wrap',
+          alignItems: 'stretch',
         }}
       >
         <Box
           sx={{
-            flex: "1 1 240px",
+            flex: '1 1 240px',
             px: 2,
             py: 1.5,
-            borderRadius: "14px",
+            borderRadius: '14px',
             border: `1px solid ${T.line}`,
             background: `linear-gradient(120deg, ${T.exit}22, ${T.panel} 55%)`,
           }}
@@ -210,8 +216,8 @@ const FinancialAuditDashboard = () => {
             sx={{
               fontSize: 10.5,
               fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               color: T.textLo,
             }}
           >
@@ -223,7 +229,7 @@ const FinancialAuditDashboard = () => {
               fontSize: 28,
               fontWeight: 700,
               color: T.textHi,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             {money(financialAuditTotals.total.unearnedTotal)}
@@ -231,10 +237,10 @@ const FinancialAuditDashboard = () => {
         </Box>
         <Box
           sx={{
-            flex: "1 1 240px",
+            flex: '1 1 240px',
             px: 2,
             py: 1.5,
-            borderRadius: "14px",
+            borderRadius: '14px',
             border: `1px solid ${T.line}`,
             background: `linear-gradient(120deg, ${T.inflow}22, ${T.panel} 55%)`,
           }}
@@ -243,8 +249,8 @@ const FinancialAuditDashboard = () => {
             sx={{
               fontSize: 10.5,
               fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               color: T.textLo,
             }}
           >
@@ -256,7 +262,7 @@ const FinancialAuditDashboard = () => {
               fontSize: 28,
               fontWeight: 700,
               color: T.textHi,
-              fontVariantNumeric: "tabular-nums",
+              fontVariantNumeric: 'tabular-nums',
             }}
           >
             {money(financialAuditTotals.total.collectedTotal)}
@@ -267,7 +273,7 @@ const FinancialAuditDashboard = () => {
       {slices.map((slice) => (
         <Box key={slice.label}>
           <SectionLabel>{slice.label}</SectionLabel>
-          <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
+          <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap' }}>
             <MetricChip
               label="Water Systems"
               value={slice.watersystems}
@@ -293,11 +299,13 @@ const FinancialAuditDashboard = () => {
         </Box>
       ))}
 
-      <Typography sx={{ fontSize: 11, color: T.textFaint, fontStyle: "italic" }}>
-        Glossary · Unearned dues are the deferred portion of membership
-        payments still covering future service days. Collected is cash taken in
-        during the rolling year ending on the attribution date. Daily averages
-        divide those totals by days in the window.
+      <Typography
+        sx={{ fontSize: 11, color: T.textFaint, fontStyle: 'italic' }}
+      >
+        Glossary · Unearned dues are the deferred portion of membership payments
+        still covering future service days. Collected is cash taken in during
+        the rolling year ending on the attribution date. Daily averages divide
+        those totals by days in the window.
       </Typography>
     </Box>
   );
