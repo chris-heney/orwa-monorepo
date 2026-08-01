@@ -1,12 +1,12 @@
-import React, { useEffect } from "react";
-import { Box, Typography } from "@mui/material";
-import { Loading } from "react-admin";
-import { DateField } from "@mui/x-date-pickers";
-import dayjs, { Dayjs } from "dayjs";
-import httpClient from "../../helpers/ra-strapi-data-provider/src/httpClient";
-import SectionLabel from "./summary/SectionLabel";
-import { MetricChip } from "./summary/MetricChip";
-import { display, money, useSummaryTokens } from "./summary/tokens";
+import React, { useEffect } from 'react';
+import { Box, Typography } from '@mui/material';
+import { Loading } from 'react-admin';
+import { DateField } from '@mui/x-date-pickers';
+import dayjs, { Dayjs } from 'dayjs';
+import httpClient from '../../helpers/ra-strapi-data-provider/src/httpClient';
+import SectionLabel from './summary/SectionLabel';
+import { MetricChip } from './summary/MetricChip';
+import { display, money, useSummaryTokens } from './summary/tokens';
 
 interface IFinancialAudit {
   unearnedTotal: number;
@@ -45,86 +45,89 @@ const FinancialAuditDashboard = () => {
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
     setLoadError(null);
+    setFinancialAuditTotals(undefined);
     httpClient(
-      `${import.meta.env.VITE_API_ENDPOINT}/api/financial-audit/get-unearned-dues?fromDate=${fromDate.format("YYYY-MM-DD")}`
+      `${
+        import.meta.env.VITE_API_ENDPOINT
+      }/api/financial-audit/get-unearned-dues?fromDate=${fromDate.format(
+        'YYYY-MM-DD'
+      )}`
     )
       .then((response) => {
+        if (cancelled) return;
         setFinancialAuditTotals(
           JSON.parse(response.body) as IFinancialAuditTotals
         );
       })
       .catch(() => {
-        setLoadError("Could not load financial audit totals.");
+        if (cancelled) return;
+        setLoadError('Could not load financial audit totals.');
         setFinancialAuditTotals(undefined);
       });
+    return () => {
+      cancelled = true;
+    };
   }, [fromDate]);
 
-  if (loadError) {
-    return (
-      <Box sx={{ py: 3, color: T.exit }}>
-        <Typography>{loadError}</Typography>
-      </Box>
-    );
-  }
+  const rangeLabel = `${fromDate
+    .subtract(1, 'year')
+    .format('MMM D, YYYY')} – ${fromDate.format('MMM D, YYYY')}`;
 
-  if (typeof financialAuditTotals === "undefined") {
-    return <Loading />;
-  }
-
-  const rangeLabel = `${fromDate.subtract(1, "year").format("MMM D, YYYY")} – ${fromDate.format("MMM D, YYYY")}`;
-
-  const slices: AuditSlice[] = [
-    {
-      label: "Unearned membership dues",
-      watersystems: financialAuditTotals.watersystems.unearnedTotal,
-      associates: financialAuditTotals.associates.unearnedTotal,
-      total: financialAuditTotals.total.unearnedTotal,
-      toneWs: T.water,
-      toneAssoc: T.committed,
-      toneTotal: T.exit,
-      hint: "Dues recognized as revenue that still cover future periods (deferred)",
-    },
-    {
-      label: "Collected membership dues",
-      watersystems: financialAuditTotals.watersystems.collectedTotal,
-      associates: financialAuditTotals.associates.collectedTotal,
-      total: financialAuditTotals.total.collectedTotal,
-      toneWs: T.water,
-      toneAssoc: T.committed,
-      toneTotal: T.inflow,
-      hint: "Cash collected for membership dues in the attribution window",
-    },
-    {
-      label: "Average daily unearned",
-      watersystems: financialAuditTotals.watersystems.unearnedDailyAverage,
-      associates: financialAuditTotals.associates.unearnedDailyAverage,
-      total: financialAuditTotals.total.unearnedDailyAverage,
-      toneWs: T.water,
-      toneAssoc: T.committed,
-      toneTotal: T.violet,
-      hint: "Unearned total spread across days in the attribution window",
-    },
-    {
-      label: "Average daily collected",
-      watersystems: financialAuditTotals.watersystems.collectedDailyAverage,
-      associates: financialAuditTotals.associates.collectedDailyAverage,
-      total: financialAuditTotals.total.collectedDailyAverage,
-      toneWs: T.water,
-      toneAssoc: T.committed,
-      toneTotal: T.inflow,
-      hint: "Collected total spread across days in the attribution window",
-    },
-  ];
+  const slices: AuditSlice[] = financialAuditTotals
+    ? [
+        {
+          label: 'Unearned membership dues',
+          watersystems: financialAuditTotals.watersystems.unearnedTotal,
+          associates: financialAuditTotals.associates.unearnedTotal,
+          total: financialAuditTotals.total.unearnedTotal,
+          toneWs: T.water,
+          toneAssoc: T.committed,
+          toneTotal: T.exit,
+          hint: 'Dues recognized as revenue that still cover future periods (deferred)',
+        },
+        {
+          label: 'Collected membership dues',
+          watersystems: financialAuditTotals.watersystems.collectedTotal,
+          associates: financialAuditTotals.associates.collectedTotal,
+          total: financialAuditTotals.total.collectedTotal,
+          toneWs: T.water,
+          toneAssoc: T.committed,
+          toneTotal: T.inflow,
+          hint: 'Cash collected for membership dues in the attribution window',
+        },
+        {
+          label: 'Average daily unearned',
+          watersystems: financialAuditTotals.watersystems.unearnedDailyAverage,
+          associates: financialAuditTotals.associates.unearnedDailyAverage,
+          total: financialAuditTotals.total.unearnedDailyAverage,
+          toneWs: T.water,
+          toneAssoc: T.committed,
+          toneTotal: T.violet,
+          hint: 'Unearned total spread across days in the attribution window',
+        },
+        {
+          label: 'Average daily collected',
+          watersystems: financialAuditTotals.watersystems.collectedDailyAverage,
+          associates: financialAuditTotals.associates.collectedDailyAverage,
+          total: financialAuditTotals.total.collectedDailyAverage,
+          toneWs: T.water,
+          toneAssoc: T.committed,
+          toneTotal: T.inflow,
+          hint: 'Collected total spread across days in the attribution window',
+        },
+      ]
+    : [];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       <Box
         sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "flex-end",
-          justifyContent: "space-between",
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
           gap: 2,
         }}
       >
@@ -151,7 +154,7 @@ const FinancialAuditDashboard = () => {
             minWidth: 220,
             px: 1.75,
             py: 1.25,
-            borderRadius: "12px",
+            borderRadius: '12px',
             border: `1px solid ${T.line}`,
             backgroundColor: T.panel,
           }}
@@ -160,8 +163,8 @@ const FinancialAuditDashboard = () => {
             sx={{
               fontSize: 10.5,
               fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase',
               color: T.textLo,
               mb: 0.75,
             }}
@@ -171,134 +174,163 @@ const FinancialAuditDashboard = () => {
           <DateField
             label="As of"
             value={fromDate}
-            onChange={(d) => d && setFromDate(d as Dayjs)}
+            // Fires on every keystroke, so half-typed dates arrive invalid —
+            // only a complete, valid date should trigger a refetch.
+            onChange={(d) => {
+              if (d && (d as Dayjs).isValid()) {
+                setFromDate(d as Dayjs);
+              }
+            }}
             fullWidth
             sx={{
-              "& .MuiOutlinedInput-root": {
+              '& .MuiOutlinedInput-root': {
                 color: T.textHi,
                 backgroundColor: T.panelSoft,
-                "& fieldset": { borderColor: T.line },
-                "&:hover fieldset": { borderColor: T.water },
+                '& fieldset': { borderColor: T.line },
+                '&:hover fieldset': { borderColor: T.water },
               },
-              "& .MuiInputLabel-root": { color: T.textLo },
-              "& .MuiInputLabel-root.Mui-focused": { color: T.water },
+              '& .MuiInputLabel-root': { color: T.textLo },
+              '& .MuiInputLabel-root.Mui-focused': { color: T.water },
             }}
           />
         </Box>
       </Box>
 
-      {/* Hero totals */}
-      <Box
-        sx={{
-          display: "flex",
-          gap: 1.5,
-          flexWrap: "wrap",
-          alignItems: "stretch",
-        }}
-      >
-        <Box
-          sx={{
-            flex: "1 1 240px",
-            px: 2,
-            py: 1.5,
-            borderRadius: "14px",
-            border: `1px solid ${T.line}`,
-            background: `linear-gradient(120deg, ${T.exit}22, ${T.panel} 55%)`,
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: 10.5,
-              fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: T.textLo,
-            }}
-          >
-            Total unearned
-          </Typography>
-          <Typography
-            sx={{
-              ...display,
-              fontSize: 28,
-              fontWeight: 700,
-              color: T.textHi,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {money(financialAuditTotals.total.unearnedTotal)}
-          </Typography>
+      {loadError ? (
+        <Box sx={{ py: 3 }}>
+          <Typography sx={{ color: T.exit }}>{loadError}</Typography>
         </Box>
-        <Box
-          sx={{
-            flex: "1 1 240px",
-            px: 2,
-            py: 1.5,
-            borderRadius: "14px",
-            border: `1px solid ${T.line}`,
-            background: `linear-gradient(120deg, ${T.inflow}22, ${T.panel} 55%)`,
-          }}
-        >
-          <Typography
+      ) : !financialAuditTotals ? (
+        <Loading />
+      ) : (
+        <>
+          {/* Hero totals */}
+          <Box
             sx={{
-              fontSize: 10.5,
-              fontWeight: 600,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: T.textLo,
+              display: 'flex',
+              gap: 1.5,
+              flexWrap: 'wrap',
+              alignItems: 'stretch',
             }}
           >
-            Total collected
-          </Typography>
-          <Typography
-            sx={{
-              ...display,
-              fontSize: 28,
-              fontWeight: 700,
-              color: T.textHi,
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {money(financialAuditTotals.total.collectedTotal)}
-          </Typography>
-        </Box>
-      </Box>
-
-      {slices.map((slice) => (
-        <Box key={slice.label}>
-          <SectionLabel>{slice.label}</SectionLabel>
-          <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
-            <MetricChip
-              label="Water Systems"
-              value={slice.watersystems}
-              format="money"
-              tone={slice.toneWs}
-              hint={slice.hint}
-            />
-            <MetricChip
-              label="Associates"
-              value={slice.associates}
-              format="money"
-              tone={slice.toneAssoc}
-              hint={slice.hint}
-            />
-            <MetricChip
-              label="Total"
-              value={slice.total}
-              format="money"
-              tone={slice.toneTotal}
-              hint={slice.hint}
-            />
+            <Box
+              sx={{
+                flex: '1 1 240px',
+                px: 2,
+                py: 1.5,
+                borderRadius: '14px',
+                border: `1px solid ${T.line}`,
+                background: `linear-gradient(120deg, ${T.exit}22, ${T.panel} 55%)`,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: T.textLo,
+                }}
+              >
+                Total unearned
+              </Typography>
+              <Typography
+                sx={{
+                  ...display,
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: T.textHi,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {money(financialAuditTotals.total.unearnedTotal)}
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                flex: '1 1 240px',
+                px: 2,
+                py: 1.5,
+                borderRadius: '14px',
+                border: `1px solid ${T.line}`,
+                background: `linear-gradient(120deg, ${T.inflow}22, ${T.panel} 55%)`,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontSize: 10.5,
+                  fontWeight: 600,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                  color: T.textLo,
+                }}
+              >
+                Total collected
+              </Typography>
+              <Typography
+                sx={{
+                  ...display,
+                  fontSize: 28,
+                  fontWeight: 700,
+                  color: T.textHi,
+                  fontVariantNumeric: 'tabular-nums',
+                }}
+              >
+                {money(financialAuditTotals.total.collectedTotal)}
+              </Typography>
+            </Box>
           </Box>
-        </Box>
-      ))}
 
-      <Typography sx={{ fontSize: 11, color: T.textFaint, fontStyle: "italic" }}>
-        Glossary · Unearned dues are the deferred portion of membership
-        payments still covering future service days. Collected is cash taken in
-        during the rolling year ending on the attribution date. Daily averages
-        divide those totals by days in the window.
-      </Typography>
+          {slices.map((slice) => (
+            <Box key={slice.label}>
+              <SectionLabel>{slice.label}</SectionLabel>
+              {/* Grid rather than flex so the three chips stretch edge to edge
+                  instead of hugging the left on wide screens. */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: 'repeat(auto-fit, minmax(140px, 1fr))',
+                    md: 'repeat(3, 1fr)',
+                  },
+                  gap: 1.25,
+                }}
+              >
+                <MetricChip
+                  label="Water Systems"
+                  value={slice.watersystems}
+                  format="money"
+                  tone={slice.toneWs}
+                  hint={slice.hint}
+                />
+                <MetricChip
+                  label="Associates"
+                  value={slice.associates}
+                  format="money"
+                  tone={slice.toneAssoc}
+                  hint={slice.hint}
+                />
+                <MetricChip
+                  label="Total"
+                  value={slice.total}
+                  format="money"
+                  tone={slice.toneTotal}
+                  hint={slice.hint}
+                />
+              </Box>
+            </Box>
+          ))}
+
+          <Typography
+            sx={{ fontSize: 11, color: T.textFaint, fontStyle: 'italic' }}
+          >
+            Glossary · Unearned dues are the deferred portion of membership
+            payments still covering future service days. Collected is cash taken
+            in during the rolling year ending on the attribution date. Daily
+            averages divide those totals by days in the window.
+          </Typography>
+        </>
+      )}
     </Box>
   );
 };
