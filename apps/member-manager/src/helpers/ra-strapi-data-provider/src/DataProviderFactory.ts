@@ -159,25 +159,47 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     });
   };
 
+  /** Strapi 5 documentIds are opaque strings; numeric entity ids are digits-only. */
+  private isDocumentId = (id: Identifier | undefined | null): boolean =>
+    typeof id === "string" && id.length > 0 && !/^\d+$/.test(id);
+
   /**
-   * Strapi 5 Draft & Publish: draft and published rows share a documentId but
-   * have different numeric ids. If a getOne/update round-trip returns the
-   * sibling version, react-admin's useEditController throws. Keep the id the
-   * client requested when the document is clearly the same entity.
+   * Stable RA id for Strapi 5 Draft & Publish: draft/published rows share a
+   * documentId but churn numeric `id` on every publish. Prefer documentId so
+   * edit URLs and getOne stay valid across saves.
    */
-  private alignRecordId = (
-    data: RaRecord,
-    requestedId: Identifier | undefined
-  ): RaRecord => {
-    if (requestedId == null || data == null) return data;
-    if (String(data.id) === String(requestedId)) return data;
-    const asNumber =
-      typeof requestedId === "number"
-        ? requestedId
-        : /^\d+$/.test(String(requestedId))
-        ? Number(requestedId)
-        : requestedId;
-    return { ...data, id: asNumber };
+  private withStableId = (data: RaRecord): RaRecord => {
+    if (data == null) return data;
+    if (typeof data.documentId === "string" && data.documentId) {
+      return { ...data, id: data.documentId };
+    }
+    return data;
+  };
+
+  /**
+   * Relation reference value for writes/inputs.
+   * Content-type relations: prefer documentId (D&P-stable).
+   * Upload/media entries: keep numeric id (upload plugin + body rewrite).
+   */
+  private relationRefId = (item: {
+    id: Identifier;
+    documentId?: string;
+    mime?: string;
+    url?: string;
+    formats?: unknown;
+  }): Identifier => {
+    const isMedia =
+      item.mime != null || item.url != null || item.formats != null;
+    if (
+      !isMedia &&
+      typeof item.documentId === "string" &&
+      item.documentId
+    ) {
+      return item.documentId;
+    }
+    return typeof item.id === "number"
+      ? item.id
+      : parseInt(String(item.id), 10);
   };
 
   /**
@@ -192,9 +214,8 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     // flat objects/arrays with their own numeric id (no .data / .attributes nesting).
     //
     // IMPORTANT: relations and media entries carry a `documentId`; component
-    // (repeater) fields do NOT. Only collapse relations/media to numeric ids —
-    // components must stay flat objects, matching Strapi 4 behavior where
-    // components had no `.data` wrapper and passed through untouched.
+    // (repeater) fields do NOT. Collapse relations/media to stable documentId
+    // (fallback numeric id). Components must stay flat objects.
     if (record && !record.attributes) {
       const raRecord: RaRecord = { ...(record as unknown as RaRecord) };
 
@@ -208,26 +229,26 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       for (const key in raRecord) {
         const value = raRecord[key];
         if (value && typeof value === "object") {
-          // Single relation / media object -> numeric id
+          // Single relation / media object -> stable id
           if (!Array.isArray(value) && isRelationOrMedia(value)) {
-            raRecord[key] = typeof value.id === "number" ? value.id : parseInt(value.id, 10);
+            raRecord[key] = this.relationRefId(value);
             continue;
           }
-          // Has-many relation / multi-media -> array of numeric ids
+          // Has-many relation / multi-media -> array of stable ids
           if (
             Array.isArray(value) &&
             value.length > 0 &&
             value.every(isRelationOrMedia)
           ) {
-            raRecord[key] = value.map((item: { id: Identifier }) =>
-              typeof item.id === "number" ? item.id : parseInt(item.id as string, 10)
+            raRecord[key] = value.map((item: { id: Identifier; documentId?: string }) =>
+              this.relationRefId(item)
             );
             continue;
           }
         }
       }
 
-      return raRecord;
+      return this.withStableId(raRecord);
     }
 
     // Strapi 4 fallback: { id, attributes: { field, relation: { data: {...} } } }
@@ -281,7 +302,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    */
   formatResponseRaw = (record: IStrapiRecord): RaRecord => {
     // Strapi 5: records are already flat and populated relations are flat
-    // objects/arrays. Return as-is (recursively copied) with id preserved.
+    // objects/arrays. Return as-is (recursively copied) with stable documentId.
     if (record && !record.attributes) {
       const copyDeep = (value: any): any => {
         if (Array.isArray(value)) return value.map(copyDeep);
@@ -292,7 +313,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         }
         return value;
       };
-      return copyDeep(record) as RaRecord;
+      return this.withStableId(copyDeep(record) as RaRecord);
     }
 
     // Strapi 4 fallback
@@ -796,14 +817,16 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const result = await this.executeRequest(cacheKey, async () => {
           const { json } = await httpClient(url);
 
-          const data =
-            resource === "users"
-              ? json
-              : raw
-              ? this.formatResponseRaw(json.data as IStrapiRecord)
-              : this.formatResponseRA(json.data as IStrapiRecord);
+          // users-permissions still keys routes by numeric id — do not swap in documentId.
+          if (resource === "users") {
+            return { data: json };
+          }
 
-          return { data: this.alignRecordId(data, params.id) };
+          const data = raw
+            ? this.formatResponseRaw(json.data as IStrapiRecord)
+            : this.formatResponseRA(json.data as IStrapiRecord);
+
+          return { data };
         });
         
         // Cache the result
@@ -812,19 +835,28 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       },
 
       getMany: async (resource, params) => {
-        // only get the integers and skip other types of data
-        const ids = params.ids.filter(
-          (id) => typeof id === "number"
-        ) as number[];
-
-        if (ids.length === 0) return { data: [], total: 0 };
         const operator = params.meta?.operator ?? "$in";
+        const documentIds = params.ids.filter((id) =>
+          this.isDocumentId(id)
+        ) as string[];
+        const numericIds = params.ids
+          .filter(
+            (id) =>
+              typeof id === "number" ||
+              (typeof id === "string" && /^\d+$/.test(id))
+          )
+          .map((id) => (typeof id === "number" ? id : Number(id)));
+
+        if (documentIds.length === 0 && numericIds.length === 0) {
+          return { data: [], total: 0 };
+        }
+
+        // Prefer documentId filters when present (D&P-stable); else numeric id.
         const query = {
-          filters: {
-            id: {
-              [operator]: ids,
-            },
-          },
+          filters:
+            documentIds.length > 0
+              ? { documentId: { [operator]: documentIds } }
+              : { id: { [operator]: numericIds } },
         };
 
         const queryStringify = qs.stringify(query, {
@@ -934,7 +966,13 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         // the cached record and resets the form from it, so a bare response
         // makes relation inputs revert to their pre-save values (and a
         // follow-up save then wipes them). populate=* restores v4 behavior.
-        const url = `${this.endpoint}/${resource}/${params.id}?populate=*`;
+        //
+        // When addressing by documentId, pin status=published so admin saves
+        // update the live version (default Document Service write is draft).
+        const statusQs = this.isDocumentId(params.id)
+          ? "&status=published"
+          : "";
+        const url = `${this.endpoint}/${resource}/${params.id}?populate=*${statusQs}`;
         const requestKey = `update:${resource}:${params.id}`;
 
         // Invalidate cache for this resource
@@ -953,12 +991,11 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
             body: JSON.stringify({ data: payload }),
           });
 
-          // Format response
-          const data = this.alignRecordId(
-            this.formatResponseRA(json.data as IStrapiRecord),
-            params.id
-          );
-          return { data };
+          return {
+            data: this.withStableId(
+              this.formatResponseRA(json.data as IStrapiRecord)
+            ),
+          };
         });
       },
 
