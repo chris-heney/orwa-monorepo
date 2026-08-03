@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Button } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import CircularProgress from "@mui/material/CircularProgress";
 
@@ -15,6 +14,7 @@ import { sendEmail, submitMembershipForm } from "../data/API";
 import { useFormStepsContext } from "../providers/StepProvider";
 import { AssociateMembershipPayload } from "../types/AssociateMembership";
 import { validateDirectoryContacts } from "../helpers/validateDirectoryContacts";
+import { useValidationHighlight } from "../helpers/validationHighlight";
 // import { StrapiFormattedFile } from "../types";
 // import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
 
@@ -24,6 +24,7 @@ const StepNavigation = () => {
   const { notify } = useNotify();
   const { isLoggedIn, isAdminView } = useUserContext();
   const { isFormSubmitted, setIsFormSubmitted } = useFormSubmittedContext();
+  const { showInvalid, clearAllInvalid } = useValidationHighlight();
 
   const payment_method = watch("payment_method");
   const path = window.location.hash.substring(2);
@@ -37,7 +38,8 @@ const StepNavigation = () => {
       const selectedMembership = getValues("membership");
 
       if (selectedMembership === 0) {
-        notify("Please select a membership package.", "info");
+        showInvalid("membership_packages");
+        notify("Please select a membership package.", "error");
         return;
       }
     }
@@ -50,10 +52,12 @@ const StepNavigation = () => {
       ) {
         const dcErr = validateDirectoryContacts(getValues("contacts"));
         if (dcErr) {
+          showInvalid("directory_contacts");
           notify(dcErr, "error");
           return;
         }
       }
+      clearAllInvalid();
       if (stepIndex < activeSteps.length - 1) {
         setStepIndex(stepIndex + 1);
       }
@@ -64,6 +68,7 @@ const StepNavigation = () => {
 
   const handlePrevious = () => {
     if (stepIndex > 0) {
+      clearAllInvalid();
       setStepIndex(stepIndex - 1);
     }
   };
@@ -172,6 +177,7 @@ const StepNavigation = () => {
       if (path.includes("watersystem")) {
         const dcErr = validateDirectoryContacts(getValues("contacts"));
         if (dcErr) {
+          showInvalid("directory_contacts");
           notify(dcErr, "error");
           return;
         }
@@ -281,51 +287,38 @@ const StepNavigation = () => {
     }
   };
 
+  const activeSteps = steps.filter((step) => step.active);
+  const isReviewStep = activeSteps[stepIndex]?.key === "review";
+
   return isFormSubmitted ? (
     <></>
   ) : (
-    <section className="w-full p-3 md:py-6 lg:py-12 mt-auto self-end place-self-end">
-      <div className="max-w-3xl mx-auto flex gap-3 justify-center">
-        {/* Previous Button */}
-        <Button
+    <section className="mt-auto border-t border-slate-200 bg-white">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-3 px-4 py-5">
+        <button
           type="button"
-          variant="contained"
-          color="inherit"
           onClick={handlePrevious}
           disabled={stepIndex === 0}
-          className="w-full sm:w-36 bg-slate-300"
+          className="w-full rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-40"
         >
-          &laquo; Previous
-        </Button>
-        {/* Next Button */}
+          &larr; Previous
+        </button>
         {isSubmitting ? (
-          <CircularProgress />
+          <CircularProgress size={28} />
         ) : (
-          <Button
-            variant="contained"
-            color="primary"
+          <button
+            type="button"
             disabled={
-              (payment_method.length === 0 &&
-                steps.filter((step) => step.active)[stepIndex].key ===
-                  "review") ||
-              (isLoggedIn &&
-                isAdminView &&
-                steps.filter((step) => step.active)[stepIndex].key === "review")
+              (payment_method.length === 0 && isReviewStep) ||
+              (isLoggedIn && isAdminView && isReviewStep)
             }
-            onClick={
-              steps.filter((step) => step.active)[stepIndex].key === "review"
-                ? handleSubmitMembership
-                : handleNext
-            }
-            className="w-full sm:w-36"
+            onClick={isReviewStep ? handleSubmitMembership : handleNext}
+            className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-40 sm:w-40"
           >
-            {steps.filter((step) => step.active)[stepIndex].key === "review"
-              ? "Submit Form"
-              : "Next \u00BB"}
-          </Button>
+            {isReviewStep ? "Submit Form" : "Next \u2192"}
+          </button>
         )}
       </div>
-      {/* <ManualUploadTest /> */}
     </section>
   );
 };

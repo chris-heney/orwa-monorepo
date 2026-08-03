@@ -6,6 +6,7 @@ import {
   WatersystemDirectoryContactRow,
   WatersystemDirectoryTitle,
 } from "../types/WatersystemMebership";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const TITLE_OPTIONS: { value: WatersystemDirectoryTitle; label: string }[] = [
   { value: "Chairman", label: "Chairman" },
@@ -52,7 +53,7 @@ const DirectoryContactsStep = () => {
 
   return (
     <div className="container mx-auto max-w-6xl px-4">
-      <div className="bg-amber-50 border border-amber-300 rounded-md p-4 mb-4 text-sm text-amber-950 text-left">
+      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-left text-sm leading-relaxed text-amber-900">
         <strong>Directory notice:</strong> Office information only will be published in the ORWA
         directory. If there are any changes, please notify ORWA in writing at{" "}
         <a href="mailto:office@orwa.org" className="font-semibold underline">
@@ -60,19 +61,20 @@ const DirectoryContactsStep = () => {
         </a>
         .
       </div>
+      <ValidationHighlight field="directory_contacts">
       <FormSection title="System Contacts">
         <div className="space-y-8 mb-2">
           {fields.map((field, index) => (
             <div
               key={field.id}
-              className="border border-gray-200 rounded-lg p-4 md:p-6 bg-gray-50/50 text-left"
+              className="rounded-lg border border-slate-200 bg-slate-50/50 p-4 text-left md:p-6"
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Contact {index + 1}</h3>
+                <h3 className="text-base font-semibold text-slate-900">Contact {index + 1}</h3>
                 {fields.length > 1 && (
                   <button
                     type="button"
-                    className="text-sm text-red-600 hover:underline"
+                    className="text-sm font-semibold text-red-600 transition hover:text-red-700 hover:underline"
                     onClick={() => remove(index)}
                   >
                     Remove
@@ -93,7 +95,7 @@ const DirectoryContactsStep = () => {
                 <TextInput source={`contacts.${index}.email`} label="Email" required={firstNameEntered(index)}/>
               </div>
               <div className="mt-6">
-                <h4 className="text-md font-medium text-gray-800 mb-3">Mailing address</h4>
+                <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">Mailing address</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <TextInput
                     source={`contacts.${index}.address_mailing_line1`}
@@ -119,14 +121,14 @@ const DirectoryContactsStep = () => {
             </div>
           ))}
         </div>
-        <div className="mt-4 pt-4 border-t border-gray-200 w-full min-w-0">
+        <div className="mt-4 pt-4 border-t border-slate-200 w-full min-w-0">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 min-w-0">
-            <p className="order-2 sm:order-1 text-sm text-gray-600 text-left m-0 leading-normal [text-wrap:pretty] min-w-0 flex-1 sm:pr-2">
+            <p className="order-2 sm:order-1 text-sm text-slate-600 text-left m-0 leading-normal [text-wrap:pretty] min-w-0 flex-1 sm:pr-2">
               List each office role separately. You can add more rows if needed.
             </p>
             <button
               type="button"
-              className="order-1 sm:order-2 shrink-0 w-full sm:w-auto inline-flex items-center justify-center px-4 py-2.5 rounded-md text-sm font-medium border-2 border-slate-700 text-slate-800 bg-white hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 whitespace-nowrap"
+              className="order-1 sm:order-2 inline-flex w-full shrink-0 items-center justify-center whitespace-nowrap rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 sm:w-auto"
               onClick={() => append(emptyDirectoryContactRow())}
             >
               + Add another contact
@@ -134,6 +136,7 @@ const DirectoryContactsStep = () => {
           </div>
         </div>
       </FormSection>
+      </ValidationHighlight>
     </div>
   );
 };

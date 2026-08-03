@@ -41,64 +41,69 @@ const WatersystemReviewStep = () => {
     <div className="container mx-auto max-w-6xl px-6">
       {/* Review Section */}
       <FormSection title="Review">
-        <div className="p-8">
+        <div className="p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Membership Information */}
-            <div className="border-r border-gray-200 pr-6">
-              <h3 className="text-xl font-semibold text-green-700 mb-4 text-left">
+            <div className="md:border-r md:border-slate-200 md:pr-6">
+              <h3 className="mb-3 text-left text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Membership Information
               </h3>
-              <hr className="border-gray-200 mb-4" />
-              <div className="space-y-2">
-                <p className="text-gray-800 text-left">
-                  <strong>Membership Dues:</strong>{" "}
-                  {currencyFormatter.format(getValues("fee_membership"))}
+              <div className="space-y-2 text-sm">
+                <p className="text-left text-slate-700">
+                  <strong className="text-slate-900">Membership Dues:</strong>{" "}
+                  <span className="tabular-nums">
+                    {currencyFormatter.format(getValues("fee_membership"))}
+                  </span>
                 </p>
-                <p className="text-gray-800 text-left">
-                  <strong>Number of Meters:</strong> {getValues("meters")}
+                <p className="text-left text-slate-700">
+                  <strong className="text-slate-900">Number of Meters:</strong>{" "}
+                  <span className="tabular-nums">{getValues("meters")}</span>
                 </p>
-                <p className="text-gray-800 text-left">
-                  <strong>Connection Fee:</strong>{" "}
-                  {currencyFormatter.format(getValues("fee_connections"))}
+                <p className="text-left text-slate-700">
+                  <strong className="text-slate-900">Connection Fee:</strong>{" "}
+                  <span className="tabular-nums">
+                    {currencyFormatter.format(getValues("fee_connections"))}
+                  </span>
                 </p>
               </div>
             </div>
 
             {/* Donation Information */}
-            <div className="pl-6">
-              <h3 className="text-xl font-semibold text-blue-700 mb-4 text-left">
+            <div className="md:pl-6">
+              <h3 className="mb-3 text-left text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Donation Information
               </h3>
-              <hr className="border-gray-200 mb-4" />
-              <div className="space-y-2">
-                <p className="text-gray-800 text-left">
-                  <strong>ORWEF Scholarship Fund:</strong>{" "}
-                  {currencyFormatter.format(isNaN(getValues("fee_scholarship")) ? 0 : getValues("fee_scholarship"))}
+              <div className="space-y-2 text-sm">
+                <p className="text-left text-slate-700">
+                  <strong className="text-slate-900">ORWEF Scholarship Fund:</strong>{" "}
+                  <span className="tabular-nums">
+                    {currencyFormatter.format(isNaN(getValues("fee_scholarship")) ? 0 : getValues("fee_scholarship"))}
+                  </span>
                 </p>
-                <p className="text-sm text-gray-500 text-left">
+                <p className="text-left text-sm text-slate-500">
                   This support is a tax deductible donation.
                 </p>
               </div>
             </div>
           </div>
-          <hr className="border-gray-200 my-6" />
-          <p className="text-gray-800 text-left font-semibold">
+          <hr className="my-6 border-slate-200" />
+          <p className="text-left text-base text-slate-900">
             <strong>Total Fee:</strong>{" "}
-            <span className="text-red-500">
+            <span className="text-lg font-bold tabular-nums text-blue-700">
               {currencyFormatter.format(getValues("payment_amount"))}
             </span>
           </p>
           {visibleDirectoryContacts.length > 0 && (
             <>
-              <hr className="border-gray-200 my-6" />
-              <h3 className="text-xl font-semibold text-gray-800 mb-3 text-left">
+              <hr className="my-6 border-slate-200" />
+              <h3 className="mb-3 text-left text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Directory contacts
               </h3>
-              <ul className="space-y-4 text-left text-gray-800">
+              <ul className="space-y-3 text-left text-sm text-slate-700">
                 {visibleDirectoryContacts.map((c, i) => (
-                  <li key={i} className="border border-gray-100 rounded p-3 bg-gray-50">
+                  <li key={i} className="rounded-md border border-slate-200 bg-slate-50 p-3">
                     <p>
-                      <strong>{trim(c.title) || "—"}</strong>
+                      <strong className="text-slate-900">{trim(c.title) || "—"}</strong>
                       {(trim(c.first) || trim(c.last)) &&
                         ` — ${trim(c.first)} ${trim(c.last)}`.trim()}
                     </p>
@@ -106,7 +111,7 @@ const WatersystemReviewStep = () => {
                     {trim(c.phone) && <p>Phone: {trim(c.phone)}</p>}
                     {(trim(c.address_mailing_line1) ||
                       trim(c.address_mailing_city)) && (
-                      <p className="text-sm mt-1">
+                      <p className="mt-1 text-sm text-slate-600">
                         Mailing: {trim(c.address_mailing_line1)}
                         {trim(c.address_mailing_line2)
                           ? `, ${trim(c.address_mailing_line2)}`

@@ -36,11 +36,11 @@ const AssociateReviewStep = () => {
     <div className="container mx-auto max-w-6xl px-4">
       {/* Review Section */}
       <FormSection title="Review">
-        <div className="p-8">
+        <div className="p-4 md:p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Membership Information */}
-            <div className="border-r border-gray-200 pr-6">
-              <h3 className="text-xl font-semibold text-green-700 mb-4 text-left">
+            <div className="md:border-r md:border-slate-200 md:pr-6">
+              <h3 className="mb-3 text-left text-sm font-semibold uppercase tracking-wide text-slate-500">
                 {
                   memberships.find(
                     (membership) => membership.id === getValues("membership")
@@ -48,36 +48,38 @@ const AssociateReviewStep = () => {
                 }{" "}
                 Membership
               </h3>
-              <hr className="border-gray-200 mb-4" />
-              <div className="space-y-2">
-                <p className="text-gray-800 text-left">
-                  <strong>Membership Dues:</strong>{" "}
-                  {currencyFormatter.format(getValues("fee_membership"))}
+              <div className="space-y-2 text-sm">
+                <p className="text-left text-slate-700">
+                  <strong className="text-slate-900">Membership Dues:</strong>{" "}
+                  <span className="tabular-nums">
+                    {currencyFormatter.format(getValues("fee_membership"))}
+                  </span>
                 </p>
               </div>
             </div>
 
             {/* Donation Information */}
-            <div className="pl-6">
-              <h3 className="text-xl font-semibold text-blue-700 mb-4 text-left">
+            <div className="md:pl-6">
+              <h3 className="mb-3 text-left text-sm font-semibold uppercase tracking-wide text-slate-500">
                 Donation Information
               </h3>
-              <hr className="border-gray-200 mb-4" />
-              <div className="space-y-2">
-                <p className="text-gray-800 text-left">
-                  <strong>ORWEF Scholarship Fund:</strong>{" "}
-                  {currencyFormatter.format(getValues("fee_scholarship"))}
+              <div className="space-y-2 text-sm">
+                <p className="text-left text-slate-700">
+                  <strong className="text-slate-900">ORWEF Scholarship Fund:</strong>{" "}
+                  <span className="tabular-nums">
+                    {currencyFormatter.format(getValues("fee_scholarship"))}
+                  </span>
                 </p>
-                <p className="text-sm text-gray-500 text-left">
+                <p className="text-left text-sm text-slate-500">
                   This support is a tax deductible donation.
                 </p>
               </div>
             </div>
           </div>
-          <hr className="border-gray-200 my-6" />
-          <p className="text-gray-800 text-left font-semibold">
+          <hr className="my-6 border-slate-200" />
+          <p className="text-left text-base text-slate-900">
             <strong>Total Fee:</strong>{" "}
-            <span className="text-red-500">
+            <span className="text-lg font-bold tabular-nums text-blue-700">
               {currencyFormatter.format(getValues("payment_amount"))}
             </span>
           </p>

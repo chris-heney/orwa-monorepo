@@ -18,12 +18,13 @@ const AssociateInfoStep = () => {
 
   return (
     <div className="container mx-auto max-w-6xl px-4">
-      <div className="bg-blue-50 border border-blue-300 rounded-md p-4 mb-4 text-sm text-blue-800 text-left">
+      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-left text-sm leading-relaxed text-blue-800">
         If you've already submitted a membership form to be invoiced, no need to submit it again. Just give the ORWA office a call at{" "}
         <a href="tel:405-672-8925" className="font-semibold underline">405-672-8925</a> to make a credit card payment.
       </div>
-      <p className="text-red-600 text-xs md:text-sm text-left py-2">
-        Fields marked with * are required
+      <p className="py-2 text-left text-sm text-slate-600">
+        Fields marked with <span className="font-semibold text-red-500">*</span>{" "}
+        are required
       </p>
       <FormSection title="Associate Information">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

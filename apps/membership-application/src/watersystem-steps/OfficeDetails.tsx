@@ -9,8 +9,9 @@ import { MaskedFaxInput } from "../components/MaskedFaxInput";
 const OfficeDetails = () => {
   return (
     <div className="container mx-auto max-w-6xl px-4">
-      <p className="text-red-600 text-xs md:text-sm text-left py-2">
-        Fields marked with * are required
+      <p className="py-2 text-left text-sm text-slate-600">
+        Fields marked with <span className="font-semibold text-red-500">*</span>{" "}
+        are required
       </p>
       <FormSection title="Office Details">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

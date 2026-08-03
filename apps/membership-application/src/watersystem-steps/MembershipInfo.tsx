@@ -53,19 +53,28 @@ const MembershipInfo = () => {
 
   return (
     <div className="container mx-auto max-w-6xl px-4">
-      <p className="text-red-600 text-xs md:text-sm text-left py-2">
-        Fields marked with * are required
+      <p className="py-2 text-left text-sm text-slate-600">
+        Fields marked with <span className="font-semibold text-red-500">*</span>{" "}
+        are required
       </p>
-      <p className="text-md text-center mb-4">
-        Annual Dues = {currencyFormatter.format(currentMembership[0]?.price)} membership fee +{" "}
-        {currencyFormatter.format(
-          currentMembership[0]?.membership_items?.[0]?.price as number
-        )}{" "}
+      <p className="mb-4 text-center text-sm text-slate-600">
+        Annual Dues ={" "}
+        <span className="font-semibold text-slate-900 tabular-nums">
+          {currencyFormatter.format(currentMembership[0]?.price)}
+        </span>{" "}
+        membership fee +{" "}
+        <span className="font-semibold text-slate-900 tabular-nums">
+          {currencyFormatter.format(
+            currentMembership[0]?.membership_items?.[0]?.price as number
+          )}
+        </span>{" "}
         per connection (Maximum:{" "}
         {currentMembership && currentMembership[0]?.membership_items?.[0]?.max_price && currentMembership[0]?.price && (
-          currencyFormatter.format(
-            (currentMembership[0]?.membership_items?.[0]?.max_price + currentMembership[0]?.price) as number
-          )
+          <span className="font-semibold text-slate-900 tabular-nums">
+            {currencyFormatter.format(
+              (currentMembership[0]?.membership_items?.[0]?.max_price + currentMembership[0]?.price) as number
+            )}
+          </span>
         )}
         )
       </p>
@@ -106,7 +115,7 @@ const MembershipInfo = () => {
          
         </div>
 
-        <p className="text-md text-center mb-4 italic">
+        <p className="mb-4 text-center text-sm italic text-slate-600">
           This support is a tax deductible donation.
         </p>
       </FormSection>

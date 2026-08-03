@@ -41,77 +41,76 @@ const CardForm = ({source}: {
   const [cardMask, setCardMask] = useState(masks.card.other)
   const [CVVMask, setCVVMask] = useState(masks.cvv.other)
 
-  return (
-    <div className="border rounded-lg">
-      <div className="py-6 px-4 bg-neutral-50 rounded-2xl">
-        <div className="flex flex-col gap-6">
+  const inputClassName =
+    "w-full rounded-md border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20";
 
-          {/* Card number */}
+  return (
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 text-left">
+      <div className="flex flex-col gap-5">
+        {/* Card number */}
+        <div className="flex flex-col">
+          <label
+            className="mb-1 text-left text-sm font-semibold text-slate-900"
+            htmlFor="cardNumber"
+          >
+            Card number <span className="text-red-500">*</span>
+          </label>
+
+          <div className="relative block">
+            <InputMask
+              {...register(`${source}.card`, { required: 'Card number is required' })}
+              mask={cardMask}
+              onKeyUp={(e) => updateMasks(e.currentTarget.value)}
+              required
+              placeholder='XXXX XXXX XXXX XXXX'
+              className={`${inputClassName} pr-[46px]`}
+            />
+            {getError(`${source}.card`) && <span className="text-sm text-red-500 text-left">*{getError(`${source}.card`)}</span>}
+
+            <span className="absolute inset-y-2 right-3 flex h-6 w-[34px] items-center justify-center">
+              <CardImage type={returnCardType(getValues("card")) as string} />
+            </span>
+          </div>
+        </div>
+
+        {/* Expiry date and cvv */}
+        <div className="flex gap-4">
+          {/* Expiry date */}
           <div className="flex flex-col">
             <label
-              className="text-lg text-neutral-900 mb-3"
-              htmlFor="cardNumber"
+              className="mb-1 text-left text-sm font-semibold text-slate-900"
+              htmlFor="cardExpiry"
             >
-              Enter your card number
+              Expiry date <span className="text-red-500">*</span>
             </label>
 
-            <div className="relative block">
-              <InputMask
-                {...register(`${source}.card`, { required: 'Card number is required' })}
-                mask={cardMask}
-                onKeyUp={(e) => updateMasks(e.currentTarget.value)}
-                required
-                placeholder='XXXX XXXX XXXX XXXX'
-                className="py-[14px] px-3 h-[52px] rounded-md w-full border-[1.5px] border-neutral-300 pr-[34px]"
-             
-              />
-              {getError(`${source}.card`) && <span className="text-red-500 text-left">*{getError(`${source}.card`)}</span>}
-
-              <span className="absolute inset-y-3 right-3 w-[34px] h-6 flex justify-center items-center border border-neutral-100">
-                <CardImage type={returnCardType(getValues("card")) as string} />
-              </span>
-            </div>
+            <InputMask
+              {...register(`${source}.exp`, { required: 'Expiry date is required' })}
+              mask="99/99"
+              required
+              placeholder="MM/YY"
+              className={inputClassName}
+            />
+            {getError(`${source}.exp`) && <span className="text-sm text-red-500 text-left">*{getError(`${source}.exp`)}</span>}
           </div>
 
-          {/* Expiry date and cvv */}
-          <div className="flex gap-4">
-            {/* Expiry date */}
-            <div className="flex flex-col">
-              <label
-                className="text-lg text-neutral-900 mb-3"
-                htmlFor="cardNumber"
-              >
-                Expiry date
-              </label>
+          {/* CVV */}
+          <div className="flex flex-col">
+            <label
+              className="mb-1 text-left text-sm font-semibold text-slate-900"
+              htmlFor="cardCvv"
+            >
+              CVC/CVV <span className="text-red-500">*</span>
+            </label>
 
-              <InputMask
-                {...register(`${source}.exp`, { required: 'Expiry date is required' })}
-                mask="99/99"
-                required
-                placeholder="MM/YY"
-                className="rounded-md py-[14px] px-3 border-[1.5px] border-neutral-300 bg-white h-[52px] w-full"
-              />
-              {getError(`${source}.exp`) && <span className="text-red-500 text-left">*{getError(`${source}.exp`)}</span>}
-            </div>
-
-            {/* CVV */}
-            <div className="flex flex-col">
-              <label
-                className="text-lg text-neutral-900 mb-3"
-                htmlFor="cardNumber"
-              >
-                CVC/CVV
-              </label>
-
-              <InputMask
-                {...register(`${source}.cvv`, { required: 'CVV is required' })}
-                mask={CVVMask}
-                required
-                placeholder="999"
-                className="rounded-md py-[14px] px-3 border-[1.5px] border-neutral-300 bg-white h-[52px] w-full"
-              />
-              {getError(`${source}.cvv`) && <span className="text-red-500 text-left">*{getError(`${source}.cvv`)}</span>}
-            </div>
+            <InputMask
+              {...register(`${source}.cvv`, { required: 'CVV is required' })}
+              mask={CVVMask}
+              required
+              placeholder="999"
+              className={inputClassName}
+            />
+            {getError(`${source}.cvv`) && <span className="text-sm text-red-500 text-left">*{getError(`${source}.cvv`)}</span>}
           </div>
         </div>
       </div>

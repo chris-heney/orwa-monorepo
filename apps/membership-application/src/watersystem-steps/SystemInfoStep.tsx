@@ -47,25 +47,33 @@ const SystemInfoStep = () => {
 
   return (
     <div className="container mx-auto max-w-6xl px-4">
-      <div className="bg-blue-50 border border-blue-300 rounded-md p-4 mb-4 text-sm text-blue-800 text-left">
+      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4 text-left text-sm leading-relaxed text-blue-800">
         If you've already submitted a membership form to be invoiced, no need to submit it again. Just give the ORWA office a call at{" "}
         <a href="tel:405-672-8925" className="font-semibold underline">405-672-8925</a> to make a credit card payment.
       </div>
-      <p className="text-red-600 text-xs md:text-sm text-left py-2">
-        Fields marked with * are required
+      <p className="py-2 text-left text-sm text-slate-600">
+        Fields marked with <span className="font-semibold text-red-500">*</span>{" "}
+        are required
       </p>
       {/* Annual Dues = $90.00 membership fee + $0.90 per connection (Maximum: $4,000) */}
-      <p className="text-md text-center mb-4">
-        Annual Dues = {currencyFormatter.format(currentMembership[0]?.price)}{" "}
+      <p className="mb-4 text-center text-sm text-slate-600">
+        Annual Dues ={" "}
+        <span className="font-semibold text-slate-900 tabular-nums">
+          {currencyFormatter.format(currentMembership[0]?.price)}
+        </span>{" "}
         membership fee +{" "}
-        {currencyFormatter.format(
-          currentMembership[0].membership_items?.[0]?.price as number
-        )}{" "}
+        <span className="font-semibold text-slate-900 tabular-nums">
+          {currencyFormatter.format(
+            currentMembership[0].membership_items?.[0]?.price as number
+          )}
+        </span>{" "}
         per connection (Maximum:{" "}
         {currentMembership && currentMembership[0].membership_items?.[0]?.max_price && currentMembership[0]?.price && (
-          currencyFormatter.format(
-            (currentMembership[0]?.membership_items?.[0]?.max_price + currentMembership[0]?.price) as number
-          )
+          <span className="font-semibold text-slate-900 tabular-nums">
+            {currencyFormatter.format(
+              (currentMembership[0]?.membership_items?.[0]?.max_price + currentMembership[0]?.price) as number
+            )}
+          </span>
         )}
         )
       </p>

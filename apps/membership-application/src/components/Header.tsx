@@ -30,18 +30,18 @@ export const Header = () => {
   }, [location.pathname]); // React to changes in the pathname
 
   return (
-    <header className="bg-black p-3">
-      <Box className="max-w-3xl mx-auto flex flex-col-reverse md:flex-row justify-between items-center">
+    <header className="bg-black px-4 py-3">
+      <Box className="mx-auto flex max-w-6xl flex-col-reverse items-center justify-between gap-2 md:flex-row">
         <div className="text-center md:text-left">
-          <h5 className="text-white text-xl sm:text-3xl">
+          <h1 className="text-lg font-semibold tracking-tight text-white sm:text-2xl">
             {title.startsWith("Water") && title.includes("renewal")
               ? "System Renewal"
               : title}{" "}
             Membership Form
-          </h5>
+          </h1>
         </div>
         <div className="flex items-center justify-center gap-6">
-          <img src="./orwa.webp" className="max-h-16 sm:max-h-116" />
+          <img src="./orwa.webp" alt="ORWA" className="h-12 w-auto sm:h-14" />
           {isLoggedIn && (
             <div className="flex items-center">
               <ProfileMenu />

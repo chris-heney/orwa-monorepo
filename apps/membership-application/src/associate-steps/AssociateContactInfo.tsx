@@ -8,12 +8,13 @@ const AssociateContactInfoStep = () => {
 
   return (
     <div className="container mx-auto max-w-6xl px-4">
-      <p className="text-red-600 text-xs md:text-sm text-left py-2">
-        Fields marked with * are required
+      <p className="py-2 text-left text-sm text-slate-600">
+        Fields marked with <span className="font-semibold text-red-500">*</span>{" "}
+        are required
       </p>
       {/* COntact Inputs */}
       <FormSection title="Point of Contacts">
-        <p className="text-sm font-semibold text-gray-800">
+        <p className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-left text-sm leading-relaxed text-blue-800">
           Only the Primary Contact information will be included in the ORWA
           directory and the ORWA website Associate Member listing page.
         </p>

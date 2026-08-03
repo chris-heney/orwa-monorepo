@@ -3,6 +3,7 @@ import { useMembershipsContext } from "../providers/MembershipContextProvider";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import currencyFormatter from "../helpers/currencyFormatter";
+import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const ALLOWED_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "webp"];
 const ALLOWED_IMAGE_EXTENSIONS_LABEL = ALLOWED_IMAGE_EXTENSIONS.map((ext) =>
@@ -69,35 +70,62 @@ const AssociateMembershipStep = () => {
         </div>
       </FormSection>
 
-      <FormSection title="Membership Packages Available">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-5">
-          {associateMemberships.map((membership) => (
-            <div
-              key={membership.id}
-              className={`p-4 border rounded cursor-pointer ${
-                selectedMembership === membership.id
-                  ? "border-blue-500 bg-blue-100"
-                  : "border-gray-300 hover:bg-gray-100"
-              }`}
-              onClick={() => {
-                setValue("membership", membership.id);
-                setValue("fee_membership", membership.price);
-              }}
-            >
-              <div className="font-semibold">{membership.name}</div>
-              <ul className="text-sm text-black list-disc text-left px-5 my-5">
-                {membership.description?.split("\n").map((line, index) => (
-                  <li key={index}>{line}</li>
-                ))}
-              </ul>
-              <div className="text-sm">
-                {currencyFormatter.format(membership.price)}
-              </div>
-            </div>
-          ))}
-        </div>
-        {/* Display validation error for membership selection */}
-      </FormSection>
+      <ValidationHighlight
+        field="membership_packages"
+        clearWhen={!!selectedMembership && selectedMembership !== 0}
+      >
+        <FormSection title="Membership Packages Available">
+          <div className="grid grid-cols-1 gap-4 p-2 md:grid-cols-2 lg:grid-cols-3">
+            {associateMemberships.map((membership) => {
+              const isSelected = selectedMembership === membership.id;
+              return (
+                <button
+                  type="button"
+                  key={membership.id}
+                  aria-pressed={isSelected}
+                  className={`flex cursor-pointer flex-col rounded-xl border-2 p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                    isSelected
+                      ? "border-blue-600 bg-blue-50 shadow-sm"
+                      : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                  onClick={() => {
+                    setValue("membership", membership.id);
+                    setValue("fee_membership", membership.price);
+                  }}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span
+                      className={`text-base font-bold ${
+                        isSelected ? "text-blue-700" : "text-slate-900"
+                      }`}
+                    >
+                      {membership.name}
+                    </span>
+                    {isSelected && (
+                      <span className="inline-flex shrink-0 items-center rounded-full bg-blue-600 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-white">
+                        Selected
+                      </span>
+                    )}
+                  </div>
+                  <ul className="my-4 list-disc px-5 text-left text-sm leading-relaxed text-slate-600">
+                    {membership.description?.split("\n").map((line, index) => (
+                      <li key={index}>{line}</li>
+                    ))}
+                  </ul>
+                  <div
+                    className={`mt-auto text-sm font-bold tabular-nums ${
+                      isSelected ? "text-blue-700" : "text-slate-900"
+                    }`}
+                  >
+                    {currencyFormatter.format(membership.price)}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {/* Display validation error for membership selection */}
+        </FormSection>
+      </ValidationHighlight>
 
       {/* Optional Donation */}
       <FormSection title="Optional Donation">
@@ -108,7 +136,7 @@ const AssociateMembershipStep = () => {
             mask="currency"
           />
         </div>
-        <p className="text-md text-center mb-4 italic">
+        <p className="mb-4 text-center text-sm italic text-slate-600">
           This support is a tax-deductible donation.
         </p>
       </FormSection>
