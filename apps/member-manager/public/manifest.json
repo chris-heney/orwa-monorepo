@@ -1,6 +1,6 @@
 {
-    "short_name": "orwa-admin-v2",
-    "name": "{{name}}",
+    "short_name": "ORWA Admin",
+    "name": "ORWA Admin",
     "icons": [
         {
             "src": "favicon.ico",
@@ -12,9 +12,11 @@
             "type": "image/webp"
         }, {
             "src": "android-chrome-192x192.png",
+            "sizes": "192x192",
             "type": "image/png"
         }, {
             "src": "android-chrome-512x512.png",
+            "sizes": "512x512",
             "type": "image/png"
         }
     ],
