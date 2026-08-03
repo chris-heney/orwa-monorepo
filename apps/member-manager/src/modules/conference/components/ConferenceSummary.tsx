@@ -160,6 +160,25 @@ const ConferenceSummary = () => {
               }
             />
           )}
+          {booths.available != null && (
+            <StatCard
+              label="Booths Available"
+              value={booths.available.toLocaleString()}
+              valueSuffix="open"
+              caption={
+                booths.available === 0
+                  ? "The expo floor is sold out"
+                  : "Vendor booths still for sale"
+              }
+              footer={
+                booths.available > 0
+                  ? `${money(booths.availableValue)} if they all sell`
+                  : undefined
+              }
+              color={booths.available === 0 ? T.committed : T.inflow}
+              hint="Open booth inventory right now, valued at each conference's booth price"
+            />
+          )}
           {sponsors.count > 0 && (
             <StatCard
               label="Sponsors"

@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, CircularProgress, Tooltip, Typography } from "@mui/material";
 import RestaurantRoundedIcon from "@mui/icons-material/RestaurantRounded";
-import { display, useSummaryTokens } from "./tokens";
+import { display, money, useSummaryTokens } from "./tokens";
 import { MetricChip, Panel, SectionLabel } from "./cards";
 import { ConferenceMetrics } from "./useConferenceMetrics";
 
@@ -170,8 +170,22 @@ const LogisticsBoard: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) =
               </Tooltip>
             )}
             <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap", mt: 0.75 }}>
-              {booths.capacity == null && (
-                <MetricChip label="Booths Sold" value={booths.sold} tone={T.deepWater} />
+              <MetricChip label="Booths Sold" value={booths.sold} tone={T.deepWater} />
+              {booths.available != null && (
+                <MetricChip
+                  label="Booths Available"
+                  value={booths.available}
+                  sub={money(booths.availableValue)}
+                  showZero
+                  tone={booths.available === 0 ? T.committed : T.inflow}
+                  hint={
+                    booths.available === 0
+                      ? "The expo floor is sold out"
+                      : `Open booths worth ${money(
+                          booths.availableValue
+                        )} at each conference's booth price`
+                  }
+                />
               )}
               <MetricChip
                 label="Booth Revenue"

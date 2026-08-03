@@ -313,10 +313,26 @@ export const useConferenceMetrics = (
     // remaining capacity is the selected conference's booths_available.
     const boothsSold = boo.length;
     const remainingRaw = num(conference?.booths_available);
-    // A five-digit `booths_available` is the legacy "unlimited" sentinel.
-    const boothsTracked = conference != null && remainingRaw > 0 && remainingRaw < 5000;
+    // A five-digit `booths_available` is the legacy "unlimited" sentinel;
+    // zero is real data (sold out), matching the legacy summary widget.
+    const boothsTracked = conference != null && remainingRaw >= 0 && remainingRaw < 5000;
     const boothCapacity = boothsTracked ? boothsSold + remainingRaw : null;
     const boothsUnnumbered = boo.filter((b) => b.booth_number == null).length;
+    // Open inventory and its dollar value at each conference's first-booth
+    // list price. `booths_available` is a live counter, so with no conference
+    // selected the open floor is summed across every conference.
+    const availabilityPool = (conference ? [conference] : conferences) as Array<
+      Record<string, unknown>
+    >;
+    let boothsAvailable: number | null = null;
+    let boothsAvailableValue = 0;
+    for (const c of availabilityPool) {
+      const rem = num(c.booths_available);
+      if (rem >= 0 && rem < 5000) {
+        boothsAvailable = (boothsAvailable ?? 0) + rem;
+        boothsAvailableValue += rem * num(c.booth_price);
+      }
+    }
 
     // --- Sponsors --------------------------------------------------------
     const sponsorsMissingLogo = spo.filter((s) => s.logo == null).length;
@@ -377,6 +393,8 @@ export const useConferenceMetrics = (
         capacity: boothCapacity,
         revenue: boothRevenue,
         unnumbered: boothsUnnumbered,
+        available: boothsAvailable,
+        availableValue: boothsAvailableValue,
       },
 
       sponsors: {
@@ -412,6 +430,7 @@ export const useConferenceMetrics = (
     feedback,
     catering,
     conference,
+    conferences,
     confId,
     year,
     l1,
