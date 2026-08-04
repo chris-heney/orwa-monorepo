@@ -15,13 +15,31 @@ import { normalizeRecordArrays } from "../helpers/normalizeRecordArrays";
 const NormalizedExtraForm = () => {
   const record = useRecordContext();
 
+  const normalized = normalizeRecordArrays(record, [
+    "conferences",
+    "included",
+    "excluded",
+  ]);
+
+  // Legacy extras predate the explicit toggles: quantity selection was implied
+  // by max_qty_each > 1, and the selection fields didn't exist. Default them
+  // so the form reflects (and persists) the equivalent explicit state.
+  const withSelectionDefaults = normalized
+    ? {
+        ...normalized,
+        quantity_selection:
+          normalized.quantity_selection ?? (normalized.max_qty_each ?? 0) > 1,
+        requires_selection: normalized.requires_selection ?? false,
+        counted_by_selection: normalized.counted_by_selection ?? false,
+        selection_options: Array.isArray(normalized.selection_options)
+          ? normalized.selection_options
+          : [],
+      }
+    : normalized;
+
   return (
     <SimpleForm
-      record={normalizeRecordArrays(record, [
-        "conferences",
-        "included",
-        "excluded",
-      ])}
+      record={withSelectionDefaults}
       sx={{
         p: 0,
       }}

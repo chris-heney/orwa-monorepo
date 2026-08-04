@@ -39,6 +39,8 @@ export interface ISharedMeta {
   label: string
   value: string
   key: string
+  /** Chosen option for extras with `requires_selection` (e.g. shirt size). */
+  selection?: string | null
   item: IExtra | null
 }
 
@@ -49,6 +51,12 @@ export interface IExtra {
   price_event: number
   context: number[]
   excluded: number[]
+  quantity_selection?: boolean | null
+  min_qty_each?: number | null
+  requires_selection?: boolean | null
+  selection_name?: string | null
+  selection_options?: string[] | null
+  counted_by_selection?: boolean | null
 }
 
 export interface ConferenceBoothsProps {

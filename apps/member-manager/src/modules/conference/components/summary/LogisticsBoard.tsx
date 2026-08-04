@@ -25,6 +25,15 @@ const LogisticsBoard: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) =
   const iconFilter =
     T.mode === "dark" ? "brightness(0) invert(1)" : "brightness(0)";
 
+  // Extras with a per-option breakdown render as their own block below the
+  // plain totals grid.
+  const simpleCatering = (catering ?? []).filter(
+    (item) => !item.options || item.options.length === 0
+  );
+  const groupedCatering = (catering ?? []).filter(
+    (item) => item.options && item.options.length > 0
+  );
+
   return (
     <Panel sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <Box>
@@ -41,20 +50,76 @@ const LogisticsBoard: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) =
             No counted extras for this selection.
           </Typography>
         ) : (
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-              gap: 1.25,
-            }}
-          >
-            {catering.map((item) => (
+          <>
+            {simpleCatering.length > 0 && (
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gap: 1.25,
+                }}
+              >
+                {simpleCatering.map((item) => (
+                  <Box
+                    key={item.name}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.25,
+                      px: 1.5,
+                      py: 1.25,
+                      borderRadius: "12px",
+                      backgroundColor: T.panelSoft,
+                      border: `1px solid ${T.line}`,
+                    }}
+                  >
+                    {item.icon ? (
+                      <Box
+                        component="img"
+                        src={item.icon}
+                        alt=""
+                        aria-hidden
+                        sx={{
+                          width: 26,
+                          height: 26,
+                          objectFit: "contain",
+                          filter: iconFilter,
+                          opacity: 0.85,
+                        }}
+                      />
+                    ) : (
+                      <RestaurantRoundedIcon sx={{ color: T.water, fontSize: 26 }} />
+                    )}
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography
+                        sx={{
+                          ...display,
+                          fontSize: 20,
+                          fontWeight: 700,
+                          color: T.textHi,
+                          lineHeight: 1.1,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {item.count.toLocaleString()}
+                      </Typography>
+                      <Typography sx={{ fontSize: 11, color: T.textLo }} noWrap>
+                        {item.name}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
+            {/* Extras grouped by selected option (e.g. "Free T-Shirt" by Shirt
+                Size): total in the header, one mini-card per option; the
+                option counts always sum to the total. */}
+            {groupedCatering.map((item) => (
               <Box
                 key={item.name}
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.25,
+                  mt: simpleCatering.length > 0 ? 1.25 : 0,
                   px: 1.5,
                   py: 1.25,
                   borderRadius: "12px",
@@ -62,43 +127,104 @@ const LogisticsBoard: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) =
                   border: `1px solid ${T.line}`,
                 }}
               >
-                {item.icon ? (
-                  <Box
-                    component="img"
-                    src={item.icon}
-                    alt=""
-                    aria-hidden
-                    sx={{
-                      width: 26,
-                      height: 26,
-                      objectFit: "contain",
-                      filter: iconFilter,
-                      opacity: 0.85,
-                    }}
-                  />
-                ) : (
-                  <RestaurantRoundedIcon sx={{ color: T.water, fontSize: 26 }} />
-                )}
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography
-                    sx={{
-                      ...display,
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: T.textHi,
-                      lineHeight: 1.1,
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {item.count.toLocaleString()}
-                  </Typography>
-                  <Typography sx={{ fontSize: 11, color: T.textLo }} noWrap>
-                    {item.name}
-                  </Typography>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1.25,
+                    mb: 1,
+                  }}
+                >
+                  {item.icon ? (
+                    <Box
+                      component="img"
+                      src={item.icon}
+                      alt=""
+                      aria-hidden
+                      sx={{
+                        width: 26,
+                        height: 26,
+                        objectFit: "contain",
+                        filter: iconFilter,
+                        opacity: 0.85,
+                      }}
+                    />
+                  ) : (
+                    <RestaurantRoundedIcon sx={{ color: T.water, fontSize: 26 }} />
+                  )}
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography
+                      sx={{
+                        ...display,
+                        fontSize: 20,
+                        fontWeight: 700,
+                        color: T.textHi,
+                        lineHeight: 1.1,
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {item.count.toLocaleString()}
+                    </Typography>
+                    <Typography sx={{ fontSize: 11, color: T.textLo }} noWrap>
+                      {item.name}
+                    </Typography>
+                  </Box>
+                  {item.selectionName && (
+                    <Typography
+                      sx={{
+                        fontSize: 10,
+                        fontWeight: 600,
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: T.textFaint,
+                      }}
+                    >
+                      by {item.selectionName}
+                    </Typography>
+                  )}
+                </Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(92px, 1fr))",
+                    gap: 1,
+                  }}
+                >
+                  {(item.options ?? []).map((option) => (
+                    <Box
+                      key={option.name}
+                      sx={{
+                        px: 1.25,
+                        py: 0.75,
+                        borderRadius: "10px",
+                        backgroundColor: T.panel,
+                        border: `1px solid ${T.line}`,
+                        borderLeft: `3px solid ${
+                          option.name === "Unspecified" ? T.committed : T.water
+                        }`,
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          ...display,
+                          fontSize: 16,
+                          fontWeight: 700,
+                          color: T.textHi,
+                          lineHeight: 1.1,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {option.count.toLocaleString()}
+                      </Typography>
+                      <Typography sx={{ fontSize: 10.5, color: T.textLo }} noWrap>
+                        {option.name}
+                      </Typography>
+                    </Box>
+                  ))}
                 </Box>
               </Box>
             ))}
-          </Box>
+          </>
         )}
 
         {headcount > 0 && (

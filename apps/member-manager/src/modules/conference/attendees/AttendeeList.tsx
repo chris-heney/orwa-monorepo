@@ -113,12 +113,16 @@ const AttendeeList = () => {
           sortBy="items.label"
           render={(record: RaRecord) => {
             return record?.items?.map((item: ISharedMeta, index: number) => {
+              // Surface the chosen option (e.g. shirt size) on the chip.
+              const chipLabel = item.selection
+                ? `${item.label} — ${item.selection}`
+                : item.label;
               return (
                 <ChipField
                   key={`item-${record.id}-${item.key + " " + index}`}
-                  record={item}
+                  record={{ ...item, label: chipLabel }}
                   source="label"
-                  label={item.label}
+                  label={chipLabel}
                 />
               );
             });

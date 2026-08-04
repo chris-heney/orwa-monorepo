@@ -28,6 +28,10 @@ export interface CateringItem {
   name: string;
   count: number;
   icon?: string;
+  /** Present when the extra groups counts by selected option (e.g. "Shirt Size"). */
+  selectionName?: string | null;
+  /** Per-option counts, sorted desc; they always sum to `count`. */
+  options?: NamedCount[];
 }
 
 export type ShowtimeMode = "countdown" | "live" | "wrapped" | "archive";
@@ -224,10 +228,25 @@ export const useConferenceMetrics = (
         if (cancelled) return;
         const data = JSON.parse(response.body);
         const items: CateringItem[] = (data.itemCounts || []).map(
-          ([, metric]: [number, { name: string; count: number; icon?: string }]) => ({
+          ([, metric]: [
+            number,
+            {
+              name: string;
+              count: number;
+              icon?: string;
+              selection_name?: string | null;
+              options?: Record<string, number>;
+            }
+          ]) => ({
             name: metric.name,
             count: num(metric.count),
             icon: metric.icon,
+            selectionName: metric.selection_name ?? null,
+            options: metric.options
+              ? Object.entries(metric.options)
+                  .map(([name, count]) => ({ name, count: num(count) }))
+                  .sort((a, b) => b.count - a.count)
+              : undefined,
           })
         );
         setCatering(items.sort((a, b) => b.count - a.count));
