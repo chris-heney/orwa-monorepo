@@ -48,10 +48,31 @@
     "counted": {
       "type": "boolean"
     },
+    "counted_by_selection": {
+      "type": "boolean",
+      "default": false
+    },
+    "quantity_selection": {
+      "type": "boolean"
+    },
+    "requires_selection": {
+      "type": "boolean",
+      "default": false
+    },
+    "selection_name": {
+      "type": "string"
+    },
+    "selection_options": {
+      "type": "json",
+      "default": []
+    },
     "max_qty": {
       "type": "integer"
     },
     "max_qty_each": {
+      "type": "integer"
+    },
+    "min_qty_each": {
       "type": "integer"
     },
     "details": {

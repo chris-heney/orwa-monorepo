@@ -16,6 +16,9 @@
     "label": {
       "type": "string"
     },
+    "selection": {
+      "type": "string"
+    },
     "item": {
       "type": "relation",
       "relation": "oneToOne",

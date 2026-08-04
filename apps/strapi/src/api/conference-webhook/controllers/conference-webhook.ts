@@ -42,6 +42,18 @@ const isContestantTicket = (ticket: ITicketPayload): boolean => {
   );
 };
 
+// Extras with `requires_selection` (e.g. "Free T-Shirt" → Shirt Size) ship the
+// chosen option in an `extra_selections` map keyed by extra id. Resolve it for
+// one extra, returning null when nothing (or blank) was chosen.
+const selectionFor = (
+  selections: unknown,
+  extraId: unknown
+): string | null => {
+  if (!selections || typeof selections !== "object") return null;
+  const raw = (selections as Record<string, unknown>)[String(extraId)];
+  return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
+};
+
 export default ({ strapi }) => {
   const service = strapi.service("api::conference-webhook.conference-webhook");
   const  currentYear  = new Date().getFullYear();
@@ -73,6 +85,7 @@ export default ({ strapi }) => {
           nonMemberFee, // agency false and memberType Non Member
           registrationAddonIds,
           registrationExtrasIds,
+          registration_extra_selections,
           team,
           logo,
           watersystem,
@@ -288,6 +301,7 @@ export default ({ strapi }) => {
             key: extra.name,
             value: registrationSource === "online" ? extra.price_online.toString() : extra.price_event.toString(),
             label: extra.name,
+            selection: selectionFor(registration_extra_selections, extra.id),
             item: extra.id,
           }));
 
@@ -647,6 +661,7 @@ export default ({ strapi }) => {
         key: extra.name + " " + index,
         value: registrationSource === "online" ? extra.price_online.toString() : extra.price_event.toString(),
         label: extra.name,
+        selection: selectionFor(ticket.extra_selections, extra.id),
         item: extra.id,
       }));
 
@@ -740,6 +755,7 @@ export default ({ strapi }) => {
         key: extra.name + " " + index,
         value: extra.price_online.toString(),
         label: extra.name,
+        selection: selectionFor(booth.extra_selections, extra.id),
         item: extra.id,
       }));
 
@@ -810,6 +826,7 @@ export default ({ strapi }) => {
                 ? extra.price_online.toString()
                 : extra.price_event.toString(),
             label: extra.name,
+            selection: selectionFor(contestant.extra_selections, extra.id),
             item: extra.id,
           };
         })

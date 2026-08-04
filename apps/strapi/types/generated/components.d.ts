@@ -76,6 +76,7 @@ export interface ConferenceLineItems extends Struct.ComponentSchema {
     >;
     key: Schema.Attribute.String;
     label: Schema.Attribute.String;
+    selection: Schema.Attribute.String;
     value: Schema.Attribute.String;
   };
 }
@@ -167,6 +168,7 @@ export interface SharedFieldMeta extends Struct.ComponentSchema {
     >;
     key: Schema.Attribute.String;
     label: Schema.Attribute.String;
+    selection: Schema.Attribute.String;
     value: Schema.Attribute.String;
   };
 }

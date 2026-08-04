@@ -389,11 +389,22 @@ export default ({ strapi }) => {
       const formatExtraLine = (
         extra: any,
         qty: number,
-        unitPrice: number
+        unitPrice: number,
+        selection?: string | null
       ) => ({
-        label: qty > 1 ? `${extra.name} &times;${qty}` : extra.name,
+        label:
+          (qty > 1 ? `${extra.name} &times;${qty}` : extra.name) +
+          (selection ? ` &mdash; ${selection}` : ""),
         amount: unitPrice * qty,
       });
+
+      // Chosen option (e.g. shirt size) for extras with `requires_selection`,
+      // sent as an `extra_selections` map keyed by extra id.
+      const selectionFor = (selections: unknown, extraId: unknown): string | null => {
+        if (!selections || typeof selections !== "object") return null;
+        const raw = (selections as Record<string, unknown>)[String(extraId)];
+        return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
+      };
 
       const freeVendors = () => {
         if (booths && booths.length === 1) {
@@ -580,7 +591,8 @@ export default ({ strapi }) => {
                         const { label, amount } = formatExtraLine(
                           extra,
                           qty,
-                          unitPrice
+                          unitPrice,
+                          selectionFor(booth.extra_selections, extra.id)
                         );
                         return `<li>${label} ${currencyFormatter.format(
                           amount
@@ -702,7 +714,8 @@ export default ({ strapi }) => {
                       const { label, amount } = formatExtraLine(
                         extra,
                         qty,
-                        unitPrice
+                        unitPrice,
+                        selectionFor(ticket.extra_selections, extra.id)
                       );
                       return `
                       <tr>
@@ -793,7 +806,12 @@ export default ({ strapi }) => {
             registrationSource === "online"
               ? extra.price_online
               : extra.price_event;
-          const { label, amount } = formatExtraLine(extra, qty, unitPrice);
+          const { label, amount } = formatExtraLine(
+            extra,
+            qty,
+            unitPrice,
+            selectionFor(ctx.request.body.registration_extra_selections, extra.id)
+          );
           return `
           <tr style="background-color:${
             index % 2 === 0 ? "#f9f9f9" : "#fff"

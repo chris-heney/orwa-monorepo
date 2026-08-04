@@ -88,6 +88,8 @@ export interface ITicketPayload {
   type: "Attendee" | "Vendor" | "Guest" | "Contestant";
   price: number;
   extras: number[];
+  /** Chosen option per extra id for extras with `requires_selection` (e.g. shirt size). */
+  extra_selections?: Record<string, string>;
   ticket_type: ITicketOption;
   [key: string]: unknown;
 }
@@ -132,6 +134,8 @@ export interface ISponsorEntity {
 
 export interface IExtraEntity {
   item: Identifier;
+  /** Option chosen for extras with `requires_selection` (stored on field-meta rows). */
+  selection?: string | null;
   context: "booth" | "attendee";
   id: any;
   max_qty_each: number;

@@ -1057,6 +1057,8 @@ export interface ApiConferenceExtraConferenceExtra
     >;
     context: Schema.Attribute.String;
     counted: Schema.Attribute.Boolean;
+    counted_by_selection: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1079,11 +1081,17 @@ export interface ApiConferenceExtraConferenceExtra
       Schema.Attribute.Private;
     max_qty: Schema.Attribute.Integer;
     max_qty_each: Schema.Attribute.Integer;
+    min_qty_each: Schema.Attribute.Integer;
     name: Schema.Attribute.String;
     order: Schema.Attribute.Integer;
     price_event: Schema.Attribute.Decimal;
     price_online: Schema.Attribute.Decimal;
     publishedAt: Schema.Attribute.DateTime;
+    quantity_selection: Schema.Attribute.Boolean;
+    requires_selection: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    selection_name: Schema.Attribute.String;
+    selection_options: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
