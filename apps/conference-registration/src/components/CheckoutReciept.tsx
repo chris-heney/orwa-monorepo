@@ -177,11 +177,17 @@ const CheckoutReceipt = () => {
                   />
                   {ticket.extras.map((extra, extraIndex) => {
                     const currentExtra = getExtraData(ExtraOptions, extra);
+                    const selection =
+                      currentExtra &&
+                      ticket.extra_selections?.[String(currentExtra.id)];
                     return (
                       <LineItem
                         key={extraIndex}
                         index={extraIndex}
-                        label={currentExtra?.name || ""}
+                        label={
+                          (currentExtra?.name || "") +
+                          (selection ? ` — ${selection}` : "")
+                        }
                         value={
                           isExtraIncluded(ticket, ExtraOptions, extra)
                             ? "Included"

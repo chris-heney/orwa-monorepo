@@ -544,6 +544,18 @@ export interface IExtraOption {
   price_event: number;
   max_qty: number;
   counted: boolean;
+  /** Summary shows a count per selected option plus the total. */
+  counted_by_selection?: boolean | null;
+  /** Explicit quantity-stepper toggle; null = legacy (derive from max_qty_each > 1). */
+  quantity_selection?: boolean | null;
+  /** Minimum quantity once the registrant opts in (0/null = no minimum). */
+  min_qty_each?: number | null;
+  /** When true, taking this extra requires choosing one of `selection_options`. */
+  requires_selection?: boolean | null;
+  /** Label for the required dropdown, e.g. "Shirt Size". */
+  selection_name?: string | null;
+  /** Choices for the required dropdown, e.g. ["SM","MD","LG"]. */
+  selection_options?: string[] | null;
   details: string;
   included: ITicketOption[];
   excluded: ITicketOption[];
@@ -610,6 +622,8 @@ export interface ITicketPayload {
   type: ticketType;
   price: number;
   extras: Identifier[];
+  /** Chosen option per extra id for extras with `requires_selection` (e.g. shirt size). */
+  extra_selections?: Record<string, string>;
   ticket_type: ITicketOption;
   /** Contestant attach: existing Attendee/Vendor registration id. */
   previous_registration_id?: Identifier;

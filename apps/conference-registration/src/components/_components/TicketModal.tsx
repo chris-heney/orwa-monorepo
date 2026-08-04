@@ -23,6 +23,7 @@ import {
   formatExtrasConfirmList,
   getUncheckedOptionalExtras,
 } from "../../helpers/getUncheckedOptionalExtras";
+import { getMissingSelectionExtras } from "../../helpers/extraSelection";
 import {
   freeVendorAllowance,
   vendorOrdinalAtIndex,
@@ -137,7 +138,9 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Clear the "choose extras" highlight once the user selects an optional extra.
+  // Clear the "choose extras" highlight once the user selects an optional
+  // extra AND no selected extra is still missing its required option choice
+  // (e.g. shirt size) — otherwise the highlight must stay until they pick one.
   useEffect(() => {
     if (!highlightExtras) return;
     if (type !== "Attendee" && type !== "Vendor") return;
@@ -146,11 +149,16 @@ const TicketModal: React.FC<ITicketModalProps> = ({
       extras: ExtraOptions,
       context: type,
     });
-    if (unchecked.length === 0) {
+    const missingSelections = getMissingSelectionExtras(
+      ticket?.extras,
+      ticket?.extra_selections,
+      (id) => getExtraData(ExtraOptions, id as string | number)
+    );
+    if (unchecked.length === 0 && missingSelections.length === 0) {
       setHighlightExtras(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightExtras, ticket?.extras, ticket?.ticket_type?.id, type, ExtraOptions]);
+  }, [highlightExtras, ticket?.extras, ticket?.extra_selections, ticket?.ticket_type?.id, type, ExtraOptions]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -306,6 +314,30 @@ const TicketModal: React.FC<ITicketModalProps> = ({
       (!ticket.extras || ticket.extras.length === 0)
     ) {
       notify("You must select one of the meal options", "error");
+      return;
+    }
+
+    // Extras with a required selection (e.g. shirt size) cannot be saved
+    // without one — toast + highlight the dropdown, unmissably.
+    const missingSelections = getMissingSelectionExtras(
+      ticket?.extras,
+      ticket?.extra_selections,
+      (id) => getExtraData(ExtraOptions, id as string | number)
+    );
+    if (missingSelections.length > 0) {
+      setHighlightExtras(true);
+      const first = missingSelections[0];
+      notify(
+        `Please choose ${(first.selection_name || "an option").toLowerCase()} for: ${missingSelections
+          .map((extra) => extra.name)
+          .join(", ")}.`,
+        "error"
+      );
+      requestAnimationFrame(() => {
+        document
+          .querySelector(`[data-validation-field="extra-selection-${first.id}"]`)
+          ?.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
       return;
     }
 

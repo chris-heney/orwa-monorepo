@@ -1,4 +1,4 @@
-import { Checkbox, IconButton, TextField, Typography, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel } from "@mui/material";
+import { Checkbox, IconButton, MenuItem, TextField, Typography, Radio, RadioGroup, FormControlLabel, FormControl, FormLabel } from "@mui/material";
 import InfoIcon from "@mui/icons-material/Info";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -13,6 +13,14 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { isExtraIncluded } from "../helpers/isExtraIncluded";
 import { filterVisibleExtras } from "../helpers/filterVisibleExtras";
 import { validationHighlightClassName } from "../helpers/validationHighlight";
+import {
+  getExtraSelection,
+  maxQtyFor,
+  minQtyFor,
+  quantitySelectionEnabled,
+  requiresSelection,
+  selectionOptionsFor,
+} from "../helpers/extraSelection";
 import { useState, useEffect } from "react";
 
 const AddExtras = ({
@@ -45,6 +53,54 @@ const AddExtras = ({
     control,
     name: field,
   });
+
+  // Chosen option per extra id (e.g. shirt size) for extras that require a
+  // selection. Ticket/booth rows carry their own map; top-level id-array
+  // usage (Registration extras) stores it beside the ids.
+  const registrationSelections = watch("registration_extra_selections");
+  const rowSelections: Record<string, string> | undefined =
+    fieldIndex !== undefined ? ticket?.extra_selections : registrationSelections;
+
+  const handleSelectionChange = (extra: IExtraOption, value: string) => {
+    const nextSelections = {
+      ...(rowSelections || {}),
+      [String(extra.id)]: value,
+    };
+    if (fieldIndex !== undefined) {
+      update(fieldIndex, { ...ticket, extra_selections: nextSelections });
+    } else {
+      setValue("registration_extra_selections", nextSelections);
+    }
+  };
+
+  // When opting into a quantity extra with a minimum, start at the minimum.
+  const initialCopiesFor = (extra: IExtraOption): number =>
+    quantitySelectionEnabled(extra) ? Math.max(1, minQtyFor(extra)) : 1;
+
+  // Rewrite this extra's id-count in the extras array (dup ids = quantity),
+  // clamping to [0, max] and snapping nonzero values up to the minimum.
+  const setExtraQuantity = (extra: IExtraOption, rawQuantity: number) => {
+    const minQty = minQtyFor(extra);
+    const maxQty = maxQtyFor(extra);
+    let quantity = Math.min(
+      Math.max(0, Number.isFinite(rawQuantity) ? rawQuantity : 0),
+      maxQty
+    );
+    if (quantity > 0 && quantity < minQty) quantity = minQty;
+
+    const currentIds: unknown[] =
+      (fieldIndex !== undefined ? ticket?.extras : ticket) || [];
+    const next = [
+      ...currentIds.filter((id) => String(id) !== String(extra.id)),
+      ...Array(quantity).fill(extra.id),
+    ];
+
+    if (fieldIndex === undefined) {
+      setValue(field, next);
+    } else {
+      update(fieldIndex, { ...ticket, extras: next });
+    }
+  };
 
   // Initialize selections from existing form values
   useEffect(() => {
@@ -82,7 +138,9 @@ const AddExtras = ({
         : [...(ticket || []).filter((id: string) => id !== extra.id)];
       
       if (value === 'yes') {
-        updatedExtras.push(extra.id);
+        for (let i = 0; i < initialCopiesFor(extra); i++) {
+          updatedExtras.push(extra.id);
+        }
       }
       
       if (fieldIndex === undefined) {
@@ -93,13 +151,14 @@ const AddExtras = ({
     } else {
       // Original checkbox behavior
       const isSelected = typeof value === 'boolean' ? value : value === 'yes';
+      const addedCopies = Array(initialCopiesFor(extra)).fill(extra.id);
       const updatedExtras =
         fieldIndex !== undefined
           ? isSelected
-            ? [...(ticket.extras || []), extra.id]
+            ? [...(ticket.extras || []), ...addedCopies]
             : (ticket.extras || []).filter((id: string) => id !== extra.id)
           : isSelected
-          ? [...(ticket || []), extra.id]
+          ? [...(ticket || []), ...addedCopies]
           : (ticket || []).filter((id: string) => id !== extra.id);
 
       if (fieldIndex === undefined) {
@@ -252,28 +311,21 @@ const AddExtras = ({
                       )}
                 </span>
               </div>
-              {extra.max_qty_each > 1 && (!useYesNo || isExtraSelected(extra.id) === 'yes') && (
+              {quantitySelectionEnabled(extra) &&
+                maxQtyFor(extra) > 1 &&
+                (!useYesNo || isExtraSelected(extra.id) === 'yes') && (
                 <div
                   className="mt-2 flex items-center"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <IconButton
                     onClick={() => {
-                      const index = ticket.extras?.indexOf(extra.id);
-
-                      if (index !== undefined && index > -1) {
-                        const updatedExtras = [...ticket.extras];
-                        updatedExtras.splice(index, 1);
-
-                        if (fieldIndex === undefined) {
-                          setValue(field, updatedExtras);
-                        } else {
-                          update(fieldIndex, {
-                            ...ticket,
-                            extras: updatedExtras,
-                          });
-                        }
-                      }
+                      // Dropping below the minimum removes the extra entirely.
+                      const target =
+                        currentQuantity - 1 < minQtyFor(extra)
+                          ? 0
+                          : currentQuantity - 1;
+                      setExtraQuantity(extra, target);
                     }}
                     disabled={currentQuantity === 0}
                     className="w-8 h-8"
@@ -284,44 +336,66 @@ const AddExtras = ({
                     type="number"
                     size="small"
                     value={currentQuantity}
-                    onChange={(e) => {
-                      const quantity = Math.min(
-                        Math.max(0, parseInt(e.target.value || "0", 10)),
-                        extra.max_qty_each
-                      );
-                      const diff = quantity - currentQuantity;
-
-                      const updatedExtras = [...(ticket.extras || [])];
-                      for (let i = 0; i < Math.abs(diff); i++) {
-                        if (diff > 0) updatedExtras.push(extra.id);
-                        else updatedExtras.pop();
-                      }
-
-                      if (fieldIndex === undefined) {
-                        setValue(field, updatedExtras);
-                      } else {
-                        update(fieldIndex, {
-                          ...ticket,
-                          extras: updatedExtras,
-                        });
-                      }
-                    }}
+                    onChange={(e) =>
+                      setExtraQuantity(
+                        extra,
+                        parseInt(e.target.value || "0", 10)
+                      )
+                    }
                     inputProps={{
                       min: 0,
-                      max: extra.max_qty_each,
+                      max: maxQtyFor(extra),
                     }}
                     className="w-20 mx-2"
                   />
                   <IconButton
-                    onClick={() => handleExtrasChange(extra, useYesNo ? 'yes' : true)}
-                    disabled={currentQuantity === extra.max_qty_each}
+                    onClick={() => setExtraQuantity(extra, currentQuantity + 1)}
+                    disabled={currentQuantity >= maxQtyFor(extra)}
                     className="w-8 h-8"
                   >
                     <AddIcon />
                   </IconButton>
                   <Typography className="text-gray-500 text-sm ml-2">
-                    Max: {extra.max_qty_each}
+                    {minQtyFor(extra) > 0
+                      ? `Min: ${minQtyFor(extra)} · Max: ${maxQtyFor(extra)}`
+                      : `Max: ${maxQtyFor(extra)}`}
                   </Typography>
+                </div>
+              )}
+              {requiresSelection(extra) &&
+                (useYesNo ? isExtraSelected(extra.id) === "yes" : selected) && (
+                <div
+                  className={`mt-2 rounded-md p-2 ${
+                    highlightInvalid &&
+                    !getExtraSelection(rowSelections, extra.id)
+                      ? validationHighlightClassName
+                      : "bg-white/70"
+                  }`}
+                  data-validation-field={`extra-selection-${extra.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <TextField
+                    select
+                    required
+                    fullWidth
+                    size="small"
+                    label={extra.selection_name || "Select an option"}
+                    value={getExtraSelection(rowSelections, extra.id)}
+                    onChange={(e) =>
+                      handleSelectionChange(extra, e.target.value)
+                    }
+                  >
+                    {selectionOptionsFor(extra).map((option) => (
+                      <MenuItem key={option} value={option}>
+                        {option}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                  <span className="mt-1 block text-left text-xs text-slate-500">
+                    Required — choose{" "}
+                    {(extra.selection_name || "an option").toLowerCase()} to
+                    continue.
+                  </span>
                 </div>
               )}
             </div>
