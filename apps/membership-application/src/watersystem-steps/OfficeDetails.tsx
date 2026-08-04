@@ -1,10 +1,10 @@
 import {
-  FormSection,
   MaskedPhoneInput,
   SelectInput,
   TextInput,
 } from "mj-react-form-builder";
 import { MaskedFaxInput } from "../components/MaskedFaxInput";
+import FormSection from "../components/FormSection";
 
 const OfficeDetails = () => {
   return (

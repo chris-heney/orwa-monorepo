@@ -1,4 +1,5 @@
-import { FormSection, ContactArrayInput } from "mj-react-form-builder";
+import { ContactArrayInput } from "mj-react-form-builder";
+import FormSection from "../components/FormSection";
 import { useMembershipsContext } from "../providers/MembershipContextProvider";
 
 const AssociateContactInfoStep = () => {

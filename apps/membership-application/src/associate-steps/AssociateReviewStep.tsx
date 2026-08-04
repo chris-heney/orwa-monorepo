@@ -1,5 +1,4 @@
 import {
-  FormSection,
   MaskedPhoneInput,
   SelectInput,
   TextInput,
@@ -8,6 +7,7 @@ import {
 import { useFormContext } from "react-hook-form";
 import PaymentTypeOptions from "../components/PaymentTypesOptions";
 import CardForm from "../components/CardForm";
+import FormSection from "../components/FormSection";
 import { stateOptions } from "../data/stateOptions";
 import currencyFormatter from "../helpers/currencyFormatter";
 import {

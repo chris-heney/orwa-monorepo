@@ -1,5 +1,4 @@
 import {
-  FormSection,
   TextInput,
   SelectInput,
   MaskedPhoneInput,
@@ -8,6 +7,7 @@ import { useMembershipsContext } from "../providers/MembershipContextProvider";
 import { assoociateCategoryOptions } from "../types/AssociateMembership";
 import SelectAssociateInput from "../components/SelectAssociateInput";
 import ValidateAssociateNameInput from "../components/ValidateAssociateNameInput";
+import FormSection from "../components/FormSection";
 
 const AssociateInfoStep = () => {
   const { memberships } = useMembershipsContext();

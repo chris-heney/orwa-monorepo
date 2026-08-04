@@ -1,4 +1,5 @@
-import { FileInput, FormSection, NumberInput } from "mj-react-form-builder";
+import { FileInput, NumberInput } from "mj-react-form-builder";
+import FormSection from "../components/FormSection";
 import { useMembershipsContext } from "../providers/MembershipContextProvider";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";

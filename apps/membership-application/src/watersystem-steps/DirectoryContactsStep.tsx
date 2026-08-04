@@ -1,5 +1,6 @@
 import { useEffect } from "react";
-import { FormSection, MaskedPhoneInput, SelectInput, TextInput } from "mj-react-form-builder";
+import { MaskedPhoneInput, SelectInput, TextInput } from "mj-react-form-builder";
+import FormSection from "../components/FormSection";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { stateOptions } from "../data/stateOptions";
 import {

@@ -1,5 +1,4 @@
 import {
-    FormSection,
     SelectInput,
     TextInput,
     ZipCodeInput,
@@ -7,6 +6,7 @@ import {
   import { useFormContext } from "react-hook-form";
   import { stateOptions } from "../data/stateOptions";
   import { useMembershipsContext } from "../providers/MembershipContextProvider";
+  import FormSection from "../components/FormSection";
   
   const AddressStep = () => {
     const { watch } = useFormContext();

@@ -1,6 +1,5 @@
 import {
   CheckboxInput,
-  FormSection,
   SelectInput,
   TextInput,
   ZipCodeInput,
@@ -14,6 +13,7 @@ import currencyFormatter from "../helpers/currencyFormatter";
 import { useMembershipsContext } from "../providers/MembershipContextProvider";
 import SelectWatersystem from "../components/SelectWatersystemInput";
 import ValidateSystemNameInput from "../components/ValidateSystemNameInput";
+import FormSection from "../components/FormSection";
 
 const SystemInfoStep = () => {
 
