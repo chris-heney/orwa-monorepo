@@ -24,7 +24,11 @@ import exportBooths from "./helpers/exportBooths";
 import ConferenceTabs from "./components/ConferenceTabs";
 import exportSponsors from "./helpers/exportSponsors";
 import exportAttendees from "./helpers/exportAttendes";
-import { getPrimaryConferenceId } from "./helpers/mergeConferenceAcrossTabFilters";
+import {
+  ensureConferenceInFilters,
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "./helpers/mergeConferenceAcrossTabFilters";
 import { omitYearForListQuery } from "./helpers/listQueryFilters";
 
 const ConferenceDashboard = () => {
@@ -62,7 +66,9 @@ const ConferenceDashboard = () => {
 
   const activeConferenceName =
     conferences.find(
-      (c) => c.id === getPrimaryConferenceId(tabFilters[selectedTab])
+      (c) =>
+        getConferenceFilterId(c) ===
+        getPrimaryConferenceId(tabFilters[selectedTab])
     )?.name || "";
 
   const exporter = (records: RaRecord[]) => {
@@ -140,7 +146,7 @@ const ConferenceDashboard = () => {
     resource.length > 0 ? resource : "conference-attendees";
   const listFilterDefaults = omitYearForListQuery(
     listResource,
-    tabFilters[selectedTab]
+    ensureConferenceInFilters(tabFilters[selectedTab], selectedTab)
   );
 
   // Determine which exporter to use based on the current resource

@@ -9,13 +9,22 @@
  * @param filterName Optional filter field name when value is a primitive
  * @returns Whether the value is selected
  */
+const idsEqual = (a: unknown, b: unknown) => {
+  if (a == null || b == null || a === "" || b === "") return false;
+  if (a === b) return true;
+  const na = Number(a);
+  const nb = Number(b);
+  if (!Number.isNaN(na) && !Number.isNaN(nb)) return na === nb;
+  return false;
+};
+
 export const isSelected = (value: any, filters: any, filterName?: string) => {
   // Handle direct primitive values (like conference IDs)
   if (typeof value !== 'object' || value === null) {
     const filterValues = filters[filterName || 'conference'] || [];
     return Array.isArray(filterValues) 
-      ? filterValues.includes(value)
-      : filterValues === value;
+      ? filterValues.some((v) => idsEqual(v, value))
+      : idsEqual(filterValues, value);
   }
 
   // Handle object values with multiple filter fields
@@ -27,10 +36,10 @@ export const isSelected = (value: any, filters: any, filterName?: string) => {
     const currentValues = filters[key] || [];
     
     if (Array.isArray(currentValues)) {
-      return currentValues.includes(val);
+      return currentValues.some((v) => idsEqual(v, val));
     }
     
-    return currentValues === val;
+    return idsEqual(currentValues, val);
   });
 };
 

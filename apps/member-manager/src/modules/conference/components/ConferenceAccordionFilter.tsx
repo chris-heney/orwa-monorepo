@@ -17,6 +17,8 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import GroupIcon from "@mui/icons-material/Group";
 import { isSelected, toggleFilter } from "../helpers/selectFilters";
 import {
+  ensureConferenceInFilters,
+  getConferenceFilterId,
   getFilterYear,
   getPrimaryConferenceId,
   mergeConferenceYearIntoAllTabs,
@@ -34,13 +36,13 @@ const ConferenceAccordionFilter = ({
   const { filterValues, setFilters } = useListFilterContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
-  // Check if we're in the edit tab where deselection should be disabled
-  const disableDeselect = selectedTab === "edit";
-
   // When tab changes, load the filters for that tab
   useEffect(() => {
     // Get the stored filters for the newly selected tab, or use empty object as default
-    let filtersForTab = { ...(tabFilters[selectedTab] || {}) };
+    let filtersForTab = ensureConferenceInFilters(
+      { ...(tabFilters[selectedTab] || {}) },
+      selectedTab
+    );
 
     // For tickets/extras/addons tabs, convert conference to conferences array if needed
     const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(selectedTab);
@@ -58,6 +60,19 @@ const ConferenceAccordionFilter = ({
     // Apply these filters (omit `year` for resources Strapi does not support)
     setFilters(omitYearForListQuery(resource, filtersForTab), filterValues, false);
   }, [selectedTab, resource, setFilters]);
+
+  // Conference radio: restore default if list filters ever lose the selection.
+  useEffect(() => {
+    if (getPrimaryConferenceId(filterValues) != null) return;
+    setFilters(
+      omitYearForListQuery(
+        resource,
+        ensureConferenceInFilters(filterValues, selectedTab)
+      ),
+      filterValues,
+      false
+    );
+  }, [filterValues, selectedTab, resource, setFilters]);
 
   useEffect(() => {
     const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(
@@ -89,6 +104,8 @@ const ConferenceAccordionFilter = ({
     ) {
       tabEntry = { ...tabEntry, year: getFilterYear(tabFilters[selectedTab] || {}) };
     }
+
+    tabEntry = ensureConferenceInFilters(tabEntry, selectedTab);
 
     setTabFilters((prev) =>
       mergeConferenceYearIntoAllTabs(prev, selectedTab, tabEntry)
@@ -149,26 +166,51 @@ const ConferenceAccordionFilter = ({
           <FormControl>
             <FormLabel>Conference</FormLabel>
             <FilterList label="" icon={<EventIcon />}>
-              {conferences?.map((conference: any) => {
+              {conferences?.map((conference: IConference & { entityId?: number }) => {
                 // For tickets/extras/addons tabs, use conferences array format
                 const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(selectedTab);
-                const conferenceId = typeof conference.id === "string" 
-                  ? parseInt(conference.id, 10) 
-                  : conference.id;
-                
+                const conferenceId = getConferenceFilterId(conference);
+                if (conferenceId == null) return null;
+
                 return (
                   <FilterListItem
-                    key={`conference-${conference.id}`}
+                    key={`conference-${conferenceId}`}
                     label={conference.name}
-                    value={isMultiConferenceTab ? conferenceId : { conference: conferenceId }}
-                    isSelected={isMultiConferenceTab 
-                      ? (val, filters) => isSelected(val, filters, "conferences")
-                      : isSelected
+                    value={
+                      isMultiConferenceTab
+                        ? { conferences: [conferenceId] }
+                        : { conference: conferenceId }
                     }
-                    toggleFilter={isMultiConferenceTab
-                      ? (val, filters) => toggleFilter(val, filters, "conferences", disableDeselect)
-                      : (val, filters) => toggleFilter(val, filters, undefined, disableDeselect)
-                    }
+                    isSelected={(val, filters) => {
+                      const current = getPrimaryConferenceId(filters);
+                      const id = isMultiConferenceTab
+                        ? val?.conferences?.[0]
+                        : val?.conference;
+                      return (
+                        current != null &&
+                        id != null &&
+                        Number(current) === Number(id)
+                      );
+                    }}
+                    toggleFilter={(val, filters) => {
+                      const id = isMultiConferenceTab
+                        ? val?.conferences?.[0]
+                        : val?.conference;
+                      const current = getPrimaryConferenceId(filters);
+                      if (
+                        id == null ||
+                        Number.isNaN(Number(id)) ||
+                        (current != null && Number(current) === Number(id))
+                      ) {
+                        return filters;
+                      }
+                      if (isMultiConferenceTab) {
+                        const { conference, ...rest } = filters;
+                        return { ...rest, conferences: [Number(id)] };
+                      }
+                      const { conferences: _c, ...rest } = filters;
+                      return { ...rest, conference: Number(id) };
+                    }}
                   />
                 );
               })}
@@ -189,7 +231,7 @@ const ConferenceAccordionFilter = ({
                     value={{ year: y }}
                     isSelected={isSelected}
                     toggleFilter={(val, filters) =>
-                      toggleFilter(val, filters, undefined, disableDeselect)
+                      toggleFilter(val, filters, undefined, false)
                     }
                   />
                 ))}
@@ -208,7 +250,8 @@ const ConferenceAccordionFilter = ({
                   ?.filter((ticket) =>
                     filterConferenceId != null
                       ? (ticket.conferences as IConference[]).some(
-                          (c) => c.id === filterConferenceId
+                          (c) =>
+                            getConferenceFilterId(c) === filterConferenceId
                         ) &&
                         ticket.name !== "Golfer" &&
                         ticket.name !== "Fisher"
@@ -272,7 +315,8 @@ const ConferenceAccordionFilter = ({
                   ?.filter((ticket) =>
                     filterConferenceId != null
                       ? (ticket.conferences as IConference[]).some(
-                          (c) => c.id === filterConferenceId
+                          (c) =>
+                            getConferenceFilterId(c) === filterConferenceId
                         ) &&
                         (ticket.name === "Golfer" || ticket.name === "Fisher")
                       : true

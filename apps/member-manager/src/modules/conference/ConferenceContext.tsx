@@ -12,10 +12,14 @@ import {
 import { Loading, useGetList, useStore } from "react-admin";
 import { IConference } from "./types";
 import IConferenceTicket from "./types/IConferenceTicket";
-import { MULTI_CONFERENCE_TABS } from "./helpers/mergeConferenceAcrossTabFilters";
+import {
+  DEFAULT_CONFERENCE_ID,
+  MULTI_CONFERENCE_TABS,
+  ensureConferenceInFilters,
+} from "./helpers/mergeConferenceAcrossTabFilters";
 
-/** Default conference for filters and fallbacks (Annual). */
-export const DEFAULT_CONFERENCE_ID = 1;
+/** Re-export for existing imports. */
+export { DEFAULT_CONFERENCE_ID };
 
 function defaultFilterForTab(tab: string, year: number): Record<string, any> {
   if (MULTI_CONFERENCE_TABS.has(tab)) {
@@ -129,10 +133,27 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
     setSearchFilter([]);
   }, [selectedTab]);
 
-  const currentFilter = {
-    ...defaultFilterForTab(selectedTab, year),
-    ...tabFilters[selectedTab],
-  };
+  // Persisted tab filters can lose `conference` (toggle/X clear). Re-hydrate.
+  useEffect(() => {
+    setTabFilters((prev) => {
+      let changed = false;
+      const next: Record<string, any> = {};
+      for (const [tab, filters] of Object.entries(prev || {})) {
+        const ensured = ensureConferenceInFilters(filters, tab);
+        next[tab] = ensured;
+        if (ensured !== filters) changed = true;
+      }
+      return changed ? next : prev;
+    });
+  }, [setTabFilters]);
+
+  const currentFilter = ensureConferenceInFilters(
+    {
+      ...defaultFilterForTab(selectedTab, year),
+      ...tabFilters[selectedTab],
+    },
+    selectedTab
+  );
 
   return !tickets || !conferences || conferencesLoading || ticketsLoading ? (
     <Loading />

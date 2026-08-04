@@ -6,7 +6,10 @@ import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { toggleFilter } from "../helpers/selectFilters";
 import { isSelected } from "../helpers/selectFilters";
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import {
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface AttendeesFilterProps {
   filterValues: any;
@@ -49,7 +52,7 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
           ?.filter((ticket) =>
             filterConferenceId != null
               ? (ticket.conferences as IConference[]).some(
-                  (c) => c.id === filterConferenceId
+                  (c) => getConferenceFilterId(c) === filterConferenceId
                 ) &&
                 ticket.name !== "Golfer" &&
                 ticket.name !== "Fisher"

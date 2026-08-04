@@ -18,18 +18,16 @@ const DefaultFilter: React.FC<DefaultFilterProps> = ({
   selectedTab,
   includeSearch = true,
   includeYear = true,
-  disableDeselect = false
+  disableDeselect: _disableDeselect = false,
 }) => {
-  // If we're in the edit tab, force disableDeselect to be true
-  const shouldDisableDeselect = selectedTab === 'edit' || disableDeselect;
-  
+  // Conference is always radio (BaseFilter); disableDeselect retained for callers.
   return (
     <BaseFilter 
       filterValues={filterValues}
       conferences={conferences}
       selectedTab={selectedTab}
       includeYear={includeYear}
-      disableDeselect={shouldDisableDeselect}
+      disableDeselect={true}
       includeSearch={includeSearch}
       multipleConferenceSelection={false}
     />

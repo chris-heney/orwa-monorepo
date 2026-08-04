@@ -1,8 +1,17 @@
-import React from "react";
-import { FilterList, FilterListItem, FilterLiveSearch } from "react-admin";
+import React, { useEffect } from "react";
+import {
+  FilterList,
+  FilterListItem,
+  FilterLiveSearch,
+  useListFilterContext,
+} from "react-admin";
 import EventIcon from "@mui/icons-material/Event";
 import { IConference } from "../types";
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import {
+  ensureConferenceInFilters,
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface SponsorshipFilterProps {
   filterValues: any;
@@ -10,32 +19,58 @@ interface SponsorshipFilterProps {
   includeSearch?: boolean;
 }
 
+const sameConferenceId = (a: unknown, b: unknown) => {
+  if (a == null || b == null || a === "" || b === "") return false;
+  const na = Number(a);
+  const nb = Number(b);
+  return !Number.isNaN(na) && !Number.isNaN(nb) && na === nb;
+};
+
 const SponsorshipFilter: React.FC<SponsorshipFilterProps> = ({
   filterValues,
   conferences,
   includeSearch = true,
 }) => {
-  // Helper to normalize IDs to numbers
-  const normalizeId = (id: any) => typeof id === 'string' ? parseInt(id, 10) : id;
-  const currentConferenceId = getPrimaryConferenceId(filterValues);
+  const { setFilters } = useListFilterContext();
+
+  useEffect(() => {
+    if (getPrimaryConferenceId(filterValues) != null) return;
+    setFilters(
+      ensureConferenceInFilters(filterValues, "sponsorships"),
+      filterValues,
+      false
+    );
+  }, [filterValues, setFilters]);
+
+  const conferenceIsSelected = (val: any, filters: any) =>
+    sameConferenceId(getPrimaryConferenceId(filters), val?.conference);
+
+  const conferenceToggleFilter = (val: any, filters: any) => {
+    const conferenceId = Number(val?.conference);
+    if (conferenceId == null || Number.isNaN(conferenceId)) {
+      return ensureConferenceInFilters(filters, "sponsorships");
+    }
+    if (sameConferenceId(getPrimaryConferenceId(filters), conferenceId)) {
+      return filters;
+    }
+    return { ...filters, conference: conferenceId };
+  };
 
   return (
     <>
-      {/* Search Filter */}
       {includeSearch && <FilterLiveSearch fullWidth />}
 
-      {/* Conference Filter - using source_conference for sponsorships */}
       <FilterList label="Conference" icon={<EventIcon />}>
-        {conferences?.map((conference: any) => {
-          const conferenceId = normalizeId(conference.id);
+        {conferences?.map((conference: IConference & { entityId?: number }) => {
+          const conferenceId = getConferenceFilterId(conference);
+          if (conferenceId == null) return null;
           return (
             <FilterListItem
-              key={`conference-${conference.id}`}
+              key={`conference-${conferenceId}`}
               label={conference.name}
-              value={{
-                ...filterValues,
-                conference: currentConferenceId === conferenceId ? undefined : conferenceId
-              }}
+              value={{ conference: conferenceId }}
+              isSelected={conferenceIsSelected}
+              toggleFilter={conferenceToggleFilter}
             />
           );
         })}
@@ -44,4 +79,4 @@ const SponsorshipFilter: React.FC<SponsorshipFilterProps> = ({
   );
 };
 
-export default SponsorshipFilter; 
+export default SponsorshipFilter;

@@ -22,6 +22,7 @@ import {
 import RegistrationFilter from "./filters/RegistrationFilter";
 import BoothFilter from "./filters/BoothFilters";
 import {
+  ensureConferenceInFilters,
   getFilterYear,
   mergeConferenceYearIntoAllTabs,
 } from "./helpers/mergeConferenceAcrossTabFilters";
@@ -94,7 +95,10 @@ const ConferenceFilters = () => {
       
       // For tickets/extras/addons tabs, convert conference to conferences array if needed
       const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(selectedTab);
-      let filtersToApply = { ...contextFilters };
+      let filtersToApply = ensureConferenceInFilters(
+        { ...contextFilters },
+        selectedTab
+      );
       
       if (isMultiConferenceTab && filtersToApply.conference && !filtersToApply.conferences) {
         // Convert conference single value to conferences array
@@ -164,6 +168,8 @@ const ConferenceFilters = () => {
       ) {
         tabEntry = { ...tabEntry, year: getFilterYear(contextFilters) };
       }
+
+      tabEntry = ensureConferenceInFilters(tabEntry, selectedTab);
 
       setTabFilters((prev) =>
         mergeConferenceYearIntoAllTabs(prev, selectedTab, tabEntry)

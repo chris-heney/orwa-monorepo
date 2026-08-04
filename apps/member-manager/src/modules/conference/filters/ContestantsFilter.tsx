@@ -5,7 +5,10 @@ import BaseFilter from "./BaseFilter";
 import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { isSelected } from "../helpers/selectFilters";
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import {
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface ContestantsFilterProps {
   filterValues: any;
@@ -33,7 +36,7 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
       isContestantTicket(ticket) &&
       (filterConferenceId == null ||
         (ticket.conferences as IConference[]).some(
-          (c) => c.id === filterConferenceId
+          (c) => getConferenceFilterId(c) === filterConferenceId
         ))
   );
 

@@ -4,6 +4,7 @@ import dayjs from "dayjs";
 import httpClient from "../../../../helpers/ra-strapi-data-provider/src/httpClient";
 import {
   getFilterYear,
+  getConferenceFilterId,
   getPrimaryConferenceId,
 } from "../../helpers/mergeConferenceAcrossTabFilters";
 import { useConferenceContext } from "../../ConferenceContext";
@@ -153,7 +154,10 @@ export const useConferenceMetrics = (
   const scope = scopeFilter(confId, year);
 
   const conference = useMemo(
-    () => conferences.find((c) => Number(c.id) === confId) as RaRecord | undefined,
+    () =>
+      conferences.find((c) => getConferenceFilterId(c) === confId) as
+        | RaRecord
+        | undefined,
     [conferences, confId]
   );
 

@@ -1,29 +1,45 @@
 import React, { useEffect, useState } from "react";
-import { FilterList, FilterListItem, FilterLiveSearch, useListFilterContext } from "react-admin";
+import {
+  FilterList,
+  FilterListItem,
+  FilterLiveSearch,
+  useListFilterContext,
+} from "react-admin";
 import EventIcon from "@mui/icons-material/Event";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import { IConference } from "../types";
-import { toggleFilter, isSelected } from "../helpers/selectFilters";
 import { useConferenceContext } from "../ConferenceContext";
+import {
+  ensureConferenceInFilters,
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "../helpers/mergeConferenceAcrossTabFilters";
 
 interface BaseFilterProps {
-  filterValues?: any; // Make optional since we're not using it directly
+  filterValues?: any;
   conferences: IConference[];
   selectedTab: string;
   includeSearch?: boolean;
   includeYear?: boolean;
+  /** Kept for API compat; conference is always single-select (radio). */
   multipleConferenceSelection?: boolean;
+  /** Kept for API compat; conference never allows empty selection. */
   disableDeselect?: boolean;
-  includeSavedQueries?: boolean;  
+  includeSavedQueries?: boolean;
 }
+
+const sameConferenceId = (a: unknown, b: unknown) => {
+  if (a == null || b == null || a === "" || b === "") return false;
+  const na = Number(a);
+  const nb = Number(b);
+  return !Number.isNaN(na) && !Number.isNaN(nb) && na === nb;
+};
 
 const BaseFilter: React.FC<BaseFilterProps> = ({
   includeSearch = true,
   includeYear = true,
   multipleConferenceSelection = false,
-  disableDeselect = false,
 }) => {
-  // Calculate years for filtering
   const currentYear = new Date().getFullYear();
   const conferenceYears = Array.from(
     { length: currentYear - 2023 + 2 },
@@ -31,84 +47,98 @@ const BaseFilter: React.FC<BaseFilterProps> = ({
   );
 
   const { selectedTab, conferences } = useConferenceContext();
-  const { filterValues } = useListFilterContext();
-  
-  // Create a search state that will be used as a key to force re-render
+  const { filterValues, setFilters } = useListFilterContext();
+
   const [searchKey, setSearchKey] = useState(`search-${selectedTab}`);
-  
-  // Update the search key when the tab changes
+
   useEffect(() => {
     setSearchKey(`search-${selectedTab}-${Date.now()}`);
   }, [selectedTab]);
 
-  // Helper to normalize IDs to numbers
-  const normalizeId = (id: any) => typeof id === 'string' ? parseInt(id, 10) : id;
+  // Conference is radio: never allow an empty selection in the list filter context.
+  useEffect(() => {
+    if (getPrimaryConferenceId(filterValues) != null) return;
+    const restored = ensureConferenceInFilters(
+      filterValues,
+      multipleConferenceSelection ? "tickets" : selectedTab
+    );
+    setFilters(restored, filterValues, false);
+  }, [filterValues, selectedTab, multipleConferenceSelection, setFilters]);
 
-  // Define a custom toggle function for conference selection that enforces single/multi selection mode
-  const conferenceToggleFilter = (val: any, filters: any) => {
-    
-    // For multi-selection mode
+  const conferenceIsSelected = (val: any, filters: any) => {
+    const current = getPrimaryConferenceId(filters);
     if (multipleConferenceSelection) {
-      return toggleFilter(val, filters, "conferences");
+      const id = typeof val === "object" ? val?.conferences?.[0] : val;
+      return sameConferenceId(current, id);
     }
-    
-    // For single-selection mode
-    const conferenceId = typeof val === 'object' ? val.conference : val;
-    
-    // If we have disabled deselection and the current value matches the selected one, return unchanged filters
-    if (disableDeselect && filters.conference === conferenceId) {
-      return filters; // Return current filters unchanged to prevent deselection
+    const id =
+      typeof val === "object" && val != null ? val.conference : val;
+    return sameConferenceId(current, id);
+  };
+
+  /** Radio: switch conference, never clear to none. X / re-click is a no-op. */
+  const conferenceToggleFilter = (val: any, filters: any) => {
+    const conferenceId = multipleConferenceSelection
+      ? typeof val === "object"
+        ? Number(val?.conferences?.[0] ?? val)
+        : Number(val)
+      : typeof val === "object"
+        ? Number(val.conference)
+        : Number(val);
+
+    if (conferenceId == null || Number.isNaN(conferenceId)) {
+      return ensureConferenceInFilters(
+        filters,
+        multipleConferenceSelection ? "tickets" : selectedTab
+      );
     }
-    
-    // If disableDeselect is true and the conference is already selected, don't allow toggling off
-    if (disableDeselect && filters.conference !== undefined && conferenceId !== filters.conference) {
-      // Only allow switching to a different conference, not deselecting
-      return {
-        ...filters,
-        conference: conferenceId
-      };
+
+    if (sameConferenceId(getPrimaryConferenceId(filters), conferenceId)) {
+      // Already selected — keep it (blocks X / toggle-off).
+      return filters;
     }
-    
-    // Otherwise, toggle the selection (clear if already selected, or set to the new value)
-    return {
-      ...filters,
-      conference: filters.conference === conferenceId ? undefined : conferenceId
-    };
+
+    if (multipleConferenceSelection) {
+      const { conference, ...rest } = filters;
+      return { ...rest, conferences: [conferenceId] };
+    }
+
+    const { conferences: _c, ...rest } = filters;
+    return { ...rest, conference: conferenceId };
   };
 
   return (
     <>
-      {/* Search Filter - Using key to force re-render */}
       {includeSearch && (
-        <FilterLiveSearch 
+        <FilterLiveSearch
           key={searchKey}
-          defaultValue={filterValues?.q || ''} 
-          source="q" 
-          fullWidth 
+          defaultValue={filterValues?.q || ""}
+          source="q"
+          fullWidth
         />
       )}
 
-      {/* Conference Filter */}
       <FilterList label="Conference" icon={<EventIcon />}>
-        {conferences?.map((conference: any) => {
-          const conferenceId = normalizeId(conference.id);
+        {conferences?.map((conference: IConference & { entityId?: number }) => {
+          const conferenceId = getConferenceFilterId(conference);
+          if (conferenceId == null) return null;
+
+          const value = multipleConferenceSelection
+            ? { conferences: [conferenceId] }
+            : { conference: conferenceId };
+
           return (
             <FilterListItem
-              key={`conference-${conference.id}`}
+              key={`conference-${conferenceId}`}
               label={conference.name}
-              value={multipleConferenceSelection ? conferenceId : { conference: conferenceId }}
-              isSelected={disableDeselect ? undefined : (val, filters) => 
-                multipleConferenceSelection
-                  ? isSelected(val, filters, "conferences")
-                  : isSelected({ conference: conferenceId }, filters)
-              }
+              value={value}
+              isSelected={conferenceIsSelected}
               toggleFilter={conferenceToggleFilter}
             />
           );
         })}
       </FilterList>
 
-      {/* Year Filter */}
       {includeYear && (
         <FilterList label="Year" icon={<CalendarTodayIcon />}>
           {conferenceYears.map((y) => (
@@ -124,4 +154,4 @@ const BaseFilter: React.FC<BaseFilterProps> = ({
   );
 };
 
-export default BaseFilter; 
+export default BaseFilter;

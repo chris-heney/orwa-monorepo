@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Button, useDataProvider, useListContext, useNotify } from "react-admin";
 import { useConferenceContext } from "../ConferenceContext";
 import exportVendorAttendeeRoster from "../helpers/exportVendorAttendeeRoster";
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import {
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "../helpers/mergeConferenceAcrossTabFilters";
 
 /**
  * Attendees tab only: exports vendor ticket rows with primary registrant email
@@ -30,7 +33,9 @@ const VendorAttendeeExportButton = () => {
 
       const conferenceName =
         conferences.find(
-          (c) => c.id === getPrimaryConferenceId(filterValues ?? {})
+          (c) =>
+            getConferenceFilterId(c) ===
+            getPrimaryConferenceId(filterValues ?? {})
         )?.name ?? "";
 
       const count = await exportVendorAttendeeRoster(

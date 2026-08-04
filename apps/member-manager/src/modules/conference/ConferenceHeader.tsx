@@ -13,7 +13,10 @@ import AddIcon from "@mui/icons-material/Add";
 import RecordCount from "../_components/RecordCount";
 import { useConferenceContext } from "./ConferenceContext";
 import VendorAttendeeExportButton from "./components/VendorAttendeeExportButton";
-import { getPrimaryConferenceId } from "./helpers/mergeConferenceAcrossTabFilters";
+import {
+  getConferenceFilterId,
+  getPrimaryConferenceId,
+} from "./helpers/mergeConferenceAcrossTabFilters";
 
 const ConferenceHeader = () => {
   const {
@@ -60,8 +63,10 @@ const ConferenceHeader = () => {
         }}
       >
         {titleConferenceId != null
-          ? conferences.find((conference) => conference.id === titleConferenceId)
-              ?.name
+          ? conferences.find(
+              (conference) =>
+                getConferenceFilterId(conference) === titleConferenceId
+            )?.name
           : "All Conferences"}{" "}
         : {title}
       </Typography>

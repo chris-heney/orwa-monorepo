@@ -171,7 +171,23 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
   private withStableId = (data: RaRecord): RaRecord => {
     if (data == null) return data;
     if (typeof data.documentId === "string" && data.documentId) {
-      return { ...data, id: data.documentId };
+      // Keep the numeric DB id for filters/relations that still use it
+      // (conference dashboard filters, numeric-id-compat middleware).
+      const rawId = data.id;
+      const entityId =
+        typeof rawId === "number"
+          ? rawId
+          : typeof rawId === "string" && /^\d+$/.test(rawId)
+            ? parseInt(rawId, 10)
+            : typeof (data as unknown as { entityId?: number }).entityId ===
+                "number"
+              ? (data as unknown as { entityId: number }).entityId
+              : undefined;
+      return {
+        ...data,
+        id: data.documentId,
+        ...(entityId != null && !Number.isNaN(entityId) ? { entityId } : {}),
+      };
     }
     return data;
   };
