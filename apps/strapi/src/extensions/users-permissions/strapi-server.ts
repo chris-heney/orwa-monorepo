@@ -12,6 +12,36 @@
 export default (plugin: any) => {
   const originalRoleService = plugin.services.role;
 
+  // The stock `me` controller sanitizes the query against the caller's scopes,
+  // so `?populate=role` is silently stripped unless the caller holds
+  // `plugin::users-permissions.role.find` — and granting that scope would open
+  // the full roles listing to every role (the RBAC endpoints must stay
+  // Admin-only). Instead, after the stock handler runs (keeping all of its
+  // user-body sanitization), attach the caller's OWN role as a minimal safe
+  // object — never its permissions. Unlike the services, the plugin's
+  // controllers are plain objects, so wrap the method directly.
+  const originalMe = plugin.controllers.user.me;
+
+  plugin.controllers.user.me = async (ctx: any) => {
+    await originalMe(ctx);
+
+    if (!ctx.state.user || !ctx.body) {
+      return;
+    }
+
+    const user = await strapi.db
+      .query('plugin::users-permissions.user')
+      .findOne({
+        where: { id: ctx.state.user.id },
+        populate: ['role'],
+      });
+
+    if (user?.role) {
+      const { id, name, description, type, modules } = user.role;
+      ctx.body.role = { id, name, description, type, modules };
+    }
+  };
+
   plugin.services.role = (ctx: { strapi: any }) => {
     const service = originalRoleService(ctx);
     const originalUpdateRole = service.updateRole;
