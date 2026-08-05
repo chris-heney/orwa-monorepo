@@ -1,12 +1,13 @@
-export { default as AdminDashboard } from './dashboard/Dashboard'
-export { default as HumanResources } from './human-resources/HumanResources'
-export { default as TrainingDashboard} from './training/dashboard/TrainingDashboard'
-export { default as GrantManagement } from  './grant-manager/GrantManagement'
-export { default as FinancialAuditDashboard } from './memberships_v2/FinancialAuditDashboard'
-export { default as MembershipManagement } from './memberships_v2/MembershipsManagement'
-export { default as SoonerwarnManagement } from './soonerwarn/SoonerwarnManagement'
-export { default as Conferences } from './conference/Conference'
-export { default as EmailManagement } from './emails-magement/EmailManagement'
-export { default as SettingsDashboard } from './setting/SettingsDashboard'
-export { default as ConferenceDashboard } from './conference/ConferenceDashboard'
-export { default as MediaLibraryPage } from './media-library/MediaLibraryPage'
+export { default as AdminDashboard } from './dashboard/Dashboard';
+export { default as HumanResources } from './human-resources/HumanResources';
+export { default as TrainingDashboard } from './training/dashboard/TrainingDashboard';
+export { default as GrantManagement } from './grant-manager/GrantManagement';
+export { default as FinancialAuditDashboard } from './memberships_v2/FinancialAuditDashboard';
+export { default as MembershipManagement } from './memberships_v2/MembershipsManagement';
+export { default as SoonerwarnManagement } from './soonerwarn/SoonerwarnManagement';
+export { default as Conferences } from './conference/Conference';
+export { default as EmailManagement } from './emails-magement/EmailManagement';
+export { default as SettingsDashboard } from './setting/SettingsDashboard';
+export { default as ConferenceDashboard } from './conference/ConferenceDashboard';
+export { default as MediaLibraryPage } from './media-library/MediaLibraryPage';
+export { default as RbacDashboard } from './rbac-manager';

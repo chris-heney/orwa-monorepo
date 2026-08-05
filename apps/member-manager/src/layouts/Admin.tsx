@@ -1,24 +1,31 @@
-import React from 'react'
-import clsx from 'clsx'
-import { useState, ErrorInfo, ReactNode, ComponentType, HtmlHTMLAttributes } from 'react'
-import { CoreLayoutProps } from 'ra-core'
-import { ErrorBoundary } from 'react-error-boundary'
-import { styled, SxProps } from '@mui/material/styles'
-import { MultiLevelMenu, AppLocationContext } from '@react-admin/ra-navigation'
-import InventoryIcon from '@mui/icons-material/Inventory'
-import PermMediaIcon from '@mui/icons-material/PermMedia'
-import AdminAppBar from './components/AdminAppBar'
-import TrainingIcon from '@mui/icons-material/ModelTraining'
-import EventsIcon from '@mui/icons-material/CalendarMonth'
-import SettingsIcon from '@mui/icons-material/Settings'
-import RequestPageIcon from '@mui/icons-material/RequestPage'
-import DashboardIcon from '@mui/icons-material/Dashboard'
-import MembersIcon from '@mui/icons-material/Diversity1'
-import PeopleIcon from '@mui/icons-material/Groups'
-import BusinessIcon from '@mui/icons-material/Business'
+import React from 'react';
+import clsx from 'clsx';
+import {
+  useState,
+  ErrorInfo,
+  ReactNode,
+  ComponentType,
+  HtmlHTMLAttributes,
+} from 'react';
+import { CoreLayoutProps } from 'ra-core';
+import { ErrorBoundary } from 'react-error-boundary';
+import { styled, SxProps } from '@mui/material/styles';
+import { MultiLevelMenu, AppLocationContext } from '@react-admin/ra-navigation';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import PermMediaIcon from '@mui/icons-material/PermMedia';
+import AdminAppBar from './components/AdminAppBar';
+import TrainingIcon from '@mui/icons-material/ModelTraining';
+import EventsIcon from '@mui/icons-material/CalendarMonth';
+import SettingsIcon from '@mui/icons-material/Settings';
+import RequestPageIcon from '@mui/icons-material/RequestPage';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import MembersIcon from '@mui/icons-material/Diversity1';
+import PeopleIcon from '@mui/icons-material/Groups';
+import BusinessIcon from '@mui/icons-material/Business';
 // import FavoriteIcon from '@mui/icons-material/Favorite';
 
-import { Navigate, useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom';
 import {
   AppBarProps,
   Sidebar as DefaultSidebar,
@@ -27,52 +34,49 @@ import {
   ErrorProps,
   SkipNavigationButton,
   Inspector,
-} from 'react-admin'
-import { Box } from '@mui/material'
-import DashboardAppBar from '../modules/dashboard/_components/DashboardBar'
-import { Email, Gavel } from '@mui/icons-material'
-import useCurrentUser from '../modules/_helpers/useCurrentUser'
+} from 'react-admin';
+import { Box } from '@mui/material';
+import DashboardAppBar from '../modules/dashboard/_components/DashboardBar';
+import { Email, Gavel } from '@mui/icons-material';
+import useCurrentUser from '../modules/_helpers/useCurrentUser';
+import { useModuleAccess } from '../modules/rbac-manager/useModuleAccess';
 
-const STAFF_HOME = '/membership-management'
-const STAFF_ALLOWED_RESOURCES = [
-  'watersystems',
-  'associates',
-]
+const STAFF_HOME = '/membership-management';
+const STAFF_ALLOWED_RESOURCES = ['watersystems', 'associates'];
 
 const isStaffAllowedPath = (pathname: string) => {
   if (pathname === STAFF_HOME) {
-    return true
+    return true;
   }
 
   return STAFF_ALLOWED_RESOURCES.some((resource) => {
-    const resourcePath = `/${resource}`
-    const showPathPattern = new RegExp(`^/${resource}/[^/]+/show$`)
+    const resourcePath = `/${resource}`;
+    const showPathPattern = new RegExp(`^/${resource}/[^/]+/show$`);
 
-    return pathname === resourcePath || showPathPattern.test(pathname)
-  })
-}
+    return pathname === resourcePath || showPathPattern.test(pathname);
+  });
+};
 
 const StaffRouteGuard = ({ children }: { children: ReactNode }) => {
-  const { role, isLoading } = useCurrentUser()
-  const location = useLocation()
+  const { role, isLoading } = useCurrentUser();
+  const location = useLocation();
 
   if (isLoading || role !== 'Staff' || isStaffAllowedPath(location.pathname)) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
-  return <Navigate to={STAFF_HOME} replace />
-}
-
+  return <Navigate to={STAFF_HOME} replace />;
+};
 
 const MyMenu = () => {
-
-  const {user} = useCurrentUser();
+  const { user } = useCurrentUser();
+  const { modules } = useModuleAccess();
 
   if (!user) {
     return null;
   }
 
-  if (user.role === "Staff") {
+  if (user.role === 'Staff') {
     return (
       <MultiLevelMenu>
         <MultiLevelMenu.Item
@@ -126,7 +130,11 @@ const MyMenu = () => {
         title="Media Library"
         icon={<PermMediaIcon />}
       />
-      <MultiLevelMenu.Item name="table" label="Training Manager" icon={<TrainingIcon />}>
+      <MultiLevelMenu.Item
+        name="table"
+        label="Training Manager"
+        icon={<TrainingIcon />}
+      >
         <MultiLevelMenu.Item
           name="training-dashboard"
           to="/training/dashboard"
@@ -169,6 +177,15 @@ const MyMenu = () => {
         title="Grant Manager"
         icon={<RequestPageIcon />}
       />
+      {modules.includes('rbac') && (
+        <MultiLevelMenu.Item
+          name="rbac-dashboard"
+          to="/rbac/dashboard"
+          label="RBAC Manager"
+          title="RBAC Manager"
+          icon={<AdminPanelSettingsIcon />}
+        />
+      )}
       {/* <MultiLevelMenu.Item
         name="soonerwarn-dashboard"
         to="/soonerwarn/dashboard"
@@ -186,7 +203,6 @@ const MyMenu = () => {
   );
 };
 
-
 const DashBoard = (props: LayoutProps) => {
   const {
     // appBar: AppBar = AdminAppBar,
@@ -198,23 +214,23 @@ const DashBoard = (props: LayoutProps) => {
     sidebar: Sidebar = DefaultSidebar,
     title,
     ...rest
-  } = props
+  } = props;
   //const [open] = useSidebarState()
-  const [errorInfo, setErrorInfo] = useState<ErrorInfo>()
+  const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
 
   const handleError = (error: Error, info: ErrorInfo) => {
-    setErrorInfo(info)
-  }
+    setErrorInfo(info);
+  };
 
-  const location = useLocation()
-  const isDashboard = location.pathname === '/admin/dashboard'
+  const location = useLocation();
+  const isDashboard = location.pathname === '/admin/dashboard';
 
   return (
     <AppLocationContext>
       <StyledLayout className={clsx('layout', className)} {...rest}>
         <SkipNavigationButton />
         <Box className={LayoutClasses.appFrame}>
-          {isDashboard ? <DashboardAppBar />  : <AdminAppBar />}
+          {isDashboard ? <DashboardAppBar /> : <AdminAppBar />}
           <main className={LayoutClasses.contentWithSidebar}>
             <Sidebar>
               <Menu hasDashboard={!!dashboard} />
@@ -232,9 +248,7 @@ const DashBoard = (props: LayoutProps) => {
                   />
                 )}
               >
-                <StaffRouteGuard>
-                  {children}
-                </StaffRouteGuard>
+                <StaffRouteGuard>{children}</StaffRouteGuard>
               </ErrorBoundary>
             </Box>
           </main>
@@ -242,30 +256,32 @@ const DashBoard = (props: LayoutProps) => {
         </Box>
       </StyledLayout>
     </AppLocationContext>
-  )
-}
+  );
+};
 
-export interface LayoutProps extends CoreLayoutProps, Omit<HtmlHTMLAttributes<HTMLDivElement>, 'title'> {
-	appBar?: ComponentType<AppBarProps>
-	className?: string
-	error?: ComponentType<ErrorProps>
-	menu?: ComponentType<MenuProps>
-	sidebar?: ComponentType<{ children: ReactNode }>
-	sx?: SxProps
+export interface LayoutProps
+  extends CoreLayoutProps,
+    Omit<HtmlHTMLAttributes<HTMLDivElement>, 'title'> {
+  appBar?: ComponentType<AppBarProps>;
+  className?: string;
+  error?: ComponentType<ErrorProps>;
+  menu?: ComponentType<MenuProps>;
+  sidebar?: ComponentType<{ children: ReactNode }>;
+  sx?: SxProps;
 }
 
 export interface LayoutState {
-	hasError: boolean
-	error?: Error
-	errorInfo?: ErrorInfo
+  hasError: boolean;
+  error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
-const PREFIX = 'RaLayout'
+const PREFIX = 'RaLayout';
 export const LayoutClasses = {
   appFrame: `${PREFIX}-appFrame`,
   contentWithSidebar: `${PREFIX}-contentWithSidebar`,
   content: `${PREFIX}-content`,
-}
+};
 
 const StyledLayout = styled('div', {
   name: PREFIX,
@@ -311,5 +327,5 @@ const StyledLayout = styled('div', {
       paddingLeft: theme.spacing(1),
     },
   },
-}))
-export default DashBoard
+}));
+export default DashBoard;
