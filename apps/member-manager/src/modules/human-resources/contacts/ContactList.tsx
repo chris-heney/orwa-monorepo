@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   List,
   TextField,
@@ -7,24 +7,26 @@ import {
   FunctionField,
   EditButton,
   DateField,
-} from "react-admin";
-import { Box, useMediaQuery } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import CreateUserModal from "../users/CreateUserModal";
-import { customDatagridStyle } from "../../../css";
-import useCurrentUser from "../../_helpers/useCurrentUser";
-import { useHumanResourcesContext } from "../HumanResourcesContext";
-import RolesContextProvider from "../../../context/RolesContextProvider";
+} from 'react-admin';
+import { Box, useMediaQuery } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import CreateUserModal from '../users/CreateUserModal';
+import { customDatagridStyle } from '../../../css';
+import { useCan } from '../../rbac-manager/useCan';
+import { useHumanResourcesContext } from '../HumanResourcesContext';
+import RolesContextProvider from '../../../context/RolesContextProvider';
 
 interface ContactListProps {
   title?: string;
 }
 
-const ContactList = ({ title = "Contacts" }: ContactListProps) => {
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
-  const { role } = useCurrentUser();
+const ContactList = ({ title = 'Contacts' }: ContactListProps) => {
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
+  const { can } = useCan();
+  // Editors get the Actions column (edit + create-user) instead of rowClick.
+  const canEditContacts = can('update', 'contact');
   const { contactFilters } = useHumanResourcesContext();
-    
+
   return (
     <List
       disableSyncWithLocation
@@ -34,7 +36,7 @@ const ContactList = ({ title = "Contacts" }: ContactListProps) => {
       filter={contactFilters || {}}
     >
       {isSmall ? (
-        <Box style={{ whiteSpace: "nowrap" }}>
+        <Box style={{ whiteSpace: 'nowrap' }}>
           <SimpleList
             linkType="show"
             primaryText={(record) => record.title}
@@ -46,7 +48,7 @@ const ContactList = ({ title = "Contacts" }: ContactListProps) => {
         <DatagridConfigurable
           sx={customDatagridStyle}
           bulkActionButtons={false}
-          rowClick={role === "Admin" ? false : "show"}
+          rowClick={canEditContacts ? false : 'show'}
         >
           <TextField source="id" label="ID" />
           <TextField source="first" label="First Name" noWrap />
@@ -62,21 +64,28 @@ const ContactList = ({ title = "Contacts" }: ContactListProps) => {
             noWrap
             render={(record: any) => typeof record.user === "number" ? <SelectContactRole contact={record}/> : <CreateUserModal contact={record}/>}
           /> */}
-          {role === "Admin" && <FunctionField
-            label="Actions"
-            render={(record: any) => {
-              return (
-                <Box sx={{display: "flex",justifyContent: "flex-end"}}>
-                  {typeof record.user !== "number" && 
-                  <RolesContextProvider>
-                    <CreateUserModal contact={record} />
-                  </RolesContextProvider>
-                  }
-                  <EditButton  sx={{ minWidth: 0, justifyContent: "flex-end"}} fullWidth label="" record={record} />
-                </Box>
-              );
-            }}
-          />}
+          {canEditContacts && (
+            <FunctionField
+              label="Actions"
+              render={(record: any) => {
+                return (
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    {typeof record.user !== 'number' && (
+                      <RolesContextProvider>
+                        <CreateUserModal contact={record} />
+                      </RolesContextProvider>
+                    )}
+                    <EditButton
+                      sx={{ minWidth: 0, justifyContent: 'flex-end' }}
+                      fullWidth
+                      label=""
+                      record={record}
+                    />
+                  </Box>
+                );
+              }}
+            />
+          )}
         </DatagridConfigurable>
       )}
     </List>

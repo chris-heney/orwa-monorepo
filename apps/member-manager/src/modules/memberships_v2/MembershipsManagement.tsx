@@ -1,14 +1,11 @@
-import React from "react";
-import MembershipsContextProvider from "./MembershipsContextProvider";
-import MembershipDashboard from "./MembershipDashboard";
-import UserRoleContextProvider from "../../context/UserRoleContextProvider";
+import React from 'react';
+import MembershipsContextProvider from './MembershipsContextProvider';
+import MembershipDashboard from './MembershipDashboard';
 
 const MembershipsDashboard = () => {
   return (
     <MembershipsContextProvider>
-      <UserRoleContextProvider>
-        <MembershipDashboard />
-      </UserRoleContextProvider>
+      <MembershipDashboard />
     </MembershipsContextProvider>
   );
 };

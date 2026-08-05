@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   TextField,
   DatagridConfigurable,
@@ -12,7 +12,7 @@ import {
   useRefresh,
   DateField,
   useRedirect,
-} from "react-admin";
+} from 'react-admin';
 
 import {
   Box,
@@ -22,15 +22,15 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-} from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import { CurrencyOptions } from "../../config/Settings";
-import { customDatagridStyle } from "../../css";
-import ConfirmInvoicePaymentModal from "./components/InvoicePaymentModal";
-import ResponsiveListItem from "../_components/ResponsiveListItem";
-import InfoIcon from "@mui/icons-material/Info";
-import { useMembershipContext } from "../memberships_v2/MembershipsContextProvider";
-import useCurrentUser from "../_helpers/useCurrentUser";
+} from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import { CurrencyOptions } from '../../config/Settings';
+import { customDatagridStyle } from '../../css';
+import ConfirmInvoicePaymentModal from './components/InvoicePaymentModal';
+import ResponsiveListItem from '../_components/ResponsiveListItem';
+import InfoIcon from '@mui/icons-material/Info';
+import { useMembershipContext } from '../memberships_v2/MembershipsContextProvider';
+import { useCan } from '../rbac-manager/useCan';
 
 const InvoicesList = ({ filters }: { filters: any }) => {
   const [modalOpen, setModalOpen] = useState(false);
@@ -42,20 +42,20 @@ const InvoicesList = ({ filters }: { filters: any }) => {
   const notify = useNotify();
   const redirect = useRedirect();
   const refresh = useRefresh(); // Trigger data refresh after updates
-  const {role} = useCurrentUser();
+  const { can } = useCan();
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   const handleConfirmPayment = async (data: { payment_date: string }) => {
     if (!selectedInvoice) return;
 
     try {
       // Update invoice payment details
-      await dataProvider.update("invoices", {
+      await dataProvider.update('invoices', {
         id: selectedInvoice.id,
         data: {
           payment_date: data.payment_date,
-          payment_method: "Invoice",
+          payment_method: 'Invoice',
         },
         previousData: selectedInvoice,
       });
@@ -77,11 +77,11 @@ const InvoicesList = ({ filters }: { filters: any }) => {
         });
       }
 
-      notify("Payment successfully confirmed", { type: "success" });
+      notify('Payment successfully confirmed', { type: 'success' });
       setModalOpen(false);
       refresh();
     } catch (error: any) {
-      notify(`Error confirming payment: ${error.message}`, { type: "error" });
+      notify(`Error confirming payment: ${error.message}`, { type: 'error' });
     }
   };
 
@@ -92,7 +92,7 @@ const InvoicesList = ({ filters }: { filters: any }) => {
     data: any
   ) => {
     if (!resource) {
-      notify("Invalid resource type", { type: "error" });
+      notify('Invalid resource type', { type: 'error' });
       return;
     }
 
@@ -105,20 +105,20 @@ const InvoicesList = ({ filters }: { filters: any }) => {
         const { data: matchedEntities } = await dataProvider.getList(resource, {
           filter: { name: data.name, email: data.email },
           pagination: { page: 1, perPage: 1 },
-          sort: { field: "id", order: "ASC" },
+          sort: { field: 'id', order: 'ASC' },
         });
 
         if (matchedEntities.length > 0) {
           const matchedId = matchedEntities[0].id;
           redirect(`/${resource}/${matchedId}/show`);
         } else {
-          notify("No matching entity found", { type: "warning" });
+          notify('No matching entity found', { type: 'warning' });
         }
       } catch (error: any) {
-        notify(`Error finding entity: ${error.message}`, { type: "error" });
+        notify(`Error finding entity: ${error.message}`, { type: 'error' });
       }
     } else {
-      notify("No ID or matching data provided", { type: "error" });
+      notify('No ID or matching data provided', { type: 'error' });
     }
   };
 
@@ -131,10 +131,10 @@ const InvoicesList = ({ filters }: { filters: any }) => {
       title=" "
       actions={false}
       pagination={
-        <Box sx={{ maxWidth: "32vw", position: "sticky", left: 0 }}>
+        <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
           <Pagination
             rowsPerPageOptions={[10, 25, 50, 100]}
-            sx={{ flexDirection: "row-reverse" }}
+            sx={{ flexDirection: 'row-reverse' }}
           />
         </Box>
       }
@@ -154,13 +154,13 @@ const InvoicesList = ({ filters }: { filters: any }) => {
               <Box
                 sx={{
                   mt: 2,
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "center",
-                  position: "relative",
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  position: 'relative',
                 }}
               >
-                {record.record.payment_method === "Card" && (
+                {record.record.payment_method === 'Card' && (
                   <>
                     <Typography variant="h6">Transaction Details</Typography>
                     <Divider />
@@ -188,7 +188,7 @@ const InvoicesList = ({ filters }: { filters: any }) => {
                 <Typography
                   variant="body1"
                   ml={2}
-                  style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
+                  style={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
                 >
                   {record.record.payment_details}
                 </Typography>
@@ -229,30 +229,32 @@ const InvoicesList = ({ filters }: { filters: any }) => {
           />
           <TextField source="payment_method" label="Payment Method" />
           <DateField source="createdAt" label="Received" />
-          {role === "Admin" && <FunctionField
-            source="payment_date"
-            label="Payment Date"
-            render={(record: RaRecord) =>
-              record.payment_method === "Invoice" && !record.payment_date ? (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  size="small"
-                  sx={{
-                    fontSize: "0.75rem",
-                  }}
-                  onClick={() => {
-                    setSelectedInvoice(record);
-                    setModalOpen(true);
-                  }}
-                >
-                  Mark Payment
-                </Button>
-              ) : (
-                <DateField source="payment_date" label="Payment Date" />
-              )
-            }
-          />}
+          {can('update', 'invoice') && (
+            <FunctionField
+              source="payment_date"
+              label="Payment Date"
+              render={(record: RaRecord) =>
+                record.payment_method === 'Invoice' && !record.payment_date ? (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    sx={{
+                      fontSize: '0.75rem',
+                    }}
+                    onClick={() => {
+                      setSelectedInvoice(record);
+                      setModalOpen(true);
+                    }}
+                  >
+                    Mark Payment
+                  </Button>
+                ) : (
+                  <DateField source="payment_date" label="Payment Date" />
+                )
+              }
+            />
+          )}
         </DatagridConfigurable>
       )}
 

@@ -8,9 +8,11 @@ interface MeRole {
   name: string;
   type: string;
   modules?: ModuleKey[] | null;
+  /** Flat action UIDs, e.g. "api::watersystem.watersystem.find". */
+  permissions?: string[] | null;
 }
 
-interface MeResponse {
+export interface MeResponse {
   id: number;
   role?: MeRole | null;
 }
@@ -35,6 +37,21 @@ const fetchMe = async (): Promise<MeResponse> => {
   return res.json();
 };
 
+/**
+ * Single shared react-query fetch of `GET /users/me?populate=role`, used by
+ * both `useModuleAccess` and `useCan` (same query key → one request).
+ */
+export const useMeQuery = () =>
+  useQuery<MeResponse, Error>(['auth', 'moduleAccess'], fetchMe, {
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+    onError: (error) => {
+      if (process.env.NODE_ENV === 'development') {
+        console.error(error);
+      }
+    },
+  });
+
 export interface ModuleAccess {
   modules: ModuleKey[];
   roleName: string | null;
@@ -57,19 +74,7 @@ export interface ModuleAccess {
  *   fetch): the hook falls back to `['settings']`.
  */
 export const useModuleAccess = (): ModuleAccess => {
-  const { data, isError, isLoading } = useQuery<MeResponse, Error>(
-    ['auth', 'moduleAccess'],
-    fetchMe,
-    {
-      staleTime: 5 * 60 * 1000,
-      retry: false,
-      onError: (error) => {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(error);
-        }
-      },
-    }
-  );
+  const { data, isError, isLoading } = useMeQuery();
 
   return useMemo(() => {
     if (isLoading) {

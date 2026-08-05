@@ -10,7 +10,7 @@ import { TypographyProps } from '@mui/material/Typography';
 
 import Typography from '@mui/material/Typography';
 
-import { useNotify, useRedirect } from 'react-admin';
+import { useNotify } from 'react-admin';
 import Logo from './components/logo';
 import AuthPageShell from './components/AuthPageShell';
 import authProvider from '../authProvider';
@@ -36,7 +36,6 @@ function Copyright(props: TypographyProps) {
 
 const LoginPage = () => {
   const notify = useNotify();
-  const redirect = useRedirect();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -57,7 +56,14 @@ const LoginPage = () => {
           // firstAllowedPath falls back to Settings.
           const role = res?.user?.role;
           const isAdmin = role?.type === 'admin' || role?.name === 'Admin';
-          redirect(firstAllowedPath(isAdmin ? ALL_MODULE_KEYS : role?.modules));
+          const target = firstAllowedPath(
+            isAdmin ? ALL_MODULE_KEYS : role?.modules
+          );
+          // Hard navigation (hash + reload, since a hash-only change does not
+          // reload the document) instead of the SPA redirect, so react-query
+          // caches from a previous login (identity, module access) are reset.
+          window.location.hash = `#${target}`;
+          window.location.reload();
         }
       });
   };

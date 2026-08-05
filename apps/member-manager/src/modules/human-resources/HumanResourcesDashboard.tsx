@@ -1,27 +1,27 @@
-import React from "react";
-import { Box, Tab, Grid, Divider } from "@mui/material";
-import { Title } from "react-admin";
+import React from 'react';
+import { Box, Tab, Grid, Divider } from '@mui/material';
+import { Title } from 'react-admin';
 
-import { useMediaQuery } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import ContactList from "./contacts/ContactList";
-import StaffList from "./staff/StaffList";
-import InstructorsList from "./instructors/InstructorList";
-import HumanResourcesHeader from "./_components/HumanResourcesHeader";
-import { Contacts, Person } from "@mui/icons-material";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { useHumanResourcesContext } from "./HumanResourcesContext";
-import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
-import HumanResourcesFilters from "./_components/HumanResourceFilters";
-import UserList from "./users/UserList";
-import BadgeList from "./contacts/badges/BadgeList";
-import RolesContextProvider from "../../context/RolesContextProvider";
-import useCurrentUser from "../_helpers/useCurrentUser";
+import { useMediaQuery } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import ContactList from './contacts/ContactList';
+import StaffList from './staff/StaffList';
+import InstructorsList from './instructors/InstructorList';
+import HumanResourcesHeader from './_components/HumanResourcesHeader';
+import { Contacts, Person } from '@mui/icons-material';
+import { TabContext, TabList, TabPanel } from '@mui/lab';
+import { useHumanResourcesContext } from './HumanResourcesContext';
+import { a11yTabPanelProps, a11yTabProps } from '../../helpers/TabFormatters';
+import HumanResourcesFilters from './_components/HumanResourceFilters';
+import UserList from './users/UserList';
+import BadgeList from './contacts/badges/BadgeList';
+import RolesContextProvider from '../../context/RolesContextProvider';
+import { useCan } from '../rbac-manager/useCan';
 
-export type TabValue = "contacts" | "staffs" | "training-instructors";
+export type TabValue = 'contacts' | 'staffs' | 'training-instructors';
 
 const HumanResourcesDashboard = () => {
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   const {
     selectedTab,
@@ -29,35 +29,36 @@ const HumanResourcesDashboard = () => {
     isSettingsOpen,
   } = useHumanResourcesContext();
 
-  const { role } = useCurrentUser();
+  const { canAction } = useCan();
 
   const tabs = [
     {
-      label: "Contacts",
-      value: "contacts",
+      label: 'Contacts',
+      value: 'contacts',
       icon: <Contacts />,
       divider: true,
     },
     {
-      label: "Staff",
-      value: "staff",
+      label: 'Staff',
+      value: 'staff',
       icon: <Person />,
-      resource: "staff",
+      resource: 'staff',
       divider: true,
     },
     {
-      label: "Instructors",
-      value: "training-instructors",
+      label: 'Instructors',
+      value: 'training-instructors',
       icon: <Person />,
-      resource: "training-instructors",
+      resource: 'training-instructors',
       divider: true,
     },
-    role === "Admin"
+    // The Users tab lists users-permissions users via /api/users.
+    canAction('plugin::users-permissions.user.find')
       ? {
-          label: "Users",
-          value: "users",
+          label: 'Users',
+          value: 'users',
           icon: <Person />,
-          resource: "users",
+          resource: 'users',
         }
       : {},
   ];
@@ -74,17 +75,17 @@ const HumanResourcesDashboard = () => {
               <BadgeList />
             </>
           ) : (
-            <Box sx={{ justifyContent: "center" }}>
+            <Box sx={{ justifyContent: 'center' }}>
               <TabContext value={selectedTab.toString()}>
                 <TabList
                   variant="scrollable"
                   sx={{
                     backgroundColor: (theme) =>
-                      theme.palette.mode === "dark"
+                      theme.palette.mode === 'dark'
                         ? theme.palette.grey[900]
                         : theme.palette.grey[100],
                     maxWidth: isSmall ? 320 : undefined,
-                    overflow: "clip",
+                    overflow: 'clip',
                   }}
                   onChange={(event: React.SyntheticEvent, tv) => {
                     setSelectedTab(tv);
@@ -112,29 +113,29 @@ const HumanResourcesDashboard = () => {
           <Box
             component="main"
             sx={{
-              display: "flex",
-              flexDirection: isSmall ? "column" : "row",
+              display: 'flex',
+              flexDirection: isSmall ? 'column' : 'row',
               flexGrow: 1,
-              justifyContent: "start",
-              alignItems: "center",
+              justifyContent: 'start',
+              alignItems: 'center',
               gap: 2,
             }}
           >
-            <Box sx={{ overflow: "hidden", flexGrow: 1, width: "100%" }}>
-              <Box sx={{ overflow: "auto" }}>
+            <Box sx={{ overflow: 'hidden', flexGrow: 1, width: '100%' }}>
+              <Box sx={{ overflow: 'auto' }}>
                 <TabContext value={selectedTab}>
-                  <Box sx={{ backgroundColor: "background.paper" }}>
+                  <Box sx={{ backgroundColor: 'background.paper' }}>
                     <TabPanel value="contacts" {...a11yTabPanelProps(0)}>
-                      <ContactList title=" "/>
+                      <ContactList title=" " />
                     </TabPanel>
                     <TabPanel value="staff" {...a11yTabPanelProps(1)}>
-                      <StaffList title=" "/>
+                      <StaffList title=" " />
                     </TabPanel>
                     <TabPanel
                       value="training-instructors"
                       {...a11yTabPanelProps(2)}
                     >
-                      <InstructorsList title=" "/>
+                      <InstructorsList title=" " />
                     </TabPanel>
                     <TabPanel value="users" {...a11yTabPanelProps(2)}>
                       <RolesContextProvider>

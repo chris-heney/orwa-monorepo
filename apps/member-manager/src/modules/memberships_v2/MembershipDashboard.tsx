@@ -1,81 +1,85 @@
-import React, { useEffect } from "react";
-import { Box, Tab, Divider, useMediaQuery, Grid } from "@mui/material";
-import { TabContext, TabPanel, TabList } from "@mui/lab";
-import { Title } from "react-admin";
-import { Theme } from "@mui/material/styles";
+import React, { useEffect } from 'react';
+import { Box, Tab, Divider, useMediaQuery, Grid } from '@mui/material';
+import { TabContext, TabPanel, TabList } from '@mui/lab';
+import { Title } from 'react-admin';
+import { Theme } from '@mui/material/styles';
 
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
-import PersonIcon from "@mui/icons-material/Person";
-import LoyaltyIcon from "@mui/icons-material/Loyalty";
-import AddShoppingCartIcon from "@mui/icons-material/AddShoppingCart";
-import PaidIcon from "@mui/icons-material/Paid";
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import MarkunreadMailboxIcon from '@mui/icons-material/MarkunreadMailbox';
+import PersonIcon from '@mui/icons-material/Person';
+import LoyaltyIcon from '@mui/icons-material/Loyalty';
+import AddShoppingCartIcon from '@mui/icons-material/AddShoppingCart';
+import PaidIcon from '@mui/icons-material/Paid';
 
-import { useMembershipContext } from "./MembershipsContextProvider";
-  import WaterSystemList from "./watersystem/WatersystemList";
-import AssociateList from "./associate/AssociateList";
-import MembershipFilters from "./componenets/MembershipFilters";
-import MembershipsSummary from "./MembershipsSummary";
-import MembershipList from "./memberships/MembershipsList";
-import MembershipItemsList from "./membership-items/MembershipItemsList";
-import InvoicesList from "../invoices/InvoicesList";
-import MembershiphHeader from "./componenets/MembershipsHeader";
-import { TabValue } from "./types/IMembershipContextProvider";
-import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
-import MembershipSettings from "./componenets/MembershipSettings";
-import useCurrentUser from "../_helpers/useCurrentUser";
-
-const STAFF_TAB_VALUES = ["watersystems", "associates"];
+import { useMembershipContext } from './MembershipsContextProvider';
+import WaterSystemList from './watersystem/WatersystemList';
+import AssociateList from './associate/AssociateList';
+import MembershipFilters from './componenets/MembershipFilters';
+import MembershipsSummary from './MembershipsSummary';
+import MembershipList from './memberships/MembershipsList';
+import MembershipItemsList from './membership-items/MembershipItemsList';
+import InvoicesList from '../invoices/InvoicesList';
+import MembershiphHeader from './componenets/MembershipsHeader';
+import { TabValue } from './types/IMembershipContextProvider';
+import { a11yTabPanelProps, a11yTabProps } from '../../helpers/TabFormatters';
+import MembershipSettings from './componenets/MembershipSettings';
+import { useCan } from '../rbac-manager/useCan';
 
 const MembershipDashboard = () => {
   const { selectedTab, setSelectedTab, isSettingsOpen } =
     useMembershipContext();
-  const { role } = useCurrentUser();
+  const { can, isLoading } = useCan();
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   const tabs = [
     {
-      label: "Summary",
-      value: "summary",
+      label: 'Summary',
+      value: 'summary',
       icon: <DashboardIcon />,
+      visible: can('find', 'membership'),
     },
     {
-      label: "Watersystems",
-      value: "watersystems",
+      label: 'Watersystems',
+      value: 'watersystems',
       icon: <MarkunreadMailboxIcon />,
+      visible: can('find', 'watersystem'),
     },
     {
-      label: "Associates",
-      value: "associates",
+      label: 'Associates',
+      value: 'associates',
       icon: <PersonIcon />,
+      visible: can('find', 'associate'),
     },
     {
-      label: "Memberships",
-      value: "memberships",
+      label: 'Memberships',
+      value: 'memberships',
       icon: <LoyaltyIcon />,
+      visible: can('find', 'membership'),
     },
     {
-      label: "Items",
-      value: "membership-items",
+      label: 'Items',
+      value: 'membership-items',
       icon: <AddShoppingCartIcon />,
+      visible: can('find', 'membership-item'),
     },
     {
-      label: "Transactions",
-      value: "invoices",
+      label: 'Transactions',
+      value: 'invoices',
       icon: <PaidIcon />,
+      visible: can('find', 'invoice'),
     },
   ];
-  const isStaff = role === "Staff";
-  const visibleTabs = isStaff
-    ? tabs.filter((tab) => STAFF_TAB_VALUES.includes(tab.value))
-    : tabs;
+  const visibleTabs = tabs.filter((tab) => tab.visible);
 
   useEffect(() => {
-    if (isStaff && !STAFF_TAB_VALUES.includes(selectedTab)) {
-      setSelectedTab("watersystems");
+    if (isLoading || visibleTabs.length === 0) return;
+    if (!visibleTabs.some((tab) => tab.value === selectedTab)) {
+      setSelectedTab(visibleTabs[0].value as TabValue);
     }
-  }, [isStaff, selectedTab, setSelectedTab]);
+    // visibleTabs derives solely from `can`, which is memoized.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoading, can, selectedTab, setSelectedTab]);
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
@@ -86,25 +90,25 @@ const MembershipDashboard = () => {
           {isSettingsOpen ? (
             <></>
           ) : (
-            <Box sx={{ justifyContent: "center" }}>
+            <Box sx={{ justifyContent: 'center' }}>
               <TabContext value={selectedTab.toString()}>
                 <TabList
                   variant="scrollable"
                   sx={{
                     backgroundColor: (theme) =>
-                      theme.palette.mode === "dark"
+                      theme.palette.mode === 'dark'
                         ? theme.palette.grey[900]
                         : theme.palette.grey[100],
                     maxWidth: isSmall ? 320 : undefined,
-                    overflow: "clip",
-                    "& .MuiTab-root": {
+                    overflow: 'clip',
+                    '& .MuiTab-root': {
                       color: (theme) =>
-                        theme.palette.mode === "dark"
-                          ? "rgba(255, 255, 255, 0.85)"
-                          : "rgba(0, 0, 0, 0.7)",
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.85)'
+                          : 'rgba(0, 0, 0, 0.7)',
                       opacity: 1,
-                      "&.Mui-selected": {
-                        color: "primary.main",
+                      '&.Mui-selected': {
+                        color: 'primary.main',
                       },
                     },
                   }}
@@ -134,26 +138,26 @@ const MembershipDashboard = () => {
           <Box
             component="main"
             sx={{
-              display: "flex",
-              flexDirection: isSmall ? "column" : "row",
+              display: 'flex',
+              flexDirection: isSmall ? 'column' : 'row',
               flexGrow: 1,
-              justifyContent: "start",
-              alignItems: "center",
+              justifyContent: 'start',
+              alignItems: 'center',
               gap: 2,
             }}
           >
-            <Box sx={{ overflow: "hidden", flexGrow: 1 }}>
-              <Box sx={{ overflow: "scroll" }}>
+            <Box sx={{ overflow: 'hidden', flexGrow: 1 }}>
+              <Box sx={{ overflow: 'scroll' }}>
                 <TabContext value={selectedTab}>
                   <Box
                     sx={{
                       backgroundColor:
-                        selectedTab === "summary"
-                          ? "transparent"
-                          : "background.paper",
+                        selectedTab === 'summary'
+                          ? 'transparent'
+                          : 'background.paper',
                     }}
                   >
-                    {!isStaff && (
+                    {can('find', 'membership') && (
                       <TabPanel
                         value="summary"
                         {...a11yTabPanelProps(0)}
@@ -168,21 +172,25 @@ const MembershipDashboard = () => {
                     <TabPanel value="associates" {...a11yTabPanelProps(2)}>
                       <AssociateList />
                     </TabPanel>
-                    {!isStaff && (
-                      <>
-                        <TabPanel value="memberships" {...a11yTabPanelProps(3)}>
-                          <MembershipList />
-                        </TabPanel>
-                        <TabPanel
-                          value="membership-items"
-                          {...a11yTabPanelProps(4)}
-                        >
-                          <MembershipItemsList />
-                        </TabPanel>
-                        <TabPanel value="invoices" {...a11yTabPanelProps(5)}>
-                          <InvoicesList filters={{ context: "membership-form" }} />
-                        </TabPanel>
-                      </>
+                    {can('find', 'membership') && (
+                      <TabPanel value="memberships" {...a11yTabPanelProps(3)}>
+                        <MembershipList />
+                      </TabPanel>
+                    )}
+                    {can('find', 'membership-item') && (
+                      <TabPanel
+                        value="membership-items"
+                        {...a11yTabPanelProps(4)}
+                      >
+                        <MembershipItemsList />
+                      </TabPanel>
+                    )}
+                    {can('find', 'invoice') && (
+                      <TabPanel value="invoices" {...a11yTabPanelProps(5)}>
+                        <InvoicesList
+                          filters={{ context: 'membership-form' }}
+                        />
+                      </TabPanel>
                     )}
                     {/* {role === "Super Admin" && (
                       <TabPanel value="logs" {...a11yTabPanelProps(6)}>
@@ -196,7 +204,7 @@ const MembershipDashboard = () => {
           </Box>
         )}
       </Grid>
-        {!isSettingsOpen && <MembershipFilters />}
+      {!isSettingsOpen && <MembershipFilters />}
     </Grid>
   );
 };

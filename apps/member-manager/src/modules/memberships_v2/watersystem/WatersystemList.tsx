@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   TextField,
   DatagridConfigurable,
@@ -11,39 +11,38 @@ import {
   List,
   FunctionField,
   Loading,
-} from "react-admin";
-import { Box, Button, useMediaQuery } from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import { CurrencyOptions } from "../../../config/Settings";
+} from 'react-admin';
+import { Box, Button, useMediaQuery } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import { CurrencyOptions } from '../../../config/Settings';
 import getExpirationDate, {
   isMembershipActiveByExpiration,
-} from "../../_helpers/getExpirationDate";
-import getExpiryBackground from "../../_helpers/getExpiryBackground";
-import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
-import WaterSystemBulkUpdateButton from "./components/WaterSystemBulkUpdate";
-import { useMembershipContext } from "../../memberships_v2/MembershipsContextProvider";
-import { customDatagridStyle } from "../../../css";
-import CustomPagination from "../../_components/CustomPagination";
-import useCurrentUser from "../../_helpers/useCurrentUser";
-import { getDirectoryContactField } from "./directoryContacts";
-
+} from '../../_helpers/getExpirationDate';
+import getExpiryBackground from '../../_helpers/getExpiryBackground';
+import coloredSurfaceSx from '../../_helpers/coloredSurfaceSx';
+import WaterSystemBulkUpdateButton from './components/WaterSystemBulkUpdate';
+import { useMembershipContext } from '../../memberships_v2/MembershipsContextProvider';
+import { customDatagridStyle } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
+import { useCan } from '../../rbac-manager/useCan';
+import { getDirectoryContactField } from './directoryContacts';
 
 const WaterSystemList = () => {
   const [filterListOpen, setFilterListOpen] = useState(false);
   const { watersystemFilters, isLoading } = useMembershipContext();
-  const selectedIds = useStore("watersystems.selectedIds")[0] ?? [];
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const selectedIds = useStore('watersystems.selectedIds')[0] ?? [];
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
-  const { role } = useCurrentUser();
+  const { can } = useCan();
 
   return isLoading ? (
     <Loading />
   ) : (
     <List
-      component={"div"}
+      component={'div'}
       resource="watersystems"
-      filter={watersystemFilters}
-      title={" "}
+      filter={watersystemFilters ?? null}
+      title={' '}
       actions={false}
       perPage={100}
       sx={{
@@ -52,27 +51,27 @@ const WaterSystemList = () => {
       disableSyncWithLocation
       pagination={<CustomPagination />}
       queryOptions={{
-        meta: { raw: true, populate: ["contacts"] },
+        meta: { raw: true, populate: ['contacts'] },
       }}
     >
       {isSmall && (
         <Button onClick={() => setFilterListOpen(!filterListOpen)}>
-          {filterListOpen ? "Hide Filters" : "Add Filters"}
+          {filterListOpen ? 'Hide Filters' : 'Add Filters'}
         </Button>
       )}
       {isSmall ? (
-        <Box style={{ whiteSpace: "nowrap" }}>
+        <Box style={{ whiteSpace: 'nowrap' }}>
           <SimpleList
-            linkType={role === "Admin" ? "edit" : "show"}
+            linkType={can('update', 'watersystem') ? 'edit' : 'show'}
             primaryText={(record) => record.name}
             secondaryText={(record) =>
-              `${record.region === null ? "No Region" : record.region} | ${
+              `${record.region === null ? 'No Region' : record.region} | ${
                 isMembershipActiveByExpiration(
                   record.payment_previous_date,
                   record.payment_last_date
                 )
-                  ? "Active"
-                  : "Inactive"
+                  ? 'Active'
+                  : 'Inactive'
               }`
             }
             tertiaryText={(record) => record.county}
@@ -81,13 +80,19 @@ const WaterSystemList = () => {
       ) : (
         <DatagridConfigurable
           sx={customDatagridStyle}
-          rowClick={role === "Admin" ? "edit" : "show"}
-          bulkActionButtons={role === "Admin" ?  <WaterSystemBulkUpdateButton /> : false}
+          rowClick={can('update', 'watersystem') ? 'edit' : 'show'}
+          bulkActionButtons={
+            can('update', 'watersystem') ? (
+              <WaterSystemBulkUpdateButton />
+            ) : (
+              false
+            )
+          }
         >
           <FunctionField
             label="Member"
             sortBy="payment_last_date"
-            sx={{ textWrap: "nowrap" }}
+            sx={{ textWrap: 'nowrap' }}
             render={(record: RaRecord) => {
               const expirationDate = getExpirationDate(
                 record.payment_previous_date,
@@ -101,13 +106,13 @@ const WaterSystemList = () => {
 
               return (
                 <Box
-                  sx={coloredSurfaceSx(active ? backgroundColor : "#ff5555", {
-                    textAlign: "center",
+                  sx={coloredSurfaceSx(active ? backgroundColor : '#ff5555', {
+                    textAlign: 'center',
                     fontWeight: 600,
                     px: 1,
                   })}
                 >
-                  {active ? "Active" : "Inactive"}
+                  {active ? 'Active' : 'Inactive'}
                 </Box>
               );
             }}
@@ -124,16 +129,16 @@ const WaterSystemList = () => {
                 record.payment_previous_date,
                 record.payment_last_date
               );
-              const backgroundColor = "transparent"; // Set background color to orange if date is invalid (N/A)
+              const backgroundColor = 'transparent'; // Set background color to orange if date is invalid (N/A)
               const displayDate = expirationDate.isValid()
-                ? expirationDate.format("MM/DD/YY")
-                : "N/A";
+                ? expirationDate.format('MM/DD/YY')
+                : 'N/A';
 
               return (
                 <Box
                   sx={{
                     backgroundColor,
-                    textAlign: "center",
+                    textAlign: 'center',
                     px: 1,
                   }}
                 >
@@ -145,16 +150,16 @@ const WaterSystemList = () => {
           <FunctionField
             label="Expiration Sent"
             render={(record: RaRecord) => {
-              if (!record.expiration_notification_sent) return "N/A";
+              if (!record.expiration_notification_sent) return 'N/A';
 
               const date = new Date(record.expiration_notification_sent);
-              return date.toLocaleString("en-US", {
-                month: "2-digit",
-                day: "2-digit",
-                year: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
+              return date.toLocaleString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
                 hour12: true,
               });
             }}
@@ -275,7 +280,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_first`}
               label={`Contact ${n}: First Name`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "first")
+                getDirectoryContactField(record, n, 'first')
               }
               noWrap
             />,
@@ -284,7 +289,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_last`}
               label={`Contact ${n}: Last Name`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "last")
+                getDirectoryContactField(record, n, 'last')
               }
               noWrap
             />,
@@ -292,21 +297,27 @@ const WaterSystemList = () => {
               key={`dir-${n}-title`}
               source={`dir_contact_${n}_title`}
               label={`Contact ${n}: Title`}
-              render={(record: RaRecord) => getDirectoryContactField(record, n, "title")}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, 'title')
+              }
               noWrap
             />,
             <FunctionField
               key={`dir-${n}-email`}
               source={`dir_contact_${n}_email`}
               label={`Contact ${n}: Email`}
-              render={(record: RaRecord) => getDirectoryContactField(record, n, "email")}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, 'email')
+              }
               noWrap
             />,
             <FunctionField
               key={`dir-${n}-phone`}
               source={`dir_contact_${n}_phone`}
               label={`Contact ${n}: Phone`}
-              render={(record: RaRecord) => getDirectoryContactField(record, n, "phone")}
+              render={(record: RaRecord) =>
+                getDirectoryContactField(record, n, 'phone')
+              }
               noWrap
             />,
             <FunctionField
@@ -314,7 +325,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_mail_line1`}
               label={`Contact ${n}: Mailing line 1`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "address_mailing_line1")
+                getDirectoryContactField(record, n, 'address_mailing_line1')
               }
               noWrap
             />,
@@ -323,7 +334,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_mail_line2`}
               label={`Contact ${n}: Mailing line 2`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "address_mailing_line2")
+                getDirectoryContactField(record, n, 'address_mailing_line2')
               }
               noWrap
             />,
@@ -332,7 +343,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_mail_city`}
               label={`Contact ${n}: Mail city`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "address_mailing_city")
+                getDirectoryContactField(record, n, 'address_mailing_city')
               }
               noWrap
             />,
@@ -341,7 +352,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_mail_state`}
               label={`Contact ${n}: Mail state`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "address_mailing_state")
+                getDirectoryContactField(record, n, 'address_mailing_state')
               }
               noWrap
             />,
@@ -350,7 +361,7 @@ const WaterSystemList = () => {
               source={`dir_contact_${n}_mail_zip`}
               label={`Contact ${n}: Mail ZIP`}
               render={(record: RaRecord) =>
-                getDirectoryContactField(record, n, "address_mailing_zip")
+                getDirectoryContactField(record, n, 'address_mailing_zip')
               }
               noWrap
             />,

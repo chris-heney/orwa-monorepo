@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode } from 'react';
 import {
   ReferenceField,
   ShowBase,
@@ -6,7 +6,7 @@ import {
   TextField,
   Title,
   useShowController,
-} from "react-admin";
+} from 'react-admin';
 import {
   List,
   ListItem,
@@ -15,21 +15,21 @@ import {
   Box,
   Grid,
   Typography,
-} from "@mui/material";
-import { Theme } from "@mui/material/styles";
-import AssociateLogo from "./fields/Logo";
-import { YearMonthDay } from "../../../helpers/Data";
+} from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import AssociateLogo from './fields/Logo';
+import { YearMonthDay } from '../../../helpers/Data';
 import getExpirationDate, {
   isMembershipActiveByExpiration,
-} from "../../_helpers/getExpirationDate";
-import SimpleInvoicesList from "../../invoices/SimpleInvoiceList";
-import { IAssociate } from "./AssociateInterface";
-import CustomShowHeader from "../componenets/CustomShowHeader";
-import useCurrentUser from "../../_helpers/useCurrentUser";
+} from '../../_helpers/getExpirationDate';
+import SimpleInvoicesList from '../../invoices/SimpleInvoiceList';
+import { IAssociate } from './AssociateInterface';
+import CustomShowHeader from '../componenets/CustomShowHeader';
+import { useCan } from '../../rbac-manager/useCan';
 
 const labelStyle: React.CSSProperties = {
-  fontWeight: "bold",
-  marginRight: "5px",
+  fontWeight: 'bold',
+  marginRight: '5px',
 };
 
 interface ResponsiveListItemProps {
@@ -43,12 +43,12 @@ const ResponsiveListItem: React.FC<ResponsiveListItemProps> = ({
   value,
   divider,
 }) => {
-  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
+  const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
 
   const listItemStyle: React.CSSProperties = {
-    justifyContent: "space-between",
-    whiteSpace: "pre-line",
-    fontSize: isSmall ? "16px" : "20px",
+    justifyContent: 'space-between',
+    whiteSpace: 'pre-line',
+    fontSize: isSmall ? '16px' : '20px',
   };
 
   return (
@@ -63,19 +63,19 @@ const ResponsiveListItem: React.FC<ResponsiveListItemProps> = ({
 
 const AssociateShow: React.FC = () => {
   const { record } = useShowController<IAssociate>();
-  const { role } = useCurrentUser();
+  const { can } = useCan();
 
   if (!record) return null;
 
   const formattedApplicationDate = new Date(
     record.application_date
-  ).toLocaleString("en-US", YearMonthDay);
+  ).toLocaleString('en-US', YearMonthDay);
   const formattedLastPaymentDate = new Date(
     record.payment_previous_date
-  ).toLocaleString("en-US", YearMonthDay);
+  ).toLocaleString('en-US', YearMonthDay);
   const formattedCurrentPaymentDate = new Date(
     record.payment_last_date
-  ).toLocaleString("en-US", YearMonthDay);
+  ).toLocaleString('en-US', YearMonthDay);
 
   const expirationDate = getExpirationDate(
     record.payment_previous_date,
@@ -91,7 +91,7 @@ const AssociateShow: React.FC = () => {
         <Grid container spacing={2}>
           <Grid item xs={12} md={5}>
             <Card sx={{ marginBottom: 2, padding: 3, borderRadius: 2 }}>
-              <Box sx={{ textAlign: "center", marginBottom: 2 }}>
+              <Box sx={{ textAlign: 'center', marginBottom: 2 }}>
                 <AssociateLogo />
               </Box>
 
@@ -108,7 +108,7 @@ const AssociateShow: React.FC = () => {
                 )}
                 <ResponsiveListItem
                   label="Mailed:"
-                  value={record.directory_mailed ? "Yes" : "No"}
+                  value={record.directory_mailed ? 'Yes' : 'No'}
                   divider
                 />
                 <ResponsiveListItem
@@ -136,8 +136,8 @@ const AssociateShow: React.FC = () => {
                       record.payment_previous_date,
                       record.payment_last_date
                     )
-                      ? "Active"
-                      : "Inactive"
+                      ? 'Active'
+                      : 'Inactive'
                   }
                   divider
                 />
@@ -161,7 +161,7 @@ const AssociateShow: React.FC = () => {
                 <ResponsiveListItem
                   label="Phone Number:"
                   value={
-                    <a href={`tel:+1${record.phone.replace(/-/g, "")}`}>
+                    <a href={`tel:+1${record.phone.replace(/-/g, '')}`}>
                       {record.phone}
                     </a>
                   }
@@ -200,7 +200,7 @@ const AssociateShow: React.FC = () => {
                 {expirationDate && (
                   <ResponsiveListItem
                     label="Expiration Date:"
-                    value={expirationDate.format("MMMM D, YYYY")}
+                    value={expirationDate.format('MMMM D, YYYY')}
                     divider
                   />
                 )}
@@ -244,16 +244,16 @@ const AssociateShow: React.FC = () => {
             </Card>
           </Grid>
 
-          {role !== "Staff" && (
+          {can('find', 'invoice') && (
             <Grid item xs={12} md={7}>
-              <Card sx={{ overflow: "auto", borderRadius: 1 }}>
+              <Card sx={{ overflow: 'auto', borderRadius: 1 }}>
                 <Typography
                   variant="h5"
                   sx={{
-                    backgroundColor: "#262626",
-                    color: "white",
-                    fontWeight: "bold",
-                    textAlign: "center",
+                    backgroundColor: '#262626',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
                     mb: 2,
                   }}
                 >

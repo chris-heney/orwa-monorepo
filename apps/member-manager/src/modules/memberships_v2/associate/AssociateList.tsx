@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   TextField,
   DatagridConfigurable,
@@ -12,36 +12,36 @@ import {
   RaRecord,
   Loading,
   ReferenceField,
-} from "react-admin";
-import { CurrencyOptions } from "../../../config/Settings";
-import { Box, Button, useMediaQuery } from "@mui/material";
-import { Theme } from "@mui/material/styles";
+} from 'react-admin';
+import { CurrencyOptions } from '../../../config/Settings';
+import { Box, Button, useMediaQuery } from '@mui/material';
+import { Theme } from '@mui/material/styles';
 import getExpirationDate, {
   isMembershipActiveByExpiration,
-} from "../../_helpers/getExpirationDate";
-import getExpiryBackground from "../../_helpers/getExpiryBackground";
-import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
-import AssociateBulkUpdateButton from "./components/AssociateBulkUpdateButton";
-import AssociateGrid from "./components/AssociateGrid";
-import { useMembershipContext } from "../MembershipsContextProvider";
-import { customDatagridStyle } from "../../../css";
-import CustomPagination from "../../_components/CustomPagination";
-import useCurrentUser from "../../_helpers/useCurrentUser";
+} from '../../_helpers/getExpirationDate';
+import getExpiryBackground from '../../_helpers/getExpiryBackground';
+import coloredSurfaceSx from '../../_helpers/coloredSurfaceSx';
+import AssociateBulkUpdateButton from './components/AssociateBulkUpdateButton';
+import AssociateGrid from './components/AssociateGrid';
+import { useMembershipContext } from '../MembershipsContextProvider';
+import { customDatagridStyle } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
+import { useCan } from '../../rbac-manager/useCan';
 
 const AssociateList = () => {
   const [filterListOpen, setFilterListOpen] = useState(false);
   const { associateFilters, isLoading, isGridView } = useMembershipContext();
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
-  const selectedIds = useStore("associates.selectedIds")[0] ?? [];
-  const { role } = useCurrentUser();
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
+  const selectedIds = useStore('associates.selectedIds')[0] ?? [];
+  const { can } = useCan();
 
   return isLoading ? (
     <Loading />
   ) : (
     <List
-      component={"div"}
+      component={'div'}
       resource="associates"
-      title={" "}
+      title={' '}
       filter={associateFilters}
       actions={false}
       sx={{
@@ -53,7 +53,7 @@ const AssociateList = () => {
     >
       {isSmall && (
         <Button onClick={() => setFilterListOpen(!filterListOpen)}>
-          {filterListOpen ? "Hide Filters" : "Add Filters"}
+          {filterListOpen ? 'Hide Filters' : 'Add Filters'}
         </Button>
       )}
       {isSmall ? (
@@ -66,8 +66,8 @@ const AssociateList = () => {
                 record.payment_previous_date,
                 record.payment_last_date
               )
-                ? "Active"
-                : "Not Active"
+                ? 'Active'
+                : 'Not Active'
             } | ${record.email}`
           }
           tertiaryText={(record) => record.member_level}
@@ -78,13 +78,13 @@ const AssociateList = () => {
         <DatagridConfigurable
           sx={customDatagridStyle}
           bulkActionButtons={
-            role === "Admin" ? <AssociateBulkUpdateButton /> : false
+            can('update', 'associate') ? <AssociateBulkUpdateButton /> : false
           }
-          rowClick={role === "Admin" ? "edit" : "show"}
+          rowClick={can('update', 'associate') ? 'edit' : 'show'}
         >
           <FunctionField
             label="Member"
-            sx={{ textWrap: "nowrap" }}
+            sx={{ textWrap: 'nowrap' }}
             sortBy="payment_last_date"
             render={(record: RaRecord) => {
               const expirationDate = getExpirationDate(
@@ -93,20 +93,20 @@ const AssociateList = () => {
               );
               const backgroundColor = expirationDate.isValid()
                 ? getExpiryBackground(expirationDate)
-                : "orange"; // Set background color to orange if date is invalid (N/A)
+                : 'orange'; // Set background color to orange if date is invalid (N/A)
               const active = isMembershipActiveByExpiration(
                 record.payment_previous_date,
                 record.payment_last_date
               );
               return (
                 <Box
-                  sx={coloredSurfaceSx(active ? backgroundColor : "#ff5555", {
-                    textAlign: "center",
+                  sx={coloredSurfaceSx(active ? backgroundColor : '#ff5555', {
+                    textAlign: 'center',
                     fontWeight: 600,
                     px: 1,
                   })}
                 >
-                  {active ? "Active" : "Not Active"}
+                  {active ? 'Active' : 'Not Active'}
                 </Box>
               );
             }}
@@ -121,16 +121,16 @@ const AssociateList = () => {
                 record.payment_previous_date,
                 record.payment_last_date
               );
-              const backgroundColor = "transparent"; // Set background color to orange if date is invalid (N/A)
+              const backgroundColor = 'transparent'; // Set background color to orange if date is invalid (N/A)
               const displayDate = expirationDate.isValid()
-                ? expirationDate.format("MM/DD/YY")
-                : "N/A";
+                ? expirationDate.format('MM/DD/YY')
+                : 'N/A';
 
               return (
                 <Box
                   sx={{
                     backgroundColor,
-                    textAlign: "center",
+                    textAlign: 'center',
                     px: 1,
                   }}
                 >
@@ -144,7 +144,7 @@ const AssociateList = () => {
             source="member_level"
             label="Level"
             render={(record: RaRecord) => {
-              return typeof record.membership === "number" ? (
+              return typeof record.membership === 'number' ? (
                 <ReferenceField
                   source="membership"
                   reference="memberships"
