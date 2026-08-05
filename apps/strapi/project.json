@@ -18,7 +18,11 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "npm run develop",
+        "commands": [
+          "node ../../scripts/ensure-strapi-deps.js",
+          "npm run develop"
+        ],
+        "parallel": false,
         "cwd": "apps/strapi"
       }
     },

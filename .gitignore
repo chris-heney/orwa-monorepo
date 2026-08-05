@@ -58,3 +58,6 @@ apps/*/.env.production
 # Headless browser test artifacts
 .playwright-mcp/
 .cursor/hooks/state/
+
+# Local DB dumps (never commit)
+.local-dumps/
