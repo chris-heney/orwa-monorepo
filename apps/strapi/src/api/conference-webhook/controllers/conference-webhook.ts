@@ -795,8 +795,10 @@ export default ({ strapi }) => {
       // Quantity extras (e.g. Mulligans) arrive as repeated IDs in
       // contestant.extras. fetchExtrasData de-dupes via $in — expand back to
       // one field-meta row per unit so the Contestants grid can show (xN).
-      const extrasById = new Map(
-        selectedExtras.map((extra) => [extra.id, extra])
+      // Explicit value type: Map(array-of-tuples) otherwise infers unknown and
+      // tsc fails the develop compile (Strapi never binds the HTTP port).
+      const extrasById = new Map<any, IExtraEntity>(
+        (selectedExtras as IExtraEntity[]).map((extra) => [extra.id, extra])
       );
       const contestantExtras = (contestant.extras || [])
         .map((extraId, index) => {

@@ -7,7 +7,10 @@
   "targets": {
     "install": {
       "executor": "nx:run-commands",
-      "options": { "command": "npm install", "cwd": "apps/member-manager" }
+      "options": {
+        "command": "npm install --legacy-peer-deps",
+        "cwd": "apps/member-manager"
+      }
     },
     "build": {
       "executor": "nx:run-commands",
@@ -16,7 +19,14 @@
     },
     "serve": {
       "executor": "nx:run-commands",
-      "options": { "command": "npm run dev", "cwd": "apps/member-manager" }
+      "options": {
+        "commands": [
+          "node ../../scripts/ensure-strapi-deps.js",
+          "npm run dev"
+        ],
+        "parallel": false,
+        "cwd": "apps/member-manager"
+      }
     }
   }
 }
