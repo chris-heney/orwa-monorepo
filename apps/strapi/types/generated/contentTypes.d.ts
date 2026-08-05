@@ -5055,6 +5055,7 @@ export interface PluginUsersPermissionsRole
       'plugin::users-permissions.role'
     > &
       Schema.Attribute.Private;
+    modules: Schema.Attribute.JSON;
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.SetMinMaxLength<{
