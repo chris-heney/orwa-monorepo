@@ -1,6 +1,6 @@
-import { Box, Button, Theme, useMediaQuery } from '@mui/material'
-import CustomExportFunction from '../../../helpers/custom-export-function'
-import React, { useState } from 'react'
+import { Box, Button, Theme, useMediaQuery } from '@mui/material';
+import CustomExportFunction from '../../../helpers/custom-export-function';
+import React, { useState } from 'react';
 import {
   List,
   TextField,
@@ -18,17 +18,18 @@ import {
   SelectColumnsButton,
   Title,
   useDataProvider,
-} from 'react-admin'
-import TrainingClassActionsButton from './components/EventListActionsPopUp'
-import TrainingEventListFilter from './components/EventListFilter'
-import EventCardGird from './components/EventListCardGridMobile'
-import PageHeadingBar from '../../_components/PageHeadingBar'
-import TrainingStatusChip from '../_components/TrainingStatusChip'
+} from 'react-admin';
+import TrainingClassActionsButton from './components/EventListActionsPopUp';
+import TrainingEventListFilter from './components/EventListFilter';
+import EventCardGird from './components/EventListCardGridMobile';
+import PageHeadingBar from '../../_components/PageHeadingBar';
+import TrainingStatusChip from '../_components/TrainingStatusChip';
+import { useCan } from '../../rbac-manager/useCan';
 
 const barButtonSx = {
   color: 'white',
   '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-}
+};
 
 const datagridSx = (theme: Theme) => ({
   '& .RaDatagrid-thead': { whiteSpace: 'nowrap' },
@@ -42,33 +43,44 @@ const datagridSx = (theme: Theme) => ({
     border: `1px solid ${theme.palette.divider}`,
     color: 'text.primary',
   },
-})
+});
 
-const ListHeader = () => (
-  <PageHeadingBar
-    title="Training Events"
-    info="Create training events and move them through the pipeline: Draft → Review → DEQ → RSVP → Live → Complete."
-    actions={
-      <>
-        <CreateButton label="New Event" sx={barButtonSx} />
-        <Box sx={{ '& .MuiButton-root': barButtonSx }}>
-          <SelectColumnsButton />
-        </Box>
-        <ExportButton sx={barButtonSx} />
-      </>
-    }
-  />
-)
+const ListHeader = () => {
+  const { can } = useCan();
+
+  return (
+    <PageHeadingBar
+      title="Training Events"
+      info="Create training events and move them through the pipeline: Draft → Review → DEQ → RSVP → Live → Complete."
+      actions={
+        <>
+          {can('create', 'training-event') && (
+            <CreateButton label="New Event" sx={barButtonSx} />
+          )}
+          {/* Column picker and export only act on the already-fetched list
+              (client-side), so read access is enough — no capability gate. */}
+          <Box sx={{ '& .MuiButton-root': barButtonSx }}>
+            <SelectColumnsButton />
+          </Box>
+          <ExportButton sx={barButtonSx} />
+        </>
+      }
+    />
+  );
+};
 
 const TrainingEventList = () => {
-  const [filterListOpen, setFilterListOpen] = useState(false)
-  const preferenceKey = 'training-events.datagrid'
+  const [filterListOpen, setFilterListOpen] = useState(false);
+  const preferenceKey = 'training-events.datagrid';
   const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
     `preferences.${preferenceKey}.availableColumns`,
     []
-  )
-  const [columnIds] = useStore<string[]>(`preferences.${preferenceKey}.columns`, [])
-  const dataProvider = useDataProvider()
+  );
+  const [columnIds] = useStore<string[]>(
+    `preferences.${preferenceKey}.columns`,
+    []
+  );
+  const dataProvider = useDataProvider();
   const exporter = (records: RaRecord[]) => {
     CustomExportFunction(
       records,
@@ -76,13 +88,20 @@ const TrainingEventList = () => {
       columnIds,
       'Training Events',
       dataProvider
-    )
-  }
+    );
+  };
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: { xs: 1, sm: 2 } }}>
+    <Box
+      sx={{
+        width: 1,
+        minWidth: 0,
+        boxSizing: 'border-box',
+        p: { xs: 1, sm: 2 },
+      }}
+    >
       <Title title="Training Events" />
       <List
         exporter={exporter}
@@ -156,7 +175,11 @@ const TrainingEventList = () => {
               label="Instructor"
               link={false}
             >
-              <ReferenceField reference="contacts" source="instructor" link={false}>
+              <ReferenceField
+                reference="contacts"
+                source="instructor"
+                link={false}
+              >
                 <Box sx={{ display: 'flex' }}>
                   <TextField source="first" noWrap />
                   <TextField source="last" ml={1} noWrap />
@@ -185,7 +208,7 @@ const TrainingEventList = () => {
         )}
       </List>
     </Box>
-  )
-}
+  );
+};
 
-export default TrainingEventList
+export default TrainingEventList;
