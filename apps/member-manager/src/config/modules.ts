@@ -219,3 +219,15 @@ export const APP_MODULES: AppModule[] = [
 export const ALL_MODULE_KEYS: ModuleKey[] = APP_MODULES.map(
   (module) => module.key
 );
+
+/**
+ * Primary route of the first `APP_MODULES` entry the user has access to —
+ * used as the post-login landing page and as the route-guard redirect target.
+ * Falls back to Settings, which every user can reach.
+ */
+export const firstAllowedPath = (
+  modules: readonly ModuleKey[] | null | undefined
+): string => {
+  const first = APP_MODULES.find((module) => modules?.includes(module.key));
+  return first?.to ?? '/admin/settings';
+};

@@ -40,144 +40,201 @@ import DashboardAppBar from '../modules/dashboard/_components/DashboardBar';
 import { Email, Gavel } from '@mui/icons-material';
 import useCurrentUser from '../modules/_helpers/useCurrentUser';
 import { useModuleAccess } from '../modules/rbac-manager/useModuleAccess';
+import {
+  APP_MODULES,
+  AppModule,
+  ModuleKey,
+  firstAllowedPath,
+} from '../config/modules';
 
-const STAFF_HOME = '/membership-management';
-const STAFF_ALLOWED_RESOURCES = ['watersystems', 'associates'];
+// Auth pages are reachable regardless of module access.
+const ALWAYS_ALLOWED_PATHS = ['/login', '/reset-password', '/forgot-password'];
 
-const isStaffAllowedPath = (pathname: string) => {
-  if (pathname === STAFF_HOME) {
-    return true;
+/**
+ * A path belongs to a prefix when it equals it, or continues past it with a
+ * separator. Root ('/') is matched exactly — as a prefix it would own
+ * everything.
+ */
+const ownsPath = (prefix: string, pathname: string) => {
+  if (prefix === '/') {
+    return pathname === '/';
   }
 
-  return STAFF_ALLOWED_RESOURCES.some((resource) => {
-    const resourcePath = `/${resource}`;
-    const showPathPattern = new RegExp(`^/${resource}/[^/]+/show$`);
-
-    return pathname === resourcePath || showPathPattern.test(pathname);
-  });
+  return (
+    pathname === prefix ||
+    pathname.startsWith(`${prefix}/`) ||
+    pathname.startsWith(`${prefix}?`)
+  );
 };
 
-const StaffRouteGuard = ({ children }: { children: ReactNode }) => {
-  const { role, isLoading } = useCurrentUser();
+const modulePrefixes = (module: AppModule) => [
+  ...module.pathPrefixes,
+  // react-admin resource routes (/watersystems, /activity-relations, /upload,
+  // …) are derived from the resource names, not just pathPrefixes.
+  ...module.resources.map((resource) => `/${resource}`),
+];
+
+/**
+ * Redirects away from paths owned by modules the current user's role does not
+ * grant. This gating is cosmetic UX only — the API (`up_permissions`) enforces
+ * reality — so unknown paths owned by NO module fail open, and while module
+ * access is still loading we render children (redirecting during load caused
+ * a post-login flash-redirect with the old Staff guard).
+ */
+const ModuleRouteGuard = ({ children }: { children: ReactNode }) => {
+  const { modules, isLoading } = useModuleAccess();
   const location = useLocation();
 
-  if (isLoading || role !== 'Staff' || isStaffAllowedPath(location.pathname)) {
+  if (isLoading) {
     return <>{children}</>;
   }
 
-  return <Navigate to={STAFF_HOME} replace />;
+  const { pathname } = location;
+
+  // '/' is react-admin's root/dashboard redirect target — exact match only.
+  if (
+    pathname === '/' ||
+    ALWAYS_ALLOWED_PATHS.some((path) => ownsPath(path, pathname))
+  ) {
+    return <>{children}</>;
+  }
+
+  const owningModules = APP_MODULES.filter((module) =>
+    modulePrefixes(module).some((prefix) => ownsPath(prefix, pathname))
+  );
+
+  if (owningModules.length === 0) {
+    // Unowned path (typo, future route): fail open — see docblock.
+    return <>{children}</>;
+  }
+
+  if (owningModules.some((module) => modules.includes(module.key))) {
+    return <>{children}</>;
+  }
+
+  return <Navigate to={firstAllowedPath(modules)} replace />;
 };
 
 const MyMenu = () => {
   const { user } = useCurrentUser();
-  const { modules } = useModuleAccess();
+  const { modules, isLoading } = useModuleAccess();
 
-  if (!user) {
+  // Render nothing until module access is known — the menu appears once
+  // loaded, matching the existing !user behavior.
+  if (!user || isLoading) {
     return null;
   }
 
-  if (user.role === 'Staff') {
-    return (
-      <MultiLevelMenu>
+  const has = (key: ModuleKey) => modules.includes(key);
+
+  return (
+    <MultiLevelMenu>
+      {has('dashboard') && (
+        <MultiLevelMenu.Item
+          name="dashboard"
+          to="/admin/dashboard"
+          label="Dashboard"
+          icon={<DashboardIcon />}
+        />
+      )}
+      {has('emails') && (
+        <MultiLevelMenu.Item
+          name="email-management"
+          to="/email-management"
+          label="Emails"
+          icon={<Email />}
+        />
+      )}
+      {has('memberships') && (
         <MultiLevelMenu.Item
           name="membership-management"
-          to={STAFF_HOME}
+          to="/membership-management"
           label="Memberships"
           icon={<MembersIcon />}
         />
-      </MultiLevelMenu>
-    );
-  }
-
-  // Full menu for non-Guest roles
-  return (
-    <MultiLevelMenu>
-      <MultiLevelMenu.Item
-        name="dashboard"
-        to="/admin/dashboard"
-        label="Dashboard"
-        icon={<DashboardIcon />}
-      />
-      <MultiLevelMenu.Item
-        name="email-management"
-        to="/email-management"
-        label="Emails"
-        icon={<Email />}
-      />
-      <MultiLevelMenu.Item
-        name="membership-management"
-        to="/membership-management"
-        label="Memberships"
-        icon={<MembersIcon />}
-      />
-      <MultiLevelMenu.Item
-        name="human-resources-dashboard"
-        to="/human-resources/dashboard"
-        label="Contacts"
-        title="Contacts"
-        icon={<PeopleIcon />}
-      />
-      <MultiLevelMenu.Item
-        name="assets"
-        to="/assets"
-        label="Asset Manager"
-        icon={<InventoryIcon />}
-      />
-      <MultiLevelMenu.Item
-        name="media-library"
-        to="/media-library"
-        label="Media Library"
-        title="Media Library"
-        icon={<PermMediaIcon />}
-      />
-      <MultiLevelMenu.Item
-        name="table"
-        label="Training Manager"
-        icon={<TrainingIcon />}
-      >
+      )}
+      {has('contacts') && (
         <MultiLevelMenu.Item
-          name="training-dashboard"
-          to="/training/dashboard"
-          label="Training Dashboard"
+          name="human-resources-dashboard"
+          to="/human-resources/dashboard"
+          label="Contacts"
+          title="Contacts"
+          icon={<PeopleIcon />}
         />
+      )}
+      {has('assets') && (
         <MultiLevelMenu.Item
-          name="training-events"
-          to="/training-events"
-          label="Training Events"
+          name="assets"
+          to="/assets"
+          label="Asset Manager"
+          icon={<InventoryIcon />}
         />
+      )}
+      {has('media-library') && (
         <MultiLevelMenu.Item
-          name="training-event-logs"
-          to="/training-event-logs"
-          label="Training History"
+          name="media-library"
+          to="/media-library"
+          label="Media Library"
+          title="Media Library"
+          icon={<PermMediaIcon />}
         />
+      )}
+      {has('training') && (
         <MultiLevelMenu.Item
-          name="training-settings"
-          to="/training-settings/1/edit"
-          label="Settings"
+          name="table"
+          label="Training Manager"
+          icon={<TrainingIcon />}
+        >
+          <MultiLevelMenu.Item
+            name="training-dashboard"
+            to="/training/dashboard"
+            label="Training Dashboard"
+          />
+          <MultiLevelMenu.Item
+            name="training-events"
+            to="/training-events"
+            label="Training Events"
+          />
+          <MultiLevelMenu.Item
+            name="training-event-logs"
+            to="/training-event-logs"
+            label="Training History"
+          />
+          <MultiLevelMenu.Item
+            name="training-settings"
+            to="/training-settings/1/edit"
+            label="Settings"
+          />
+        </MultiLevelMenu.Item>
+      )}
+      {has('conference') && (
+        <MultiLevelMenu.Item
+          name="conference-dashboard"
+          to="/conference/dashboard"
+          label="Conference Manager"
+          title="Conference Manager"
+          icon={<EventsIcon />}
         />
-      </MultiLevelMenu.Item>
-      <MultiLevelMenu.Item
-        name="conference-dashboard"
-        to="/conference/dashboard"
-        label="Conference Manager"
-        title="Conference Manager"
-        icon={<EventsIcon />}
-      />
-      <MultiLevelMenu.Item
-        name="terms"
-        to="/terms"
-        label="Terms Manager"
-        title="Terms Manager"
-        icon={<Gavel />}
-      />
-      <MultiLevelMenu.Item
-        name="grant-dashboard"
-        to="/grant/dashboard"
-        label="Grant Manager"
-        title="Grant Manager"
-        icon={<RequestPageIcon />}
-      />
-      {modules.includes('rbac') && (
+      )}
+      {has('terms') && (
+        <MultiLevelMenu.Item
+          name="terms"
+          to="/terms"
+          label="Terms Manager"
+          title="Terms Manager"
+          icon={<Gavel />}
+        />
+      )}
+      {has('grants') && (
+        <MultiLevelMenu.Item
+          name="grant-dashboard"
+          to="/grant/dashboard"
+          label="Grant Manager"
+          title="Grant Manager"
+          icon={<RequestPageIcon />}
+        />
+      )}
+      {has('rbac') && (
         <MultiLevelMenu.Item
           name="rbac-dashboard"
           to="/rbac/dashboard"
@@ -248,7 +305,7 @@ const DashBoard = (props: LayoutProps) => {
                   />
                 )}
               >
-                <StaffRouteGuard>{children}</StaffRouteGuard>
+                <ModuleRouteGuard>{children}</ModuleRouteGuard>
               </ErrorBoundary>
             </Box>
           </main>

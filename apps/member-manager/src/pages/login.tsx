@@ -1,19 +1,20 @@
-import React from "react";
-import Button from "@mui/material/Button";
-import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
-import Box from "@mui/material/Box";
-import { TypographyProps } from "@mui/material/Typography";
+import React from 'react';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import { TypographyProps } from '@mui/material/Typography';
 
-import Typography from "@mui/material/Typography";
+import Typography from '@mui/material/Typography';
 
-import { useNotify, useRedirect } from "react-admin";
-import Logo from "./components/logo";
-import AuthPageShell from "./components/AuthPageShell";
-import authProvider from "../authProvider";
+import { useNotify, useRedirect } from 'react-admin';
+import Logo from './components/logo';
+import AuthPageShell from './components/AuthPageShell';
+import authProvider from '../authProvider';
+import { ALL_MODULE_KEYS, firstAllowedPath } from '../config/modules';
 
 function Copyright(props: TypographyProps) {
   return (
@@ -23,12 +24,12 @@ function Copyright(props: TypographyProps) {
       align="center"
       {...props}
     >
-      {"Copyright © "}
+      {'Copyright © '}
       <Link color="inherit" target="_blank" href="https://orwa.org/">
         ORWA
-      </Link>{" "}
+      </Link>{' '}
       {new Date().getFullYear()}
-      {"."}
+      {'.'}
     </Typography>
   );
 }
@@ -41,17 +42,22 @@ const LoginPage = () => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     authProvider
-      .login({ username: data.get("email"), password: data.get("password") })
+      .login({ username: data.get('email'), password: data.get('password') })
       .then((res) => {
         if (res.error) {
           notify(res.error, {
-            type: "error",
+            type: 'error',
           });
         } else {
-          notify("Logged in successfully", {
-            type: "success",
+          notify('Logged in successfully', {
+            type: 'success',
           });
-          redirect(res?.user?.role?.name === "Staff" ? "/membership-management" : "/");
+          // Land on the first module the role grants (admins get all modules,
+          // so they land on the dashboard). A missing role never hard-fails:
+          // firstAllowedPath falls back to Settings.
+          const role = res?.user?.role;
+          const isAdmin = role?.type === 'admin' || role?.name === 'Admin';
+          redirect(firstAllowedPath(isAdmin ? ALL_MODULE_KEYS : role?.modules));
         }
       });
   };
@@ -59,11 +65,11 @@ const LoginPage = () => {
     <AuthPageShell>
       <Box
         sx={{
-          width: "100%",
+          width: '100%',
           maxWidth: 420,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
         <Logo />
@@ -71,7 +77,12 @@ const LoginPage = () => {
         <Typography component="h1" variant="h6" sx={{ mt: 1 }}>
           ORWA Admin v2
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: "100%" }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit}
+          noValidate
+          sx={{ mt: 1, width: '100%' }}
+        >
           <TextField
             margin="normal"
             required

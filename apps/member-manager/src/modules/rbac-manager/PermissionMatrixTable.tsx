@@ -75,6 +75,23 @@ const withPreset = (
   };
 };
 
+/**
+ * Keeps the endpoint-name column visible during horizontal scroll. The base
+ * must be opaque (`background.paper`) — the zebra rows use a translucent
+ * `action.hover`, and scrolled cells would show through a transparent sticky
+ * cell. The zebra tint is re-applied on top via `backgroundImage` so the
+ * sticky cell still matches its row in both light and dark mode.
+ */
+const stickyNameCellSx = (isZebra: boolean) => (theme: Theme) => ({
+  position: 'sticky',
+  left: 0,
+  zIndex: 2,
+  backgroundColor: theme.palette.background.paper,
+  backgroundImage: isZebra
+    ? `linear-gradient(${theme.palette.action.hover}, ${theme.palette.action.hover})`
+    : 'none',
+});
+
 const matrixTableSx = (theme: Theme) => ({
   borderCollapse: 'collapse',
   'tr th': {
@@ -114,7 +131,7 @@ const MatrixSection = ({ types, matrix, onChange }: MatrixSectionProps) => {
       <Table size="small" sx={matrixTableSx}>
         <TableHead>
           <TableRow>
-            <TableCell>Endpoint</TableCell>
+            <TableCell sx={stickyNameCellSx(false)}>Endpoint</TableCell>
             {CRUD_ACTIONS.map((action) => (
               <TableCell key={action} align="center">
                 {action}
@@ -141,7 +158,11 @@ const MatrixSection = ({ types, matrix, onChange }: MatrixSectionProps) => {
                 key={`${type}.${controller}`}
                 sx={{ bgcolor: i % 2 === 0 ? 'action.hover' : 'transparent' }}
               >
-                <TableCell sx={{ whiteSpace: 'nowrap' }}>{label}</TableCell>
+                <TableCell
+                  sx={[{ whiteSpace: 'nowrap' }, stickyNameCellSx(i % 2 === 0)]}
+                >
+                  {label}
+                </TableCell>
                 {CRUD_ACTIONS.map((action) => (
                   <TableCell key={action} align="center" padding="checkbox">
                     {actions[action] ? (
