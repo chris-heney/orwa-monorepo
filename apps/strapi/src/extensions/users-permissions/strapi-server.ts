@@ -40,7 +40,10 @@ export default (plugin: any) => {
   // the full roles listing to every role (the RBAC endpoints must stay
   // Admin-only). Instead, after the stock handler runs (keeping all of its
   // user-body sanitization), attach the caller's OWN role as a minimal safe
-  // object — never its permissions. Unlike the services, the plugin's
+  // object. Its `permissions` is a flat array of the role's permission action
+  // strings — that exposes only the caller's own capabilities, which they can
+  // already discover empirically by calling endpoints; it does not expose
+  // other roles or the permission registry. Unlike the services, the plugin's
   // controllers are plain objects, so wrap the method directly.
   const originalMe = plugin.controllers.user.me;
 
@@ -60,7 +63,21 @@ export default (plugin: any) => {
 
     if (user?.role) {
       const { id, name, description, type, modules } = user.role;
-      ctx.body.role = { id, name, description, type, modules };
+      const permissionRows = await strapi.db
+        .query('plugin::users-permissions.permission')
+        .findMany({
+          where: { role: { id } },
+          select: ['action'],
+        });
+
+      ctx.body.role = {
+        id,
+        name,
+        description,
+        type,
+        modules,
+        permissions: permissionRows.map((permission: any) => permission.action),
+      };
     }
   };
 
