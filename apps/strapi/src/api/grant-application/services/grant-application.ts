@@ -67,6 +67,13 @@ export interface IGrantApplicationFormPayload {
   application_date: Date;
   status: Identifier;
   selected_projects: string[];
+  project_costs?: Array<{
+    project_type_id: number;
+    name?: string;
+    classification?: string;
+    amount: number;
+    source?: "applicant" | "document" | "even-split";
+  }>;
   proposal: StrapiFormattedFile[];
   uploaded_engineering_report: StrapiFormattedFile[];
   uploaded_notice_of_violation: StrapiFormattedFile[];
@@ -122,6 +129,7 @@ export default ({ strapi }) => ({
       change_order_request,
       grant,
       selected_projects,
+      project_costs,
       proposal,
       uploaded_engineering_report,
       uploaded_notice_of_violation,
@@ -261,6 +269,7 @@ export default ({ strapi }) => ({
           application_date: new Date(),
           status: statusId,
           selected_projects: projectIds,
+          ...(Array.isArray(project_costs) ? { project_costs } : {}),
           proposal,
           satisfy_deq_issued_order,
           consesnt_order,

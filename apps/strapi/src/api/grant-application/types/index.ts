@@ -84,6 +84,13 @@ export interface IContactEntity {
     application_date: Date;
     status: Identifier;
     selected_projects: string[];
+    project_costs?: Array<{
+      project_type_id: number;
+      name?: string;
+      classification?: string;
+      amount: number;
+      source?: "applicant" | "document" | "even-split";
+    }>;
     proposal: StrapiFormattedFile[];
     uploaded_engineering_report: StrapiFormattedFile[];
     uploaded_notice_of_violation: StrapiFormattedFile[];

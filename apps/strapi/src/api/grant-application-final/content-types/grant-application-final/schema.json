@@ -214,6 +214,11 @@
       "relation": "oneToMany",
       "target": "api::project-type.project-type"
     },
+    "project_costs": {
+      "type": "component",
+      "repeatable": true,
+      "component": "grant.project-cost"
+    },
     "grant_application_score": {
       "type": "relation",
       "relation": "oneToOne",

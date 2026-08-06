@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_grant_project_costs",
+  "info": {
+    "displayName": "Project Cost",
+    "description": "Per-project-type estimated cost snapshot on a grant application"
+  },
+  "options": {},
+  "attributes": {
+    "project_type_id": {
+      "type": "integer"
+    },
+    "name": {
+      "type": "string"
+    },
+    "classification": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "biginteger"
+    },
+    "source": {
+      "type": "enumeration",
+      "enum": ["applicant", "document", "even-split"],
+      "default": "applicant"
+    }
+  }
+}

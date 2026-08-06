@@ -234,6 +234,7 @@ export default ({ strapi }) => {
           engineer: true,
           additional_contacts: true,
           selected_projects: true,
+          project_costs: true,
           proposals: true,
           uploaded_engineering_report: true,
           uploaded_notice_of_violation: true,
@@ -395,6 +396,13 @@ export default ({ strapi }) => {
     status: 12,
     application_id: a.application_id ?? "",
     selected_projects: (a.selected_projects ?? []).map((p) => String(p.id)),
+    project_costs: (a.project_costs ?? []).map((row) => ({
+      project_type_id: Number(row.project_type_id),
+      name: row.name ?? "",
+      classification: row.classification ?? "",
+      amount: Number(row.amount ?? 0),
+      source: row.source ?? "applicant",
+    })),
     proposals: toFormFiles(a.proposals),
     uploaded_engineering_report: toFormFiles(a.uploaded_engineering_report),
     uploaded_notice_of_violation: toFormFiles(a.uploaded_notice_of_violation),
@@ -458,6 +466,7 @@ export default ({ strapi }) => {
           original_application_number,
           grant,
           selected_projects,
+          project_costs,
           uploaded_engineering_report,
           uploaded_notice_of_violation,
           uploaded_additional_files,
@@ -611,6 +620,7 @@ export default ({ strapi }) => {
             application_date: new Date(),
             status: 12,
             selected_projects: projectIds,
+            ...(Array.isArray(project_costs) ? { project_costs } : {}),
             satisfy_deq_issued_order,
             consent_order_number,
             money_set_aside,
@@ -900,6 +910,9 @@ export default ({ strapi }) => {
           selected_projects: (payload.selected_projects ?? []).map((project) =>
             parseInt(project)
           ),
+          ...(Array.isArray(payload.project_costs)
+            ? { project_costs: payload.project_costs }
+            : {}),
         };
 
         // Fields the applicant must never change through this endpoint.

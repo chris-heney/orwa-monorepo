@@ -2278,6 +2278,7 @@ export interface ApiGrantApplicationFinalGrantApplicationFinal
     population_served: Schema.Attribute.Integer;
     portion_matched_by_recipient: Schema.Attribute.BigInteger;
     previous_application_id: Schema.Attribute.String;
+    project_costs: Schema.Attribute.Component<'grant.project-cost', true>;
     project_proposal_birds: Schema.Attribute.Text;
     projects_approved: Schema.Attribute.Text;
     proposals: Schema.Attribute.Media<

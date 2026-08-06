@@ -152,6 +152,25 @@ export default {
       }
       return next();
     });
+
+    // When project_costs is present on a grant application write, snapshot
+    // type name/classification and recompute combined_cost_of_projects as
+    // the rounded sum. Runs after coerce so amounts are already integers.
+    const { enrichProjectCosts } = require('./utils/enrich-project-costs');
+    const GRANT_APPLICATION_UID =
+      'api::grant-application-final.grant-application-final';
+
+    strapi.documents.use(async (context, next) => {
+      if (
+        (context.action === 'create' || context.action === 'update') &&
+        context.uid === GRANT_APPLICATION_UID &&
+        context.params?.data &&
+        Array.isArray(context.params.data.project_costs)
+      ) {
+        await enrichProjectCosts(context.params.data);
+      }
+      return next();
+    });
   },
 
   /**

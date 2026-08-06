@@ -114,6 +114,24 @@ export interface ConferenceTicketsPurchased extends Struct.ComponentSchema {
   };
 }
 
+export interface GrantProjectCost extends Struct.ComponentSchema {
+  collectionName: 'components_grant_project_costs';
+  info: {
+    description: 'Per-project-type estimated cost snapshot on a grant application';
+    displayName: 'Project Cost';
+  };
+  attributes: {
+    amount: Schema.Attribute.BigInteger;
+    classification: Schema.Attribute.String;
+    name: Schema.Attribute.String;
+    project_type_id: Schema.Attribute.Integer;
+    source: Schema.Attribute.Enumeration<
+      ['applicant', 'document', 'even-split']
+    > &
+      Schema.Attribute.DefaultTo<'applicant'>;
+  };
+}
+
 export interface LocationCoordinates extends Struct.ComponentSchema {
   collectionName: 'components_location_coordinates';
   info: {
@@ -320,6 +338,7 @@ declare module '@strapi/strapi' {
       'conference.line-items': ConferenceLineItems;
       'conference.sponsorships': ConferenceSponsorships;
       'conference.tickets-purchased': ConferenceTicketsPurchased;
+      'grant.project-cost': GrantProjectCost;
       'location.coordinates': LocationCoordinates;
       'renewal.membership-renewal': RenewalMembershipRenewal;
       'shared.field-meta': SharedFieldMeta;
