@@ -4,9 +4,10 @@ import CircularProgress from "@mui/material/CircularProgress";
 import {
   updateApplication,
   useGetApplicationId,
+  useGetProjects,
   useSubmitApplication,
 } from "../data/API";
-import { IGrantApplicationFormPayload } from "../types/types";
+import { IGrantApplicationFormPayload, IProject } from "../types/types";
 import { useNotify } from "../NotificationProvider";
 import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
 import {
@@ -23,6 +24,11 @@ import {
   mapFormErrorsToValidationFields,
   useValidationHighlight,
 } from "../helpers/validationHighlight";
+import {
+  projectCostsMapToRows,
+  ProjectCostsMap,
+  sumProjectCosts,
+} from "../helpers/projectCosts";
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
@@ -37,6 +43,7 @@ const StepNavigation = () => {
   const { showInvalid, clearAllInvalid } = useValidationHighlight();
 
   const applicationId = useGetApplicationId();
+  const { data: projects } = useGetProjects();
   const certifyChecked = watch("certify");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -101,6 +108,14 @@ const StepNavigation = () => {
 
     setIsSubmitting(true);
     const formPayload = getValues() as IGrantApplicationFormPayload;
+    const selectedProjectIds = formPayload.selected_projects ?? [];
+    const costsMap = (formPayload.project_costs ?? {}) as ProjectCostsMap;
+    const projectCostRows = projectCostsMapToRows(
+      costsMap,
+      selectedProjectIds,
+      (projects as unknown as IProject[]) ?? []
+    );
+    const combinedCost = sumProjectCosts(costsMap, selectedProjectIds);
 
     const submissionApplicationId = isEditMode
       ? (formPayload as Record<string, any>).application_id
@@ -110,6 +125,8 @@ const StepNavigation = () => {
       const processedPayload = await processAndUploadFiles(
         {
           ...formPayload,
+          project_costs: projectCostRows,
+          combined_cost_of_projects: combinedCost,
           id: submissionApplicationId,
         },
         notify
@@ -123,6 +140,8 @@ const StepNavigation = () => {
 
       const payload = {
         ...processedPayload,
+        project_costs: projectCostRows,
+        combined_cost_of_projects: combinedCost,
         additional_funding_requested: Math.round(
           watch("additional_funding_requested")
         ),

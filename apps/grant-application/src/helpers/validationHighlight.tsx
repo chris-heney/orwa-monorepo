@@ -187,7 +187,11 @@ export function mapFormErrorsToValidationFields(
       path.startsWith("total_project") ||
       path.startsWith("additional_funding") ||
       path.startsWith("proposals") ||
-      path.startsWith("bid")
+      path.startsWith("bid") ||
+      path.startsWith("description_justification") ||
+      path.startsWith("combined_cost") ||
+      path.startsWith("requested_grant") ||
+      path.startsWith("minimum_utility")
     ) {
       fields.add("projects");
     } else if (

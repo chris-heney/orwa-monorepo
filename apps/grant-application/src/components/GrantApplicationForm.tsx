@@ -18,6 +18,18 @@ import {
 } from "../helpers/formPersistence";
 import { useEditSession } from "../providers/EditSessionProvider";
 import { ValidationHighlightProvider } from "../helpers/validationHighlight";
+import { projectCostsToFormMap } from "../helpers/projectCosts";
+
+/** Ensure project_costs is always the form map shape (edit-session returns an array). */
+const withFormProjectCosts = (
+  data: Record<string, any> | null | undefined
+): Record<string, any> | undefined => {
+  if (!data) return undefined;
+  return {
+    ...data,
+    project_costs: projectCostsToFormMap(data.project_costs),
+  };
+};
 
 const GrantApplicationForm = () => {
   const { steps, setStepIndex, stepIndex } = useContext(FormSteps);
@@ -32,15 +44,19 @@ const GrantApplicationForm = () => {
   const [formDefaultValues, setFormDefaultValues] = useState<
     Record<string, any> | undefined
   >(
-    (editPayload as Record<string, any> | null) ??
-      entryPayload ??
-      (payload.grantApplicationFormPayload as Record<string, any>)
+    withFormProjectCosts(editPayload as Record<string, any> | null) ??
+      withFormProjectCosts(entryPayload as Record<string, any> | null) ??
+      withFormProjectCosts(
+        payload.grantApplicationFormPayload as Record<string, any>
+      )
   );
   const [formKey, setFormKey] = useState(0);
 
   useEffect(() => {
     if (isEditMode && editPayload) {
-      setFormDefaultValues(editPayload as Record<string, any>);
+      setFormDefaultValues(
+        withFormProjectCosts(editPayload as Record<string, any>)
+      );
       setStepIndex(0);
       setFormKey((prev) => prev + 1);
     }
@@ -72,12 +88,12 @@ const GrantApplicationForm = () => {
     if (savedData) {
       try {
         const restoredData = await restoreFilesFromCache(savedData.data);
-        setFormDefaultValues(restoredData);
+        setFormDefaultValues(withFormProjectCosts(restoredData));
         setStepIndex(savedData.stepIndex || 0);
         setFormKey((prev) => prev + 1);
       } catch (error) {
         console.warn("Failed to restore files from cache:", error);
-        setFormDefaultValues(savedData.data);
+        setFormDefaultValues(withFormProjectCosts(savedData.data));
         setStepIndex(savedData.stepIndex || 0);
         setFormKey((prev) => prev + 1);
       }
@@ -89,8 +105,10 @@ const GrantApplicationForm = () => {
     clearSavedFormData();
     setShowPreviousSessionModal(false);
     setFormDefaultValues(
-      entryPayload ??
-        (payload.grantApplicationFormPayload as Record<string, any>)
+      withFormProjectCosts(entryPayload as Record<string, any> | null) ??
+        withFormProjectCosts(
+          payload.grantApplicationFormPayload as Record<string, any>
+        )
     );
     setStepIndex(0);
     setFormKey((prev) => prev + 1);

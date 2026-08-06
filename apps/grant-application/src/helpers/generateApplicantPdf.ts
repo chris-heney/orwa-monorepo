@@ -1,6 +1,7 @@
 import { PDFDocument, rgb, StandardFonts } from "pdf-lib";
 import { IGrantApplicationFormPayload } from "../types/types";
 import currencyFormatter from "./currencyFormat";
+import { ProjectCostRow } from "./projectCosts";
 
 interface GrantApplicationWithId extends IGrantApplicationFormPayload {
   id: string;
@@ -529,13 +530,51 @@ export async function generatePDF(
 
     yPosition -= lineHeight * 1.5;
 
+    // Itemized per-type costs (when present), then combined total
+    const projectCostRows: ProjectCostRow[] = Array.isArray(
+      payload.project_costs
+    )
+      ? payload.project_costs
+      : [];
+    if (projectCostRows.length > 0) {
+      page.drawText("Estimated Costs by Project Type", {
+        x: margin,
+        y: yPosition,
+        size: fontSize,
+        font: timesRomanBoldFont,
+      });
+      yPosition -= lineHeight;
+
+      for (const row of projectCostRows) {
+        checkPageOverflow();
+        const rowName =
+          row.name?.trim() || `Project ${row.project_type_id}`;
+        const rowAmount = currencyFormatter
+          .format(Number(row.amount) || 0)
+          .replace(/\.00$/, "");
+        page.drawText(`${rowName}: ${rowAmount}`, {
+          x: margin,
+          y: yPosition,
+          size: fontSize,
+          font: timesRomanFont,
+          maxWidth: width - 2 * margin,
+        });
+        yPosition -= lineHeight;
+      }
+
+      yPosition -= lineHeight * 0.25;
+    }
+
     // Make bold the estimated cost
-    page.drawText(`Estimated Cost: ${formattedCost.replace(/\.00$/, "")}`, {
-      x: margin,
-      y: yPosition,
-      size: fontSize,
-      font: timesRomanBoldFont,
-    });
+    page.drawText(
+      `Combined Estimated Cost: ${formattedCost.replace(/\.00$/, "")}`,
+      {
+        x: margin,
+        y: yPosition,
+        size: fontSize,
+        font: timesRomanBoldFont,
+      }
+    );
 
     yPosition -= lineHeight * 1.5;
 

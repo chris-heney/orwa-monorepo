@@ -107,6 +107,7 @@ export const testPayload: IGrantApplicationFormPayload = {
     other_describe: 'Replacement of old infrastructure',
     description_justification_estimated_cost: 'Control Panel at the WTP is approximately 30 years old and is starting to have faults. Additionally, the new panel has updated technologies that were not available in the 1990s. NOV findings identified by DEQ at well. Work will bring into compliance. The reclaim pump at the WTP is not functioning. Will purchase new pump to restore reclaim functions. Two leaks started winter near hydrants, work will replace repair leak. UBMAX was bought out by gWorks and require transition by 2025. Removal of approximately 1425 ft of old cast-iron abandoned main water line crossing through pasture where horses range, property owner is requesting removal.',
     combined_cost_of_projects: 100000,
+    project_costs: {},
     requested_grant_amount: 100000,
     // portion_matched_by_recipient: 20000,
     engineering_report: 'Yes',

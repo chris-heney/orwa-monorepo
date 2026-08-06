@@ -4,14 +4,23 @@ import { useEntryList } from "../providers/EntryListProvider";
 import { useFormContext } from "react-hook-form";
 import { useUserContext } from "../providers/UserContextProvider";
 import { useNotify } from "../NotificationProvider";
-import { IGrantApplicationFormPayload } from "../types/types";
+import { IGrantApplicationFormPayload, IProject } from "../types/types";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
-import { useGetApplicationId, useSubmitApplication } from "../data/API";
+import {
+  useGetApplicationId,
+  useGetProjects,
+  useSubmitApplication,
+} from "../data/API";
 import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
 import { useScoringCriterias } from "../providers/AppContextProvider";
 import { getSelectedCriterias } from "../helpers/getCriterias";
 import { clearSavedFormData } from "../helpers/formPersistence";
 import { fileCache } from "../helpers/fileCache";
+import {
+  projectCostsMapToRows,
+  ProjectCostsMap,
+  sumProjectCosts,
+} from "../helpers/projectCosts";
 
 const EntryListSidebar = () => {
   const formContext = (() => {
@@ -35,6 +44,7 @@ const EntryListSidebar = () => {
   const { setViewingEntries } = useUserContext();
 
   const applicationId = useGetApplicationId();
+  const { data: projects } = useGetProjects();
 
   const { notify } = useNotify();
 
@@ -46,12 +56,22 @@ const EntryListSidebar = () => {
       ...entry.data,
       ...getValues(),
     };
+    const selectedProjectIds = formPayload.selected_projects ?? [];
+    const costsMap = (formPayload.project_costs ?? {}) as ProjectCostsMap;
+    const projectCostRows = projectCostsMapToRows(
+      costsMap,
+      selectedProjectIds,
+      (projects as unknown as IProject[]) ?? []
+    );
+    const combinedCost = sumProjectCosts(costsMap, selectedProjectIds);
 
     try {
       // Process the payload and upload files if necessary
       const processedPayload = await processAndUploadFiles(
         {
           ...formPayload,
+          project_costs: projectCostRows,
+          combined_cost_of_projects: combinedCost,
           id: applicationId.data,
         },
         notify
@@ -70,6 +90,8 @@ const EntryListSidebar = () => {
 
       const payload = {
         ...processedPayload,
+        project_costs: projectCostRows,
+        combined_cost_of_projects: combinedCost,
         adminOptions,
         applicant_pdf: uploadedPDF,
         additional_funding_requested: Math.round(formPayload.additional_funding_requested),

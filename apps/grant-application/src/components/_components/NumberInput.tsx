@@ -30,17 +30,15 @@ const NumberInput = ({
   requiredMessage,
   wholeNumber = false,
 }: NumberInputProps) => {
-  const {
-    register,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useFormContext();
+  const { register, formState, setValue, watch, getFieldState } =
+    useFormContext();
   const number = watch(name);
+  // Supports nested paths (e.g. project_costs.12) — errors[name] alone does not.
+  const { error } = getFieldState(name, formState);
 
   const handleValueChange = (values: any) => {
     const { floatValue } = values;
-    setValue(name, floatValue);
+    setValue(name, floatValue, { shouldValidate: true, shouldDirty: true });
   };
 
   return (
@@ -57,7 +55,16 @@ const NumberInput = ({
           min: min,
           max: max,
           validate: (value: number) => {
-            if (maxLength && value.toString().length > maxLength) {
+            if (
+              required &&
+              (value === undefined || value === null || Number.isNaN(value))
+            ) {
+              return `${label} ${requiredMessage ? requiredMessage : "is required"}`;
+            }
+            if (min !== undefined && value != null && value < min) {
+              return `${label} must be greater than or equal to ${min}`;
+            }
+            if (maxLength && value != null && value.toString().length > maxLength) {
               return `${label} must be ${maxLength} digits or less`;
             }
             return true;
@@ -68,14 +75,14 @@ const NumberInput = ({
           disabled
             ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
             : "bg-white text-gray-900 border-gray-300 focus:ring-blue-500"
-        } ${errors[name] ? "border-red-500 focus:ring-red-500" : ""}`}
+        } ${error ? "border-red-500 focus:ring-red-500" : ""}`}
         thousandSeparator={
           mask === "currency" || mask === "percentage" ? "," : undefined
         }
         prefix={mask === "currency" ? "$" : undefined}
         suffix={mask === "percentage" ? "%" : undefined}
         onValueChange={handleValueChange}
-        value={number}
+        value={number ?? ""}
         allowNegative={false}
         decimalScale={wholeNumber ? 0 : decimalScale} // Disable decimal scale if wholeNumber is true
         isAllowed={(values) => {
@@ -95,8 +102,8 @@ const NumberInput = ({
       {helperText && (
         <p className="text-gray-500 text-sm mt-1 text-left">{helperText}</p>
       )}
-      {errors[name] && (
-        <p className="text-red-500 text-sm mt-1 text-left">{`${errors[name]?.message}`}</p>
+      {error && (
+        <p className="text-red-500 text-sm mt-1 text-left">{`${error.message}`}</p>
       )}
       {number !== undefined &&
         number !== null &&

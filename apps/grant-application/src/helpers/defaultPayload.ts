@@ -44,6 +44,7 @@ export const defaultPayload = {
       description_justification_estimated_cost: "",
       // project_proposal_birds: [],
       combined_cost_of_projects: 0,
+      project_costs: {},
       // requested_grant_amount: "",
       // portion_matched_by_recipient: "",
       // minimum_utility_financial_contribution: "",

@@ -281,6 +281,19 @@ export interface IGrantApplicationFormPayload {
   other_describe: string;
   description_justification_estimated_cost: string;
   combined_cost_of_projects: number;
+  /**
+   * Form state uses a map keyed by project type id string.
+   * Submit / PDF / edit-session use (or return) an array of rows.
+   */
+  project_costs:
+    | Record<string, number | undefined>
+    | Array<{
+        project_type_id: number;
+        amount: number;
+        name?: string;
+        classification?: string;
+        source?: "applicant" | "document" | "even-split";
+      }>;
   requested_grant_amount: number;
   minimum_utility_financial_contribution?: number;
   engineering_report: "Yes" | "No" | "N/A";
