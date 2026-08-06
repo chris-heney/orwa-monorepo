@@ -1,10 +1,17 @@
 import {
   Box,
   Button,
+  Chip,
   Divider,
   Grid,
   ListItem,
   Modal,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
 } from "@mui/material";
 import { RaRecord, useRecordContext } from "react-admin";
@@ -14,7 +21,9 @@ import { formatNumber } from "../../../../helpers/Formators";
 import ApplicationPayoutList from "../ApplicationPayoutList";
 import {
   IGrantApplication,
+  IProjectCost,
   IProjectType,
+  ProjectCostSource,
   StrapiFile,
 } from "../GrantApplicationTypes";
 import { GenerateAwardLetter } from "./GenerateAwardLetter";
@@ -24,6 +33,116 @@ import GrantStatus from "./GrantStatus";
 import ApplicationEmailModal from "./ApplicationEmailModal";
 import AssetModal, { AssetModalFile } from "../../../_components/AssetModal";
 import StarIcon from '@mui/icons-material/Star';
+
+const projectCostSourceLabel = (source?: ProjectCostSource): string | null => {
+  if (source === "even-split") return "Even Split";
+  if (source === "document") return "Document";
+  return null;
+};
+
+const ProjectCostSourceBadge = ({ source }: { source?: ProjectCostSource }) => {
+  const label = projectCostSourceLabel(source);
+  if (!label) return null;
+
+  return (
+    <Chip
+      size="small"
+      label={label}
+      color={source === "even-split" ? "warning" : "info"}
+      variant="outlined"
+      sx={{ fontWeight: 600 }}
+    />
+  );
+};
+
+const ProjectCostsBreakdown = ({ costs }: { costs: IProjectCost[] }) => {
+  if (!costs?.length) return null;
+
+  return (
+    <Box sx={{ mt: 1, mb: 1.5, width: "100%" }}>
+      <Typography
+        variant="subtitle2"
+        sx={{ fontWeight: "bold", mb: 0.75, color: "text.primary" }}
+      >
+        Project Cost Breakdown
+      </Typography>
+      <TableContainer
+        sx={{
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          bgcolor: "background.paper",
+        }}
+      >
+        <Table size="small" aria-label="Project cost breakdown">
+          <TableHead>
+            <TableRow
+              sx={{
+                bgcolor: "action.hover",
+                "& th": {
+                  color: "text.secondary",
+                  fontWeight: 700,
+                  borderBottomColor: "divider",
+                },
+              }}
+            >
+              <TableCell>Project Type</TableCell>
+              <TableCell align="right">Amount</TableCell>
+              <TableCell align="right">Source</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {costs.map((row, index) => {
+              const amount = Number(row.amount);
+              return (
+                <TableRow
+                  key={row.id ?? `${row.project_type_id}-${index}`}
+                  sx={{
+                    "& td": { borderBottomColor: "divider", color: "text.primary" },
+                    "&:last-child td": { borderBottom: 0 },
+                  }}
+                >
+                  <TableCell>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.25,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {row.name || `Project #${row.project_type_id}`}
+                      </Typography>
+                      {row.classification ? (
+                        <Typography variant="caption" color="text.secondary">
+                          {row.classification}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  </TableCell>
+                  <TableCell align="right">
+                    {Number.isFinite(amount) ? formatNumber(amount) : "—"}
+                  </TableCell>
+                  <TableCell align="right">
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        minHeight: 24,
+                      }}
+                    >
+                      <ProjectCostSourceBadge source={row.source} />
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+};
 
 const statusesForAwardLetter = [
   "Authorized by DEQ",
@@ -368,6 +487,9 @@ const GrantApplicationDetails = () => {
             Financials
           </Typography>
           <Divider />
+          {record.project_costs && record.project_costs.length > 0 && (
+            <ProjectCostsBreakdown costs={record.project_costs} />
+          )}
           {record.combined_cost_of_projects !== undefined && (
             <ResponsiveListItem
               label="Combined Cost of Projects"

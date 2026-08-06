@@ -90,6 +90,11 @@ interface ProjectTypeRef {
   name?: string;
 }
 
+interface ProjectCostRef {
+  name?: string | null;
+  amount?: string | number | null;
+}
+
 /**
  * Some project-type records are legacy form artifacts ("Engineering Report
  * N/A", question text). Fold them into "Other" so the breakdown reads as a
@@ -102,6 +107,44 @@ const projectNames = (list: ProjectTypeRef[] | undefined): string[] =>
   ((list ?? []).map((p) => p?.name).filter(Boolean) as string[]).map(
     cleanProjectName
   );
+
+/**
+ * Split `total` across project types. Prefer real cost shares from
+ * `project_costs` (amount / Σ amounts, names via cleanProjectName); fall
+ * back to an even split across `fallbackNames` when costs are missing or
+ * sum to zero — today's historical behavior.
+ */
+const attributeByProject = (
+  total: number,
+  fallbackNames: string[],
+  costs: ProjectCostRef[] | undefined | null
+): { name: string; share: number }[] => {
+  if (!total) return [];
+
+  const byName = new Map<string, number>();
+  for (const row of costs ?? []) {
+    const name = row?.name ? cleanProjectName(row.name) : "";
+    const amount = num(row?.amount);
+    if (!name || amount <= 0) continue;
+    byName.set(name, (byName.get(name) ?? 0) + amount);
+  }
+  const costSum = Array.from(byName.values()).reduce((s, a) => s + a, 0);
+  if (costSum > 0) {
+    return Array.from(byName.entries()).map(([name, amount]) => ({
+      name,
+      share: total * (amount / costSum),
+    }));
+  }
+
+  const names = fallbackNames.length ? fallbackNames : ["Unspecified"];
+  const share = total / names.length;
+  return names.map((name) => ({ name, share }));
+};
+
+const projectCostsOf = (
+  app: IGrantApplication
+): ProjectCostRef[] | undefined =>
+  (app as unknown as { project_costs?: ProjectCostRef[] }).project_costs;
 
 export const useGrantMetrics = (
   applications: IGrantApplication[],
@@ -339,10 +382,13 @@ export const useGrantMetrics = (
               .selected_projects
           );
           const requested = num(app.requested_grant_amount);
-          const share = selected.length ? requested / selected.length : 0;
-          if (!selected.length && requested)
-            row("Unspecified").requested += requested;
-          for (const name of selected) row(name).requested += share;
+          for (const { name, share } of attributeByProject(
+            requested,
+            selected,
+            projectCostsOf(app)
+          )) {
+            row(name).requested += share;
+          }
         }
         for (const app of approved) {
           const chosen = projectNames(
@@ -355,9 +401,13 @@ export const useGrantMetrics = (
           );
           const names = chosen.length ? chosen : fallback;
           const award = app.award_amount || 0;
-          const share = names.length ? award / names.length : 0;
-          if (!names.length && award) row("Unspecified").approved += award;
-          for (const name of names) row(name).approved += share;
+          for (const { name, share } of attributeByProject(
+            award,
+            names,
+            projectCostsOf(app)
+          )) {
+            row(name).approved += share;
+          }
         }
         for (const payout of reimbursements) {
           const raw = (payout as unknown as { project_type?: ProjectTypeRef })
@@ -421,9 +471,13 @@ export const useGrantMetrics = (
             (app as unknown as { selected_projects?: ProjectTypeRef[] })
               .selected_projects
           );
-          const names = selected.length ? selected : ["Unspecified"];
-          const share = requested / names.length;
-          for (const name of names) add(name, edge, share);
+          for (const { name, share } of attributeByProject(
+            requested,
+            selected,
+            projectCostsOf(app)
+          )) {
+            add(name, edge, share);
+          }
         } else {
           add(regionOf(app, dimension) || "Unspecified", edge, requested);
         }

@@ -2,6 +2,18 @@ import { IContact } from '../../training/_types'
 import { IGrantPayout } from '../grants/components/GrantTypes'
 import { IProject } from '../types';
 
+export type ProjectCostSource = 'applicant' | 'document' | 'even-split';
+
+/** Denormalized per-project-type cost snapshot from grant.project-cost */
+export interface IProjectCost {
+  id?: number
+  project_type_id: number
+  name: string
+  classification?: string
+  amount: number | string
+  source?: ProjectCostSource
+}
+
 export interface IGrantApplication {
   previous_application_id: string
   createdAt: string
@@ -35,6 +47,8 @@ export interface IGrantApplication {
   description_justification_estimated_cost: string;
   project_proposal_birds: string;
   combined_cost_of_projects: string;
+  /** Per-type cost breakdown; when present, combined_cost_of_projects is Σ amounts */
+  project_costs?: IProjectCost[];
   requested_grant_amount: string;
   portion_matched_by_recipient: string;
   minimum_utility_financial_contribution: string;

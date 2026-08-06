@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Button, Card, Divider, Grid, Typography } from "@mui/material";
 import {
+  ArrayInput,
   AutocompleteArrayInput,
   DateInput,
   Loading,
@@ -8,13 +9,40 @@ import {
   ReferenceArrayInput,
   ReferenceInput,
   SelectInput,
+  SimpleFormIterator,
   TextInput,
   useRecordContext,
 } from "react-admin";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { useGrantContext } from "../../GrantContextProvider";
 import ContactsCreateModal from "./ContactsCreateModal";
 import FileUploadField from "../../../_components/FileUploadField";
+import { formatNumber } from "../../../../helpers/Formators";
+
+const PROJECT_COST_SOURCE_CHOICES = [
+  { id: "applicant", name: "Applicant" },
+  { id: "document", name: "Document" },
+  { id: "even-split", name: "Even Split" },
+];
+
+/** Live sum of project_costs amounts for the disabled Combined Cost field. */
+const ProjectCostsCombinedHint = () => {
+  const costs = useWatch({ name: "project_costs" }) as
+    | Array<{ amount?: number | string }>
+    | undefined;
+  const sum = Array.isArray(costs)
+    ? costs.reduce((acc, row) => {
+        const n = Number(row?.amount);
+        return acc + (Number.isFinite(n) ? Math.round(n) : 0);
+      }, 0)
+    : 0;
+
+  return (
+    <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: -1, mb: 1 }}>
+      Sum of project costs: {formatNumber(sum)} (server recomputes Combined Cost on save)
+    </Typography>
+  );
+};
 
 const GrantApplicationFormFields = () => {
   const grantContext = useGrantContext();
@@ -25,6 +53,8 @@ const GrantApplicationFormFields = () => {
 
   const form = useFormContext();
   const projectType = form.watch("drinking_or_wastewater");
+  const projectCosts = useWatch({ name: "project_costs" }) as unknown[] | undefined;
+  const hasProjectCosts = Array.isArray(projectCosts) && projectCosts.length > 0;
 
   return !grantContext || !form.getValues() ? (
     <Loading />
@@ -429,13 +459,91 @@ const GrantApplicationFormFields = () => {
         <Card sx={{ p: 2, my: 2, mx: 1 }}>
           <Typography variant="h5">Financials</Typography>
           <Divider />
+          {hasProjectCosts && (
+            <Box sx={{ mt: 1.5, mb: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                Project Costs
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                Edit per-type amounts below. Combined Cost is recomputed from these
+                rows when you save.
+              </Typography>
+              <ArrayInput source="project_costs" label={false}>
+                <SimpleFormIterator
+                  inline
+                  fullWidth
+                  disableAdd
+                  disableRemove
+                  disableReordering
+                  disableClear
+                  sx={{
+                    "& .RaSimpleFormIterator-line": {
+                      borderBottom: 1,
+                      borderColor: "divider",
+                      pb: 1,
+                      mb: 1,
+                      alignItems: "flex-start",
+                    },
+                    "& .RaSimpleFormIterator-form": {
+                      flex: 1,
+                      gap: 1,
+                    },
+                  }}
+                >
+                  {/* Preserve Strapi component id on update when present */}
+                  <NumberInput source="id" sx={{ display: "none" }} />
+                  <NumberInput
+                    source="project_type_id"
+                    sx={{ display: "none" }}
+                  />
+                  <TextInput
+                    source="classification"
+                    sx={{ display: "none" }}
+                  />
+                  <TextInput
+                    source="name"
+                    label="Project Type"
+                    helperText={false}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      flex: "1 1 40%",
+                      minWidth: 160,
+                      "& .MuiInputBase-input": {
+                        color: "text.primary",
+                        WebkitTextFillColor: "unset",
+                      },
+                    }}
+                  />
+                  <NumberInput
+                    source="amount"
+                    label="Amount"
+                    helperText={false}
+                    sx={{ flex: "0 1 140px", minWidth: 120 }}
+                  />
+                  <SelectInput
+                    source="source"
+                    label="Source"
+                    choices={PROJECT_COST_SOURCE_CHOICES}
+                    helperText={false}
+                    sx={{ flex: "0 1 160px", minWidth: 140 }}
+                  />
+                </SimpleFormIterator>
+              </ArrayInput>
+              <ProjectCostsCombinedHint />
+            </Box>
+          )}
           <Grid container spacing={1}>
             <Grid item xs={12} md={6} sm={12}>
               <NumberInput
                 source="combined_cost_of_projects"
                 label="Combined Cost of Projects"
                 fullWidth
-                helperText={false}
+                helperText={
+                  hasProjectCosts
+                    ? "Read-only — recomputed from project costs on save"
+                    : false
+                }
+                disabled={hasProjectCosts}
               />
             </Grid>
             <Grid item xs={12} md={6} sm={12}>
