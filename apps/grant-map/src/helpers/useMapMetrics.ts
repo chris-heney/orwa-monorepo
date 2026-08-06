@@ -51,6 +51,11 @@ interface ProjectTypeRef {
   name?: string;
 }
 
+interface ProjectCostRef {
+  name?: string | null;
+  amount?: string | number | null;
+}
+
 /**
  * Some project-type records are legacy form artifacts ("Engineering Report
  * N/A", question text). Fold them into "Other" so the breakdown reads as a
@@ -63,6 +68,36 @@ const projectNames = (list: ProjectTypeRef[] | undefined | null): string[] =>
   ((list ?? []).map((p) => p?.name).filter(Boolean) as string[]).map(
     cleanProjectName
   );
+
+/**
+ * Per-type weights for an application. Prefer real cost shares from
+ * `project_costs` (amount / Σ amounts, names via cleanProjectName); fall
+ * back to an even split across `fallbackNames` when costs are missing or
+ * sum to zero — today's historical behavior. Weights always sum to 1.
+ */
+const projectWeights = (
+  fallbackNames: string[],
+  costs: ProjectCostRef[] | undefined | null
+): { name: string; weight: number }[] => {
+  const byName = new Map<string, number>();
+  for (const row of costs ?? []) {
+    const name = row?.name ? cleanProjectName(row.name) : "";
+    const amount = num(row?.amount);
+    if (!name || amount <= 0) continue;
+    byName.set(name, (byName.get(name) ?? 0) + amount);
+  }
+  const costSum = Array.from(byName.values()).reduce((s, a) => s + a, 0);
+  if (costSum > 0) {
+    return Array.from(byName.entries()).map(([name, amount]) => ({
+      name,
+      weight: amount / costSum,
+    }));
+  }
+
+  const names = fallbackNames.length ? fallbackNames : ["Unspecified"];
+  const weight = 1 / names.length;
+  return names.map((name) => ({ name, weight }));
+};
 
 export const useMapMetrics = (
   applications: IGrantApplication[],
@@ -267,13 +302,17 @@ export const useMapMetrics = (
           const requested = num(app.requested_grant_amount);
           const award = isApproved(app) ? app.award_amount || 0 : 0;
           const paid = isApproved(app) ? paidTotal(app) : 0;
-          const targets = names.length ? names : ["Unspecified"];
-          for (const name of targets) {
+          // Dollar fields and fractional counts share the same weights so a
+          // multi-type app still contributes 1.0 to the count total.
+          for (const { name, weight } of projectWeights(
+            names,
+            app.project_costs
+          )) {
             const r = row(name);
-            r.count += 1 / targets.length;
-            r.requested += requested / targets.length;
-            r.approved += award / targets.length;
-            r.disbursed += paid / targets.length;
+            r.count += weight;
+            r.requested += requested * weight;
+            r.approved += award * weight;
+            r.disbursed += paid * weight;
           }
         }
       } else {

@@ -137,10 +137,14 @@ export const useGetGrantApplications =
       )
       .join("&");
 
+    // Component (not a relation): needed for cost-share project attribution
+    // in useMapMetrics. Full component rows are small (name + amount).
+    const projectCostsPopulate = "populate[project_costs]=true";
+
     const { data: response } = await axios.get(
       `${STRAPI_API_ENDPOINT}/grant-application-finals?pagination[limit]=${
         perPage ?? 10000
-      }&${usedFields}&${usedRelations}&sort=legal_entity_name:ASC${filterParams}`,
+      }&${usedFields}&${usedRelations}&${projectCostsPopulate}&sort=legal_entity_name:ASC${filterParams}`,
       {
         headers: {
           "Content-Type": "application/json",

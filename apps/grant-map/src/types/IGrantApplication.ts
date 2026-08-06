@@ -91,6 +91,14 @@ export default interface IGrantApplication {
     name: string;
     classification: "Drinking Water" | "Wastewater";
   }[];
+  /** Per-type cost snapshot; used for reporting attribution weights. */
+  project_costs?: {
+    project_type_id?: number | null;
+    name?: string | null;
+    classification?: string | null;
+    amount?: string | number | null;
+    source?: "applicant" | "document" | "even-split" | null;
+  }[];
   regions: {
     [key: string]: string;
   };
