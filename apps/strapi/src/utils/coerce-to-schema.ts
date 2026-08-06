@@ -42,6 +42,20 @@ type Attribute = {
   multiple?: boolean;
 };
 
+/**
+ * Strapi 4 let fractional writes to integer/biginteger columns through and
+ * MySQL rounded them (89984.91 -> 89985); Strapi 5 rejects them with
+ * "must be a valid integer" before they reach the database. Public forms
+ * send decimals (dollar amounts with cents, computed percentages), so
+ * restore the v4 outcome by rounding.
+ */
+const roundIfIntegerType = (schemaType: string, value: number): number =>
+  (schemaType === "integer" || schemaType === "biginteger") &&
+  Number.isFinite(value) &&
+  !Number.isInteger(value)
+    ? Math.round(value)
+    : value;
+
 const coerceScalar = (schemaType: string, value: unknown): unknown => {
   if (typeof value === "object") return value;
 
@@ -49,9 +63,16 @@ const coerceScalar = (schemaType: string, value: unknown): unknown => {
     return String(value);
   }
 
-  if (NUMBER_TYPES.includes(schemaType) && typeof value !== "number") {
+  if (NUMBER_TYPES.includes(schemaType)) {
+    if (typeof value === "number") {
+      return roundIfIntegerType(schemaType, value);
+    }
     const numeric = Number(value);
-    return Number.isNaN(numeric) ? (value === true ? 1 : 0) : numeric;
+    return Number.isNaN(numeric)
+      ? value === true
+        ? 1
+        : 0
+      : roundIfIntegerType(schemaType, numeric);
   }
 
   if (schemaType === "boolean" && typeof value !== "boolean") {
