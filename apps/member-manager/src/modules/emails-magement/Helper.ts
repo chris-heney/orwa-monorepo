@@ -113,7 +113,17 @@ export const getGrantStatus = async (
       }
     );
 
-    return fetchedStatus[0]?.id as number | undefined;
+    const row = fetchedStatus[0] as
+      | { id?: number | string; entityId?: number }
+      | undefined;
+    if (!row) return undefined;
+    // Relation list filters need the numeric PK; bare documentId matches 0 rows.
+    if (typeof row.entityId === "number") return row.entityId;
+    if (typeof row.id === "number") return row.id;
+    if (typeof row.id === "string" && /^\d+$/.test(row.id)) {
+      return parseInt(row.id, 10);
+    }
+    return undefined;
   } catch (error) {
     console.error("Error:", error);
     return undefined;

@@ -3,6 +3,8 @@ import { IGrantApplication } from '../../grant-application/GrantApplicationTypes
 
 export interface IGrant {
     id: Identifier
+    /** Numeric Strapi PK; used for relation filters (id is documentId). */
+    entityId?: number
     name: string
     status: string
     reimbursement_type: string

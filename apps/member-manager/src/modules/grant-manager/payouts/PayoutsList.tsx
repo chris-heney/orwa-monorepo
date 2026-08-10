@@ -3,7 +3,6 @@ import { Box, Modal, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
   List,
-  ReferenceField,
   TextField,
   DateField,
   NumberField,
@@ -33,7 +32,7 @@ const ReimbursementPayoutsList = () => {
   const {
     payoutStatusId,
     setPayoutStatusId,
-    grantId,
+    grantFilterId,
     fiscalYearStart,
     fiscalYearEnd,
   } = useGrantContext();
@@ -51,7 +50,7 @@ const ReimbursementPayoutsList = () => {
         disableSyncWithLocation
         filter={{
           ...{
-            grant: grantId,
+            grant: grantFilterId,
             type: "Reimbursement",
           },
           ...(payoutStatusId && { payout_status: payoutStatusId }),
@@ -133,35 +132,23 @@ const ReimbursementPayoutsList = () => {
             )}
           />
 
-          <ReferenceField
-            source="application.id"
-            reference="grant-application-finals"
+          {/* Application is already populated on the payout; avoid ReferenceField
+              which looks up by nested numeric id and misses documentId-keyed records. */}
+          <TextField
+            source="application.application_id"
             label="ID"
-            link={false}
-          >
-            <TextField source="application_id" noWrap label="Application ID" />
-          </ReferenceField>
-
-          <ReferenceField
-            source="application.id"
-            reference="grant-application-finals"
+            noWrap
+          />
+          <TextField
+            source="application.legal_entity_name"
             label="Application"
-            link={false}
-          >
-            <TextField source="legal_entity_name" noWrap label="System Name" />
-          </ReferenceField>
-          <ReferenceField
-            source="application.id"
-            reference="grant-application-finals"
+            noWrap
+          />
+          <NumberField
+            source="application.award_amount"
             label="Awarded"
-            link={false}
-          >
-            <NumberField
-              options={CurrencyOptions}
-              source="award_amount"
-              label="Awarded"
-            />
-          </ReferenceField>
+            options={CurrencyOptions}
+          />
           <FunctionField
             label="Total Paid Out"
             render={(record: RaRecord) => (

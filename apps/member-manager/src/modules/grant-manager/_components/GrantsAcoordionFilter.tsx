@@ -5,6 +5,7 @@ import { ListContextProvider, ListControllerResult } from 'react-admin'
 import SummaryRangeSelection from './SummaryRangeSelect'
 import LegendToggleFilter from './LegendToggleFilter'
 import { useGrantContext } from '../GrantContextProvider'
+import { getRelationFilterId } from '../helpers/getRelationFilterId'
 
 const GrantsAccordionFilter = () => {
 
@@ -12,8 +13,18 @@ const GrantsAccordionFilter = () => {
     grants,
     grantIndex,
     setGrantIndex,
+    setGrantId,
+    setGrantFilterId,
     selectedTab,
   } = useGrantContext()
+
+  const selectGrant = (index: number) => {
+    const grant = grants?.[index]
+    setGrantIndex(index)
+    if (grant?.id != null) setGrantId(grant.id)
+    const filterId = getRelationFilterId(grant)
+    if (filterId != null) setGrantFilterId(filterId)
+  }
 
   return (
     <Accordion disableGutters sx={{
@@ -45,7 +56,7 @@ const GrantsAccordionFilter = () => {
         <FormControl>
           <FormLabel>Grants</FormLabel>
           <ListContextProvider value={{ resource: 'grant-applications' } as ListControllerResult}>
-            <RadioGroup value={grantIndex} onChange={(e) => setGrantIndex(parseInt(e.target.value))}>
+            <RadioGroup value={grantIndex} onChange={(e) => selectGrant(parseInt(e.target.value, 10))}>
               {grants?.map((conference, i) => {
                 return (
                   <FormControlLabel

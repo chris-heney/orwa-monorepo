@@ -303,7 +303,7 @@ const FundsExplorer: React.FC<{
             {measure === "breakdown"
               ? "Raw requested dollars by where each application sits today — requests can exceed the pool"
               : dimension === "project"
-              ? "Awards split evenly across an application's selected project types"
+              ? "Attributed by each application's project cost shares when available; otherwise split evenly across selected types"
               : "Grouped by the applicant's location on file"}
           </Typography>
         </Box>

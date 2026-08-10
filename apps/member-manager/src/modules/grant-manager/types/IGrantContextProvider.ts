@@ -11,6 +11,9 @@ export interface IGrantContextProvider {
     setGrantIndex: React.Dispatch<React.SetStateAction<number>>
     grantId: Identifier
     setGrantId: React.Dispatch<React.SetStateAction<Identifier>>
+    /** Numeric PK for Strapi relation filters (grantId is documentId). */
+    grantFilterId: Identifier
+    setGrantFilterId: React.Dispatch<React.SetStateAction<Identifier>>
     from: Dayjs | null
     setFrom: React.Dispatch<React.SetStateAction<Dayjs | null>>
     to: Dayjs | null

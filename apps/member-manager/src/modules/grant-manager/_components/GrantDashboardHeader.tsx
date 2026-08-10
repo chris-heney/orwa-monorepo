@@ -42,7 +42,7 @@ const GrantDashboardHeader = () => {
     setIsActivitySidebarOpen,
     resource,
     applicationStatuses,
-    grantId,
+    grantFilterId,
     payoutStatusId,
     fiscalYearStart,
     fiscalYearEnd,
@@ -169,11 +169,11 @@ const GrantDashboardHeader = () => {
               filter={
                 resource === "grant-application-finals"
                   ? applicationStatuses.length > 0
-                    ? { grant: grantId, status: applicationStatuses }
-                    : { grant: grantId }
+                    ? { grant: grantFilterId, status: applicationStatuses }
+                    : { grant: grantFilterId }
                   : resource === "grant-payouts"
                   ? {
-                      grant: grantId,
+                      grant: grantFilterId,
                       ...(payoutStatusId && { payout_status: payoutStatusId }),
                       type:
                         selectedTab === "Admin Payouts"

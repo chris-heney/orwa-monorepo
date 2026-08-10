@@ -12,6 +12,7 @@ import {
 import { useGetList } from "react-admin";
 import { useGrantContext } from "../GrantContextProvider";
 import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
+import { getRelationFilterId } from "../helpers/getRelationFilterId";
 
 const PayoutStatusFilter = () => {
   const { payoutStatusId, setPayoutStatusId } = useGrantContext();
@@ -51,23 +52,27 @@ const PayoutStatusFilter = () => {
             </Button>
           )}
         </Box>
-        {legendData?.map((legend, i) => (
-          <FormControlLabel
-            key={`conference-${i}`}
-            sx={coloredSurfaceSx(legend.color || "#cccccc", {
-              px: 1,
-              my: 0.25,
-              borderRadius: 0.5,
-              "& .MuiRadio-root": { color: "inherit" },
-              "& .Mui-checked": { color: "inherit" },
-            })}
-            value={payoutStatusId}
-            control={<Radio />}
-            label={legend.name}
-            checked={legend.id === payoutStatusId}
-            onChange={() => setPayoutStatusId(legend.id)}
-          />
-        ))}
+        {legendData?.map((legend, i) => {
+          const statusFilterId = getRelationFilterId(legend);
+          if (statusFilterId == null) return null;
+          return (
+            <FormControlLabel
+              key={`payout-status-${statusFilterId}-${i}`}
+              sx={coloredSurfaceSx(legend.color || "#cccccc", {
+                px: 1,
+                my: 0.25,
+                borderRadius: 0.5,
+                "& .MuiRadio-root": { color: "inherit" },
+                "& .Mui-checked": { color: "inherit" },
+              })}
+              value={statusFilterId}
+              control={<Radio />}
+              label={legend.name}
+              checked={statusFilterId === payoutStatusId}
+              onChange={() => setPayoutStatusId(statusFilterId)}
+            />
+          );
+        })}
       </RadioGroup>
     </Box>
   );

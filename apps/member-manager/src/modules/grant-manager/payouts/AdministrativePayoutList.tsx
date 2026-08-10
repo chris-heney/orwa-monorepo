@@ -23,7 +23,7 @@ const AdministrativePayoutsList = () => {
   const [selectedPayout, setSelectedPayout] = React.useState<RaRecord>();
   const [payoutStatus, setPayoutStatus] = React.useState<RaRecord | null>(null);
 
-  const { payoutStatusId, setPayoutStatusId, grantId, fiscalYearStart, fiscalYearEnd} = useGrantContext();
+  const { payoutStatusId, setPayoutStatusId, grantFilterId, fiscalYearStart, fiscalYearEnd} = useGrantContext();
 
   useEffect(() => {
     setPayoutStatusId(1);
@@ -40,7 +40,7 @@ const AdministrativePayoutsList = () => {
         disableSyncWithLocation
         filter={{
           ...{
-            grant: grantId,
+            grant: grantFilterId,
             type: "Administrative",
           },
           ...(payoutStatusId && { payout_status: payoutStatusId }),

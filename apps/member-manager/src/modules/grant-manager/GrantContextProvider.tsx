@@ -10,6 +10,10 @@ import { IGrantApplication } from "./grant-application/GrantApplicationTypes";
 import { Identifier, Loading, useGetList, useStore } from "react-admin";
 import { IGrant } from "./grants/components/GrantTypes";
 import dayjs, { Dayjs } from "dayjs";
+import {
+  getRelationFilterId,
+  sanitizeNumericFilterIds,
+} from "./helpers/getRelationFilterId";
 
 export const GrantContext = createContext<IGrantContextProvider>({
   grants: [],
@@ -17,6 +21,8 @@ export const GrantContext = createContext<IGrantContextProvider>({
   setGrantIndex: () => {},
   grantId: 0,
   setGrantId: () => {},
+  grantFilterId: 0,
+  setGrantFilterId: () => {},
   from: null,
   setFrom: () => {},
   to: null,
@@ -43,21 +49,22 @@ export const GrantContext = createContext<IGrantContextProvider>({
   setIsEmailSidebarOpen: () => {},
   resource: "",
   setResource: () => {},
-    fiscalYearStart: null,
-    setFiscalYearStart: () => {},
-    fiscalYearEnd: null,
-    setFiscalYearEnd: () => {},
-    applicationSearchFilter: "",
-    setApplicationSearchFilter: () => {},
-  });
+  fiscalYearStart: null,
+  setFiscalYearStart: () => {},
+  fiscalYearEnd: null,
+  setFiscalYearEnd: () => {},
+  applicationSearchFilter: "",
+  setApplicationSearchFilter: () => {},
+});
 
 export const useGrantContext = () => useContext(GrantContext);
 
 const GrantContextProvider = ({ children }: PropsWithChildren) => {
-  // const dataProvider = useDataProvider()
-
-  const [grantIndex, setGrantIndex] = useState(1);
-  const [grantId, setGrantId] = useState<Identifier>(4);
+  const [grantIndex, setGrantIndex] = useState(0);
+  // documentId — used by Show/Edit getOne
+  const [grantId, setGrantId] = useState<Identifier>(0);
+  // numeric PK — used by Strapi relation list filters
+  const [grantFilterId, setGrantFilterId] = useState<Identifier>(4);
   const [from, setFrom] = useState<Dayjs | null>(null);
   const [to, setTo] = useState<Dayjs | null>(null);
   const currentDate = new Date();
@@ -65,8 +72,8 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
   const isBeforeJulyFirst = currentDate.getMonth() < 6; // 6 is July (0-based months)
 
   const [fiscalYearStart, setFiscalYearStart] = useState<string | null>(
-    isBeforeJulyFirst 
-      ? `${currentYear - 1}-07-01` 
+    isBeforeJulyFirst
+      ? `${currentYear - 1}-07-01`
       : `${currentYear}-07-01`
   );
   const [fiscalYearEnd, setFiscalYearEnd] = useState<string | null>(
@@ -84,25 +91,38 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
   );
   const [godMode, setGodMode] = useState(false);
 
-  // Sidebars
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(true);
+  // Sidebars — closed until the user opens them
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
   const [isActivitySidebarOpen, setIsActivitySidebarOpen] = useState(false);
   const [isEmailSidebarOpen, setIsEmailSidebarOpen] = useState(false);
 
   const [payoutStatusId, setPayoutStatusId] = useState<Identifier>(0);
-  const [applicationStatuses, setApplicationStatuses] = useStore<string[]>(
+  const [applicationStatuses, setApplicationStatusesRaw] = useStore<string[]>(
     "grants-application-status",
-    ["12"]
+    []
   );
-  const [applicationSearchFilter, setApplicationSearchFilter] = useStore<string>("grants-application-search-filter", "");
+  // Drop stale documentIds left in localStorage after the Strapi 5 id remap.
+  const setApplicationStatuses = (
+    value: string[] | ((prev: string[]) => string[])
+  ) => {
+    if (typeof value === "function") {
+      setApplicationStatusesRaw((prev) =>
+        sanitizeNumericFilterIds(value(prev))
+      );
+    } else {
+      setApplicationStatusesRaw(sanitizeNumericFilterIds(value));
+    }
+  };
+  const [applicationSearchFilter, setApplicationSearchFilter] = useStore<string>(
+    "grants-application-search-filter",
+    ""
+  );
 
   // Dashboard
   const [dashboardContext, setDashboardContext] = useState<"create" | "edit">(
     "edit"
   );
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // resource
 
   const [resource, setResource] = useStore<string | null>(
     "grants-resource",
@@ -122,32 +142,46 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
   );
 
   useEffect(() => {
+    setApplicationStatusesRaw((prev) => {
+      const cleaned = sanitizeNumericFilterIds(prev);
+      return cleaned.length === prev.length ? prev : cleaned;
+    });
+  }, [setApplicationStatusesRaw]);
+
+  useEffect(() => {
     if (!grants || grantsLoading) return;
     const openGrantIndex = grants.findIndex((grant) => grant.status === "Open");
-    setGrantIndex(openGrantIndex !== -1 ? openGrantIndex : 1);
-    setGrantId(grants[openGrantIndex !== -1 ? openGrantIndex : 1].id);
-    setTo(dayjs(grants[grantIndex].closes));
-    setFrom(dayjs(grants[grantIndex].opens));
-  }, [grantsLoading]);
+    const index = openGrantIndex !== -1 ? openGrantIndex : 0;
+    const selected = grants[index];
+    const filterId = getRelationFilterId(selected);
+    setGrantIndex(index);
+    setGrantId(selected.id);
+    if (filterId != null) setGrantFilterId(filterId);
+    setTo(dayjs(selected.closes));
+    setFrom(dayjs(selected.opens));
+  }, [grants, grantsLoading]);
 
-  // TODO improve this
-  // useEffect(() => { 
-  //   if (fiscalYearStart && fiscalYearEnd) {
-  //     setFrom(dayjs(fiscalYearStart));
-  //     setTo(dayjs(fiscalYearEnd));
-  //   }
-  // }, [fiscalYearStart, fiscalYearEnd]);
+  if (!GrantContext || !grants || grants.length === 0 || grantsLoading) {
+    return <Loading />;
+  }
 
-  return !GrantContext || !grants || grants?.length === 0 || grantsLoading ? (
-    <Loading />
-  ) : (
+  // Derive from the selected grant so children never see a stale/zero id
+  // between first paint and the sync effect.
+  const selectedGrant = grants[grantIndex] ?? grants[0];
+  const resolvedGrantId = selectedGrant?.id ?? grantId;
+  const resolvedGrantFilterId =
+    getRelationFilterId(selectedGrant) ?? grantFilterId;
+
+  return (
     <GrantContext.Provider
       value={{
         grants,
         grantIndex,
         setGrantIndex,
-        grantId,
+        grantId: resolvedGrantId,
         setGrantId,
+        grantFilterId: resolvedGrantFilterId,
+        setGrantFilterId,
         from,
         setFrom,
         to,
@@ -162,7 +196,7 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
         setIsFilterSidebarOpen,
         payoutStatusId,
         setPayoutStatusId,
-        applicationStatuses,
+        applicationStatuses: sanitizeNumericFilterIds(applicationStatuses),
         setApplicationStatuses,
         dashboardContext,
         setDashboardContext,

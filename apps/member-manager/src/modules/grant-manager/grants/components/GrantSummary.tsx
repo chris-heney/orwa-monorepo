@@ -20,6 +20,7 @@ import { useGrantMetrics } from "./summary/useGrantMetrics";
 import DashboardView from "./summary/DashboardView";
 import GraphView from "./summary/GraphView";
 import TableView from "./summary/TableView";
+import { getRelationFilterId } from "../../helpers/getRelationFilterId";
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrBefore);
@@ -63,6 +64,8 @@ const GrantSummary = () => {
     }
   );
 
+  const grantFilterId = getRelationFilterId(grant);
+
   // Fetch all applications
   const { data: applicationsData, isLoading: applicationLoading } = useGetList(
     "grant-application-finals",
@@ -73,7 +76,8 @@ const GrantSummary = () => {
       },
       pagination: { page: 1, perPage: 1000 },
       sort: { field: "id", order: "ASC" },
-      filter: { grant: grant.id },
+      // Bare documentId in relation filters returns 0 rows on Strapi 5.
+      filter: grantFilterId != null ? { grant: grantFilterId } : {},
     }
   );
 

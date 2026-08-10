@@ -13,12 +13,26 @@ import {
 } from "react-admin";
 import { Box, MenuItem, Select } from "@mui/material";
 import getContrastColor from "../../../_helpers/getContrastColor";
+import { getRelationFilterId } from "../../helpers/getRelationFilterId";
 
 interface SelectPayoutStatusProps {
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setSelectedPayout: Dispatch<SetStateAction<RaRecord<Identifier> | undefined>>;
   setPayoutStatus: Dispatch<SetStateAction<RaRecord<Identifier> | null>>;
 }
+
+/** Prefer documentId (stable RA id); fall back to numeric entity id. */
+const resolvePayoutStatusId = (
+  payoutStatus: RaRecord | Identifier | null | undefined
+): Identifier | undefined => {
+  if (payoutStatus == null || payoutStatus === "") return undefined;
+  if (typeof payoutStatus !== "object") return payoutStatus;
+  if (typeof payoutStatus.documentId === "string" && payoutStatus.documentId) {
+    return payoutStatus.documentId;
+  }
+  if (payoutStatus.id != null && payoutStatus.id !== "") return payoutStatus.id;
+  return getRelationFilterId(payoutStatus);
+};
 
 const SelectPayoutStatus = ({
   setIsModalOpen,
@@ -28,20 +42,23 @@ const SelectPayoutStatus = ({
   const { isLoading } = useListContext();
   const record = useRecordContext();
   const dataProvider = useDataProvider();
-  const [status, setStatus] = React.useState<RaRecord>(record.payout_status);
-
   const notify = useNotify();
 
-  const updateStatus = async (e: { target: { value: string } }) => {
-    // if (e.target.value !== 'New Reason') {
-    // Only update status and refresh for options other than "New Reason"
+  const [statusId, setStatusId] = React.useState<Identifier | undefined>(() =>
+    resolvePayoutStatusId(record?.payout_status)
+  );
 
+  React.useEffect(() => {
+    setStatusId(resolvePayoutStatusId(record?.payout_status));
+  }, [record?.payout_status]);
+
+  const updateStatus = async (e: { target: { value: string } }) => {
     const { data: payoutStatus } = await dataProvider.getOne(
       "payout-statuses",
       { id: e.target.value, meta: { raw: true } }
     );
 
-    setStatus(payoutStatus);
+    setStatusId(payoutStatus.id);
     setPayoutStatus(payoutStatus);
     setSelectedPayout(record);
 
@@ -52,7 +69,12 @@ const SelectPayoutStatus = ({
         await dataProvider.update("grant-payouts", {
           id: record.id,
           previousData: { ...record },
-          data: { payout_status: payoutStatus.id },
+          data: {
+            payout_status:
+              payoutStatus.documentId ??
+              payoutStatus.id ??
+              getRelationFilterId(payoutStatus),
+          },
         });
 
         if (record.application) {
@@ -65,9 +87,6 @@ const SelectPayoutStatus = ({
             type: "success",
           });
         }
-
-        // Send Activity to Activity Log
-        // await sendActivity(dataProvider, 'grant-application', `Grant Payout for ${record.application.legal_entity_name} was ${payoutStatus?.name} for ${pa}`, [record?.id, record?.application?.id])
       } catch (error) {
         notify(`Error updating Grant Payout to ${payoutStatus.name}`, {
           type: "error",
@@ -75,7 +94,7 @@ const SelectPayoutStatus = ({
         console.error(error);
       }
     }
-    // if new reasons is selected, open modal to create new status
+
     if (e.target.value === "New Reason") {
       setIsModalOpen(true);
     }
@@ -83,44 +102,77 @@ const SelectPayoutStatus = ({
 
   const { data: rawStatus, isLoading: isRawLoading } = useGetOne(
     "payout-statuses",
-    { id: status?.id, meta: { raw: true, populate: true } }
+    { id: statusId as Identifier, meta: { raw: true, populate: true } },
+    { enabled: statusId != null && statusId !== "" }
   );
 
   const nextIds = React.useMemo(() => {
     const raw = (rawStatus?.next_statuses || []) as any[];
-    return raw.map((s: any) => (typeof s === "object" ? s.id : s));
+    return raw
+      .map((s: any) =>
+        typeof s === "object" ? getRelationFilterId(s) ?? s?.id : s
+      )
+      .filter((id) => id != null && id !== "");
   }, [rawStatus]);
 
   const filterIds = React.useMemo(() => {
-    const ids = [status?.id, ...nextIds].filter(Boolean);
+    const current =
+      getRelationFilterId(rawStatus) ??
+      getRelationFilterId(
+        typeof record?.payout_status === "object" ? record.payout_status : null
+      ) ??
+      (typeof statusId === "number" ||
+      (typeof statusId === "string" && /^\d+$/.test(statusId))
+        ? statusId
+        : undefined);
+    const ids = [current, ...nextIds].filter(
+      (id) => id != null && id !== ""
+    ) as Identifier[];
     return Array.from(new Set(ids));
-  }, [status?.id, nextIds]);
+  }, [rawStatus, record?.payout_status, statusId, nextIds]);
 
   const { data: statusOptions, isLoading: isStatusLoading } = useGetList(
     "payout-statuses",
     {
       meta: { raw: true, populate: true },
       pagination: { page: 1, perPage: 100 },
-      filter: { id: filterIds },
+      filter: filterIds.length > 0 ? { id: filterIds } : {},
       sort: { field: "order", order: "ASC" },
-    }
+    },
+    { enabled: filterIds.length > 0 }
   );
 
-  return isLoading || isStatusLoading || isRawLoading ? (
+  if (!statusId) {
+    return (
+      <Box sx={{ color: "text.secondary", fontStyle: "italic", px: 1 }}>
+        No status
+      </Box>
+    );
+  }
+
+  return isLoading || isStatusLoading || isRawLoading || !rawStatus ? (
     <Loading />
   ) : (
     <Box>
-      {rawStatus.next_statuses.length > 0 ? (
+      {(rawStatus.next_statuses?.length ?? 0) > 0 ? (
         <Select
           size="small"
-          value={status?.id.toString()}
+          // Both Select value and MenuItem values come from withStableId
+          // records (documentId), so they match after Strapi 5 remapping.
+          value={rawStatus.id}
           onChange={updateStatus}
           sx={{
             textAlign: "center",
             mr: 2,
             width: 200,
-            backgroundColor: status?.color,
-            color: getContrastColor(status?.color, 0.3),
+            backgroundColor: rawStatus.color,
+            color: getContrastColor(rawStatus.color, 0.3),
+            "& .MuiSelect-select": {
+              color: "inherit",
+            },
+            "& .MuiSvgIcon-root": {
+              color: "inherit",
+            },
             "& .css-6hp17o-MuiList-root-MuiMenu-list": {
               paddingTop: 0,
               paddingBottom: 0,
@@ -140,8 +192,6 @@ const SelectPayoutStatus = ({
           }}
           fullWidth
         >
-          {/* Create New Reason Button */}
-          {/* <MenuItem value={'New Reason'}>New Status</MenuItem> */}
           {statusOptions?.map((status, index) => (
             <MenuItem
               sx={{
@@ -163,7 +213,7 @@ const SelectPayoutStatus = ({
                   },
                 },
               }}
-              key={`status-${index}`}
+              key={`status-${status.id}-${index}`}
               value={status.id}
             >
               {status.name}
@@ -174,11 +224,11 @@ const SelectPayoutStatus = ({
         <TextField
           source="payout_status.name"
           sx={{
-            backgroundColor: status?.color,
+            backgroundColor: rawStatus.color,
             p: 0.5,
             borderRadius: 1,
             fontWeight: 700,
-            color: getContrastColor(status?.color, 0.3),
+            color: getContrastColor(rawStatus.color, 0.3),
             width: "93%",
             display: "block",
             textAlign: "center",

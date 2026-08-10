@@ -22,6 +22,7 @@ import PayoutStatusFilter from "./_components/PayoutStatusFilter";
 import ActivityFeed from "../activity/ActivityFeed";
 import { useGrantContext } from "./GrantContextProvider";
 import SelectFiscalYearRange from "./_components/SelectFiscalYearRange";
+import { getRelationFilterId } from "./helpers/getRelationFilterId";
 
 const GrantManagementSidebars = () => {
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
@@ -32,6 +33,8 @@ const GrantManagementSidebars = () => {
     selectedTab,
     grantIndex,
     setGrantIndex,
+    setGrantId,
+    setGrantFilterId,
     grants,
     isSettingsOpen,
     setIsFilterSidebarOpen,
@@ -39,6 +42,14 @@ const GrantManagementSidebars = () => {
     setIsActivitySidebarOpen,
     setIsSettingsOpen,
   } = useGrantContext();
+
+  const selectGrant = (index: number) => {
+    const grant = grants?.[index];
+    setGrantIndex(index);
+    if (grant?.id != null) setGrantId(grant.id);
+    const filterId = getRelationFilterId(grant);
+    if (filterId != null) setGrantFilterId(filterId);
+  };
 
   useEffect(() => {
     if (isSettingsOpen) {
@@ -130,7 +141,7 @@ const GrantManagementSidebars = () => {
               >
                 <RadioGroup
                   value={grantIndex}
-                  onChange={(e) => setGrantIndex(parseInt(e.target.value))}
+                  onChange={(e) => selectGrant(parseInt(e.target.value, 10))}
                 >
                   {grants?.map((grant, i) => {
                     return (

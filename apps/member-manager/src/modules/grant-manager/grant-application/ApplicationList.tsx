@@ -51,7 +51,7 @@ const GrantApplicationList = () => {
   const [isCreating, setIsCreating] = React.useState(false);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const { grantId, applicationStatuses, applicationSearchFilter } =
+  const { grantFilterId, applicationStatuses, applicationSearchFilter } =
     useGrantContext();
   const dataProvider = useDataProvider();
   // useEffect(() => {
@@ -149,8 +149,8 @@ const GrantApplicationList = () => {
         filterDefaultValues={applicationSearchFilter.length > 0 ? { q: applicationSearchFilter } : {}}
         filter={
           applicationStatuses.length > 0
-            ? { grant: grantId, status: applicationStatuses }
-            : { grant: grantId }
+            ? { grant: grantFilterId, status: applicationStatuses }
+            : { grant: grantFilterId }
         }
         title={" "}
         resource="grant-application-finals"
