@@ -35,6 +35,10 @@ import {
 import httpClient from "./httpClient";
 import qs from "qs";
 import { StrapiFormattedFile } from "../../../modules/grant-manager/types";
+import {
+  convertRaParamsToStrapiParams as serializeRaListParams,
+  isDocumentId as isStrapiDocumentId,
+} from "./serializeStrapiFilters";
 
 /**
  * Data FLow:
@@ -161,12 +165,15 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
 
   /** Strapi 5 documentIds are opaque strings; numeric entity ids are digits-only. */
   private isDocumentId = (id: Identifier | undefined | null): boolean =>
-    typeof id === "string" && id.length > 0 && !/^\d+$/.test(id);
+    isStrapiDocumentId(id);
 
   /**
    * Stable RA id for Strapi 5 Draft & Publish: draft/published rows share a
    * documentId but churn numeric `id` on every publish. Prefer documentId so
    * edit URLs and getOne stay valid across saves.
+   *
+   * Also applied recursively to nested populated content-type records so
+   * relation objects expose the same id/entityId shape as top-level rows.
    */
   private withStableId = (data: RaRecord): RaRecord => {
     if (data == null) return data;
@@ -190,6 +197,36 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       };
     }
     return data;
+  };
+
+  /** True for upload/media entries — do not remap their numeric ids. */
+  private isMediaRecord = (value: Record<string, unknown>): boolean =>
+    value.mime != null || value.url != null || value.formats != null;
+
+  /**
+   * Deep-copy a Strapi 5 flat record and withStableId every nested object that
+   * looks like a content-type row (has documentId, is not media).
+   */
+  private stabilizeNestedRecords = (value: unknown): unknown => {
+    if (Array.isArray(value)) {
+      return value.map((item) => this.stabilizeNestedRecords(item));
+    }
+    if (value && typeof value === "object") {
+      const obj = value as Record<string, unknown>;
+      const copy: Record<string, unknown> = {};
+      for (const key of Object.keys(obj)) {
+        copy[key] = this.stabilizeNestedRecords(obj[key]);
+      }
+      if (
+        typeof copy.documentId === "string" &&
+        copy.documentId &&
+        !this.isMediaRecord(copy)
+      ) {
+        return this.withStableId(copy as RaRecord);
+      }
+      return copy;
+    }
+    return value;
   };
 
   /**
@@ -318,18 +355,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    */
   formatResponseRaw = (record: IStrapiRecord): RaRecord => {
     // Strapi 5: records are already flat and populated relations are flat
-    // objects/arrays. Return as-is (recursively copied) with stable documentId.
+    // objects/arrays. Stabilize documentId → id (and entityId) at every level.
     if (record && !record.attributes) {
-      const copyDeep = (value: any): any => {
-        if (Array.isArray(value)) return value.map(copyDeep);
-        if (value && typeof value === "object") {
-          const copy: Record<string, any> = {};
-          for (const key in value) copy[key] = copyDeep(value[key]);
-          return copy;
-        }
-        return value;
-      };
-      return this.withStableId(copyDeep(record) as RaRecord);
+      return this.stabilizeNestedRecords(record) as RaRecord;
     }
 
     // Strapi 4 fallback
@@ -467,83 +495,13 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    * @param params - The input parameters containing pagination, sorting, filtering, target, and ID data.
    * @returns A query string for Strapi with the adjusted parameters.
    */
-  convertRaParamsToStrapiParams = (params: GetListParams): string => {
-    const { sort: s, filter: f, pagination } = params;
-  
-    // 🔹 Handle SORTING
-    const sort = s?.field
-      ? `sort=${encodeURIComponent(s.field)}:${s.order.toLowerCase()}`
-      : "sort=updatedAt:desc";
-  
-    // 🔹 Handle FILTERING
-    const filters: string[] = [];
-  
-    const buildFilterQuery = (key: string, value: any, prefix = `filters`) => {
-      if (key === "q" && typeof value === "string" && value) {
-        // 🔹 Handle full-text search
-        filters.push(`_q=${encodeURIComponent(value)}`);
-        return;
-      }
-  
-      if (typeof value === "object" && value !== null) {
-        Object.entries(value).forEach(([operator, opValue]) => {
-          if (operator === "$null") {
-            filters.push(`${prefix}[${key}][$null]=true`);
-          } else if (["$in", "$nin"].includes(operator) && Array.isArray(opValue)) {
-            opValue.forEach((v) =>
-              filters.push(`${prefix}[${key}][${operator}][]=${encodeURIComponent(v)}`)
-            );
-          } else if (["$lt", "$lte", "$gt", "$gte"].includes(operator)) {
-            filters.push(`${prefix}[${key}][${operator}]=${encodeURIComponent(opValue as string)}`);
-          } else if (operator === "$between" && Array.isArray(opValue)) {
-            filters.push(
-              `${prefix}[${key}][$between][0]=${encodeURIComponent(opValue[0])}`,
-              `${prefix}[${key}][$between][1]=${encodeURIComponent(opValue[1])}`
-            );
-          } else if (
-            !operator.startsWith("$") &&
-            typeof opValue === "object" &&
-            opValue !== null &&
-            !Array.isArray(opValue)
-          ) {
-            // Nested relational filter, e.g. { application: { committee_date: { $between: [...] } } }
-            // -> filters[application][committee_date][$between][...]
-            buildFilterQuery(operator, opValue, `${prefix}[${key}]`);
-          } else {
-            filters.push(`${prefix}[${key}][${operator}]=${encodeURIComponent(opValue as string)}`);
-          }
-        });
-      } else {
-        filters.push(`${prefix}[${key}]=${encodeURIComponent(value)}`);
-      }
-    };
-  
-    // 🔹 Handle `$or` and `$and` queries properly
-    if ("$or" in f && Array.isArray(f.$or)) {
-      f.$or.forEach((orCondition: any, index: number) => {
-        Object.entries(orCondition).forEach(([key, value]) => {
-          buildFilterQuery(key, value, `filters[$or][${index}]`);
-        });
-      });
-    } else if ("$and" in f && Array.isArray(f.$and)) {
-      f.$and.forEach((andCondition: any, index: number) => {
-        Object.entries(andCondition).forEach(([key, value]) => {
-          buildFilterQuery(key, value, `filters[$and][${index}]`);
-        });
-      });
-    } else {
-      Object.entries(f).forEach(([key, value]) => {
-        buildFilterQuery(key, value);
-      });
-    }
-  
-    // 🔹 Handle PAGINATION
-    const start = (pagination.page - 1) * pagination.perPage;
-    const paginationParams = `pagination[start]=${start}&pagination[limit]=${pagination.perPage}`;
-  
-    // 🔹 Construct the final query string
-    return [sort, ...filters, paginationParams].join("&");
-  };
+  /**
+   * React Admin list params → Strapi query string.
+   * DocumentId-shaped filter leaves become filters[rel][documentId]=… so
+   * call sites can pass record.id after withStableId without empty results.
+   */
+  convertRaParamsToStrapiParams = (params: GetListParams): string =>
+    serializeRaListParams(params);
   /**
    * Turn React Admin params in Strapi equivalent request body.
    * @param {Object} params React Admin params

@@ -6,6 +6,7 @@ import { IConference } from "../types";
 import IConferenceTicket from "../types/IConferenceTicket";
 import { isSelected, toggleFilter } from "../helpers/selectFilters";
 import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import { getFilterRelationValue } from "../../../helpers/strapiIds";
 
 interface RegistrationFilterProps {
   filterValues: any;
@@ -56,10 +57,9 @@ const RegistrationFilter: React.FC<RegistrationFilterProps> = ({
           {extras 
             ?.filter((extra) => extra.context === "Registration")
             .map((extra) => {
-              const extraId = typeof extra.id === "string"
-                ? parseInt(extra.id, 10)
-                : extra.id;
-              
+              const extraId = getFilterRelationValue(extra);
+              if (extraId == null) return null;
+
               return (
                 <FilterListItem
                   key={`extra-${extra.id}`}

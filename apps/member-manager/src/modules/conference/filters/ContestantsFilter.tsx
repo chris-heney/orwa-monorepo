@@ -9,6 +9,7 @@ import {
   getConferenceFilterId,
   getPrimaryConferenceId,
 } from "../helpers/mergeConferenceAcrossTabFilters";
+import { getFilterRelationValue } from "../../../helpers/strapiIds";
 
 interface ContestantsFilterProps {
   filterValues: any;
@@ -78,10 +79,9 @@ const ContestantsFilter: React.FC<ContestantsFilterProps> = ({
         <FilterList label="Contestant Ticket" icon={<GroupIcon />}>
           {contestantTickets
             .map((ticket) => {
-              const ticketId = typeof ticket.id === "string"
-                ? parseInt(ticket.id, 10)
-                : ticket.id;
-              
+              const ticketId = getFilterRelationValue(ticket);
+              if (ticketId == null) return null;
+
               return (
                 <FilterListItem
                   key={`ticket-${ticket.id}`}

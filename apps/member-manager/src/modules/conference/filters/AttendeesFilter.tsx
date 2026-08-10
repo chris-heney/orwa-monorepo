@@ -10,6 +10,7 @@ import {
   getConferenceFilterId,
   getPrimaryConferenceId,
 } from "../helpers/mergeConferenceAcrossTabFilters";
+import { getFilterRelationValue } from "../../../helpers/strapiIds";
 
 interface AttendeesFilterProps {
   filterValues: any;
@@ -59,6 +60,9 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
               : true
           )
           .map((ticket) => {
+            const ticketId = getFilterRelationValue(ticket);
+            if (ticketId == null) return null;
+
             return (
               <FilterListItem
                 key={`ticket-${ticket.id}`}
@@ -67,7 +71,7 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
                     ? (ticket.conferences[0] as IConference).name
                     : ""
                 }`}
-                value={{ conference_ticket: ticket.id }}
+                value={{ conference_ticket: ticketId }}
                 isSelected={isSelected}
                 toggleFilter={(val, filters) =>
                   toggleFilter(val, filters, undefined, disableDeselect)
@@ -104,11 +108,14 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
               extra.context === "Attendee" || extra.context === "Vendor"
           )
           .map((extra) => {
+            const extraId = getFilterRelationValue(extra);
+            if (extraId == null) return null;
+
             return (
               <FilterListItem
                 key={`extra-${extra.id}`}
                 label={extra.name}
-                value={{ "items][item": extra.id }}
+                value={{ "items][item": extraId }}
                 isSelected={isSelected}
                 toggleFilter={toggleFilter}
               />

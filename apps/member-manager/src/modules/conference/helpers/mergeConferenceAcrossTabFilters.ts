@@ -1,3 +1,5 @@
+import { getRelationFilterId } from "../../../helpers/strapiIds";
+
 /** Tabs that store the conference id as `conferences: [id]` */
 export const MULTI_CONFERENCE_TABS = new Set([
   "tickets",
@@ -16,16 +18,7 @@ export function getConferenceFilterId(conference: {
   id?: unknown;
   entityId?: unknown;
 } | null | undefined): number | undefined {
-  if (!conference) return undefined;
-  const entity = conference.entityId;
-  if (typeof entity === "number" && !Number.isNaN(entity)) return entity;
-  if (typeof entity === "string" && /^\d+$/.test(entity)) {
-    return parseInt(entity, 10);
-  }
-  const id = conference.id;
-  if (typeof id === "number" && !Number.isNaN(id)) return id;
-  if (typeof id === "string" && /^\d+$/.test(id)) return parseInt(id, 10);
-  return undefined;
+  return getRelationFilterId(conference);
 }
 
 export function getPrimaryConferenceId(

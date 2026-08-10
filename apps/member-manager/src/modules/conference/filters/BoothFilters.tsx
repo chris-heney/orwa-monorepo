@@ -7,6 +7,7 @@ import IConferenceTicket from "../types/IConferenceTicket";
 import { toggleFilter } from "../helpers/selectFilters";
 import { isSelected } from "../helpers/selectFilters";
 import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import { getFilterRelationValue } from "../../../helpers/strapiIds";
 
 interface AttendeesFilterProps {
   filterValues: any;
@@ -47,11 +48,14 @@ const BoothFilter: React.FC<AttendeesFilterProps> = ({
               extra.context === "Booth"
           )
           .map((extra) => {
+            const extraId = getFilterRelationValue(extra);
+            if (extraId == null) return null;
+
             return (
               <FilterListItem
                 key={`extra-${extra.id}`}
                 label={`${extra.name}`}
-                value={{ "items][item": extra.id }}
+                value={{ "items][item": extraId }}
                 isSelected={isSelected}
                 toggleFilter={toggleFilter}
               />
