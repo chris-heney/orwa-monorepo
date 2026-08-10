@@ -113,21 +113,6 @@ const ConferenceAccordionFilter = ({
     );
   }, [filterValues, selectedTab, setTabFilters, resource, tabFilters]);
 
-  // Custom toggle function that enforces single selection for ticket filters
-  const singleSelectionToggle = (value: any, filters: any) => {
-    // Get the key (should be conference_ticket)
-    const key = Object.keys(value)[0];
-
-    // Check if the value is already selected
-    const isValueSelected = isSelected(value, filters);
-
-    // If already selected, remove it, otherwise set it as a single value (not array)
-    return {
-      ...filters,
-      [key]: isValueSelected ? undefined : value[key],
-    };
-  };
-
   return (
     <Accordion
       disableGutters
@@ -272,7 +257,7 @@ const ConferenceAccordionFilter = ({
                         }`}
                         value={{ conference_ticket: ticketId }}
                         isSelected={isSelected}
-                        toggleFilter={singleSelectionToggle}
+                        toggleFilter={toggleFilter}
                       />
                     );
                   })}
@@ -330,7 +315,7 @@ const ConferenceAccordionFilter = ({
                         label={ticket.name}
                         value={{ conference_ticket: ticketId }}
                         isSelected={isSelected}
-                        toggleFilter={singleSelectionToggle}
+                        toggleFilter={toggleFilter}
                       />
                     );
                   })}
