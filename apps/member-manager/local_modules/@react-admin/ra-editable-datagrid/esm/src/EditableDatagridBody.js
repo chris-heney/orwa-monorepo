@@ -28,8 +28,8 @@ import { RecordContextProvider, } from 'react-admin';
 import EditableDatagridRow from './EditableDatagridRow';
 import EditableDatagridCreateForm from './EditableDatagridCreateForm';
 import { DatagridClasses } from './EditableDatagrid';
-var EditableDatagridBody = function (props) {
-    var children = props.children, className = props.className, data = props.data, expand = props.expand, hasBulkActions = props.hasBulkActions, hover = props.hover, onToggleItem = props.onToggleItem, resource = props.resource, rowClick = props.rowClick, rowStyle = props.rowStyle, rowSx = props.rowSx, selectedIds = props.selectedIds, isRowSelectable = props.isRowSelectable, editForm = props.editForm, createForm = props.createForm, _a = props.hasStandaloneCreateForm, hasStandaloneCreateForm = _a === void 0 ? false : _a, isStandaloneCreateFormVisible = props.isStandaloneCreateFormVisible, closeStandaloneCreateForm = props.closeStandaloneCreateForm, mutationMode = props.mutationMode, rest = __rest(props, ["children", "className", "data", "expand", "hasBulkActions", "hover", "onToggleItem", "resource", "rowClick", "rowStyle", "rowSx", "selectedIds", "isRowSelectable", "editForm", "createForm", "hasStandaloneCreateForm", "isStandaloneCreateFormVisible", "closeStandaloneCreateForm", "mutationMode"]);
+var EditableDatagridBody = function (_a) {
+    var children = _a.children, className = _a.className, _b = _a.data, data = _b === void 0 ? [] : _b, expand = _a.expand, _c = _a.hasBulkActions, hasBulkActions = _c === void 0 ? false : _c, hover = _a.hover, onToggleItem = _a.onToggleItem, resource = _a.resource, rowClick = _a.rowClick, rowStyle = _a.rowStyle, rowSx = _a.rowSx, selectedIds = _a.selectedIds, isRowSelectable = _a.isRowSelectable, editForm = _a.editForm, createForm = _a.createForm, _d = _a.hasStandaloneCreateForm, hasStandaloneCreateForm = _d === void 0 ? false : _d, isStandaloneCreateFormVisible = _a.isStandaloneCreateFormVisible, closeStandaloneCreateForm = _a.closeStandaloneCreateForm, mutationMode = _a.mutationMode, rest = __rest(_a, ["children", "className", "data", "expand", "hasBulkActions", "hover", "onToggleItem", "resource", "rowClick", "rowStyle", "rowSx", "selectedIds", "isRowSelectable", "editForm", "createForm", "hasStandaloneCreateForm", "isStandaloneCreateFormVisible", "closeStandaloneCreateForm", "mutationMode"]);
     return (React.createElement(TableBody, __assign({ className: clsx('datagrid-body', className, DatagridClasses.tbody) }, rest),
         createForm && (React.createElement(EditableDatagridCreateForm, { closeStandaloneCreateForm: closeStandaloneCreateForm, createForm: createForm, expand: expand, hasBulkActions: hasBulkActions, hasStandaloneCreateForm: hasStandaloneCreateForm, isStandaloneCreateFormVisible: isStandaloneCreateFormVisible, resource: resource })),
         data.map(function (record, rowIndex) {
@@ -45,9 +45,9 @@ var EditableDatagridBody = function (props) {
 EditableDatagridBody.propTypes = {
     className: PropTypes.string,
     children: PropTypes.node,
-    data: PropTypes.arrayOf(PropTypes.any).isRequired,
+    data: PropTypes.arrayOf(PropTypes.any),
     expand: PropTypes.oneOfType([PropTypes.element, PropTypes.elementType]),
-    hasBulkActions: PropTypes.bool.isRequired,
+    hasBulkActions: PropTypes.bool,
     hover: PropTypes.bool,
     onToggleItem: PropTypes.func,
     resource: PropTypes.string,
@@ -56,10 +56,6 @@ EditableDatagridBody.propTypes = {
     selectedIds: PropTypes.arrayOf(PropTypes.any),
     isRowSelectable: PropTypes.func,
     version: PropTypes.number,
-};
-EditableDatagridBody.defaultProps = {
-    data: [],
-    hasBulkActions: false,
 };
 // trick material-ui Table into thinking this is one of the child type it supports
 // @ts-ignore

@@ -6,9 +6,9 @@ declare const EditableDatagridBody: {
     propTypes: {
         className: PropTypes.Requireable<string>;
         children: PropTypes.Requireable<PropTypes.ReactNodeLike>;
-        data: PropTypes.Validator<any[]>;
+        data: PropTypes.Requireable<any[]>;
         expand: PropTypes.Requireable<NonNullable<PropTypes.ReactElementLike | PropTypes.ReactComponentLike>>;
-        hasBulkActions: PropTypes.Validator<boolean>;
+        hasBulkActions: PropTypes.Requireable<boolean>;
         hover: PropTypes.Requireable<boolean>;
         onToggleItem: PropTypes.Requireable<(...args: any[]) => any>;
         resource: PropTypes.Requireable<string>;
@@ -17,10 +17,6 @@ declare const EditableDatagridBody: {
         selectedIds: PropTypes.Requireable<any[]>;
         isRowSelectable: PropTypes.Requireable<(...args: any[]) => any>;
         version: PropTypes.Requireable<number>;
-    };
-    defaultProps: {
-        data: any[];
-        hasBulkActions: boolean;
     };
     muiName: string;
 };
@@ -34,4 +30,3 @@ export interface EditableDatagridBodyProps extends DatagridBodyProps {
     closeStandaloneCreateForm: () => void;
 }
 export default EditableDatagridBody;
-//# sourceMappingURL=EditableDatagridBody.d.ts.map

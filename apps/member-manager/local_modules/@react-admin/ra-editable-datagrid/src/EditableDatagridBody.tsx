@@ -12,29 +12,28 @@ import EditableDatagridRow from './EditableDatagridRow';
 import EditableDatagridCreateForm from './EditableDatagridCreateForm';
 import { DatagridClasses } from './EditableDatagrid';
 
-const EditableDatagridBody = (props: EditableDatagridBodyProps) => {
-    const {
-        children,
-        className,
-        data,
-        expand,
-        hasBulkActions,
-        hover,
-        onToggleItem,
-        resource,
-        rowClick,
-        rowStyle,
-        rowSx,
-        selectedIds,
-        isRowSelectable,
-        editForm,
-        createForm,
-        hasStandaloneCreateForm = false,
-        isStandaloneCreateFormVisible,
-        closeStandaloneCreateForm,
-        mutationMode,
-        ...rest
-    } = props;
+const EditableDatagridBody = ({
+    children,
+    className,
+    data = [],
+    expand,
+    hasBulkActions = false,
+    hover,
+    onToggleItem,
+    resource,
+    rowClick,
+    rowStyle,
+    rowSx,
+    selectedIds,
+    isRowSelectable,
+    editForm,
+    createForm,
+    hasStandaloneCreateForm = false,
+    isStandaloneCreateFormVisible,
+    closeStandaloneCreateForm,
+    mutationMode,
+    ...rest
+}: EditableDatagridBodyProps) => {
 
     return (
         <TableBody
@@ -97,9 +96,9 @@ export interface EditableDatagridBodyProps extends DatagridBodyProps {
 EditableDatagridBody.propTypes = {
     className: PropTypes.string,
     children: PropTypes.node,
-    data: PropTypes.arrayOf(PropTypes.any).isRequired,
+    data: PropTypes.arrayOf(PropTypes.any),
     expand: PropTypes.oneOfType([PropTypes.element, PropTypes.elementType]),
-    hasBulkActions: PropTypes.bool.isRequired,
+    hasBulkActions: PropTypes.bool,
     hover: PropTypes.bool,
     onToggleItem: PropTypes.func,
     resource: PropTypes.string,
@@ -108,11 +107,6 @@ EditableDatagridBody.propTypes = {
     selectedIds: PropTypes.arrayOf(PropTypes.any),
     isRowSelectable: PropTypes.func,
     version: PropTypes.number,
-};
-
-EditableDatagridBody.defaultProps = {
-    data: [],
-    hasBulkActions: false,
 };
 
 // trick material-ui Table into thinking this is one of the child type it supports
