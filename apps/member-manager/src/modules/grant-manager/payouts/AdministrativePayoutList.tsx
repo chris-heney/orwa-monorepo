@@ -63,15 +63,10 @@ const AdministrativePayoutsList = () => {
 
   const {
     payoutStatusId,
-    setPayoutStatusId,
     grantFilterId,
     fiscalYearStart,
     fiscalYearEnd,
   } = useGrantContext();
-
-  useEffect(() => {
-    setPayoutStatusId(1);
-  }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
   const theme = useTheme();

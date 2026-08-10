@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect } from "react";
-import { Modal, useMediaQuery, useTheme } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
+import { Link as MuiLink, Modal, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
   List,
@@ -71,15 +72,10 @@ const ReimbursementPayoutsList = () => {
 
   const {
     payoutStatusId,
-    setPayoutStatusId,
     grantFilterId,
     fiscalYearStart,
     fiscalYearEnd,
   } = useGrantContext();
-
-  useEffect(() => {
-    setPayoutStatusId(1);
-  }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
   const theme = useTheme();
@@ -150,10 +146,26 @@ const ReimbursementPayoutsList = () => {
             label="ID"
             noWrap
           />
-          <TextField
-            source="application.legal_entity_name"
+          <FunctionField
             label="Application"
-            noWrap
+            sortBy="application.legal_entity_name"
+            render={(record: RaRecord) => {
+              const app = record?.application;
+              const name = app?.legal_entity_name;
+              const appId = app?.id ?? app?.documentId ?? app?.entityId;
+              if (!name) return null;
+              if (appId == null) return <>{name}</>;
+              return (
+                <MuiLink
+                  component={RouterLink}
+                  to={`/grant-application-finals/${appId}/show`}
+                  underline="hover"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {name}
+                </MuiLink>
+              );
+            }}
           />
           <NumberField
             source="application.award_amount"

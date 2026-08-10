@@ -16,7 +16,10 @@ interface ModalContentProps {
   payoutStatus: RaRecord<Identifier> | null | undefined
 }
 
-const PayoutModal = ({ setIsModalOpen, selectedPayout , payoutStatus }: ModalContentProps) => {
+const PayoutModal = React.forwardRef<HTMLDivElement, ModalContentProps>(function PayoutModal(
+  { setIsModalOpen, selectedPayout, payoutStatus },
+  ref
+) {
   const [update] = useUpdate()
   const notify = useNotify()
   const dataProvider = useDataProvider()
@@ -81,7 +84,10 @@ const PayoutModal = ({ setIsModalOpen, selectedPayout , payoutStatus }: ModalCon
     }
   }
   return (
-    <Box sx={{
+    <Box
+      ref={ref}
+      tabIndex={-1}
+      sx={{
       position: 'absolute',
       top: '50%',
       left: '50%',
@@ -92,7 +98,7 @@ const PayoutModal = ({ setIsModalOpen, selectedPayout , payoutStatus }: ModalCon
       boxShadow: 24,
     }}>
 
-      <CustomSecondaryHeader sx={{ textAlign: 'center' }} title={`Grant Payout ${status}`} />
+      <CustomSecondaryHeader sx={{ textAlign: 'center' }} title={`Grant Payout ${payoutStatus?.name ?? ''}`} />
       <Edit component={'div'} id={selectedPayout?.id} title={' '} sx={{
         '& .css-1a69w1n-MuiStack-root': {
           alignItems: 'center',
@@ -123,7 +129,7 @@ const PayoutModal = ({ setIsModalOpen, selectedPayout , payoutStatus }: ModalCon
             <Grid item xs={12}>
               <Box sx={{display: 'flex' , alignItems:'center'}}>
                 <Checkbox checked={sendEmail} onClick={() => sendEmail ? setSendEmail(false) : setSendEmail(true)}/>
-                <Typography variant="body1">Send {`Email Payout ${status}`} to Applicant</Typography>
+                <Typography variant="body1">Send {`Email Payout ${payoutStatus?.name ?? ''}`} to Applicant</Typography>
               </Box>          
             </Grid>
           </Grid>
@@ -131,5 +137,5 @@ const PayoutModal = ({ setIsModalOpen, selectedPayout , payoutStatus }: ModalCon
       </Edit>
     </Box>
   )
-}
+})
 export default PayoutModal

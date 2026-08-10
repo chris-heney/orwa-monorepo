@@ -1,4 +1,5 @@
 import React, { ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CustomHeader from '../../_components/CustomHeader';
 import { Button, EditButton, useRecordContext, useRedirect, useResourceContext } from 'react-admin';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -18,10 +19,20 @@ const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
   customActions,
 }) => {
   const redirect = useRedirect();
+  const navigate = useNavigate();
   const resource = useResourceContext();
   const record = useRecordContext();
   const title = record ? `${record[displayField]}` : `View ${resource.charAt(0).toUpperCase() + resource.slice(1)}`;
   const {role} = useCurrentUser();
+
+  const handleBack = () => {
+    // Prefer history so list→show→back restores prior location; fall back for deep links.
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    redirect(redirectTo);
+  };
 
   return (
     <CustomHeader
@@ -30,7 +41,7 @@ const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
       Component={() => (
         <div>
           <Button
-            onClick={() => redirect(redirectTo)}
+            onClick={handleBack}
             sx={{
               color: 'white',
               mr: 2,
