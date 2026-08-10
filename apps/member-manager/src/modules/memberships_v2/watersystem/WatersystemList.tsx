@@ -42,7 +42,7 @@ const WaterSystemList = () => {
     <List
       component={"div"}
       resource="watersystems"
-      filter={watersystemFilters ?? null}
+      filter={watersystemFilters}
       title={" "}
       actions={false}
       perPage={100}

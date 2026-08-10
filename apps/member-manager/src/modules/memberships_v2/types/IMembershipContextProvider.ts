@@ -1,17 +1,20 @@
-import React, { ReactElement } from 'react'
+import React from 'react'
 import { Identifier } from 'react-admin'
 
 export type TabValue = 'summary' | 'watersystems' | 'associates' | 'memberships' | 'membership-items' | 'invoices'
+
+/** Permanent / persisted list filter values for react-admin `List` `filter` prop. */
+export type MembershipFilterValues = Record<string, unknown>
 
 export interface IMembershipContextProvider {
     selectedTab: TabValue
     setSelectedTab: React.Dispatch<React.SetStateAction<TabValue>>
     isFilterSidebarOpen: boolean
     setIsFilterSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>
-    watersystemFilters: ReactElement | ReactElement[]
-    setWatersystemFilters: React.Dispatch<React.SetStateAction<ReactElement | ReactElement[]>>
-    associateFilters: ReactElement | ReactElement[]
-    setAssociateFilters: React.Dispatch<React.SetStateAction<ReactElement | ReactElement[]>>
+    watersystemFilters: MembershipFilterValues
+    setWatersystemFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
+    associateFilters: MembershipFilterValues
+    setAssociateFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
     isLoading: boolean
     setIsLoading: React.Dispatch<React.SetStateAction<boolean>>
     isContactModalOpen: boolean
@@ -28,12 +31,12 @@ export interface IMembershipContextProvider {
     setLinkNewContactToWatersystemId: React.Dispatch<
         React.SetStateAction<Identifier | null>
     >
-    invoicesFilters: ReactElement | ReactElement[]
-    setInvoicesFilters: React.Dispatch<React.SetStateAction<ReactElement | ReactElement[]>>
-    membershipExtraFilters: ReactElement | ReactElement[]
-    setMembershipExtraFilters: React.Dispatch<React.SetStateAction<ReactElement | ReactElement[]>>
-    membershipFilters: ReactElement | ReactElement[]
-    setMembershipFilters: React.Dispatch<React.SetStateAction<ReactElement | ReactElement[]>>
+    invoicesFilters: MembershipFilterValues
+    setInvoicesFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
+    membershipExtraFilters: MembershipFilterValues
+    setMembershipExtraFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
+    membershipFilters: MembershipFilterValues
+    setMembershipFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
     isSettingsOpen: boolean
     setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
     savingQuery: boolean
