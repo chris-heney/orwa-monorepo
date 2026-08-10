@@ -1677,6 +1677,8 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
+    directory_opt_out: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
     email: Schema.Attribute.Email & Schema.Attribute.Unique;
     first: Schema.Attribute.String;
     last: Schema.Attribute.String;

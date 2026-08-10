@@ -101,11 +101,25 @@ const WatersystemReviewStep = () => {
               </h3>
               <ul className="space-y-3 text-left text-sm text-slate-700">
                 {visibleDirectoryContacts.map((c, i) => (
-                  <li key={i} className="rounded-md border border-slate-200 bg-slate-50 p-3">
-                    <p>
-                      <strong className="text-slate-900">{trim(c.title) || "—"}</strong>
-                      {(trim(c.first) || trim(c.last)) &&
-                        ` — ${trim(c.first)} ${trim(c.last)}`.trim()}
+                  <li
+                    key={i}
+                    className={`rounded-md border p-3 ${
+                      c.directory_opt_out
+                        ? "border-slate-300 bg-slate-100/80"
+                        : "border-slate-200 bg-slate-50"
+                    }`}
+                  >
+                    <p className="flex flex-wrap items-center gap-2">
+                      <span>
+                        <strong className="text-slate-900">{trim(c.title) || "—"}</strong>
+                        {(trim(c.first) || trim(c.last)) &&
+                          ` — ${trim(c.first)} ${trim(c.last)}`.trim()}
+                      </span>
+                      {c.directory_opt_out && (
+                        <span className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                          Opted out of directory
+                        </span>
+                      )}
                     </p>
                     {trim(c.email) && <p>Email: {trim(c.email)}</p>}
                     {trim(c.phone) && <p>Phone: {trim(c.phone)}</p>}

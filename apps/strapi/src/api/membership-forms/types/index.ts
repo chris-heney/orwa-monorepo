@@ -17,6 +17,8 @@ export interface IContact {
   address_mailing_city?: string;
   address_mailing_state?: string;
   address_mailing_zip?: string;
+  /** When true, contact stays on file but is not published in the ORWA directory */
+  directory_opt_out?: boolean;
 }
 
 

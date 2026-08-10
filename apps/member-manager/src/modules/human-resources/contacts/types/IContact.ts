@@ -17,6 +17,7 @@ export default interface IContact {
   address_mailing_city?: string
   address_mailing_state?: string
   address_mailing_zip?: string
+  directory_opt_out?: boolean
 }
 
 

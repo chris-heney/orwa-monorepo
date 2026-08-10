@@ -183,6 +183,7 @@ export default ({ strapi }) => {
       phone: trim(row.phone) || null,
       title: trim(row.title) || null,
       contact_type: "watersystem",
+      directory_opt_out: !!row.directory_opt_out,
     };
 
     if (hasAddress) {
@@ -607,6 +608,9 @@ export default ({ strapi }) => {
               mailing
             )}</td></tr>`
           : "";
+        const optOutRow = c.directory_opt_out
+          ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Directory</strong></td><td style="padding:2px 0;">Opted out (not published)</td></tr>`
+          : `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Directory</strong></td><td style="padding:2px 0;">Published</td></tr>`;
 
         return `
             <tr style="background-color: ${
@@ -622,6 +626,7 @@ export default ({ strapi }) => {
                   ${emailRow}
                   ${phoneRow}
                   ${mailRow}
+                  ${optOutRow}
                 </table>
               </td>
             </tr>`;

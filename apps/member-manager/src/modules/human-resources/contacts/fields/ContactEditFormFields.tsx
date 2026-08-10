@@ -8,7 +8,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { SelectInput, TextInput, useRecordContext } from "react-admin";
+import {
+  BooleanInput,
+  SelectInput,
+  TextInput,
+  useRecordContext,
+} from "react-admin";
 import { useWatch } from "react-hook-form";
 import CustomPhoneInput from "../../../_components/MaskedPhoneInput";
 import BadgeGrid from "../badges/BadgeGrid";
@@ -127,6 +132,15 @@ const ContactFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
               <Grid item xs={12} sm={6}>
                 <CustomPhoneInput source="phone" label="Phone" fullWidth />
               </Grid>
+              {effectiveContactType === "watersystem" && (
+                <Grid item xs={12}>
+                  <BooleanInput
+                    source="directory_opt_out"
+                    label="Opt out of ORWA directory"
+                    helperText="When enabled, this contact stays on file but is not published in the membership directory."
+                  />
+                </Grid>
+              )}
             </Grid>
           </Card>
           <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>

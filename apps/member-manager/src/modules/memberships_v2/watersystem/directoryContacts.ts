@@ -12,6 +12,7 @@ export type DirectoryContactShape = {
   address_mailing_city?: string;
   address_mailing_state?: string;
   address_mailing_zip?: string;
+  directory_opt_out?: boolean;
 };
 
 /** Normalize watersystem `contacts` from API (ids only vs raw populated objects). */

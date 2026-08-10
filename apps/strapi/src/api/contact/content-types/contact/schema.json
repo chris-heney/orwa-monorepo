@@ -109,6 +109,10 @@
         "administrator"
       ]
     },
+    "directory_opt_out": {
+      "type": "boolean",
+      "default": false
+    },
     "license": {
       "type": "string"
     },

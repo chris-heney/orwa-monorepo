@@ -469,6 +469,25 @@ const WatersystemShow = () => {
                                 "Contact"}{" "}
                               {c.title ? `— ${c.title}` : ""}
                             </Link>
+                            {c.directory_opt_out && (
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                sx={{
+                                  border: "1px solid",
+                                  borderColor: "divider",
+                                  borderRadius: 1,
+                                  px: 1,
+                                  py: 0.25,
+                                  fontWeight: 600,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.04em",
+                                  color: "text.secondary",
+                                }}
+                              >
+                                Opted out
+                              </Typography>
+                            )}
                             {role === "Admin" && (
                               <MUIButton
                                 type="button"
