@@ -103,12 +103,17 @@ const authProvider: AuthProvider = {
       return { success: false, error: error.message };
     }
   },
-  logout: () => {
+  logout: async () => {
+    try {
+      const { userPreferencesStore } = await import('./helpers/userPreferencesStore')
+      await userPreferencesStore.flush()
+    } catch (err) {
+      console.warn('[authProvider] preferences flush on logout failed', err)
+    }
     Cookies.deleteCookie('token')
     Cookies.deleteCookie('role')
     Cookies.deleteCookie('email')
     Cookies.deleteCookie('id')
-    return Promise.resolve()
   },
 
   checkAuth: () => {

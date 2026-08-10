@@ -10,6 +10,9 @@ import {
   Resource,
 } from "react-admin";
 import { AdminLayout } from "./layouts";
+import { userPreferencesStore } from "./helpers/userPreferencesStore";
+import UserPreferencesSync from "./components/UserPreferencesSync";
+import { queryClient } from "./helpers/queryClient";
 import { darkTheme, lightTheme } from "./theme";
 import {
   Asset,
@@ -112,6 +115,8 @@ export const App = () => {
         layout={AdminLayout}
         dataProvider={dataProvider}
         authProvider={AuthProvider}
+        store={userPreferencesStore}
+        queryClient={queryClient}
         dashboard={AdminDashboard}
         // Providing both themes enables the AppBar theme toggle; react-admin
         // persists the choice and follows the OS preference by default.
@@ -126,6 +131,7 @@ export const App = () => {
 
           return (
             <>
+          <UserPreferencesSync />
           {/* --- Main Entities --- */}
           <Route path="/login" />
 
