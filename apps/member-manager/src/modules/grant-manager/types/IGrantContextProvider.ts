@@ -2,6 +2,7 @@ import { Identifier } from 'react-admin'
 import { IGrantApplication } from '../grant-application/GrantApplicationTypes'
 import { IGrant } from '../grants/components/GrantTypes'
 import { Dayjs } from 'dayjs'
+import type { SearchableTab } from '../helpers/searchBarTabs'
 
 export type TabValue = 'summary' | 'edit' | 'applications' | 'grant' | 'payouts' | 'Admin Payouts' | 'application scores' | 'tokens' | 'map' 
 
@@ -46,4 +47,7 @@ export interface IGrantContextProvider {
     setFiscalYearEnd: React.Dispatch<React.SetStateAction<string | null>>
     applicationSearchFilter: string
     setApplicationSearchFilter: (value: string) => void
+    searchBarOpen: Record<SearchableTab, boolean>
+    setSearchBarOpenForTab: (tab: SearchableTab, open: boolean) => void
+    toggleSearchBarForTab: (tab: SearchableTab) => void
 }

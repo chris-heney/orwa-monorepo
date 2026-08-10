@@ -1,12 +1,12 @@
-import { Box, Modal, Theme, useMediaQuery, useTheme } from "@mui/material";
-import React, { useEffect } from "react";
+import { Modal, Theme, useMediaQuery, useTheme } from "@mui/material";
+import React, { useCallback, useEffect } from "react";
 import {
-  CreateButton,
   DateField,
   FilterLiveSearch,
   FunctionField,
   List,
   RaRecord,
+  useListFilterContext,
 } from "react-admin";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
@@ -17,13 +17,57 @@ import EditPayoutMobile from "./EditPayoutMobile";
 import EditPayout from "./EditPayoutRowForm";
 import PayoutShow from "./PayoutShow";
 import ModalPayoutStatus from "../payouts/components/ModalPayoutStatus";
+import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
+import { LEGACY_PAYOUT_SEARCH_KEYS, stripSearchKeys } from "../helpers/searchBarTabs";
+
+const ADMIN_SEARCH_SOURCE = "application][legal_entity_name][$contains";
+
+const AdminPayoutsSearchActions = () => {
+  const { filterValues, setFilters } = useListFilterContext();
+  const { setSearchBarOpenForTab } = useGrantContext();
+
+  const onClearSearch = useCallback(() => {
+    setFilters(
+      stripSearchKeys(filterValues as Record<string, unknown>, [
+        ADMIN_SEARCH_SOURCE,
+        ...LEGACY_PAYOUT_SEARCH_KEYS,
+      ]),
+      null
+    );
+  }, [filterValues, setFilters]);
+
+  useEffect(() => {
+    const fv = filterValues as Record<string, unknown>;
+    if (fv[ADMIN_SEARCH_SOURCE]) {
+      setSearchBarOpenForTab("Admin Payouts", true);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
+
+  return (
+    <GrantCollapsibleSearch
+      tab="Admin Payouts"
+      onClearSearch={onClearSearch}
+    >
+      <FilterLiveSearch
+        helperText="Search by application name"
+        source={ADMIN_SEARCH_SOURCE}
+      />
+    </GrantCollapsibleSearch>
+  );
+};
 
 const AdministrativePayoutsList = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedPayout, setSelectedPayout] = React.useState<RaRecord>();
   const [payoutStatus, setPayoutStatus] = React.useState<RaRecord | null>(null);
 
-  const { payoutStatusId, setPayoutStatusId, grantFilterId, fiscalYearStart, fiscalYearEnd} = useGrantContext();
+  const {
+    payoutStatusId,
+    setPayoutStatusId,
+    grantFilterId,
+    fiscalYearStart,
+    fiscalYearEnd,
+  } = useGrantContext();
 
   useEffect(() => {
     setPayoutStatusId(1);
@@ -44,11 +88,12 @@ const AdministrativePayoutsList = () => {
             type: "Administrative",
           },
           ...(payoutStatusId && { payout_status: payoutStatusId }),
-          ...(fiscalYearStart && fiscalYearEnd && {
+          ...(fiscalYearStart &&
+            fiscalYearEnd && {
               transaction_date: {
                 $between: [fiscalYearStart, fiscalYearEnd],
               },
-          }),
+            }),
         }}
         sort={{ field: "transaction_date", order: "ASC" }}
         title={" "}
@@ -56,35 +101,11 @@ const AdministrativePayoutsList = () => {
         perPage={50}
         queryOptions={{ meta: { raw: true, populate: true } }}
         pagination={<CustomPagination />}
-        actions={
-          <Box
-            sx={{
-              display: "flex",
-            }}
-          >
-            <FilterLiveSearch
-              helperText="Search by application name"
-              source="application][legal_entity_name][$contains"
-            />
-            <CreateButton
-              label="Payout"
-              sx={{
-                ml: 2,
-                backgroundColor: "primary.main",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                },
-                my: "auto",
-              }}
-            />
-          </Box>
-        }
+        actions={<AdminPayoutsSearchActions />}
         sx={{
-          " .RaList-actions": {
-            display: "flex",
-            justifyContent: "flex-start",
-            px: 2,
+          ".RaList-actions": {
+            p: 0,
+            minHeight: 0,
           },
         }}
       >
@@ -119,10 +140,10 @@ const AdministrativePayoutsList = () => {
           <FunctionField
             label="Amount"
             render={(record: RaRecord) => {
-              const value = record.amount || 0; // Ensure there's a value
+              const value = record.amount || 0;
               const formattedValue = Math.abs(value).toLocaleString("en-US", {
                 minimumFractionDigits: 2,
-              }); // Format with 2 decimal places
+              });
               return (
                 <span style={{ color: value < 0 ? "#ff0800" : "inherit" }}>
                   {value < 0 ? `($${formattedValue})` : `$${formattedValue}`}
@@ -130,18 +151,18 @@ const AdministrativePayoutsList = () => {
               );
             }}
           />
-          {/* Running Balance Column */}
           <FunctionField
             label="Balance"
             render={(record: RaRecord) => {
               runningTotal += record.amount / 2 || 0;
               return (
                 <span>
-                  ${runningTotal.toLocaleString("en-US", {
+                  $
+                  {runningTotal.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                   })}
                 </span>
-              ); // Display the running balance
+              );
             }}
           />
         </EditableDatagridConfigurable>

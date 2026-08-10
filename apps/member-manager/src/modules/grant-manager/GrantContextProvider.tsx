@@ -14,6 +14,17 @@ import {
   getRelationFilterId,
   sanitizeNumericFilterIds,
 } from "./helpers/getRelationFilterId";
+import {
+  SearchableTab,
+  hasPersistedSearch,
+} from "./helpers/searchBarTabs";
+
+const emptySearchBarOpen = (): Record<SearchableTab, boolean> => ({
+  applications: false,
+  payouts: false,
+  "Admin Payouts": false,
+  "application scores": false,
+});
 
 export const GrantContext = createContext<IGrantContextProvider>({
   grants: [],
@@ -55,6 +66,9 @@ export const GrantContext = createContext<IGrantContextProvider>({
   setFiscalYearEnd: () => {},
   applicationSearchFilter: "",
   setApplicationSearchFilter: () => {},
+  searchBarOpen: emptySearchBarOpen(),
+  setSearchBarOpenForTab: () => {},
+  toggleSearchBarForTab: () => {},
 });
 
 export const useGrantContext = () => useContext(GrantContext);
@@ -117,6 +131,25 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
     "grants-application-search-filter",
     ""
   );
+
+  const [searchBarOpen, setSearchBarOpen] =
+    useState<Record<SearchableTab, boolean>>(emptySearchBarOpen);
+
+  // Auto-open Applications search only when a persisted query exists.
+  useEffect(() => {
+    if (!hasPersistedSearch(applicationSearchFilter)) return;
+    setSearchBarOpen((prev) =>
+      prev.applications ? prev : { ...prev, applications: true }
+    );
+  }, [applicationSearchFilter]);
+
+  const setSearchBarOpenForTab = (tab: SearchableTab, open: boolean) => {
+    setSearchBarOpen((prev) => ({ ...prev, [tab]: open }));
+  };
+
+  const toggleSearchBarForTab = (tab: SearchableTab) => {
+    setSearchBarOpen((prev) => ({ ...prev, [tab]: !prev[tab] }));
+  };
 
   // Dashboard
   const [dashboardContext, setDashboardContext] = useState<"create" | "edit">(
@@ -214,6 +247,9 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
         setFiscalYearEnd,
         applicationSearchFilter,
         setApplicationSearchFilter,
+        searchBarOpen,
+        setSearchBarOpenForTab,
+        toggleSearchBarForTab,
       }}
     >
       {children}

@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Box, Modal, useMediaQuery, useTheme } from "@mui/material";
+import React, { useCallback, useEffect } from "react";
+import { Modal, useMediaQuery, useTheme } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
   List,
@@ -8,8 +8,7 @@ import {
   NumberField,
   FunctionField,
   RaRecord,
-  FilterLiveSearch,
-  CreateButton,
+  useListFilterContext,
 } from "react-admin";
 import { EditableDatagridConfigurable } from "@react-admin/ra-editable-datagrid";
 import EditPayout from "./EditPayoutRowForm";
@@ -23,6 +22,47 @@ import CustomPagination from "../../_components/CustomPagination";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import SelectPayoutStatus from "./components/SelectPayoutStatus";
 import { CurrencyOptions } from "../../../config/Settings";
+import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
+import GrantOrLiveSearch from "../_components/GrantOrLiveSearch";
+import {
+  buildApplicationOrFilter,
+  LEGACY_PAYOUT_SEARCH_KEYS,
+  stripSearchKeys,
+} from "../helpers/searchBarTabs";
+
+const PayoutsSearchActions = () => {
+  const { filterValues, setFilters } = useListFilterContext();
+  const { setSearchBarOpenForTab } = useGrantContext();
+
+  const onClearSearch = useCallback(() => {
+    setFilters(
+      stripSearchKeys(
+        filterValues as Record<string, unknown>,
+        LEGACY_PAYOUT_SEARCH_KEYS
+      ),
+      null
+    );
+  }, [filterValues, setFilters]);
+
+  // Open the bar if a prior $or / legacy search is already in filters
+  useEffect(() => {
+    const fv = filterValues as Record<string, unknown>;
+    const has =
+      Boolean(fv.$or) ||
+      LEGACY_PAYOUT_SEARCH_KEYS.some((k) => Boolean(fv[k]));
+    if (has) setSearchBarOpenForTab("payouts", true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
+
+  return (
+    <GrantCollapsibleSearch tab="payouts" onClearSearch={onClearSearch}>
+      <GrantOrLiveSearch
+        buildOr={buildApplicationOrFilter}
+        legacyKeys={LEGACY_PAYOUT_SEARCH_KEYS}
+        placeholder="Search by name or ID"
+      />
+    </GrantCollapsibleSearch>
+  );
+};
 
 const ReimbursementPayoutsList = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
@@ -70,40 +110,11 @@ const ReimbursementPayoutsList = () => {
         perPage={50}
         queryOptions={{ meta: { raw: true, populate: true } }}
         pagination={<CustomPagination />}
-        actions={
-          <Box
-            sx={{
-              display: "flex",
-              gap: 2,
-            }}
-          >
-            <FilterLiveSearch
-              helperText="Search by application name"
-              source="application][legal_entity_name][$contains"
-            />
-            <FilterLiveSearch
-              helperText="Search by application ID"
-              source="application][application_id][$contains"
-            />
-            <CreateButton
-              label="Payout"
-              sx={{
-                ml: 2,
-                backgroundColor: "primary.main",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                },
-                my: "auto",
-              }}
-            />
-          </Box>
-        }
+        actions={<PayoutsSearchActions />}
         sx={{
-          " .RaList-actions": {
-            display: "flex",
-            justifyContent: "flex-start",
-            px: 2,
+          ".RaList-actions": {
+            p: 0,
+            minHeight: 0,
           },
         }}
       >

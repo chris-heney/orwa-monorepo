@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Box, Checkbox, Modal, useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
@@ -28,6 +28,7 @@ import AgDatagrid from "../../_components/AgDatagrid";
 import type { AgDatagridPrefs } from "../../_components/AgDatagrid";
 import { IProject } from "../types";
 import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
+import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
 
 const AG_PREFS_KEY = "agGrid.grant-application-finals";
 
@@ -43,6 +44,24 @@ const PersistentFilterLiveSearch = () => {
   }, [filterValues.q]);
 
   return <FilterLiveSearch />;
+};
+
+const ApplicationsSearchActions = () => {
+  const { setApplicationSearchFilter } = useGrantContext();
+  const { filterValues, setFilters } = useListContext();
+
+  const onClearSearch = useCallback(() => {
+    setApplicationSearchFilter("");
+    const next = { ...filterValues };
+    delete next.q;
+    setFilters(next, null);
+  }, [filterValues, setFilters, setApplicationSearchFilter]);
+
+  return (
+    <GrantCollapsibleSearch tab="applications" onClearSearch={onClearSearch}>
+      <PersistentFilterLiveSearch />
+    </GrantCollapsibleSearch>
+  );
 };
 
 const GrantApplicationList = () => {
@@ -154,7 +173,7 @@ const GrantApplicationList = () => {
         }
         title={" "}
         resource="grant-application-finals"
-        actions={<PersistentFilterLiveSearch />}
+        actions={<ApplicationsSearchActions />}
         queryOptions={{
           meta: {
             raw: true,
@@ -165,9 +184,8 @@ const GrantApplicationList = () => {
         pagination={<CustomPagination />}
         sx={{
           ".RaList-actions": {
-            display: "flex",
-            justifyContent: "flex-start",
-            px: 2,
+            p: 0,
+            minHeight: 0,
           },
         }}
       >

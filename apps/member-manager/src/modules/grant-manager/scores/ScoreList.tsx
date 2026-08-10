@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect } from "react";
 import {
   List,
   TextField,
@@ -10,11 +10,19 @@ import {
   FunctionField,
   useRecordContext,
   useGetOne,
-  FilterLiveSearch,
+  useListFilterContext,
 } from "react-admin";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import CustomPagination from "../../_components/CustomPagination";
 import { Box, Typography, useTheme } from "@mui/material";
+import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
+import GrantOrLiveSearch from "../_components/GrantOrLiveSearch";
+import { useGrantContext } from "../GrantContextProvider";
+import {
+  buildScoresOrFilter,
+  LEGACY_SCORE_SEARCH_KEYS,
+  stripSearchKeys,
+} from "../helpers/searchBarTabs";
 
 const ScoreSheetLink = () => {
   const record = useRecordContext();
@@ -37,6 +45,42 @@ const ScoreSheetLink = () => {
   );
 };
 
+const ScoresSearchActions = () => {
+  const { filterValues, setFilters } = useListFilterContext();
+  const { setSearchBarOpenForTab } = useGrantContext();
+
+  const onClearSearch = useCallback(() => {
+    setFilters(
+      stripSearchKeys(
+        filterValues as Record<string, unknown>,
+        LEGACY_SCORE_SEARCH_KEYS
+      ),
+      null
+    );
+  }, [filterValues, setFilters]);
+
+  useEffect(() => {
+    const fv = filterValues as Record<string, unknown>;
+    const has =
+      Boolean(fv.$or) ||
+      LEGACY_SCORE_SEARCH_KEYS.some((k) => Boolean(fv[k]));
+    if (has) setSearchBarOpenForTab("application scores", true);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
+
+  return (
+    <GrantCollapsibleSearch
+      tab="application scores"
+      onClearSearch={onClearSearch}
+    >
+      <GrantOrLiveSearch
+        buildOr={buildScoresOrFilter}
+        legacyKeys={LEGACY_SCORE_SEARCH_KEYS}
+        placeholder="Search by name or ID"
+      />
+    </GrantCollapsibleSearch>
+  );
+};
+
 const ScoreList = () => {
   const theme = useTheme();
   return (
@@ -44,26 +88,13 @@ const ScoreList = () => {
       title={" "}
       resource="grant-application-scores"
       pagination={<CustomPagination />}
-      actions={
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <FilterLiveSearch
-            helperText="Search by application id"
-            // or application_id
-            source="grant_application][application_id][$contains"
-          />
-          <FilterLiveSearch
-            helperText="Search by application name"
-            source="grant_application][legal_entity_name][$contains"
-          />
-        </Box>
-      }
+      actions={<ScoresSearchActions />}
       sort={{ field: "date", order: "DESC" }}
       disableSyncWithLocation
       sx={{
-        " .RaList-actions": {
-          display: "flex",
-          justifyContent: "flex-start",
-          px: 2,
+        ".RaList-actions": {
+          p: 0,
+          minHeight: 0,
         },
       }}
     >
@@ -143,7 +174,6 @@ const ScoreList = () => {
             }
           />
         </ReferenceField>
-        {/* link to the scoring sheets orwa.org/application-search/?key=email */}
         <FunctionField label="Score Sheet" render={() => <ScoreSheetLink />} />
       </DatagridConfigurable>
     </List>

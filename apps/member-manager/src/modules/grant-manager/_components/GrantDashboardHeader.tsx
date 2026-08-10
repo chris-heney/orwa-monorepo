@@ -10,9 +10,11 @@ import {
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
+import SearchIcon from "@mui/icons-material/Search";
 import RecordCount from "../../_components/RecordCount";
 import {
   ConfigurableDatagridColumn,
+  CreateButton,
   ExportButton,
   ListBase,
   RaRecord,
@@ -27,6 +29,7 @@ import exportPayouts from "../../grant-manager/payouts/helpers/exportPayouts";
 import ExportApplications from "../../grant-manager/grant-application/helpers/ExportApplication";
 import ExportAdminPayouts from "../grant-application/helpers/ExportAdminPayouts";
 import { IGrantApplication } from "../grant-application/GrantApplicationTypes";
+import { isSearchableTab } from "../helpers/searchBarTabs";
 
 const GrantDashboardHeader = () => {
   const {
@@ -47,7 +50,12 @@ const GrantDashboardHeader = () => {
     fiscalYearStart,
     fiscalYearEnd,
     setGodMode,
+    searchBarOpen,
+    setSearchBarOpenForTab,
+    setApplicationSearchFilter,
   } = useGrantContext();
+
+  const searchableTab = isSearchableTab(selectedTab) ? selectedTab : null;
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
 
@@ -187,6 +195,19 @@ const GrantDashboardHeader = () => {
               <RecordCount />
               <ExportButton sx={{ color: "white" }} />
               <SelectColumnsButton style={{ color: "white" }} />
+              {(selectedTab === "payouts" ||
+                selectedTab === "Admin Payouts") && (
+                <CreateButton
+                  label="Payout"
+                  sx={{
+                    backgroundColor: "primary.main",
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "primary.dark",
+                    },
+                  }}
+                />
+              )}
             </ListBase>
           )}
 
@@ -225,6 +246,42 @@ const GrantDashboardHeader = () => {
               )}
             </IconButton>
           </Tooltip> */}
+
+          {searchableTab && (
+            <Tooltip title="Search">
+              <IconButton
+                onClick={() => {
+                  const willOpen = !searchBarOpen[searchableTab];
+                  if (!willOpen) {
+                    // Clear persisted application search before closing so the
+                    // provider effect cannot immediately re-open the bar.
+                    if (searchableTab === "applications") {
+                      setApplicationSearchFilter("");
+                    }
+                    setSearchBarOpenForTab(searchableTab, false);
+                  } else {
+                    setSearchBarOpenForTab(searchableTab, true);
+                  }
+                }}
+                size="small"
+                color="primary"
+              >
+                <SearchIcon
+                  fontSize="small"
+                  style={
+                    !searchBarOpen[searchableTab]
+                      ? { stroke: "white" }
+                      : { fill: "white" }
+                  }
+                  sx={{
+                    "&:hover": {
+                      color: "white",
+                    },
+                  }}
+                />
+              </IconButton>
+            </Tooltip>
+          )}
 
           <Tooltip title="Filter">
             <IconButton
