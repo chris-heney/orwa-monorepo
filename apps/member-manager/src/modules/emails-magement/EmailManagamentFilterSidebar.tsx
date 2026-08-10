@@ -1,70 +1,54 @@
 import React from "react";
 import { ListBase } from "react-admin";
-import { Grid, IconButton, Paper, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { Favorite } from "@mui/icons-material";
 import { useEmailManagementContext } from "./EmailManagementContextProvider";
-import CustomHeader from "../_components/CustomHeader";
 import EmailFilters from "./emails-templates/EmailFilters";
 import EmailLogFilters from "./email-logs/EmailLogFilters";
 import EmailTaskFilters from "./email-taks/components/EmailTaskFilters";
-    
+import FilterSidebarShell from "../_components/FilterSidebarShell";
+
 const EmailManagementFilterSidebar = () => {
   const {
     selectedTab,
     isFilterSidebarOpen,
+    setIsFilterSidebarOpen,
     isLoading,
     setSavingQuery,
     emailFilters,
     emailLogFilters,
-    emailTaskFilters
+    emailTaskFilters,
   } = useEmailManagementContext();
 
-  return !isFilterSidebarOpen || isLoading ? (
-    <></>
-  ) : (
-    <Grid
-      item
-      xs={12}
-      md={2}
-      sx={{
-        flexGrow: 1,
-        position: "relative",
-      }}
+  if (isLoading) {
+    return null;
+  }
+
+  return (
+    <FilterSidebarShell
+      open={isFilterSidebarOpen}
+      onClose={() => setIsFilterSidebarOpen(false)}
+      headerActions={
+        <Tooltip title="Save Current Filter">
+          <IconButton
+            onClick={() => setSavingQuery((prev) => !prev)}
+            size="small"
+            sx={{ color: "common.white" }}
+            aria-label="Save current filter"
+          >
+            <Favorite fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      }
     >
-      <Paper
-        component={"aside"}
-        sx={{
-          mt: 3,
-          ml: 2,
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <CustomHeader
-          title="Filters"
-          Component={() => {
-            return (
-              <Tooltip title="Save Current Filter">
-                <IconButton onClick={() => setSavingQuery((prev) => !prev)} color="primary">
-                  <Favorite
-                    fontSize="small"
-                    sx={{
-                      color: "white",
-                    }}
-                  />
-                </IconButton>
-              </Tooltip>
-            );
-          }}
-        />
+      <Box sx={{ p: 2 }}>
         {selectedTab === "email-templates" && (
           <ListBase
             filterDefaultValues={emailFilters}
             disableSyncWithLocation
             resource={selectedTab}
           >
-            <EmailFilters/>
+            <EmailFilters />
           </ListBase>
         )}
         {selectedTab === "email-logs" && (
@@ -73,8 +57,8 @@ const EmailManagementFilterSidebar = () => {
             disableSyncWithLocation
             resource={selectedTab}
           >
-            <EmailLogFilters/>
-            </ListBase>
+            <EmailLogFilters />
+          </ListBase>
         )}
         {selectedTab === "scheduled-email-tasks" && (
           <ListBase
@@ -82,11 +66,11 @@ const EmailManagementFilterSidebar = () => {
             disableSyncWithLocation
             resource={selectedTab}
           >
-            <EmailTaskFilters/>
+            <EmailTaskFilters />
           </ListBase>
         )}
-      </Paper>
-    </Grid>
+      </Box>
+    </FilterSidebarShell>
   );
 };
 

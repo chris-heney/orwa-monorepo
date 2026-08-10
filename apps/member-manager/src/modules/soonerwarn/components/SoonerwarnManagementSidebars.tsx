@@ -1,14 +1,12 @@
-import { Box, Paper, Theme, useMediaQuery } from "@mui/material";
+import { Box } from "@mui/material";
 import React, { useEffect } from "react";
-import CustomHeader from "../../_components/CustomHeader";
 import ActivityFeed from "../../activity/ActivityFeed";
 import { useSoonerwarnContext } from "../SoonerwarnContextProvider";
 import SoonerwarnStatusFilter from "./SoonerwarnStatusFilter";
 import SoonerwarnEmailSideBar from "../../emails-magement/SoonerwarnEmailSidebar";
+import FilterSidebarShell from "../../_components/FilterSidebarShell";
 
 const SoonerwarnManagementSidebars = () => {
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
-
   const {
     isFilterSidebarOpen,
     isActivitySidebarOpen,
@@ -74,47 +72,31 @@ const SoonerwarnManagementSidebars = () => {
       setIsActivitySidebarOpen(false);
     }
   }, [isFilterSidebarOpen]);
+
   return (
     <>
-      {isFilterSidebarOpen && !isSmall && (
-        <Box
-          sx={{
-            flexGrow: 1,
-            position: "relative",
-          }}
-        >
-          <Paper
-            component={"aside"}
-            sx={{
-              mt: 3,
-              ml: 2,
-              position: "sticky",
-              top: 0,
-              zIndex: 10,
-            }}
-          >
-            <CustomHeader title="Filter" />
-
-            {selectedTab === "soonerwarn applications" && (
-              <SoonerwarnStatusFilter
-                selectedStatuses={selectedStatuses}
-                setSelectedStatuses={setSelectedStatuses}
-                resource={"soonerwarn-statuses"}
-              />
-            )}
-            {selectedTab === "needs assistance" && (
-              <SoonerwarnStatusFilter
-                selectedStatuses={selectedRequestedStatuses}
-                setSelectedStatuses={setSelectedRequestedStatuses}
-                resource={"request-statuses"}
-              />
-            )}
-            {/* {selectedTab === 'payouts' && <PayoutStatusFilter />} */}
-          </Paper>
+      <FilterSidebarShell
+        open={isFilterSidebarOpen}
+        onClose={() => setIsFilterSidebarOpen(false)}
+        title="Filter"
+      >
+        <Box sx={{ p: 2 }}>
+          {selectedTab === "soonerwarn applications" && (
+            <SoonerwarnStatusFilter
+              selectedStatuses={selectedStatuses}
+              setSelectedStatuses={setSelectedStatuses}
+              resource={"soonerwarn-statuses"}
+            />
+          )}
+          {selectedTab === "needs assistance" && (
+            <SoonerwarnStatusFilter
+              selectedStatuses={selectedRequestedStatuses}
+              setSelectedStatuses={setSelectedRequestedStatuses}
+              resource={"request-statuses"}
+            />
+          )}
         </Box>
-      )}
-
-      {/* Email Sidebar */}
+      </FilterSidebarShell>
 
       {isActivitySidebarOpen && (
         <ActivityFeed

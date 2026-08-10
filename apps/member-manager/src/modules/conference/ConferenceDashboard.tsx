@@ -25,18 +25,16 @@ import ConferenceTabs from "./components/ConferenceTabs";
 import exportSponsors from "./helpers/exportSponsors";
 import exportAttendees from "./helpers/exportAttendes";
 import {
-  ensureConferenceInFilters,
   getConferenceFilterId,
   getPrimaryConferenceId,
 } from "./helpers/mergeConferenceAcrossTabFilters";
-import { omitYearForListQuery } from "./helpers/listQueryFilters";
+import { normalizeFiltersForListQuery } from "./helpers/listQueryFilters";
 
 const ConferenceDashboard = () => {
   const {
     selectedTab,
     conferences,
     resource,
-    isFilterSidebarOpen,
     tabFilters,
   } = useConferenceContext();
 
@@ -144,9 +142,10 @@ const ConferenceDashboard = () => {
 
   const listResource =
     resource.length > 0 ? resource : "conference-attendees";
-  const listFilterDefaults = omitYearForListQuery(
+  const listFilterDefaults = normalizeFiltersForListQuery(
     listResource,
-    ensureConferenceInFilters(tabFilters[selectedTab], selectedTab)
+    tabFilters[selectedTab],
+    selectedTab
   );
 
   // Determine which exporter to use based on the current resource
@@ -192,6 +191,9 @@ const ConferenceDashboard = () => {
         }}
       >
         <ListBase
+          // Remount on tab/resource change so tickets' `conferences` filter
+          // cannot briefly fire against singular-`conference` resources.
+          key={`${selectedTab}:${listResource}`}
           storeKey={`${selectedTab}-${JSON.stringify(tabFilters[selectedTab])}`}
           perPage={100}
           filterDefaultValues={listFilterDefaults}
@@ -207,7 +209,8 @@ const ConferenceDashboard = () => {
               overflow: "hidden",
               flexGrow: "1",
               backgroundColor: "transparent",
-              maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
+              maxWidth: "95vw",
+              width: "100%",
             }}
           >
             {/* Header */}

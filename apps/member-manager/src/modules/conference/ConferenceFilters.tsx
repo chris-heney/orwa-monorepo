@@ -1,17 +1,10 @@
 import React, { useEffect, useRef } from "react";
 import { useConferenceContext } from "./ConferenceContext";
-import {
-  Card,
-  CardContent,
-  IconButton,
-  Tooltip,
-  useMediaQuery,
-  Theme,
-} from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import { Favorite } from "@mui/icons-material";
 import SavedFilters from "../_components/SavedFilters";
 import { Loading, useListFilterContext, useListSortContext } from "react-admin";
-import CustomHeader from "../_components/CustomHeader";
+import FilterSidebarShell from "../_components/FilterSidebarShell";
 import {
   AttendeesFilter,
   ContestantsFilter,
@@ -27,6 +20,7 @@ import {
   mergeConferenceYearIntoAllTabs,
 } from "./helpers/mergeConferenceAcrossTabFilters";
 import {
+  normalizeFiltersForListQuery,
   omitYearForListQuery,
   shouldOmitYearFromListQuery,
 } from "./helpers/listQueryFilters";
@@ -36,33 +30,33 @@ const deepEqual = (obj1: any, obj2: any): boolean => {
   if (obj1 === obj2) return true;
   if (obj1 == null || obj2 == null) return false;
   if (typeof obj1 !== "object" || typeof obj2 !== "object") return false;
-  
+
   // Handle arrays
   if (Array.isArray(obj1) && Array.isArray(obj2)) {
     if (obj1.length !== obj2.length) return false;
     return obj1.every((val, idx) => deepEqual(val, obj2[idx]));
   }
-  
+
   // Handle non-array objects
   if (Array.isArray(obj1) || Array.isArray(obj2)) return false;
-  
+
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
-  
+
   if (keys1.length !== keys2.length) return false;
-  
+
   for (const key of keys1) {
     if (!keys2.includes(key)) return false;
     if (!deepEqual(obj1[key], obj2[key])) return false;
   }
-  
+
   return true;
 };
 
 const ConferenceFilters = () => {
-  // Keep conferences from context for UI display
   const {
     isFilterSidebarOpen,
+    setIsFilterSidebarOpen,
     selectedTab,
     setSavingQuery,
     savingQuery,
@@ -74,8 +68,6 @@ const ConferenceFilters = () => {
     setTabSorts,
     resource,
   } = useConferenceContext();
-
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
 
   const { filterValues, setFilters } = useListFilterContext();
   const { sort, setSort } = useListSortContext();
@@ -92,30 +84,52 @@ const ConferenceFilters = () => {
   useEffect(() => {
     if (previousTab.current !== selectedTab) {
       isSyncingFromContext.current = true;
-      
+
       // For tickets/extras/addons tabs, convert conference to conferences array if needed
-      const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(selectedTab);
+      const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(
+        selectedTab
+      );
       let filtersToApply = ensureConferenceInFilters(
         { ...contextFilters },
         selectedTab
       );
-      
-      if (isMultiConferenceTab && filtersToApply.conference && !filtersToApply.conferences) {
+
+      if (
+        isMultiConferenceTab &&
+        filtersToApply.conference &&
+        !filtersToApply.conferences
+      ) {
         // Convert conference single value to conferences array
         filtersToApply.conferences = [filtersToApply.conference];
         delete filtersToApply.conference;
-      } else if (!isMultiConferenceTab && filtersToApply.conferences && !filtersToApply.conference) {
+      } else if (
+        !isMultiConferenceTab &&
+        filtersToApply.conferences &&
+        !filtersToApply.conference
+      ) {
         // Convert conferences array to conference single value for other tabs
-        if (Array.isArray(filtersToApply.conferences) && filtersToApply.conferences.length > 0) {
+        if (
+          Array.isArray(filtersToApply.conferences) &&
+          filtersToApply.conferences.length > 0
+        ) {
           filtersToApply.conference = filtersToApply.conferences[0];
           delete filtersToApply.conferences;
         }
       }
 
-      const listFilters = omitYearForListQuery(resource, filtersToApply);
-      
+      const listFilters = normalizeFiltersForListQuery(
+        resource,
+        filtersToApply,
+        selectedTab
+      );
+
       // Only update if the values are different
-      if (!deepEqual(listFilters, omitYearForListQuery(resource, filterValues))) {
+      if (
+        !deepEqual(
+          listFilters,
+          normalizeFiltersForListQuery(resource, filterValues, selectedTab)
+        )
+      ) {
         setFilters(listFilters, filterValues, false);
       }
       if (!deepEqual(contextSort || {}, sort)) {
@@ -127,7 +141,16 @@ const ConferenceFilters = () => {
         isSyncingFromContext.current = false;
       }, 100);
     }
-  }, [selectedTab, contextFilters, contextSort, setFilters, setSort, filterValues, sort, resource]);
+  }, [
+    selectedTab,
+    contextFilters,
+    contextSort,
+    setFilters,
+    setSort,
+    filterValues,
+    sort,
+    resource,
+  ]);
 
   useEffect(() => {
     // Only update context if we're not currently syncing from context
@@ -141,7 +164,9 @@ const ConferenceFilters = () => {
     ) {
       // For tickets/extras/addons tabs, keep conferences array format
       // For other tabs, normalize conferences array to conference single value for storage
-      const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(selectedTab);
+      const isMultiConferenceTab = ["tickets", "extras", "addons"].includes(
+        selectedTab
+      );
       const normalizedFilters: Record<string, any> = { ...filterValues };
 
       let tabEntry: Record<string, any>;
@@ -187,8 +212,6 @@ const ConferenceFilters = () => {
       }));
     }
   }, [sort, contextSort, selectedTab, setTabSorts]);
-
-  if (isFilterSidebarOpen || isSmall) return null;
 
   if (!filterValues) return <Loading />;
 
@@ -271,39 +294,23 @@ const ConferenceFilters = () => {
   };
 
   return (
-    <Card sx={{ pb: 2 }}>
-      {/* <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        <p>{"Sort values: " + (sort ? JSON.stringify(sort) : "none")}</p>
-        <p>{"Context values: " + JSON.stringify(filterValues)}</p>
-        <p style={{ whiteSpace: "wrap", maxWidth: "100px" }}>
-          {"Tab Filters: " + JSON.stringify(tabFilters)}
-        </p>
-        <p style={{ whiteSpace: "wrap", maxWidth: "100px" }}>
-          {"Tab Sorts: " + JSON.stringify(tabSorts)}
-        </p>
-      </div> */}
-      <CustomHeader
-        title="Filters"
-        Component={() => {
-          return (
-            <Tooltip title="Save Current Filter">
-              <IconButton
-                onClick={() => setSavingQuery((prev) => !prev)}
-                color="primary"
-              >
-                <Favorite
-                  fontSize="small"
-                  sx={{
-                    color: "white",
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          );
-        }}
-      />
-
-      <CardContent>
+    <FilterSidebarShell
+      open={isFilterSidebarOpen}
+      onClose={() => setIsFilterSidebarOpen(false)}
+      headerActions={
+        <Tooltip title="Save Current Filter">
+          <IconButton
+            onClick={() => setSavingQuery((prev) => !prev)}
+            size="small"
+            sx={{ color: "common.white" }}
+            aria-label="Save current filter"
+          >
+            <Favorite fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      }
+    >
+      <Box sx={{ p: 2 }}>
         <SavedFilters
           resource={resource}
           savingQuery={savingQuery}
@@ -311,8 +318,8 @@ const ConferenceFilters = () => {
         />
 
         {renderFilterComponent()}
-      </CardContent>
-    </Card>
+      </Box>
+    </FilterSidebarShell>
   );
 };
 

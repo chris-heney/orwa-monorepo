@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, IconButton, Paper, Tooltip } from "@mui/material";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import {
   FilterList,
   FilterListItem,
@@ -12,12 +12,12 @@ import { Divider } from "@mui/material";
 import { useHumanResourcesContext } from "../HumanResourcesContext";
 import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
-import CustomHeader from "../../_components/CustomHeader";
 import { Favorite } from "@mui/icons-material";
 import RolesContextProvider, {
   useRolesContext,
 } from "../../../context/RolesContextProvider";
 import SavedFilters from "../../_components/SavedFilters";
+import FilterSidebarShell from "../../_components/FilterSidebarShell";
 
 const ContactFilters = () => {
   const { setContactFilters, selectedTab, isSavingQuery, setSavingQuery } =
@@ -252,6 +252,7 @@ const HumanResourcesFilters = () => {
   const {
     selectedTab,
     isFilterSidebarOpen,
+    setIsFilterSidebarOpen,
     isLoading,
     contactFilters,
     staffFilters,
@@ -260,39 +261,27 @@ const HumanResourcesFilters = () => {
     setSavingQuery,
   } = useHumanResourcesContext();
 
-  return !isFilterSidebarOpen || isLoading ? (
-    <></>
-  ) : (
-    <Paper
-      component={"aside"}
-      sx={{
-        mt: 3,
-        ml: 2,
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-      }}
+  if (isLoading) {
+    return null;
+  }
+
+  return (
+    <FilterSidebarShell
+      open={isFilterSidebarOpen}
+      onClose={() => setIsFilterSidebarOpen(false)}
+      headerActions={
+        <Tooltip title="Save Current Filter">
+          <IconButton
+            onClick={() => setSavingQuery((prev) => !prev)}
+            size="small"
+            sx={{ color: "common.white" }}
+            aria-label="Save current filter"
+          >
+            <Favorite fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      }
     >
-      <CustomHeader
-        title="Filters"
-        Component={() => {
-          return (
-            <Tooltip title="Save Current Filter">
-              <IconButton
-                onClick={() => setSavingQuery((prev) => !prev)}
-                color="primary"
-              >
-                <Favorite
-                  fontSize="small"
-                  sx={{
-                    color: "white",
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
-          );
-        }}
-      />
       <Box sx={{ p: 2 }}>
         {selectedTab === "contacts" && (
           <ListBase
@@ -336,7 +325,7 @@ const HumanResourcesFilters = () => {
           </ListBase>
         )}
       </Box>
-    </Paper>
+    </FilterSidebarShell>
   );
 };
 

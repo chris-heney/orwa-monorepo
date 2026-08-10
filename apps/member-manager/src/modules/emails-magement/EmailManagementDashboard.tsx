@@ -14,7 +14,7 @@ import EmailLogsList from "./email-logs/EmailLogList";
 import EmailManagementFilterSidebar from "./EmailManagamentFilterSidebar";
 
 const EmailManagementDashboard = () => {
-  const { selectedTab, setSelectedTab, isSettingsOpen, isFilterSidebarOpen } =
+  const { selectedTab, setSelectedTab, isSettingsOpen } =
     useEmailManagementContext();
   // const { role, isLoading } = useUserRoleContext();
 
@@ -40,7 +40,7 @@ const EmailManagementDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
-      <Grid item xs={12} md={(isSettingsOpen || !isFilterSidebarOpen) ? 12 : 10}>
+      <Grid item xs={12} md={12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Email Management" />
           <EmailManagemenHeader/>

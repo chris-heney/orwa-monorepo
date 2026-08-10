@@ -28,7 +28,7 @@ import useCurrentUser from "../_helpers/useCurrentUser";
 const STAFF_TAB_VALUES = ["watersystems", "associates"];
 
 const MembershipDashboard = () => {
-  const { selectedTab, setSelectedTab, isSettingsOpen, isFilterSidebarOpen} =
+  const { selectedTab, setSelectedTab, isSettingsOpen } =
     useMembershipContext();
   const { role } = useCurrentUser();
 
@@ -79,7 +79,7 @@ const MembershipDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
-      <Grid item xs={12} md={((isFilterSidebarOpen && !isSettingsOpen ) && selectedTab !== "summary") ? 10 : 12}>
+      <Grid item xs={12} md={12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Memberships" />
           <MembershiphHeader />

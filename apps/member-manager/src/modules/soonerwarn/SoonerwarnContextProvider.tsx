@@ -60,7 +60,10 @@ const SoonerwarnContextProvider = ({ children }: PropsWithChildren<{}>) => {
   const [selectedTab, setSelectedTab] = useStore<SoonerwarnTabValue>('soonerwarn-tab-value', 'soonerwarn applications');
 
   // Sidebar states
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false);
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useStore(
+    "soonerwarn-filter-sidebar-open",
+    false
+  );
   const [isActivitySidebarOpen, setIsActivitySidebarOpen] = useState(false);
   const [isEmailSidebarOpen, setIsEmailSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);

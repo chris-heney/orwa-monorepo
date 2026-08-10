@@ -30,7 +30,6 @@ const SoonerwarnDashboard = () => {
     setIsEmailSidebarOpen,
     isActivitySidebarOpen,
     isEmailSidebarOpen,
-    isFilterSidebarOpen,
     setResource,
   } = useSoonerwarnContext();
 
@@ -74,9 +73,7 @@ const SoonerwarnDashboard = () => {
         display: "flex",
         flexDirection: isSmall ? "column" : "row",
         maxWidth:
-          isActivitySidebarOpen || isEmailSidebarOpen || isFilterSidebarOpen
-            ? "90vw"
-            : "96vw",
+          isActivitySidebarOpen || isEmailSidebarOpen ? "90vw" : "96vw",
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
@@ -133,9 +130,7 @@ const SoonerwarnDashboard = () => {
                 <Box
                   sx={{
                     maxWidth:
-                      isActivitySidebarOpen ||
-                      isEmailSidebarOpen ||
-                      isFilterSidebarOpen
+                      isActivitySidebarOpen || isEmailSidebarOpen
                         ? "90vw"
                         : "96vw",
                     overflow: "scroll",
@@ -151,9 +146,7 @@ const SoonerwarnDashboard = () => {
                           sx={{
                             width: "100%",
                             maxWidth:
-                              isActivitySidebarOpen ||
-                              isEmailSidebarOpen ||
-                              isFilterSidebarOpen
+                              isActivitySidebarOpen || isEmailSidebarOpen
                                 ? "90vw"
                                 : "96vw",
                             overflow: "hidden",

@@ -23,11 +23,10 @@ export type TabValue = "contacts" | "staffs" | "training-instructors";
 const HumanResourcesDashboard = () => {
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
 
-  const { 
-    selectedTab, 
-    setSelectedTab, 
-    isSettingsOpen, 
-    isFilterSidebarOpen, 
+  const {
+    selectedTab,
+    setSelectedTab,
+    isSettingsOpen,
   } = useHumanResourcesContext();
 
   const { role } = useCurrentUser();
@@ -65,7 +64,7 @@ const HumanResourcesDashboard = () => {
 
   return (
     <Grid container spacing={0} maxWidth={"95vw"}>
-      <Grid item xs={12} md={isFilterSidebarOpen && !isSettingsOpen ? 10 : 12}>
+      <Grid item xs={12} md={12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
           <Title title="Human Resources" />
           <HumanResourcesHeader />
@@ -149,9 +148,7 @@ const HumanResourcesDashboard = () => {
           </Box>
         )}
       </Grid>
-      {!isSettingsOpen && isFilterSidebarOpen && <Grid item xs={12} md={2}>
-        <HumanResourcesFilters />
-      </Grid>}
+      {!isSettingsOpen && <HumanResourcesFilters />}
     </Grid>
   );
 };

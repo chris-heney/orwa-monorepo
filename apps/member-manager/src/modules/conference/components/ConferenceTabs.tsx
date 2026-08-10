@@ -1,4 +1,4 @@
-import { Paper, Tab, Theme, useMediaQuery } from '@mui/material';
+import { Paper, Tab } from '@mui/material';
 import { TabPanel } from '@mui/lab';
 import { TabList } from "@mui/lab";
 import { TabContext } from "@mui/lab";
@@ -81,8 +81,7 @@ const getTabComponent = (tabValue: string) => {
   };
 
 const ConferenceTabs = () => {
-  const { selectedTab, setSelectedTab, setResource, isFilterSidebarOpen } =
-    useConferenceContext();
+  const { selectedTab, setSelectedTab, setResource } = useConferenceContext();
   const { filterValues } = useListFilterContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
@@ -185,9 +184,6 @@ const ConferenceTabs = () => {
     },
   ];
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
- 
-
   return (
     <Box sx={{ p: 0 }}>
       <TabContext value={selectedTab.toString()}>
@@ -249,7 +245,8 @@ const ConferenceTabs = () => {
           sx={{
             mb: 2,
             backgroundColor: "background.paper",
-            maxWidth: isSmall || isFilterSidebarOpen ? "95vw" : "80vw",
+            maxWidth: "95vw",
+            width: "100%",
             overflow: "scroll",
           }}
         >

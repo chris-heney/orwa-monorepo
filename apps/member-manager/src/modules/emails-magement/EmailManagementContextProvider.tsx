@@ -35,7 +35,10 @@ const EmailManagementContextProvider = ({ children }: PropsWithChildren) => {
     "email-management-tab-value",
     "email-templates"
   );
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(true);
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useStore(
+    "email-management-filter-sidebar-open",
+    false
+  );
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);

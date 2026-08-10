@@ -3,16 +3,17 @@ import { useMembershipContext } from "../MembershipsContextProvider";
 import { ListBase } from "react-admin";
 import WaterSystemFilter from "../watersystem/components/WatersystemFilter";
 import AssociateListFilterSidebar from "../associate/components/AssociateListFilterSidebar";
-import { Grid, IconButton, Paper, Tooltip } from "@mui/material";
-import CustomHeader from "../../_components/CustomHeader";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import InvoicesFilters from "./InvoicesFilters";
 import { Favorite } from "@mui/icons-material";
 import useCurrentUser from "../../_helpers/useCurrentUser";
+import FilterSidebarShell from "../../_components/FilterSidebarShell";
 
 const MembershipFilters = () => {
   const {
     selectedTab,
     isFilterSidebarOpen,
+    setIsFilterSidebarOpen,
     isLoading,
     associateFilters,
     watersystemFilters,
@@ -23,45 +24,30 @@ const MembershipFilters = () => {
   } = useMembershipContext();
   const { role } = useCurrentUser();
 
-  return selectedTab === "summary" || !isFilterSidebarOpen || isLoading ? (
-    <></>
-  ) : (
-    <Grid
-      item
-      xs={12}
-      md={2}
-      sx={{
-        flexGrow: 1,
-        position: "relative",
-      }}
+  if (selectedTab === "summary" || isLoading) {
+    return null;
+  }
+
+  return (
+    <FilterSidebarShell
+      open={isFilterSidebarOpen}
+      onClose={() => setIsFilterSidebarOpen(false)}
+      headerActions={
+        role === "Staff" ? undefined : (
+          <Tooltip title="Save Current Filter">
+            <IconButton
+              onClick={() => setSavingQuery((prev) => !prev)}
+              size="small"
+              sx={{ color: "common.white" }}
+              aria-label="Save current filter"
+            >
+              <Favorite fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        )
+      }
     >
-      <Paper
-        component={"aside"}
-        sx={{
-          mt: 3,
-          ml: 2,
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <CustomHeader
-          title="Filters"
-          Component={role === "Staff" ? undefined : () => {
-            return (
-              <Tooltip title="Save Current Filter">
-                <IconButton onClick={() => setSavingQuery((prev) => !prev)} color="primary">
-                  <Favorite
-                    fontSize="small"
-                    sx={{
-                      color: "white",
-                    }}
-                  />
-                </IconButton>
-              </Tooltip>
-            );
-          }}
-        />
+      <Box sx={{ p: 2 }}>
         {selectedTab === "watersystems" && (
           <ListBase
             filterDefaultValues={watersystemFilters ?? null}
@@ -107,8 +93,8 @@ const MembershipFilters = () => {
             <InvoicesFilters />
           </ListBase>
         )}
-      </Paper>
-    </Grid>
+      </Box>
+    </FilterSidebarShell>
   );
 };
 
