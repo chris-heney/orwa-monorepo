@@ -34,12 +34,14 @@ const SponsorshipFilter: React.FC<SponsorshipFilterProps> = ({
   const { setFilters } = useListFilterContext();
 
   useEffect(() => {
-    if (getPrimaryConferenceId(filterValues) != null) return;
-    setFilters(
-      ensureConferenceInFilters(filterValues, "sponsorships"),
-      filterValues,
-      false
-    );
+    const next = ensureConferenceInFilters(filterValues, "sponsorships");
+    // Always normalize plural→singular; a stale `conferences` key 400s Strapi.
+    if (
+      next.conference !== filterValues?.conference ||
+      filterValues?.conferences != null
+    ) {
+      setFilters(next, filterValues, false);
+    }
   }, [filterValues, setFilters]);
 
   const conferenceIsSelected = (val: any, filters: any) =>

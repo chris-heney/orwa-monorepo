@@ -42,8 +42,9 @@ export function getPrimaryConferenceId(
 
 /**
  * Conference is a radio: always keep exactly one selected.
- * Restores the default when missing/cleared. Preserves tab shape
- * (`conference` vs `conferences: [id]`).
+ * Restores the default when missing/cleared.
+ * Always normalizes shape for the tab (`conference` vs `conferences: [id]`)
+ * so a stale plural key never hits singular-relation resources (400 Invalid key).
  */
 export function ensureConferenceInFilters(
   filters: Record<string, any> | null | undefined,
@@ -51,17 +52,15 @@ export function ensureConferenceInFilters(
   defaultId: number = DEFAULT_CONFERENCE_ID
 ): Record<string, any> {
   const base = filters || {};
-  if (getPrimaryConferenceId(base) != null) {
-    return base;
-  }
+  const primaryId = getPrimaryConferenceId(base) ?? defaultId;
   const next = { ...base };
   const useMulti = tab != null && MULTI_CONFERENCE_TABS.has(tab);
   if (useMulti) {
     delete next.conference;
-    next.conferences = [defaultId];
+    next.conferences = [primaryId];
   } else {
     delete next.conferences;
-    next.conference = defaultId;
+    next.conference = primaryId;
   }
   return next;
 }
