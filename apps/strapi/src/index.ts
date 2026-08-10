@@ -52,6 +52,32 @@ const configureTermPermissions = async (strapi) => {
   }
 };
 
+/** Self-only RaStore sync for member-manager. */
+const USER_PREFERENCES_ACTIONS = [
+  // Current dedicated API
+  'api::my-preferences.my-preferences.getMine',
+  'api::my-preferences.my-preferences.updateMine',
+  // Legacy paths on api::user (kept for in-flight clients)
+  'api::user.user.getMyPreferences',
+  'api::user.user.updateMyPreferences',
+];
+
+const configureUserPreferencesPermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(
+      strapi,
+      { type: 'authenticated' },
+      USER_PREFERENCES_ACTIONS
+    );
+    await ensureRolePermissions(strapi, { type: 'admin' }, USER_PREFERENCES_ACTIONS);
+    await ensureRolePermissions(strapi, { type: 'staff' }, USER_PREFERENCES_ACTIONS);
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure user preferences permissions: ${error.message}`
+    );
+  }
+};
+
 const STAFF_ROLE_TYPE = 'staff';
 const STAFF_ALLOWED_ACTIONS = [
   'api::associate.associate.find',
@@ -64,6 +90,10 @@ const STAFF_ALLOWED_ACTIONS = [
   'api::saved-query.saved-query.findOne',
   'plugin::upload.content-api.find',
   'plugin::upload.content-api.findOne',
+  'api::my-preferences.my-preferences.getMine',
+  'api::my-preferences.my-preferences.updateMine',
+  'api::user.user.getMyPreferences',
+  'api::user.user.updateMyPreferences',
 ];
 
 const configureStaffRole = async (strapi) => {
@@ -183,5 +213,6 @@ export default {
   async bootstrap({ strapi }) {
     await configureStaffRole(strapi);
     await configureTermPermissions(strapi);
+    await configureUserPreferencesPermissions(strapi);
   },
 };
