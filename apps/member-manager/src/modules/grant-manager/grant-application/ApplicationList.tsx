@@ -140,7 +140,10 @@ const GrantApplicationList = () => {
         pagination: { page: 1, perPage: 1000 },
         sort: { field: "id", order: "ASC" },
         filter: { status: ids },
-        meta: { raw: true, populate: { payouts: "*" } },
+        meta: {
+          raw: true,
+          populate: { payouts: { populate: { payout_status: true } } },
+        },
       });
       if (data.length === 0) return;
       checkAndUpdateRecords(data);

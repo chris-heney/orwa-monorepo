@@ -10,9 +10,12 @@ import { computeBalance } from "../helpers/payoutAmounts";
 
 export { computeBalance, isAwardPaidInFull } from "../helpers/payoutAmounts";
 
-// Nested populate so `type` and `payout_status.name` are available for
-// award-balance math (admin draws and rejected requests must not count).
-const BALANCE_META = { raw: true, populate: { payouts: "*" } };
+// Nested payout_status only — `populate[payouts]=*` 400s in Strapi 5 because
+// it also walks the inverse `application` relation.
+const BALANCE_META = {
+  raw: true,
+  populate: { payouts: { populate: { payout_status: true } } },
+};
 
 const BalanceField = ({ applicationId }: { applicationId: Identifier }) => {
   const { data: application, isLoading } = useGetOne(

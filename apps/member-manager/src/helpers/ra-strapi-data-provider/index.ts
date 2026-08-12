@@ -6,6 +6,7 @@ export {
   appendFilterQuery,
   isDocumentId,
 } from './src/serializeStrapiFilters'
+export { serializePopulateQuery } from './src/serializePopulateQuery'
 export {
   sanitizeStrapiWritePayload,
   sanitizeWriteValue,

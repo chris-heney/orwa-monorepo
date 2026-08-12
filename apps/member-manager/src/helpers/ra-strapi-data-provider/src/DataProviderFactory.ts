@@ -35,6 +35,7 @@ import {
 import httpClient from "./httpClient";
 import qs from "qs";
 import { StrapiFormattedFile } from "../../../modules/grant-manager/types";
+import { serializePopulateQuery } from "./serializePopulateQuery";
 import {
   convertRaParamsToStrapiParams as serializeRaListParams,
   isDocumentId as isStrapiDocumentId,
@@ -435,37 +436,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
    * @returns string
    */
   buildPopulationQueryString = (
-    populationOptions: IPopulationOption[],
+    populationOptions: IPopulationOption[] | Record<string, unknown>,
     customFilter?: string
-  ): string => {
-    const queryString = [];
-
-    // If a custom filter is provided, use it directly
-    if (customFilter) {
-      queryString.push(customFilter);
-      return queryString.join("&");
-    }
-
-    for (const key in populationOptions) {
-      const option = populationOptions[key];
-
-      if (Array.isArray(option.children)) {
-        for (const childOption of option.children) {
-          queryString.push(
-            `populate[${key}][${childOption.field}]=${
-              childOption.children
-                ? this.buildPopulationQueryString(childOption)
-                : ""
-            }`
-          );
-        }
-      } else {
-        queryString.push(`populate[${key}]=${option}`);
-      }
-    }
-
-    return queryString.length ? queryString.join("&") : "populate=*";
-  };
+  ): string => serializePopulateQuery(populationOptions, customFilter);
 
   /**
    * Strapi 5 write-body sanitizer. See sanitizeStrapiWritePayload.ts for the
