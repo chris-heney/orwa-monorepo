@@ -39,6 +39,7 @@ import {
   convertRaParamsToStrapiParams as serializeRaListParams,
   isDocumentId as isStrapiDocumentId,
 } from "./serializeStrapiFilters";
+import { sanitizeStrapiWritePayload } from "./sanitizeStrapiWritePayload";
 
 /**
  * Data FLow:
@@ -467,43 +468,11 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
   };
 
   /**
-   * Ensures there is no empty string in the object.
-   *
-   * @param {Object} object React Admin data object
-   * @returns {Object} Strapi object
+   * Strapi 5 write-body sanitizer. See sanitizeStrapiWritePayload.ts for the
+   * relation vs repeater vs media vs many-to-many shape rules.
    */
-
-  sanitizeRaRecordForStrapi = (object: RaRecord): IStrapiAttributes => {
-    const newObject: Partial<RaRecord> = {};
-    const components: string[] = ["stages"];
-
-    // Strapi 5 rejects unknown/system keys on create/update with a ValidationError
-    const systemFields = [
-      "id",
-      "documentId",
-      "entityId",
-      "createdAt",
-      "updatedAt",
-      "publishedAt",
-      "createdBy",
-      "updatedBy",
-      "locale",
-    ];
-
-    Object.keys(object).forEach((key) => {
-      if (systemFields.includes(key)) return;
-
-      const newValue = object[key] === "" ? null : object[key];
-
-      if (components.includes(key)) {
-        newObject[key] = { data: newValue };
-      } else {
-        newObject[key] = newValue;
-      }
-    });
-
-    return newObject;
-  };
+  sanitizeRaRecordForStrapi = (object: RaRecord): IStrapiAttributes =>
+    sanitizeStrapiWritePayload(object as Record<string, unknown>);
 
   /**
    * React Admin Params for filtering, sorting, and pagination converted to Strapi.
@@ -998,6 +967,10 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         // Invalidate cache for this resource
         this.cache.invalidate(new RegExp(`^(getOne|getList|getMany|getManyReference):.*${resource}`));
 
+        const payload = await this.prepareWritePayload(
+          params.data as Record<string, any>
+        );
+
         // Process updates in parallel with a concurrency limit
         const batchSize = 5; // Process 5 updates at a time
         const results = [];
@@ -1006,14 +979,14 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
           const batch = params.ids.slice(i, i + batchSize);
           const batchResults = await Promise.all(
             batch.map(async (id) => {
-              const url = `${this.endpoint}/${resource}/${id}`;
+              const statusQs = this.isDocumentId(id) ? "&status=published" : "";
+              const url = `${this.endpoint}/${resource}/${id}?populate=*${statusQs}`;
               const requestKey = `updateMany:${resource}:${id}`;
               
               return this.executeRequest(requestKey, async () => {
-                const body = this.raToStrapiObj(params);
                 const { json } = await httpClient(url, {
                   method: "PUT",
-                  body,
+                  body: JSON.stringify({ data: payload }),
                 });
                 return (json.data as IStrapiRecord).id;
               });

@@ -52,3 +52,37 @@ export function getFilterRelationValue(record: {
 export function sanitizeNumericFilterIds(ids: string[]): string[] {
   return ids.filter((id) => /^\d+$/.test(String(id)));
 }
+
+/**
+ * Scalar to send for a Strapi 5 relation write.
+ *
+ * withStableId records are fat objects `{ id: documentId, entityId, name, … }`.
+ * Putting that object in a PUT/POST body 400s ("Invalid key entityId at <rel>").
+ * Prefer documentId; fall back to id when it is already a scalar.
+ */
+export function toRelationWriteId(
+  record:
+    | { documentId?: unknown; id?: unknown }
+    | string
+    | number
+    | null
+    | undefined
+): string | number | undefined {
+  if (record == null || record === "") return undefined;
+  if (typeof record === "string" || typeof record === "number") return record;
+  if (typeof record.documentId === "string" && record.documentId) {
+    return record.documentId;
+  }
+  if (typeof record.id === "string" || typeof record.id === "number") {
+    return record.id;
+  }
+  return undefined;
+}
+
+/** oneToMany / manyToMany write value: array of documentIds (or numeric ids). */
+export function toRelationWriteIds(value: unknown): Array<string | number> {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => toRelationWriteId(item as { documentId?: unknown; id?: unknown }))
+    .filter((id): id is string | number => id != null && id !== "");
+}

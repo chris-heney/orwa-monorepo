@@ -38,6 +38,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
 
   interface Status {
     id: string
+    documentId?: string
     name: string
     color: `#${string}`
   }
@@ -107,15 +108,21 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
 
     const applicationData = {
       ...data,
-      status: applicationStatus?.id,
+      status: applicationStatus?.documentId ?? applicationStatus?.id,
     }
     const updatedPayloadVariables = {
       ...payloadVariables,
       ...applicationData,
     }
 
-    update('grant-application-finals', { id: record?.id, data: applicationData, previousData: record })
-    notify('Grant Application Was Updated', { type: 'success', autoHideDuration: 3000 })
+    try {
+      await update('grant-application-finals', { id: record?.id, data: applicationData, previousData: record })
+      notify('Grant Application Was Updated', { type: 'success', autoHideDuration: 3000 })
+    } catch (error) {
+      notify('Error updating Grant Application', { type: 'error' })
+      console.error(error)
+      return
+    }
 
     await sendEmails(data.email, applicationData)
 
@@ -124,8 +131,10 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
 
   const updateSendEmails = async () => {
     const applicationData = {
-      status: applicationStatus?.id,
-      sub_status: applicationSubStatus ? applicationSubStatus?.id : null,
+      status: applicationStatus?.documentId ?? applicationStatus?.id,
+      sub_status: applicationSubStatus
+        ? applicationSubStatus?.documentId ?? applicationSubStatus?.id
+        : null,
     }
     try {
       await update('grant-application-finals', { id: selectedApplication?.id, data: applicationData ,previousData: selectedApplication })

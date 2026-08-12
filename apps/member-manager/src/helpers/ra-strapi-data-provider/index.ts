@@ -6,3 +6,7 @@ export {
   appendFilterQuery,
   isDocumentId,
 } from './src/serializeStrapiFilters'
+export {
+  sanitizeStrapiWritePayload,
+  sanitizeWriteValue,
+} from './src/sanitizeStrapiWritePayload'

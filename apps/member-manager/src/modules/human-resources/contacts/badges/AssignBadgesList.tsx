@@ -2,6 +2,7 @@ import React from 'react'
 import { Identifier, UpdateParams, useDataProvider, useGetList, useRecordContext, useRefresh } from 'react-admin'
 import { Box, Chip, Grid, IconButton, Tooltip } from '@mui/material'
 import AddIcon from '@mui/icons-material/Add'
+import { toRelationWriteId, toRelationWriteIds } from '../../../../helpers/strapiIds'
 
 const AssignBadgesList = () => {
   const record = useRecordContext()
@@ -19,7 +20,9 @@ const AssignBadgesList = () => {
       id: record.id,
       previousData: record,
       data: {
-        badges: [...record.badges, badgeId],
+        badges: [...toRelationWriteIds(record.badges), toRelationWriteId(badgeId)].filter(
+          (id): id is string | number => id != null
+        ),
       }
     }
     await dataProvider.update('contacts', updatedRecordParams)

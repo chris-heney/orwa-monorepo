@@ -3,6 +3,7 @@ import { Identifier, UpdateParams, useDataProvider, useGetList, useRecordContext
 import { Box, Chip, Grid, IconButton, Tooltip } from '@mui/material'
 import { useLocation } from 'react-router-dom'
 import DeleteIcon from '@mui/icons-material/Delete'
+import { toRelationWriteId, toRelationWriteIds } from '../../../../helpers/strapiIds'
 interface BadgeGridProps {
   filter?: string | string[]
   filterGrid?: boolean
@@ -30,7 +31,7 @@ const BadgeGrid = ({ filter, filterGrid = false }: BadgeGridProps) => {
       id: record.id,
       previousData: record,
       data: {
-        badges: record.badges.filter((id: Identifier) => id !== badgeId),
+        badges: toRelationWriteIds(record.badges).filter((id) => id !== badgeId),
       }
     }
     await dataProvider.update('contacts', updatedRecordParams)        

@@ -35,7 +35,16 @@ const PayoutModal = React.forwardRef<HTMLDivElement, ModalContentProps>(function
     }
 
     try {
-      update('grant-payouts', { id: selectedPayout?.id, previousData: { ...selectedPayout }, data: { ...data, payout_status: payoutStatus?.id, denial_reason: statusId ?? null } })
+      await update('grant-payouts', {
+        id: selectedPayout?.id,
+        previousData: { ...selectedPayout },
+        data: {
+          comments: data.comments,
+          ...(data.transaction_date != null && { transaction_date: data.transaction_date }),
+          ...(data.amount != null && { amount: data.amount }),
+          payout_status: payoutStatus?.documentId ?? payoutStatus?.id,
+        },
+      })
       notify('Payout Was Updated', { type: 'success' })
       sendActivity(dataProvider, 'grant-application', `Grant Payout for ${selectedPayout?.application.legal_entity_name} was ${payoutStatus?.name} `, [selectedPayout?.id, selectedPayout?.application.id])
       setIsModalOpen(false)

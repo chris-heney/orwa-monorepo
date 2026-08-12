@@ -15,6 +15,7 @@ import {
 import CustomHeader from "../../../_components/CustomHeader";
 import ContactCreateFormFields from "../../../human-resources/contacts/fields/ContactCreateFields";
 import { formatTitle } from "../../../../helpers/formatResourceTitle";
+import { toRelationWriteId, toRelationWriteIds } from "../../../../helpers/strapiIds";
 
 async function appendContactToWatersystem(
   dataProvider: DataProvider,
@@ -27,14 +28,9 @@ async function appendContactToWatersystem(
     meta,
   });
   const raw = (ws as RaRecord).contacts;
-  const ids: Identifier[] = Array.isArray(raw)
-    ? raw.map((item: unknown) =>
-        item != null && typeof item === "object" && "id" in (item as object)
-          ? (item as { id: Identifier }).id
-          : (item as Identifier)
-      )
-    : [];
-  const nextIds = Array.from(new Set([...(ids ?? []), newContactId]));
+  const ids = toRelationWriteIds(raw);
+  const next = toRelationWriteId(newContactId);
+  const nextIds = Array.from(new Set([...ids, ...(next != null ? [next] : [])]));
   await dataProvider.update("watersystems", {
     id: watersystemId,
     previousData: ws,

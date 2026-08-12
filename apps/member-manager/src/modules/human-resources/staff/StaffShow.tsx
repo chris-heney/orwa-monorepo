@@ -26,6 +26,7 @@ import StaffCard from './_components/StaffCard'
 import ActivityFeed from '../../activity/ActivityFeed'
 import { useRefresh } from 'react-admin'
 import ShowHeader from '../_components/ShowHeader'
+import { toRelationWriteId } from '../../../helpers/strapiIds'
 
 const StaffShow = () => {
   const refresh = useRefresh()
@@ -55,7 +56,7 @@ const StaffShow = () => {
       id: asset.id,
       previousData: asset,
       data: {
-        assigned_to: record.id
+        assigned_to: toRelationWriteId(record),
       }
     }
     await dataProvider.update('assets', updatedAssetParams)

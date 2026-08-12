@@ -19,6 +19,7 @@ import {
 } from '@mui/material'
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd'
 import { useRefresh } from 'react-admin'
+import { toRelationWriteId } from '../../../helpers/strapiIds'
 
 const StaffAssignList = () => {
   const refresh = useRefresh()
@@ -48,7 +49,7 @@ const StaffAssignList = () => {
       id: record.id,
       previousData: record,
       data: {
-        assigned_to: staff.id
+        assigned_to: toRelationWriteId(staff),
       }
     }
     await dataProvider.update('assets', updatedAssetParams)

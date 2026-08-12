@@ -15,6 +15,7 @@ import {
 import { Box, MenuItem, Select } from "@mui/material";
 import getContrastColor from "../../_helpers/getContrastColor";
 import { sendActivity } from "../../../helpers/sendActivity";
+import { toRelationWriteId } from "../../grant-manager/helpers/getRelationFilterId";
 
 const SelectSoonerwarnStatus = ({
   status_resource,
@@ -49,7 +50,7 @@ const SelectSoonerwarnStatus = ({
       await dataProvider.update(record_resource, {
         id: record.id,
         previousData: { ...record },
-        data: { status: status },
+        data: { status: toRelationWriteId(status) },
       });
       notify(`Soonerwarn application was updated to ${status.name}`, {
         type: "success",

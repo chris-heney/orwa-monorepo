@@ -5,4 +5,6 @@ export {
   getRelationFilterId,
   sanitizeNumericFilterIds,
   isDocumentId,
+  toRelationWriteId,
+  toRelationWriteIds,
 } from "../../../helpers/strapiIds";

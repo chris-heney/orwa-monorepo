@@ -23,6 +23,7 @@ import {
 } from '@mui/material'
 import LibraryAddIcon from '@mui/icons-material/LibraryAdd'
 import { useRefresh } from 'react-admin'
+import { toRelationWriteId, toRelationWriteIds } from '../../../helpers/strapiIds'
 
 const SubAssetAssignList = () => {
   const refresh = useRefresh()
@@ -39,7 +40,9 @@ const SubAssetAssignList = () => {
       id: record.id,
       previousData: record,
       data: {
-        sub_assets: record.sub_assets.filter((id: Identifier) => id !== asset.id)
+        sub_assets: toRelationWriteIds(record.sub_assets).filter(
+          (id) => id !== toRelationWriteId(asset)
+        ),
       }
     }
     await dataProvider.update('assets', updatedAssetParams)
@@ -52,7 +55,10 @@ const SubAssetAssignList = () => {
       id: record.id,
       previousData: record,
       data: {
-        sub_assets: record.sub_assets.concat(asset.id)
+        sub_assets: [
+          ...toRelationWriteIds(record.sub_assets),
+          toRelationWriteId(asset),
+        ].filter((id): id is string | number => id != null),
       }
     }
     await dataProvider.update('assets', updatedAssetParams)

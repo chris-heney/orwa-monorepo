@@ -4,6 +4,7 @@ import { MenuItem, Select } from '@mui/material'
 import getContrastColor from '../../../_helpers/getContrastColor'
 import { sendActivity } from '../../../../helpers/sendActivity'
 import { useGrantContext } from '../../GrantContextProvider'
+import { toRelationWriteId } from '../../helpers/getRelationFilterId'
 
 interface GrantStatusProps {
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -52,7 +53,7 @@ const GrantStatus = ({
 
     } else {
       try {
-        await dataProvider.update('grant-application-finals', { id: record.id, previousData: { ...record }, data: { status: status } })
+        await dataProvider.update('grant-application-finals', { id: record.id, previousData: { ...record }, data: { status: toRelationWriteId(status) } })
         notify(`Grant Application was Updated to ${status.name}`, { type: 'success' })
 
         // Send Activity to Activity Log

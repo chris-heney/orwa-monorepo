@@ -13,7 +13,10 @@ import {
 } from "react-admin";
 import { Box, MenuItem, Select } from "@mui/material";
 import getContrastColor from "../../../_helpers/getContrastColor";
-import { getRelationFilterId } from "../../helpers/getRelationFilterId";
+import {
+  getRelationFilterId,
+  toRelationWriteId,
+} from "../../helpers/getRelationFilterId";
 
 interface SelectPayoutStatusProps {
   setIsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -53,46 +56,46 @@ const SelectPayoutStatus = ({
   }, [record?.payout_status]);
 
   const updateStatus = async (e: { target: { value: string } }) => {
-    const { data: payoutStatus } = await dataProvider.getOne(
-      "payout-statuses",
-      { id: e.target.value, meta: { raw: true } }
-    );
+    const previousStatusId = statusId;
+    try {
+      const { data: payoutStatus } = await dataProvider.getOne(
+        "payout-statuses",
+        { id: e.target.value, meta: { raw: true } }
+      );
 
-    setStatusId(payoutStatus.id);
-    setPayoutStatus(payoutStatus);
-    setSelectedPayout(record);
+      setStatusId(payoutStatus.id);
+      setPayoutStatus(payoutStatus);
+      setSelectedPayout(record);
 
-    if (payoutStatus?.email_template) {
-      setIsModalOpen(true);
-    } else {
-      try {
-        await dataProvider.update("grant-payouts", {
-          id: record.id,
-          previousData: { ...record },
-          data: {
-            payout_status:
-              payoutStatus.documentId ??
-              payoutStatus.id ??
-              getRelationFilterId(payoutStatus),
-          },
-        });
-
-        if (record.application) {
-          notify(
-            `Grant Payout for ${record.application.legal_entity_name} was ${payoutStatus.name}`,
-            { type: "success" }
-          );
-        } else {
-          notify(`Grant Payout was ${payoutStatus.name} type: ${record.type}`, {
-            type: "success",
-          });
-        }
-      } catch (error) {
-        notify(`Error updating Grant Payout to ${payoutStatus.name}`, {
-          type: "error",
-        });
-        console.error(error);
+      if (payoutStatus?.email_template) {
+        setIsModalOpen(true);
+        return;
       }
+
+      await dataProvider.update("grant-payouts", {
+        id: record.id,
+        previousData: { ...record },
+        data: {
+          payout_status: toRelationWriteId(payoutStatus),
+        },
+      });
+
+      if (record.application) {
+        notify(
+          `Grant Payout for ${record.application.legal_entity_name} was ${payoutStatus.name}`,
+          { type: "success" }
+        );
+      } else {
+        notify(`Grant Payout was ${payoutStatus.name} type: ${record.type}`, {
+          type: "success",
+        });
+      }
+    } catch (error) {
+      setStatusId(previousStatusId);
+      notify(`Error updating Grant Payout`, {
+        type: "error",
+      });
+      console.error(error);
     }
 
     if (e.target.value === "New Reason") {
