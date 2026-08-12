@@ -4,7 +4,7 @@
 FROM node:22-alpine AS build
 RUN apk add --no-cache build-base gcc autoconf automake zlib-dev libpng-dev vips-dev git
 WORKDIR /opt/app
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json .npmrc ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 # Compile local plugin server bundles, then the Strapi app + admin panel

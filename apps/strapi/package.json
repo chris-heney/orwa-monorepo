@@ -10,6 +10,7 @@
     "strapi": "strapi"
   },
   "dependencies": {
+    "@radix-ui/react-tooltip": "1.0.7",
     "@strapi/plugin-users-permissions": "5.52.0",
     "@strapi/strapi": "5.52.0",
     "cron-parser": "^5.0.4",
