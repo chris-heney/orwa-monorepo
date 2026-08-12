@@ -5,6 +5,7 @@ import uploadService from "../services/uploadService";
 import { useFormContext } from "react-hook-form";
 import { useGetApplicationId } from "../data/API";
 import { useScoringCriterias } from "../providers/AppContextProvider";
+import { getSelectedCriterias } from "./getCriterias";
 
 export const ManualUploadTest = () => {
 
@@ -17,32 +18,6 @@ export const ManualUploadTest = () => {
   const [file, setFile] = useState<File | null>(null);
   const [fileUrl, setFileUrl] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<string | null>(null);
-
-
-  const getSelectedCriterias = (selectedProjects: string[]) => {
-    return scoringCriterias
-      .filter((criteria) => {
-        return (
-          criteria.project_type.data &&
-          criteria.project_type.data.classification ===
-            getValues("drinking_or_wastewater")
-        );
-      })
-      .map((criteria) => {
-        const included = () => {
-          console.log("selected", criteria.project_type.data.id.toString());
-          return (
-            criteria.project_type.data &&
-            criteria.project_type.data &&
-            selectedProjects.includes(
-              criteria.project_type.data.id.toString()
-            )
-          );
-        };
-
-        return [criteria.order, criteria.label, included()];
-      });
-  }
 
   const handleGeneratePDF = async (
     event: React.MouseEvent<HTMLButtonElement>
@@ -57,7 +32,11 @@ export const ManualUploadTest = () => {
     try {
       const pdfBytes = await generatePDF(
         {...getValues() as IGrantApplicationFormPayload, id: applicationId.data.toString()},
-        getSelectedCriterias(getValues("selected_projects"))
+        getSelectedCriterias(
+          getValues("selected_projects"),
+          scoringCriterias,
+          getValues("drinking_or_wastewater")
+        )
       );
 
       const generatedFile = new File([pdfBytes], "grant_application.pdf", {

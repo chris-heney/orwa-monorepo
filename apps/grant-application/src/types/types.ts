@@ -356,9 +356,8 @@ export interface IScoringCriteria {
   id: number;
   order: string;
   label: string;
-  project_type: {
-    data : IProject
-  };
+  /** Strapi 5: flat relation. Legacy v4 used `{ data: IProject }`. */
+  project_type: IProject | { data: IProject | null } | null;
 }
 
 export interface IProject {

@@ -29,6 +29,7 @@ import {
   ProjectCostsMap,
   sumProjectCosts,
 } from "../helpers/projectCosts";
+import { getSelectedCriterias } from "../helpers/getCriterias";
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
@@ -78,27 +79,6 @@ const StepNavigation = () => {
     }
   };
 
-  const getSelectedCriterias = (selectedProjects: string[]) => {
-    return scoringCriterias
-      .filter((criteria) => {
-        return (
-          criteria.project_type.data &&
-          criteria.project_type.data.classification ===
-            getValues("drinking_or_wastewater")
-        );
-      })
-      .map((criteria) => {
-        const included = () => {
-          return (
-            criteria.project_type.data &&
-            selectedProjects.includes(criteria.project_type.data.id.toString())
-          );
-        };
-
-        return [criteria.order, criteria.label, included()];
-      });
-  };
-
   const handleSubmitPayload = async () => {
     const isValid = await trigger();
     if (!isValid) {
@@ -135,7 +115,11 @@ const StepNavigation = () => {
       const uploadedPDF = await uploadApplicantPDF(
         processedPayload,
         notify,
-        getSelectedCriterias(getValues("selected_projects"))
+        getSelectedCriterias(
+          selectedProjectIds,
+          scoringCriterias,
+          formPayload.drinking_or_wastewater
+        )
       );
 
       const payload = {
