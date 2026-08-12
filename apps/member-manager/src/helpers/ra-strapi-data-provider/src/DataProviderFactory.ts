@@ -199,6 +199,21 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     return data;
   };
 
+  /**
+   * Catch for useEditController: after withStableId, `data.id` is usually the
+   * documentId, but callers may still request by numeric PK (legacy filters,
+   * hardcoded defaults, stale RaStore). React-admin throws if they differ.
+   * Keep the id the client asked for; entityId/documentId stay on the record.
+   */
+  private alignRecordId = (
+    data: RaRecord,
+    requestedId: Identifier | undefined
+  ): RaRecord => {
+    if (requestedId == null || data == null) return data;
+    if (String(data.id) === String(requestedId)) return data;
+    return { ...data, id: requestedId };
+  };
+
   /** True for upload/media entries — do not remap their numeric ids. */
   private isMediaRecord = (value: Record<string, unknown>): boolean =>
     value.mime != null || value.url != null || value.formats != null;
@@ -466,6 +481,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     const systemFields = [
       "id",
       "documentId",
+      "entityId",
       "createdAt",
       "updatedAt",
       "publishedAt",
@@ -800,7 +816,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
             ? this.formatResponseRaw(json.data as IStrapiRecord)
             : this.formatResponseRA(json.data as IStrapiRecord);
 
-          return { data };
+          // Align after withStableId so numeric getOne (legacy Edit ids) still
+          // satisfies useEditController's id === requested check.
+          return { data: this.alignRecordId(data, params.id) };
         });
         
         // Cache the result
@@ -966,8 +984,11 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
           });
 
           return {
-            data: this.withStableId(
-              this.formatResponseRA(json.data as IStrapiRecord)
+            data: this.alignRecordId(
+              this.withStableId(
+                this.formatResponseRA(json.data as IStrapiRecord)
+              ),
+              params.id
             ),
           };
         });
