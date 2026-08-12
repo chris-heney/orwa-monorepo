@@ -109,8 +109,8 @@ const MembershipInfo = () => {
             required
             helperText={
               perConnectionPrice != null
-                ? `x ${currencyFormatter.format(perConnectionPrice)} per connection`
-                : undefined
+                ? `× ${currencyFormatter.format(perConnectionPrice)} per connection`
+                : "Loading connection rate…"
             }
           />
           <NumberInput
@@ -120,7 +120,7 @@ const MembershipInfo = () => {
             helperText={
               baseMembershipFee != null
                 ? `+ ${currencyFormatter.format(baseMembershipFee)} Base Membership Fee`
-                : undefined
+                : "Loading membership fee…"
             }
             mask="currency"
           />
