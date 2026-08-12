@@ -1,6 +1,11 @@
 import { IGrantApplication } from "../../../../grant-application/GrantApplicationTypes";
 import { IGrantPayout } from "../../GrantTypes";
 import { APPROVED_STATUSES } from "../../../helpers/previousFyRollover";
+import {
+  isCountableTowardAward,
+  sumPayoutAmounts,
+  toMoney,
+} from "../../../../payouts/helpers/payoutAmounts";
 
 /**
  * The dimensional model of the grant program's money.
@@ -332,7 +337,7 @@ export const classifyApplication = (
     const award = app.award_amount || requested;
     const paid =
       paidLookup?.(app) ??
-      (app.payouts ?? []).reduce((sum, p) => sum + (p.amount || 0), 0);
+      sumPayoutAmounts(app.payouts, isCountableTowardAward);
     const isFull = status === "Paid in Full" || (award > 0 && paid >= award);
     if (isFull) return { leaf: "paid_full", amount: award };
     if (paid > 0) return { leaf: "paid_partial", amount: award };
@@ -466,11 +471,14 @@ export const aggregatePathways = (
     if (payout.type !== "Reimbursement") continue;
     const appId = payout.application?.id;
     if (appId == null) continue;
-    paidByApp.set(Number(appId), (paidByApp.get(Number(appId)) ?? 0) + (payout.amount || 0));
+    paidByApp.set(
+      Number(appId),
+      (paidByApp.get(Number(appId)) ?? 0) + toMoney(payout.amount)
+    );
   }
   const paidLookup = (app: IGrantApplication): number => {
     if (app.payouts?.length)
-      return app.payouts.reduce((sum, p) => sum + (p.amount || 0), 0);
+      return sumPayoutAmounts(app.payouts, isCountableTowardAward);
     return app.id != null ? paidByApp.get(Number(app.id)) ?? 0 : 0;
   };
 

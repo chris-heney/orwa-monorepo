@@ -10,6 +10,10 @@ import { IGrantApplication } from "../../../../../grant-application/GrantApplica
 import { IGrantPayout } from "../../../GrantTypes";
 import { APPROVED_STATUSES } from "../../../../helpers/previousFyRollover";
 import { useSummaryTokens, display, money, SummaryTokens } from "../../tokens";
+import {
+  isCountableTowardAward,
+  sumPayoutAmounts,
+} from "../../../../../payouts/helpers/payoutAmounts";
 
 export const variantMeta = {
   title: "Reel Builder",
@@ -104,14 +108,13 @@ const buildTree = (props: Props, T: SummaryTokens): PathNode => {
 
   const paidOf = (app: IGrantApplication): number => {
     if (app.payouts && app.payouts.length) {
-      return app.payouts.reduce((s, p) => s + (p?.amount || 0), 0);
+      return sumPayoutAmounts(app.payouts, isCountableTowardAward);
     }
     if (app.id == null) return 0;
-    return payouts
-      .filter(
-        (p) => p?.type !== "Administrative" && p?.application?.id === app.id
-      )
-      .reduce((s, p) => s + (p.amount || 0), 0);
+    return sumPayoutAmounts(
+      payouts.filter((p) => p?.application?.id === app.id),
+      isCountableTowardAward
+    );
   };
 
   const buckets = {

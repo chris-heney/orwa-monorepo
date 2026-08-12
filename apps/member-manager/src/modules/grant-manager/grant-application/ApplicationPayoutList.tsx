@@ -18,6 +18,10 @@ import {
 import { useRecordContext, RaRecord, useGetList } from "react-admin";
 import { CurrencyOptions } from "../../../config/Settings";
 import { formatDate } from "../../../helpers/dateFormatter";
+import {
+  isCountableTowardAward,
+  toMoney,
+} from "../payouts/helpers/payoutAmounts";
 import ModalMakePayout from "./components/MadalMakePayout";
 import { Money } from "@mui/icons-material";
 import { getRelationFilterId } from "../helpers/getRelationFilterId";
@@ -172,15 +176,18 @@ const ApplicationPayoutList = () => {
     if (!record || !payouts?.length) return [];
     let running = 0;
     return payouts.map((payout: RaRecord) => {
-      running += payout.amount || 0;
+      const amount = toMoney(payout.amount);
+      if (isCountableTowardAward(payout)) {
+        running += amount;
+      }
       return {
         id: payout.id,
         date: formatDate(payout?.transaction_date) || "—",
         statusName: payout?.payout_status?.name || "N/A",
         statusColor: payout?.payout_status?.color,
-        amount: payout.amount || 0,
+        amount,
         totalPaid: running,
-        balance: (record.award_amount || 0) - running,
+        balance: toMoney(record.award_amount) - running,
       };
     });
   }, [payouts, record]);
@@ -195,6 +202,11 @@ const ApplicationPayoutList = () => {
 
   const payoutMade = () => setIsModalOpen(false);
 
+  const stripe =
+    theme.palette.mode === "dark"
+      ? "rgba(255, 255, 255, 0.04)"
+      : "rgba(15, 23, 32, 0.03)";
+
   const headCellSx = {
     color: "text.secondary",
     fontWeight: 700,
@@ -202,17 +214,18 @@ const ApplicationPayoutList = () => {
     letterSpacing: "0.06em",
     textTransform: "uppercase" as const,
     borderBottom: `1px solid ${theme.palette.divider}`,
-    py: 1.25,
+    py: 0.5,
     px: 1.5,
     bgcolor: "transparent",
     whiteSpace: "nowrap" as const,
   };
 
   const bodyCellSx = {
-    py: 1.25,
+    py: 0.5,
     px: 1.5,
     borderBottom: `1px solid ${theme.palette.divider}`,
     fontSize: "0.9rem",
+    bgcolor: "transparent",
   };
 
   return (
@@ -291,11 +304,18 @@ const ApplicationPayoutList = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows.map((row) => (
+              {rows.map((row, index) => (
                 <TableRow
                   key={row.id}
                   hover
                   sx={{
+                    bgcolor: index % 2 === 1 ? stripe : "transparent",
+                    "&:hover": {
+                      bgcolor:
+                        theme.palette.mode === "dark"
+                          ? "rgba(255, 255, 255, 0.07)"
+                          : "rgba(15, 23, 32, 0.05)",
+                    },
                     "&:last-child td": { borderBottom: 0 },
                   }}
                 >

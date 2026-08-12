@@ -11,6 +11,10 @@ import {
   edgeNodeForApplication,
 } from "./pathways/model";
 import { useSummaryTokens } from "./tokens";
+import {
+  isCountableTowardAward,
+  sumPayoutAmounts,
+} from "../../../payouts/helpers/payoutAmounts";
 
 const UNAPPROVED_STATUSES = [
   "Not Approved",
@@ -34,7 +38,7 @@ const num = (value: unknown): number => {
 };
 
 const paidTotal = (app: IGrantApplication) =>
-  (app.payouts ?? []).reduce((sum, p) => sum + (p.amount || 0), 0);
+  sumPayoutAmounts(app.payouts, isCountableTowardAward);
 
 export interface LifecycleStage {
   key: string;

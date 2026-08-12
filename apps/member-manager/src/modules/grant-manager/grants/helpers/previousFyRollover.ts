@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
+import { isCountableTowardAward, sumPayoutAmounts } from "../../payouts/helpers/payoutAmounts";
 
 dayjs.extend(utc);
 
@@ -55,10 +56,7 @@ export const computePreviousFyRollover = (
     const award = app.award_amount || 0;
     entry.approved += award;
     if (app.closed_out) {
-      const paid = (app.payouts ?? []).reduce(
-        (sum, payout) => sum + (payout.amount || 0),
-        0
-      );
+      const paid = sumPayoutAmounts(app.payouts, isCountableTowardAward);
       entry.closeoutReturns += award - paid;
     }
     perFy.set(fy, entry);

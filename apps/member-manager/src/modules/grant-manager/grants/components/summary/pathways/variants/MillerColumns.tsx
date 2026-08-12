@@ -10,6 +10,10 @@ import { IGrantApplication } from "../../../../../grant-application/GrantApplica
 import { IGrantPayout } from "../../../GrantTypes";
 import { APPROVED_STATUSES } from "../../../../helpers/previousFyRollover";
 import { useSummaryTokens, display, money, SummaryTokens } from "../../tokens";
+import {
+  isCountableTowardAward,
+  sumPayoutAmounts,
+} from "../../../../../payouts/helpers/payoutAmounts";
 
 export const variantMeta = {
   title: "Miller Columns",
@@ -76,14 +80,10 @@ const gatherFacts = (
       app.payouts ??
       (payouts ?? []).filter(
         (p) =>
-          p?.type !== "Administrative" &&
           p?.application != null &&
           (p.application as IGrantApplication).id === app.id
       );
-    const paid = (ownPayouts ?? []).reduce(
-      (sum, p) => sum + (p?.amount || 0),
-      0
-    );
+    const paid = sumPayoutAmounts(ownPayouts, isCountableTowardAward);
     const requested = cleanMoney(app.requested_grant_amount);
     const award = app.award_amount || 0;
 

@@ -19,7 +19,8 @@ import {
 import { CurrencyOptions } from "../../../config/Settings";
 import GrantApplicationCreateForm from "./CreateGrantApplication";
 import ModalDenialReason from "./components/ModalDenialReason";
-import BalanceField, { computeBalance } from "../payouts/components/BalanceField";
+import BalanceField from "../payouts/components/BalanceField";
+import { isAwardPaidInFull } from "../payouts/helpers/payoutAmounts";
 import { getGrantStatus } from "../../emails-magement/Helper";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
@@ -105,27 +106,22 @@ const GrantApplicationList = () => {
 
   const checkAndUpdateRecords = async (records: RaRecord[]) => {
     const statusId = await getGrantStatus(dataProvider, "Paid in Full");
+    if (statusId == null) return;
 
-    // Records arrive raw with payouts populated, so balances are computed
-    // locally instead of one getOne request per application.
-    const zeroBalances = records.filter(
-      (record) => computeBalance(record as any) === 0
+    // Only Paid reimbursements count. Admin draws, Requested/Not Approved
+    // rows, and Strapi decimal-string concatenation used to look like a $0
+    // remaining balance and flip these to Paid in Full.
+    const fullyPaid = records.filter((record) => isAwardPaidInFull(record));
+
+    await Promise.all(
+      fullyPaid.map((record) =>
+        dataProvider.update("grant-application-finals", {
+          id: record.id,
+          previousData: record,
+          data: { status: statusId },
+        })
+      )
     );
-
-    zeroBalances.map(async (record) => {
-      if (record.payouts.length === 0) return;
-      const updatedRecordParams = {
-        id: record.id,
-        previousData: record,
-        data: {
-          status: statusId,
-        },
-      };
-      return dataProvider.update(
-        "grant-application-finals",
-        updatedRecordParams
-      );
-    });
   };
 
   useEffect(() => {
@@ -136,13 +132,15 @@ const GrantApplicationList = () => {
           "Grant Agreement Signed/Sealed/Returned"
         ),
         await getGrantStatus(dataProvider, "Revised per COR"),
-      ];
+      ].filter((id) => id != null);
+
+      if (ids.length === 0) return;
 
       const { data } = await dataProvider.getList("grant-application-finals", {
         pagination: { page: 1, perPage: 1000 },
         sort: { field: "id", order: "ASC" },
         filter: { status: ids },
-        meta: { raw: true },
+        meta: { raw: true, populate: { payouts: "*" } },
       });
       if (data.length === 0) return;
       checkAndUpdateRecords(data);

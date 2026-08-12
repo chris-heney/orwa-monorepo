@@ -12,6 +12,10 @@ import { IGrantApplication } from "../../../../../grant-application/GrantApplica
 import { IGrantPayout } from "../../../GrantTypes";
 import { APPROVED_STATUSES } from "../../../../helpers/previousFyRollover";
 import { useSummaryTokens, display, money, SummaryTokens } from "../../tokens";
+import {
+  isCountableTowardAward,
+  sumPayoutAmounts,
+} from "../../../../../payouts/helpers/payoutAmounts";
 
 export const variantMeta = {
   title: "Cascade Rows",
@@ -55,7 +59,7 @@ const cleanMoney = (raw: unknown): number => {
 };
 
 const paidOf = (app: IGrantApplication): number =>
-  (app.payouts ?? []).reduce((sum, p) => sum + (p?.amount || 0), 0);
+  sumPayoutAmounts(app.payouts, isCountableTowardAward);
 
 type LeafBucket =
   | "denied"
