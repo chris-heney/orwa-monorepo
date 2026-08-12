@@ -10,6 +10,11 @@ export default ({ env }) => ({
       salt: env('TRANSFER_TOKEN_SALT'),
     },
   },
+  // No Strapi Growth AI license — admin still probes /admin/ai-feature-config
+  // and gets a deliberate 404 when disabled; keep the flag off explicitly.
+  ai: {
+    enabled: false,
+  },
   flags: {
     nps: env.bool('FLAG_NPS', true),
     promoteEE: env.bool('FLAG_PROMOTE_EE', true),
