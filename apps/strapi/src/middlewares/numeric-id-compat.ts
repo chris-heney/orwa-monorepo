@@ -20,6 +20,10 @@ import type { Core } from '@strapi/strapi';
  * Half-linked relations come back null from document-service reads that
  * default to draft status (e.g. lifecycle hooks), causing 500s and rollbacks.
  *
+ * Fat relation objects (withStableId `{ id, documentId, entityId, name, … }`)
+ * are collapsed to documentId before Strapi validates the body. Strapi 5 400s
+ * on client-only nested keys ("Invalid key entityId at payout_status").
+ *
  * NOTE: must be registered AFTER `strapi::body` so ctx.request.body is parsed.
  */
 export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
@@ -37,24 +41,29 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
     return pluralToUid;
   };
 
-  // Per-uid list of relation attributes whose target has draftAndPublish.
-  const dpRelationAttrs = new Map<string, { key: string; target: string }[]>();
+  // Per-uid list of relation attributes (all targets, plus which are D&P).
+  const relationAttrs = new Map<
+    string,
+    { key: string; target: string; draftAndPublish: boolean }[]
+  >();
 
-  const getDpRelationAttrs = (uid: string) => {
-    if (!dpRelationAttrs.has(uid)) {
-      const attrs: { key: string; target: string }[] = [];
+  const getRelationAttrs = (uid: string) => {
+    if (!relationAttrs.has(uid)) {
+      const attrs: { key: string; target: string; draftAndPublish: boolean }[] = [];
       const contentType = (strapi.contentTypes as any)[uid];
       for (const [key, attr] of Object.entries(contentType?.attributes ?? {}) as [string, any][]) {
         if (attr.type === 'relation' && attr.target) {
           const target = (strapi.contentTypes as any)[attr.target];
-          if (target?.options?.draftAndPublish) {
-            attrs.push({ key, target: attr.target });
-          }
+          attrs.push({
+            key,
+            target: attr.target,
+            draftAndPublish: Boolean(target?.options?.draftAndPublish),
+          });
         }
       }
-      dpRelationAttrs.set(uid, attrs);
+      relationAttrs.set(uid, attrs);
     }
-    return dpRelationAttrs.get(uid)!;
+    return relationAttrs.get(uid)!;
   };
 
   const isNumericId = (value: unknown): boolean =>
@@ -107,9 +116,49 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
     return value;
   };
 
+  /**
+   * withStableId / raw list records are fat `{ id, documentId, entityId, name, … }`.
+   * Strapi 5 400s on client-only keys nested in relation values
+   * ("Invalid key entityId at payout_status"). Collapse to documentId (or id).
+   */
+  const collapseFatRelation = (value: any): any => {
+    if (value == null || typeof value === 'string' || typeof value === 'number') {
+      return value;
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => collapseFatRelation(item));
+    }
+    if (typeof value !== 'object') return value;
+
+    if ('set' in value || 'connect' in value || 'disconnect' in value) {
+      const mapped: Record<string, any> = { ...value };
+      for (const op of ['set', 'connect', 'disconnect'] as const) {
+        if (mapped[op] !== undefined && mapped[op] !== null) {
+          mapped[op] = collapseFatRelation(mapped[op]);
+        }
+      }
+      return mapped;
+    }
+
+    if (typeof value.documentId === 'string' && value.documentId) {
+      return value.documentId;
+    }
+    if (value.id != null && (typeof value.id === 'string' || typeof value.id === 'number')) {
+      const extra = Object.keys(value).filter(
+        (k) => k !== 'id' && k !== 'documentId' && k !== 'entityId'
+      );
+      if (extra.length > 0 || 'entityId' in value) {
+        return value.id;
+      }
+    }
+    return value;
+  };
+
   const rewriteBodyRelations = async (uid: string, data: Record<string, any>) => {
-    for (const { key, target } of getDpRelationAttrs(uid)) {
-      if (data[key] !== undefined) {
+    for (const { key, target, draftAndPublish } of getRelationAttrs(uid)) {
+      if (data[key] === undefined) continue;
+      data[key] = collapseFatRelation(data[key]);
+      if (draftAndPublish) {
         data[key] = await mapRelationValue(target, data[key]);
       }
     }
