@@ -24,9 +24,29 @@ const SystemInfoStep = () => {
 
   if (!memberships) return;
 
-  const currentMembership = memberships.filter((membership) => {
-    return membership.context === "Watersystem";
-  });
+  const watersystemMembership = (memberships ?? []).find(
+    (membership) => membership.context === "Watersystem"
+  );
+  const connectionItems = (() => {
+    const raw = watersystemMembership?.membership_items as
+      | { price?: number; max_price?: number }[]
+      | { data?: { price?: number; max_price?: number }[] }
+      | null
+      | undefined;
+    if (raw == null) return [] as { price?: number; max_price?: number }[];
+    if (Array.isArray(raw)) return raw;
+    if (typeof raw === "object" && Array.isArray(raw.data)) return raw.data;
+    return [];
+  })();
+  const connectionItem = connectionItems[0];
+  const baseMembershipFee =
+    watersystemMembership?.price != null
+      ? Number(watersystemMembership.price)
+      : null;
+  const perConnectionPrice =
+    connectionItem?.price != null ? Number(connectionItem.price) : null;
+  const maxConnectionFee =
+    connectionItem?.max_price != null ? Number(connectionItem.max_price) : null;
 
   const physical_same_as_mailing = watch("physical_same_as_mailing");
 
@@ -55,24 +75,20 @@ const SystemInfoStep = () => {
         Fields marked with <span className="font-semibold text-red-500">*</span>{" "}
         are required
       </p>
-      {/* Annual Dues = $90.00 membership fee + $0.90 per connection (Maximum: $4,000) */}
+      {/* Annual Dues summary from Strapi membership + membership_items */}
       <p className="mb-4 text-center text-sm text-slate-600">
         Annual Dues ={" "}
         <span className="font-semibold text-slate-900 tabular-nums">
-          {currencyFormatter.format(currentMembership[0]?.price)}
+          {currencyFormatter.format(baseMembershipFee ?? 0)}
         </span>{" "}
         membership fee +{" "}
         <span className="font-semibold text-slate-900 tabular-nums">
-          {currencyFormatter.format(
-            currentMembership[0].membership_items?.[0]?.price as number
-          )}
+          {currencyFormatter.format(perConnectionPrice ?? 0)}
         </span>{" "}
         per connection (Maximum:{" "}
-        {currentMembership && currentMembership[0].membership_items?.[0]?.max_price && currentMembership[0]?.price && (
+        {maxConnectionFee != null && baseMembershipFee != null && (
           <span className="font-semibold text-slate-900 tabular-nums">
-            {currencyFormatter.format(
-              (currentMembership[0]?.membership_items?.[0]?.max_price + currentMembership[0]?.price) as number
-            )}
+            {currencyFormatter.format(maxConnectionFee + baseMembershipFee)}
           </span>
         )}
         )

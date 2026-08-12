@@ -138,7 +138,7 @@ const MembershipContextProvider = ({ children }: PropsWithChildren) => {
             >
               <MembershipsContext.Provider
                 value={{
-                  memberships: memberships as unknown as Membership[],
+                  memberships: (memberships ?? []) as unknown as Membership[],
                   isMembershipsLoading,
                 }}
               >

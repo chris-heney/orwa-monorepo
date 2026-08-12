@@ -9,6 +9,7 @@ import { getFormRoute } from "../helpers/getFormRoute";
 import { useNavigate } from "react-router";
 import { AdminOptions } from "../types";
 import { useFormContext } from "react-hook-form";
+import { useMembershipsContext } from "../providers/MembershipContextProvider";
 
 const EntryListSidebar = () => {
   
@@ -30,6 +31,11 @@ const EntryListSidebar = () => {
     updateAdminOptions,
     selectedSubmission,
   } = useEntryList();
+
+  const { memberships } = useMembershipsContext();
+  const perConnectionPrice = memberships.find(
+    (membership) => membership.context === "Watersystem"
+  )?.membership_items?.[0]?.price;
 
   const { notify } = useNotify();
   const navigate = useNavigate();
@@ -56,7 +62,7 @@ const EntryListSidebar = () => {
             getFormRoute(entry).includes("watersystem")
               ? `Number of Connections: ${
                   (formPayload as WatersystemMembershipPayload)?.meters
-                } x $0.9\n`
+                } x ${currencyFormatter.format(perConnectionPrice ?? 0)}\n`
               : ""
           }Base Membership Fee: ${currencyFormatter.format(
             formPayload.fee_membership || 0

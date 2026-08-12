@@ -4,53 +4,79 @@ import { useMembershipsContext } from "../providers/MembershipContextProvider";
 import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import currencyFormatter from "../helpers/currencyFormatter";
+import { MembershipItem } from "../types";
+
+/**
+ * Strapi 5: membership_items is a flat array.
+ * Legacy v4 populate nested as { data: [...] }.
+ */
+function resolveMembershipItems(
+  items: MembershipItem[] | { data?: MembershipItem[] | null } | null | undefined
+): MembershipItem[] {
+  if (items == null) return [];
+  if (Array.isArray(items)) return items;
+  if (typeof items === "object" && Array.isArray(items.data)) return items.data;
+  return [];
+}
 
 const MembershipInfo = () => {
   const { memberships } = useMembershipsContext();
-  const { setValue, getValues } = useFormContext();
+  const { setValue, watch } = useFormContext();
 
-  const currentMembership = memberships.filter((membership) => {
-    return membership.context === "Watersystem";
-  });
+  const meters = watch("meters");
+  const feeConnections = watch("fee_connections");
+  const feeMembership = watch("fee_membership");
+  const feeScholarship = watch("fee_scholarship");
+
+  const watersystemMembership = (memberships ?? []).find(
+    (membership) => membership.context === "Watersystem"
+  );
+  const connectionItem = resolveMembershipItems(
+    watersystemMembership?.membership_items
+  )[0];
+  const perConnectionPrice =
+    connectionItem?.price != null ? Number(connectionItem.price) : null;
+  const maxConnectionFee =
+    connectionItem?.max_price != null ? Number(connectionItem.max_price) : null;
+  const baseMembershipFee =
+    watersystemMembership?.price != null
+      ? Number(watersystemMembership.price)
+      : null;
 
   useEffect(() => {
     if (
-      !currentMembership ||
-      !currentMembership[0] ||
-      !currentMembership[0].membership_items?.[0]?.max_price
-    )
-      return;
-
-    // Calculate the fee_connection based on the number of meters
-    setValue("fee_connections", 0.9 * getValues("meters"));
-
-    // set fee_membership to the current membership price
-    setValue("fee_membership", currentMembership[0].price);
-
-
-    // Ensure max_price check is valid
-    if (
-      getValues("fee_connections") >
-      currentMembership[0]?.membership_items?.[0]?.max_price
+      watersystemMembership == null ||
+      perConnectionPrice == null ||
+      meters == null
     ) {
-      setValue("fee_connections", 4000);
+      return;
     }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getValues("meters")]);
+    const metersCount = Number(meters) || 0;
+    let connectionFee = perConnectionPrice * metersCount;
 
-  // Update payment_amount based on the total cost
+    if (maxConnectionFee != null && connectionFee > maxConnectionFee) {
+      connectionFee = maxConnectionFee;
+    }
+
+    setValue("fee_connections", connectionFee);
+    setValue("fee_membership", baseMembershipFee ?? 0);
+  }, [
+    meters,
+    perConnectionPrice,
+    maxConnectionFee,
+    baseMembershipFee,
+    watersystemMembership,
+    setValue,
+  ]);
+
   useEffect(() => {
+    const scholarshipFee = isNaN(feeScholarship) ? 0 : feeScholarship || 0;
+    const connectionFee = isNaN(feeConnections) ? 0 : feeConnections || 0;
+    const membershipFee = isNaN(feeMembership) ? 0 : feeMembership || 0;
 
-    const scholarshipFee = isNaN(getValues("fee_scholarship")) ? 0 : getValues("fee_scholarship");
-    const connectionFee = isNaN(getValues("fee_connections")) ? 0 : getValues("fee_connections");
-    const membershipFee = isNaN(getValues("fee_membership")) ? 0 : getValues("fee_membership");
-
-    const total = scholarshipFee + connectionFee + membershipFee;
-
-    setValue("payment_amount", total);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [getValues("fee_connections"), getValues("fee_membership"),getValues("fee_scholarship")]);
+    setValue("payment_amount", scholarshipFee + connectionFee + membershipFee);
+  }, [feeConnections, feeMembership, feeScholarship, setValue]);
 
   return (
     <div className="container mx-auto max-w-6xl px-4">
@@ -61,20 +87,16 @@ const MembershipInfo = () => {
       <p className="mb-4 text-center text-sm text-slate-600">
         Annual Dues ={" "}
         <span className="font-semibold text-slate-900 tabular-nums">
-          {currencyFormatter.format(currentMembership[0]?.price)}
+          {currencyFormatter.format(baseMembershipFee ?? 0)}
         </span>{" "}
         membership fee +{" "}
         <span className="font-semibold text-slate-900 tabular-nums">
-          {currencyFormatter.format(
-            currentMembership[0]?.membership_items?.[0]?.price as number
-          )}
+          {currencyFormatter.format(perConnectionPrice ?? 0)}
         </span>{" "}
         per connection (Maximum:{" "}
-        {currentMembership && currentMembership[0]?.membership_items?.[0]?.max_price && currentMembership[0]?.price && (
+        {maxConnectionFee != null && baseMembershipFee != null && (
           <span className="font-semibold text-slate-900 tabular-nums">
-            {currencyFormatter.format(
-              (currentMembership[0]?.membership_items?.[0]?.max_price + currentMembership[0]?.price) as number
-            )}
+            {currencyFormatter.format(maxConnectionFee + baseMembershipFee)}
           </span>
         )}
         )
@@ -85,13 +107,21 @@ const MembershipInfo = () => {
             source="meters"
             label="Number of connection"
             required
-            helperText="x $0.90 per connection"
+            helperText={
+              perConnectionPrice != null
+                ? `x ${currencyFormatter.format(perConnectionPrice)} per connection`
+                : undefined
+            }
           />
           <NumberInput
             source="fee_connections"
             label="Fee Connections"
             disabled
-            helperText="+ $90.00 Base Membership Fee"
+            helperText={
+              baseMembershipFee != null
+                ? `+ ${currencyFormatter.format(baseMembershipFee)} Base Membership Fee`
+                : undefined
+            }
             mask="currency"
           />
           <NumberInput
@@ -103,8 +133,6 @@ const MembershipInfo = () => {
         </div>
       </FormSection>
 
-      {/* Optional Donation */}
-
       <FormSection title="Optional Donation">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <NumberInput
@@ -113,15 +141,12 @@ const MembershipInfo = () => {
             mask="currency"
             min={0}
           />
-         
         </div>
 
         <p className="mb-4 text-center text-sm italic text-slate-600">
           This support is a tax deductible donation.
         </p>
       </FormSection>
-
-      {/* Total Cost */}
     </div>
   );
 };

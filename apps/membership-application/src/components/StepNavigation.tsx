@@ -4,6 +4,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import {
   useFormSubmittedContext,
+  useMembershipsContext,
   useUserContext,
 } from "../providers/MembershipContextProvider";
 import { uploadService, useNotify } from "mj-react-form-builder";
@@ -24,10 +25,14 @@ const StepNavigation = () => {
   const { notify } = useNotify();
   const { isLoggedIn, isAdminView } = useUserContext();
   const { isFormSubmitted, setIsFormSubmitted } = useFormSubmittedContext();
+  const { memberships } = useMembershipsContext();
   const { showInvalid, clearAllInvalid } = useValidationHighlight();
 
   const payment_method = watch("payment_method");
   const path = window.location.hash.substring(2);
+  const perConnectionPrice = memberships.find(
+    (membership) => membership.context === "Watersystem"
+  )?.membership_items?.[0]?.price;
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -244,7 +249,7 @@ const StepNavigation = () => {
             : formPayload.fee_scholarship,
           payment_details: `==========\n${
             path.includes("watersystem")
-              ? `Number of Connections: ${formPayload.meters} x $0.9\n`
+              ? `Number of Connections: ${formPayload.meters} x ${currencyFormatter.format(perConnectionPrice ?? 0)}\n`
               : ""
           }Base Membership Fee: ${currencyFormatter.format(
             formPayload.fee_membership
