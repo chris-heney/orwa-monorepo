@@ -26,14 +26,16 @@ const SponsorsList = () => {
       >
         <FunctionField
           label="Organization"
+          source="organization"
+          sortBy="organization"
           render={(record) => {
-            return typeof record.registration === "number" ? (
+            return record.registration != null &&
+              record.registration !== "" ? (
               <ReferenceField
                 source="registration"
                 reference="conference-registrations"
                 label="Organization"
                 link={false}
-                sortBy="registration.organization"
               >
                 <TextField source="organization" label="Organization" noWrap />
               </ReferenceField>

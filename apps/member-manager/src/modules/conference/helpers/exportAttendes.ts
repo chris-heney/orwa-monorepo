@@ -5,6 +5,18 @@ import {
   RaRecord,
   DataProvider,
 } from "react-admin";
+import { formatDate } from "../../../helpers/dateFormatter";
+import fetchRelatedRecord from "./fetchRelatedRecord";
+
+const formatExportDate = (value: unknown): string => {
+  if (value == null || value === "") return "";
+  if (typeof value !== "string") return String(value);
+  const dateOnly = value.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return formatDate(dateOnly);
+  }
+  return value;
+};
 
 const exportAttendees = async (
   RecordList: RaRecord[],
@@ -25,24 +37,19 @@ const exportAttendees = async (
         );
       }
 
-      const { data: registration } =
-        typeof record.registration === "number"
-          ? await dataProvider.getOne("conference-registrations", {
-              id: record.registration,
-            })
-          : { data: {} };
+      const registration = await fetchRelatedRecord(
+        dataProvider,
+        "conference-registrations",
+        record.registration
+      );
 
-      // fetch contact
-
-      const { data: conferenceTicket } =
-        typeof record.conference_ticket === "number"
-          ? await dataProvider.getOne("conference-tickets", {
-              id: record.conference_ticket,
-            })
-          : { data: {} };
+      const conferenceTicket = await fetchRelatedRecord(
+        dataProvider,
+        "conference-tickets",
+        record.conference_ticket
+      );
 
       for (const column of columns) {
-        // Check if the column has a label and it's not empty
         if (column.label && column.label.trim() !== "") {
           let value =
             typeof column.source !== "undefined"
@@ -74,11 +81,9 @@ const exportAttendees = async (
                 : record[column.label.toLowerCase() as keyof typeof record]
               : "";
 
-          if (
-            column.label === "Date Registered" &&
-            registration.registration_date
-          ) {
-            value = registration.registration_date;
+          if (column.label === "Date Registered") {
+            // Always overwrite — source is often "registration" (documentId).
+            value = formatExportDate(registration.registration_date);
           }
 
           if (column.label === "Type" && conferenceTicket.name) {
