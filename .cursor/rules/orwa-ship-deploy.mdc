@@ -1,0 +1,87 @@
+---
+description: ORWA ship/deploy checklist — Strapi image + WP Engine static frontends + wp-cli page cache flush
+alwaysApply: true
+---
+
+# ORWA ship / deploy
+
+When the user says stage/commit/push/merge/ship/deploy, do the **full** path below. Do not stop at git push.
+
+ORWA does **not** use Cloudflare or a separate CDN product. Frontends live on **WP Engine**; stale `index.html` is WP Engine **page cache** (`x-cacheable: SHORT`, `max-age=600`). Fix it with **wp-cli**, not CDN folklore.
+
+## Git
+
+- Small scoped commits only (`strapi: …`, `member-manager: …`).
+- Leave unrelated work, screenshots, `.playwright-mcp/`, and secret `.env` files unstaged.
+- `git fetch` → merge `origin/main` if needed → `git push origin <branch>` → merge/push to `main` as requested.
+
+## Strapi (backend)
+
+```bash
+npx nx run strapi:docker-push
+ssh root@admin.orwa.org "cd /var/opt/orwa-monorepo && docker compose pull strapi && docker compose up -d strapi"
+```
+
+- Compose file: `/var/opt/orwa-monorepo/docker-compose.yml`
+- Container: `orwa-admin-v5`
+- Smoke: wait for logs `Strapi started successfully`; hit `https://admin.orwa.org/admin` (200).
+
+## Static frontends (WP Engine)
+
+Apps under `sites/orwa/` on `orwa@orwa.ssh.wpengine.net`:
+
+| App | Remote dir | Public URL |
+|-----|------------|------------|
+| member-manager | `member-manager/` | https://orwa.org/member-manager/ |
+| conference-registration | `conference-registration/` | https://orwa.org/conference-registration/ |
+| grant-map | `gapp-map/` | https://orwa.org/gapp-map/ |
+| grant-application | `gapp-form/` | https://orwa.org/gapp-form/ |
+| associate-directory | `associate-directory/` | https://orwa.org/associate-directory/ |
+
+### Build (never `nx build` for production)
+
+```bash
+cd apps/<app>
+npx vite build --mode production   # or: npx vite build
+grep -c 'localhost:1337' dist/assets/*.js    # must be 0
+grep -c 'localhost:13370' dist/assets/*.js   # must be 0
+```
+
+`nx build` can bake localhost from tracked `.env`. Vite `base: './'` required for subdirectory apps.
+
+### Rsync (no `--delete`)
+
+```bash
+SSH=(ssh -o IdentitiesOnly=yes -i "${HOME}/.ssh/id_ed25519")
+rsync -avz --exclude '.DS_Store' --exclude 'package.json' \
+  dist/ -e "${SSH[*]}" \
+  orwa@orwa.ssh.wpengine.net:sites/orwa/<remote-dir>/
+```
+
+### REQUIRED — flush WP Engine caches (do this every frontend deploy)
+
+`wp cache flush` = **object cache only**. It will **not** update live `index.html`.
+
+```bash
+ssh -o IdentitiesOnly=yes -i "${HOME}/.ssh/id_ed25519" \
+  orwa@orwa.ssh.wpengine.net 'wp page-cache flush && wp cdn-cache flush'
+```
+
+- `wp page-cache flush` — WP Engine page/Varnish cache (this is what kept serving old `index.html`)
+- `wp cdn-cache flush` — WP Engine’s own edge-cache CLI (name is theirs; not an external CDN we run)
+
+### Verify before declaring done
+
+```bash
+# Must show the NEW hashed bundle from this build (not the previous one)
+curl -sS https://orwa.org/<app>/ | grep -oE 'index\.[a-f0-9]+\.js'
+curl -sSI https://orwa.org/<app>/ | grep -iE 'x-cache|age:|last-modified'
+```
+
+If `x-cache: HIT` still shows the **old** hash after flush, re-run both flushes and re-check. Do not tell the user to “wait 10 minutes” or blame Cloudflare.
+
+Also smoke in a headless browser (hard-reload / cache-disabled) — typecheck alone is not enough.
+
+## Failure pattern (2026-08-12)
+
+Shipping a member-manager fix while WP Engine still served prior `index.html` → browser kept loading `populate[payouts]=*` bundle → grant dashboard 400s. Origin was correct; **page cache** was not flushed. Always flush + verify hash.
