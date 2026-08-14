@@ -20,6 +20,13 @@ import CustomAvatarHeader from "../_components/CustomAvatarHeader";
 import UserContextProvider from "../../context/UserContextProvider";
 import RolesContextProvider from "../../context/RolesContextProvider";
 import CustomToolBar from "../_components/CustomToolbar";
+import { getRelationFilterId } from "../../helpers/strapiIds";
+
+/** Strapi 5 returns `avatar: []` when empty; `[]` is truthy so `[0].url` throws. */
+function contactAvatarSrc(avatar: IContact["avatar"] | undefined) {
+  const path = avatar?.[0]?.url;
+  return path ? `${import.meta.env.VITE_API_ENDPOINT}${path}` : undefined;
+}
 
 interface EditHumanResourceProps {
   resource: string;
@@ -182,7 +189,9 @@ const EditHumanResource = ({ id, resource }: EditHumanResourceProps) => {
               index === 1 ||
               index === 2 ||
               index === 0 ? (
-                <UserContextProvider id={contact.user ? contact.user.id :  undefined}>
+                <UserContextProvider
+                  id={getRelationFilterId(contact.user) ?? undefined}
+                >
                   <RolesContextProvider>
                     <Edit
                       title={"Contacts"}
@@ -192,13 +201,7 @@ const EditHumanResource = ({ id, resource }: EditHumanResourceProps) => {
                       actions={false}
                     >
                       <CustomAvatarHeader
-                        url={
-                          contact.avatar
-                            ? `${import.meta.env.VITE_API_ENDPOINT}${
-                                contact.avatar[0].url
-                              }`
-                            : undefined
-                        }
+                        url={contactAvatarSrc(contact.avatar)}
                         title={
                           contact?.first
                             ? `${contact.first + " " + contact.last}`
@@ -253,7 +256,7 @@ const EditHumanResource = ({ id, resource }: EditHumanResourceProps) => {
                   resource="training-instructor-certifications"
                 >
                   <CustomAvatarHeader
-                    url={contact.avatar ? contact.avatar[0].url : undefined}
+                    url={contactAvatarSrc(contact.avatar)}
                     title={
                       contact?.first
                         ? `${
