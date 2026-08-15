@@ -7,7 +7,9 @@ import {
 } from "react-admin";
 import { formatDate } from "../../../helpers/dateFormatter";
 import { formatNumber } from "../../../helpers/Formators";
-import fetchRelatedRecord from "./fetchRelatedRecord";
+import fetchRelatedRecord, {
+  relationDisplayValue,
+} from "../../../helpers/fetchRelatedRecord";
 
 const formatExportDate = (value: unknown): string => {
   if (value == null || value === "") return "";
@@ -76,8 +78,9 @@ const exportBooths = async (
               .map((item: ConfigurableDatagridColumn) => `${item.label}`)
               .join(", ");
           } else {
-            value = booth[column.source as keyof typeof booth];
-            value = typeof value === "boolean" ? (value ? "Yes" : "No") : value;
+            value = relationDisplayValue(
+              booth[column.source as keyof typeof booth]
+            );
           }
           filteredRecord[column.label as keyof typeof booth] = value as string;
         }

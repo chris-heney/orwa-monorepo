@@ -93,7 +93,13 @@ const GrantDashboardHeader = () => {
   };
 
   const defaultExport = (records: RaRecord[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, "Grant Scores");
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      "Grant Scores",
+      dataProvider
+    );
   };
 
   const adminPayoutExport = (records: RaRecord[]) => {

@@ -1,6 +1,10 @@
 import jsonExport from 'jsonexport/dist'
 import { downloadCSV, ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
 import formatTime from '../../_helpers/formatTime'
+import {
+  exportRelationResource,
+  resolveExportCell,
+} from '../../../helpers/fetchRelatedRecord'
 
 const exportSchedule = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
 
@@ -19,20 +23,15 @@ const exportSchedule = async (RecordList: RaRecord[], availableColumns: Configur
       // Check if the column has a label and it's not empty
       if (column.label && column.label.trim() !== '') {
 
-        let value = typeof column.source !== 'undefined'
-
-          ? Array.isArray(schedule[column.source as keyof typeof schedule])
-            ? schedule[column.source as keyof typeof schedule].map((item: ConfigurableDatagridColumn) => `${item.label}`).join(', ')
-            : typeof schedule[column.source as keyof typeof schedule] === 'boolean'
-              ? schedule[column.source as keyof typeof schedule] ? 'Yes' : 'No'
-              : schedule[column.source as keyof typeof schedule]
-          : typeof schedule[column.label.toLowerCase() as keyof typeof schedule] !== 'undefined'
-            ? Array.isArray(schedule[column.label.toLowerCase() as keyof typeof schedule])
-              ? schedule[column.label.toLowerCase() as keyof typeof schedule].map((item: ConfigurableDatagridColumn) => `${item.label}`).join(', ')
-              : typeof schedule[column.label.toLowerCase() as keyof typeof schedule] === 'boolean'
-                ? schedule[column.label.toLowerCase() as keyof typeof schedule] ? 'Yes' : 'No'
-                : schedule[column.label.toLowerCase() as keyof typeof schedule]
-            : ''
+        let value = await resolveExportCell(
+          typeof column.source !== 'undefined'
+            ? schedule[column.source as keyof typeof schedule]
+            : schedule[column.label.toLowerCase() as keyof typeof schedule],
+          {
+            dataProvider,
+            resource: exportRelationResource(column.source, column.label),
+          }
+        )
 
         if (column.label === 'Start Time' && schedule.start) {
             value = formatTime(schedule.start)

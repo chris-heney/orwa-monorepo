@@ -3,6 +3,10 @@ import jsonExport from "jsonexport/dist";
 import getExpirationDate, {
   isMembershipActiveByExpiration,
 } from "../../_helpers/getExpirationDate";
+import {
+  fetchRelatedRecord,
+  relationDisplayValue,
+} from "../../../helpers/fetchRelatedRecord";
 
 export const defaultAssociateExport = async (
   records: RaRecord[],
@@ -17,17 +21,10 @@ export const defaultAssociateExport = async (
     : availableColumns;
 
   // Helper function to get contact information
-  const getContactInfo = async (recordId: any, field: string) => {
-    // Check if recordId exists and is a valid number
-    if (!recordId || typeof recordId !== 'number' || isNaN(recordId)) return '';
-    try {
-      const contactResult = await dataProvider.getOne('contacts', { id: recordId });
-      const contact = contactResult.data as Record<string, any>;
-      return contact && contact[field] ? contact[field] : '';
-    } catch (error) {
-      console.error(`Error fetching contact ${field}:`, error);
-      return '';
-    }
+  const getContactInfo = async (recordId: unknown, field: string) => {
+    const contact = await fetchRelatedRecord(dataProvider, "contacts", recordId);
+    const value = contact[field];
+    return value == null || value === "" ? "" : String(value);
   };
 
   // Process records for export
@@ -91,16 +88,7 @@ export const defaultAssociateExport = async (
       else {
         const sourceKey = column.source as string;
         if (sourceKey && record[sourceKey] !== undefined) {
-          // Handle different data types
-          if (typeof record[sourceKey] === 'boolean') {
-            exportRecord[columnLabel] = record[sourceKey] ? 'Yes' : 'No';
-          } else if (Array.isArray(record[sourceKey])) {
-            exportRecord[columnLabel] = record[sourceKey].join(', ');
-          } else if (record[sourceKey] === null) {
-            exportRecord[columnLabel] = '';
-          } else {
-            exportRecord[columnLabel] = record[sourceKey];
-          }
+          exportRecord[columnLabel] = relationDisplayValue(record[sourceKey]);
         } else {
           exportRecord[columnLabel] = '';
         }

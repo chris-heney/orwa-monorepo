@@ -6,7 +6,9 @@ import {
   DataProvider,
 } from "react-admin";
 import { formatDate } from "../../../helpers/dateFormatter";
-import fetchRelatedRecord from "./fetchRelatedRecord";
+import fetchRelatedRecord, {
+  relationDisplayValue,
+} from "../../../helpers/fetchRelatedRecord";
 
 const formatExportDate = (value: unknown): string => {
   if (value == null || value === "") return "";
@@ -51,35 +53,11 @@ const exportAttendees = async (
 
       for (const column of columns) {
         if (column.label && column.label.trim() !== "") {
-          let value =
+          let value = relationDisplayValue(
             typeof column.source !== "undefined"
-              ? Array.isArray(record[column.source as keyof typeof record])
-                ? record[column.source as keyof typeof record]
-                    .map((item: ConfigurableDatagridColumn) => `${item.label}`)
-                    .join(", ")
-                : typeof record[column.source as keyof typeof record] ===
-                  "boolean"
-                ? record[column.source as keyof typeof record]
-                  ? "Yes"
-                  : "No"
-                : record[column.source as keyof typeof record]
-              : typeof record[
-                  column.label.toLowerCase() as keyof typeof record
-                ] !== "undefined"
-              ? Array.isArray(
-                  record[column.label.toLowerCase() as keyof typeof record]
-                )
-                ? record[column.label.toLowerCase() as keyof typeof record]
-                    .map((item: ConfigurableDatagridColumn) => `${item.label}`)
-                    .join(", ")
-                : typeof record[
-                    column.label.toLowerCase() as keyof typeof record
-                  ] === "boolean"
-                ? record[column.label.toLowerCase() as keyof typeof record]
-                  ? "Yes"
-                  : "No"
-                : record[column.label.toLowerCase() as keyof typeof record]
-              : "";
+              ? record[column.source as keyof typeof record]
+              : record[column.label.toLowerCase() as keyof typeof record]
+          );
 
           if (column.label === "Date Registered") {
             // Always overwrite — source is often "registration" (documentId).

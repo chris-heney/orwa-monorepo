@@ -5,6 +5,10 @@ import {
   RaRecord,
   DataProvider,
 } from 'react-admin';
+import {
+  exportRelationResource,
+  resolveExportCell,
+} from '../../../helpers/fetchRelatedRecord';
 
 const fetchAllRecords = async (dataProvider: any, resource: string, page = 1, perPage = 1000, accumulatedRecords: RaRecord[] = []) => {
   const { data, total } = await dataProvider.getList(resource, {
@@ -34,7 +38,8 @@ const CustomContactExport = async (
   console.log('Fetching all records for export...');
   const RecordList = await fetchAllRecords(dataProvider, resource);
 
-  const data = RecordList.map((record) => {
+  const data = await Promise.all(
+    RecordList.map(async (record) => {
     const filteredRecord = {} as Record<string, string>;
     let columns = availableColumns;
 
@@ -46,28 +51,26 @@ const CustomContactExport = async (
 
     for (const column of columns) {
       if (column.label && column.label.trim() !== '') {
-        const value = record[column.source as keyof typeof record]
-          ? Array.isArray(record[column.source as keyof typeof record])
-            ? record[column.source as keyof typeof record]
-                .map((item: ConfigurableDatagridColumn) => `${item.label}`)
-                .join(', ')
-            : typeof record[column.source as keyof typeof record] === 'boolean'
-            ? record[column.source as keyof typeof record]
-              ? 'Yes'
-              : 'No'
-            : record[column.source as keyof typeof record]
-          : '';
+        filteredRecord[column.label] = await resolveExportCell(
+          record[column.source as keyof typeof record],
+          {
+            dataProvider,
+            resource: exportRelationResource(column.source, column.label),
+          }
+        );
 
-        filteredRecord[column.label] = value as string;
-
-        if (column.label === 'Team' && record.team) {
-          filteredRecord['Team'] = record.team.name;
+        if (column.label === 'Team') {
+          filteredRecord['Team'] = await resolveExportCell(record.team, {
+            dataProvider,
+            resource: 'conference-teams',
+          });
         }
       }
     }
 
     return filteredRecord;
-  });
+  })
+  );
 
   // Export the combined records to CSV
   return jsonExport(data, (err: Error, csv: string) => {

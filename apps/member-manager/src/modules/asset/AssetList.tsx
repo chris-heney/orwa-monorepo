@@ -18,6 +18,7 @@ import {
   ExportButton,
   SelectColumnsButton,
   useListContext,
+  useDataProvider,
 } from 'react-admin'
 import CustomExportFunction from '../../helpers/custom-export-function'
 import { CurrencyOptions } from '../../config/Settings'
@@ -74,8 +75,15 @@ const AssetList = () => {
     []
   )
 
+  const dataProvider = useDataProvider()
   const exporter = (records: ConfigurableDatagridColumn[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, 'Assets')
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      'Assets',
+      dataProvider
+    )
   }
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))

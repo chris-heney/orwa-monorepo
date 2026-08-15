@@ -406,7 +406,8 @@ const Membershipheader = () => {
           records,
           availableColumns,
           columnIds,
-          `${title}-${new Date().toLocaleDateString()}`
+          `${title}-${new Date().toLocaleDateString()}`,
+          dataProvider
         );
       } else if (resource === "associates") {
         defaultAssociateExport(
@@ -423,7 +424,8 @@ const Membershipheader = () => {
           records,
           availableColumns,
           columnIds,
-          `${title}-${new Date().toLocaleDateString()}`
+          `${title}-${new Date().toLocaleDateString()}`,
+          dataProvider
         );
       } else if (resource === "associates") {
         NaylorExportAssociate(

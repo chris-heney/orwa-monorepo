@@ -17,6 +17,7 @@ import {
   ExportButton,
   SelectColumnsButton,
   Title,
+  useDataProvider,
 } from 'react-admin'
 import TrainingClassActionsButton from './components/EventListActionsPopUp'
 import TrainingEventListFilter from './components/EventListFilter'
@@ -67,8 +68,15 @@ const TrainingEventList = () => {
     []
   )
   const [columnIds] = useStore<string[]>(`preferences.${preferenceKey}.columns`, [])
+  const dataProvider = useDataProvider()
   const exporter = (records: RaRecord[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, 'Training Events')
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      'Training Events',
+      dataProvider
+    )
   }
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))

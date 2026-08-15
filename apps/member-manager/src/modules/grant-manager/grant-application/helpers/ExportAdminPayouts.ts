@@ -1,12 +1,11 @@
 import jsonExport from "jsonexport/dist";
 import {
   downloadCSV,
-  ConfigurableDatagridColumn,
   DataProvider,
   RaRecord,
 } from "react-admin";
 import { formatNumber } from "../../../../helpers/Formators";
-import dayjs from "dayjs";
+import { fetchRelatedField } from "../../../../helpers/fetchRelatedRecord";
 
 const exportPayouts = async (
   RecordList: RaRecord[],
@@ -25,21 +24,19 @@ const exportPayouts = async (
           )
         : "";
 
-      // Fetch the payout status using the status ID
-      const { data: payoutStatus } =
-        typeof payout.payout_status === "number"
-          ? await dataProvider.getOne("payout-statuses", {
-              id: payout.payout_status,
-            })
-          : { data: { name: "" } };
+      const payoutStatusName = await fetchRelatedField(
+        dataProvider,
+        "payout-statuses",
+        payout.payout_status,
+        "name"
+      );
       // Format amount: add parentheses for negatives and currency formatting
       filteredRecord["Amount"] =
         payout.amount < 0
           ? `(${formatNumber(Math.abs(payout.amount))})`
           : `${formatNumber(payout.amount)}`;
 
-      // Add status
-      filteredRecord["Status"] = payoutStatus.name || "Unknown";
+      filteredRecord["Status"] = payoutStatusName || "Unknown";
 
       runningBalance += payout.amount || 0;
       filteredRecord["Total Balance"] = formatNumber(runningBalance)    

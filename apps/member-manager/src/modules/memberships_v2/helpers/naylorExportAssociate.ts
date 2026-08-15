@@ -5,6 +5,7 @@ import {
 } from "react-admin";
 import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { IAssociate } from "../associate/AssociateInterface";
+import { fetchRelatedRecord } from "../../../helpers/fetchRelatedRecord";
 
 export const NaylorExportAssociate = async (
   RecordList: IAssociate[],
@@ -39,10 +40,11 @@ export const NaylorExportAssociate = async (
     ).map(async (record: any) => {
       const filteredRecord: Record<string, string> = {};
 
-      const { data: primaryContact } =
-        typeof record.contact_primary === "number"
-          ? await dataProvider.getOne("contacts", { id: record.contact_primary })
-          : { data: {} };
+      const primaryContact = await fetchRelatedRecord(
+        dataProvider,
+        "contacts",
+        record.contact_primary
+      );
 
       for (const [header, field] of Object.entries(headers)) {
         if (header === "Primary Associate Job Title") {

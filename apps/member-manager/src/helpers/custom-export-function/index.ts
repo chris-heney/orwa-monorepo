@@ -1,61 +1,61 @@
 import jsonExport from "jsonexport/dist";
-import { downloadCSV, ConfigurableDatagridColumn, RaRecord } from "react-admin";
+import {
+  downloadCSV,
+  ConfigurableDatagridColumn,
+  DataProvider,
+  RaRecord,
+} from "react-admin";
+import {
+  exportRelationResource,
+  resolveExportCell,
+} from "../fetchRelatedRecord";
 
-const CustomExportFunction = (
+const CustomExportFunction = async (
   RecordList: RaRecord[],
   availableColumns: ConfigurableDatagridColumn[],
   columnIds: string[],
-  title: string
+  title: string,
+  dataProvider?: DataProvider,
+  relationResources?: Record<string, string>
 ) => {
-  const data = RecordList.map((record) => {
-    const filteredRecord = {} as Record<string, string>;
+  const data = await Promise.all(
+    RecordList.map(async (record) => {
+      const filteredRecord = {} as Record<string, string>;
 
-    let columns = availableColumns;
+      let columns = availableColumns;
 
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter((column) =>
-        columnIds?.includes(column.index)
-      );
-    }
-
-    for (const column of columns) {
-      // Check if the column has a label and it's not empty
-      if (column.label && column.label.trim() !== "") {
-        let value = record[column.source as keyof typeof record]
-          ? Array.isArray(record[column.source as keyof typeof record])
-            ? record[column.source as keyof typeof record]
-                .map((item: ConfigurableDatagridColumn) => `${item.label}`)
-                .join(", ")
-            : typeof record[column.source as keyof typeof record] === "boolean"
-            ? record[column.source as keyof typeof record]
-              ? "Yes"
-              : "No"
-            : record[column.source as keyof typeof record]
-          : typeof record[column.label.toLowerCase() as keyof typeof record] !==
-            "undefined"
-          ? Array.isArray(
-              record[column.label.toLowerCase() as keyof typeof record]
-            )
-            ? record[column.label.toLowerCase() as keyof typeof record]
-                .map((item: ConfigurableDatagridColumn) => `${item.label}`)
-                .join(", ")
-            : typeof record[
-                column.label.toLowerCase() as keyof typeof record
-              ] === "boolean"
-            ? record[column.label.toLowerCase() as keyof typeof record]
-              ? "Yes"
-              : "No"
-            : record[column.label.toLowerCase() as keyof typeof record]
-          : "";
-        filteredRecord[column.label as keyof typeof record] = value as string;
+      if (columnIds.length > 0) {
+        columns = availableColumns.filter((column) =>
+          columnIds?.includes(column.index)
+        );
       }
 
-      if (column.label === "Team" && record.createdAt) {
-        filteredRecord["team"] = record.team.name;
+      for (const column of columns) {
+        if (column.label && column.label.trim() !== "") {
+          const raw =
+            record[column.source as keyof typeof record] ??
+            record[column.label.toLowerCase() as keyof typeof record];
+          const resource = exportRelationResource(
+            column.source,
+            column.label,
+            relationResources
+          );
+          filteredRecord[column.label as keyof typeof record] =
+            await resolveExportCell(raw, { dataProvider, resource });
+        }
+
+        if (column.label === "Team") {
+          filteredRecord["Team"] = await resolveExportCell(record.team, {
+            dataProvider,
+            resource:
+              relationResources?.team ??
+              exportRelationResource("team", "Team", relationResources),
+          });
+        }
       }
-    }
-    return filteredRecord;
-  });
+      return filteredRecord;
+    })
+  );
 
   return jsonExport(data, (err: Error, csv: string) =>
     downloadCSV(csv, `${title}`)

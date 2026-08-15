@@ -15,6 +15,7 @@ import {
   ExportButton,
   SelectColumnsButton,
   Title,
+  useDataProvider,
 } from 'react-admin'
 import React from 'react'
 import CustomExportFunction from '../../../helpers/custom-export-function'
@@ -51,8 +52,15 @@ const TrainingHistoryList = () => {
     []
   )
   const [columnIds] = useStore<string[]>(`preferences.${preferenceKey}.columns`, [])
+  const dataProvider = useDataProvider()
   const exporter = (records: RaRecord[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, 'Training History')
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      'Training History',
+      dataProvider
+    )
   }
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
 

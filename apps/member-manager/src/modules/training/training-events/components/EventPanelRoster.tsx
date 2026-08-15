@@ -8,6 +8,7 @@ import {
   TextField,
   useRecordContext,
   useStore,
+  useDataProvider,
 } from 'react-admin'
 import { Alert, Box, Button, Chip, Theme, Typography, useMediaQuery } from '@mui/material'
 import HowToRegIcon from '@mui/icons-material/HowToReg'
@@ -37,8 +38,15 @@ const EventPanelRoster = () => {
     []
   )
   const [columnIds] = useStore<string[]>(`preferences.${preferenceKey}.columns`, [])
+  const dataProvider = useDataProvider()
   const exporter = (records: RaRecord[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, 'Class Roster')
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      'Class Roster',
+      dataProvider
+    )
   }
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))

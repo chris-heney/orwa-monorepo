@@ -13,6 +13,7 @@ import {
   useStore,
   DatagridConfigurable,
   SimpleList,
+  useDataProvider,
 } from 'react-admin'
 import { useLocation } from 'react-router-dom'
 
@@ -49,8 +50,15 @@ const EventRegistrationList = () => {
     []
   )
 
+  const dataProvider = useDataProvider()
   const exporter = (records: ConfigurableDatagridColumn[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, 'Class Roster')
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      'Class Roster',
+      dataProvider
+    )
   }
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))

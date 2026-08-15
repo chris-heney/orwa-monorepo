@@ -8,6 +8,10 @@ import {
 import { balance } from "../../payouts/components/BalanceField";
 import { totalPaidOut } from "../../payouts/components/TotalPayoutField";
 import { IGrantApplication } from "../GrantApplicationTypes";
+import {
+  fetchRelatedRecord,
+  relationDisplayValue,
+} from "../../../../helpers/fetchRelatedRecord";
 
 const ExportApplications = async (
   RecordList: IGrantApplication[],
@@ -24,19 +28,22 @@ const ExportApplications = async (
     RecordList.map(async (application) => {
       const filteredRecord = {} as IGrantApplication[];
 
-      const email = typeof application?.point_of_contact === "number"
-        ? await dataProvider
-            .getOne("contacts", { id: application.point_of_contact })
-            .then((res) => {
-              return res.data.email;
-            })
-        : application.email;
+      const pointOfContact = await fetchRelatedRecord(
+        dataProvider,
+        "contacts",
+        application.point_of_contact
+      );
+      const email =
+        (pointOfContact.email as string) || application.email;
 
       let columns = availableColumns;
 
-      const status = typeof application?.status === "number" ? await dataProvider.getOne("grant-statuses", { id: application.status }).then((res) => {
-        return res.data.name;
-      }) : application.status;
+      const statusRecord = await fetchRelatedRecord(
+        dataProvider,
+        "grant-statuses",
+        application.status
+      );
+      const status = (statusRecord.name as string) || "";
 
 
       if (columnIds.length > 0) {
@@ -57,8 +64,9 @@ const ExportApplications = async (
               application.id as Identifier
             );
           } else {
-            value = application[column.source as keyof typeof application];
-            value = typeof value === "boolean" ? (value ? "Yes" : "No") : value;
+            value = relationDisplayValue(
+              application[column.source as keyof typeof application]
+            );
           }
 
           if (column.label === "Selected Projects") {

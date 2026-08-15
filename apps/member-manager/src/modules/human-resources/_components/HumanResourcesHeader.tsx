@@ -93,7 +93,8 @@ const HumanResourcesHeader = () => {
         records,
         availableColumns,
         columnIds,
-        `${formatTitle(resource)}-${new Date().toLocaleDateString()}`
+        `${formatTitle(resource)}-${new Date().toLocaleDateString()}`,
+        dataProvider
       );
     }
   };

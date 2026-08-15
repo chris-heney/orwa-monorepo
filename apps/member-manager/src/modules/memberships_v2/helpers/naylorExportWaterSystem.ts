@@ -1,14 +1,24 @@
 import jsonExport from "jsonexport/dist";
-import { downloadCSV, ConfigurableDatagridColumn, RaRecord } from "react-admin";
+import {
+  downloadCSV,
+  ConfigurableDatagridColumn,
+  DataProvider,
+  RaRecord,
+} from "react-admin";
 import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { IWatersystem } from "../watersystem/WatersystemInterface";
 import { directoryContactFieldFromSource } from "../watersystem/directoryContacts";
+import {
+  exportRelationResource,
+  resolveExportCell,
+} from "../../../helpers/fetchRelatedRecord";
 
-export const NaylorExportWaterSystem = (
+export const NaylorExportWaterSystem = async (
   RecordList: IWatersystem[],
   availableColumns: ConfigurableDatagridColumn[],
   columnIds: string[],
-  title: string
+  title: string,
+  dataProvider?: DataProvider
 ) => {
 
   const columnMap: Record<string, string> = {
@@ -27,7 +37,8 @@ export const NaylorExportWaterSystem = (
     "Office Email": "Email",
   };
 
-  const data = RecordList.map((watersytem) => {
+  const data = await Promise.all(
+    RecordList.map(async (watersytem) => {
     const filteredRecord: Record<string, string> = {};
 
     let columns = availableColumns;
@@ -48,10 +59,6 @@ export const NaylorExportWaterSystem = (
             )
           : watersytem[column.source as keyof typeof watersytem];
 
-        value =
-          typeof value === "boolean" ? (value ? "+" : " ") : value;
-
-
         if (column.label === "Name") {
           value = isMembershipActiveByExpiration(
             watersytem.payment_previous_date,
@@ -59,6 +66,13 @@ export const NaylorExportWaterSystem = (
           )
             ? `*${watersytem.name}`
             : `${watersytem.name}`;
+        } else if (typeof value === "boolean") {
+          value = value ? "+" : " ";
+        } else {
+          value = await resolveExportCell(value, {
+            dataProvider,
+            resource: exportRelationResource(column.source, column.label),
+          });
         }
 
         // Use the columnMap to get the new label
@@ -68,7 +82,8 @@ export const NaylorExportWaterSystem = (
       }
     }
     return filteredRecord;
-  });
+  })
+  );
 
   const sortFunction = (
     a: Record<string, string>,

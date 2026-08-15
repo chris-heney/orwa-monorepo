@@ -1,6 +1,7 @@
 import jsonExport from 'jsonexport/dist'
 import { downloadCSV, ConfigurableDatagridColumn, DataProvider, RaRecord } from 'react-admin'
 import { formatNumber } from '../../../helpers/Formators'
+import { fetchRelatedRecord, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
 // import { balance } from '../../payouts/components/BalanceField'
 // import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
 
@@ -18,7 +19,11 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
       columns = availableColumns.filter(column => columnIds?.includes(column.index)).slice(8,11)
     }
 
-    const { data: registrant } = registration.registrant ? await dataProvider.getOne('contacts', { id: registration.registrant }) : { data: {} }
+    const registrant = await fetchRelatedRecord(
+      dataProvider,
+      'contacts',
+      registration.registrant
+    )
 
 
     for (const column of columns) {
@@ -27,7 +32,7 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
         let value = registration[column.source as keyof typeof registration]
 
         if (column.label === 'Registrant') {
-          value = registrant.first + ' ' + registrant.last
+          value = `${registrant.first ?? ''} ${registrant.last ?? ''}`.trim()
         }
         else if (column.label === 'Email') {
           value = registrant.email
@@ -56,8 +61,9 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
             .join(', ')
         }
         else {
-          value = registration[column.source as keyof typeof registration]
-          value = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value
+          value = relationDisplayValue(
+            registration[column.source as keyof typeof registration]
+          )
         }
 
         // Assign the value to the corresponding label in the filtered record

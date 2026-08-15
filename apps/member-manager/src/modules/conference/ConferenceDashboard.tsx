@@ -74,7 +74,8 @@ const ConferenceDashboard = () => {
       records,
       availableColumns,
       columnIds,
-      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`
+      `${activeConferenceName} ${formattedTitle}-${new Date().toLocaleDateString()}`,
+      dataProvider
     );
   };
 

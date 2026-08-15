@@ -10,6 +10,7 @@ import {
   DatagridConfigurable,
   NumberField,
   RaRecord,
+  useDataProvider,
 } from 'react-admin'
 import CustomExportFunction from '../../../helpers/custom-export-function'
 import CustomListActions from '../../_components/CustomListActions'
@@ -26,8 +27,15 @@ const SessionList = () => {
     []
   )
 
+  const dataProvider = useDataProvider()
   const exporter = (records: RaRecord[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, 'TopicsList')
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      'TopicsList',
+      dataProvider
+    )
   }
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))

@@ -1,5 +1,7 @@
 import jsonExport from "jsonexport/dist";
 import { downloadCSV, DataProvider, RaRecord } from "react-admin";
+import fetchRelatedRecord from "../../../helpers/fetchRelatedRecord";
+import { isDocumentId } from "../../../helpers/strapiIds";
 
 type RegistrationBundle = {
   registration: RaRecord;
@@ -17,27 +19,31 @@ const exportVendorAttendeeRoster = async (
   dataProvider: DataProvider,
   title: string
 ): Promise<number> => {
-  const ticketVendorCache = new Map<number, boolean>();
-  const regBundleCache = new Map<number, RegistrationBundle>();
+  const ticketVendorCache = new Map<string, boolean>();
+  const regBundleCache = new Map<string, RegistrationBundle>();
 
-  const isVendorTicketId = async (id: number): Promise<boolean> => {
-    if (ticketVendorCache.has(id)) return ticketVendorCache.get(id)!;
-    const { data: ticket } = await dataProvider.getOne("conference-tickets", {
-      id,
-    });
-    const v = ticket?.name === "Vendor";
-    ticketVendorCache.set(id, v);
+  const isVendorTicket = async (ticket: unknown): Promise<boolean> => {
+    const resolved = await fetchRelatedRecord(
+      dataProvider,
+      "conference-tickets",
+      ticket
+    );
+    const key = String(resolved.id ?? ticket ?? "");
+    if (key && ticketVendorCache.has(key)) return ticketVendorCache.get(key)!;
+    const v = resolved.name === "Vendor";
+    if (key) ticketVendorCache.set(key, v);
     return v;
   };
 
-  const registrantContactId = (registration: RaRecord | undefined): number | undefined => {
+  const registrantContactId = (
+    registration: RaRecord | undefined
+  ): string | number | undefined => {
     const r = registration?.registrant;
     if (typeof r === "number") return r;
-    if (typeof r === "string" && /^\d+$/.test(r)) return parseInt(r, 10);
+    if (typeof r === "string" && (isDocumentId(r) || /^\d+$/.test(r))) return r;
     if (r && typeof r === "object") {
-      const id = (r as RaRecord).id;
-      if (typeof id === "number") return id;
-      if (typeof id === "string" && /^\d+$/.test(id)) return parseInt(id, 10);
+      const id = (r as RaRecord).id ?? (r as { documentId?: string }).documentId;
+      if (id != null && id !== "") return id as string | number;
     }
     return undefined;
   };
@@ -72,9 +78,10 @@ const exportVendorAttendeeRoster = async (
   };
 
   const resolveRegistrationBundle = async (
-    regId: number
+    regId: string | number
   ): Promise<RegistrationBundle> => {
-    if (regBundleCache.has(regId)) return regBundleCache.get(regId)!;
+    const cacheKey = String(regId);
+    if (regBundleCache.has(cacheKey)) return regBundleCache.get(cacheKey)!;
 
     const { data: registration } = await dataProvider.getOne(
       "conference-registrations",
@@ -97,7 +104,7 @@ const exportVendorAttendeeRoster = async (
       registrantLast,
       registrantEmail,
     };
-    regBundleCache.set(regId, bundle);
+    regBundleCache.set(cacheKey, bundle);
     return bundle;
   };
 
@@ -113,7 +120,7 @@ const exportVendorAttendeeRoster = async (
       vendorRows.push(r);
       continue;
     }
-    if (typeof ticket === "number" && (await isVendorTicketId(ticket))) {
+    if (ticket != null && (await isVendorTicket(ticket))) {
       vendorRows.push(r);
     }
   }
@@ -122,14 +129,19 @@ const exportVendorAttendeeRoster = async (
     vendorRows.map(async (record) => {
       const rawReg = record.registration;
       const rid =
-        typeof rawReg === "number"
+        typeof rawReg === "number" ||
+        isDocumentId(rawReg) ||
+        (typeof rawReg === "string" && /^\d+$/.test(rawReg))
           ? rawReg
           : rawReg && typeof rawReg === "object"
-            ? (rawReg as RaRecord).id
+            ? ((rawReg as RaRecord).id ??
+              (rawReg as { documentId?: string }).documentId)
             : undefined;
 
       const bundle =
-        typeof rid === "number" ? await resolveRegistrationBundle(rid) : null;
+        rid != null && rid !== ""
+          ? await resolveRegistrationBundle(rid as string | number)
+          : null;
       const registration = bundle?.registration ?? {};
 
       return {

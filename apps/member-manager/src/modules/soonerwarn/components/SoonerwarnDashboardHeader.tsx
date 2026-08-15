@@ -20,6 +20,7 @@ import {
   SelectColumnsButton,
   TopToolbar,
   useStore,
+  useDataProvider,
 } from "react-admin";
 import { useSoonerwarnContext } from "../SoonerwarnContextProvider";
 import CustomExportFunction from "../../../helpers/custom-export-function";
@@ -54,8 +55,16 @@ const SoonerwarnDashboardHeader = () => {
     []
   );
 
+  const dataProvider = useDataProvider();
   const defaultExport = (records: RaRecord[]) => {
-    CustomExportFunction(records, availableColumns, columnIds, "Grant Scores");
+    CustomExportFunction(
+      records,
+      availableColumns,
+      columnIds,
+      "SoonerWARN Applications",
+      dataProvider,
+      { status: "soonerwarn-statuses" }
+    );
   };
 
   return (

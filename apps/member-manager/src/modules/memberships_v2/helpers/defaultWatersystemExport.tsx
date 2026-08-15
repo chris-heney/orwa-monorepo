@@ -1,27 +1,32 @@
-import { ConfigurableDatagridColumn, RaRecord } from "react-admin";
+import { ConfigurableDatagridColumn, DataProvider, RaRecord } from "react-admin";
 import jsonExport from "jsonexport/dist";
 import getExpirationDate, {
   isMembershipActiveByExpiration,
 } from "../../_helpers/getExpirationDate";
 import { directoryContactFieldFromSource } from "../watersystem/directoryContacts";
+import {
+  exportRelationResource,
+  resolveExportCell,
+} from "../../../helpers/fetchRelatedRecord";
 
-export const defaultWatersystemExport = (
+export const defaultWatersystemExport = async (
   records: RaRecord[],
   availableColumns: ConfigurableDatagridColumn[],
   columnIds: string[],
-  fileName: string
+  fileName: string,
+  dataProvider?: DataProvider
 ) => {
   // Filter columns based on columnIds if provided
   const columns = columnIds?.length > 0
     ? availableColumns.filter(column => columnIds.includes(column.index))
     : availableColumns;
 
-  // Process records for export
-  const exportData = records.map(record => {
+  const exportData = await Promise.all(
+    records.map(async (record) => {
     const exportRecord: Record<string, any> = {};
 
-    // Process each column
-    columns.forEach(column => {
+    await Promise.all(
+      columns.map(async (column) => {
       const columnLabel = column.label || column.source;
       if (!columnLabel) return;
       
@@ -63,7 +68,6 @@ export const defaultWatersystemExport = (
           exportRecord[columnLabel] = "N/A";
         }
       }
-      // Handle regular fields
       else {
         const sourceKey = column.source as string;
         if (sourceKey?.startsWith("dir_contact_")) {
@@ -72,24 +76,23 @@ export const defaultWatersystemExport = (
             sourceKey
           );
         } else if (sourceKey && record[sourceKey] !== undefined) {
-          // Handle different data types
-          if (typeof record[sourceKey] === 'boolean') {
-            exportRecord[columnLabel] = record[sourceKey] ? 'Yes' : 'No';
-          } else if (Array.isArray(record[sourceKey])) {
-            exportRecord[columnLabel] = record[sourceKey].join(', ');
-          } else if (record[sourceKey] === null) {
-            exportRecord[columnLabel] = '';
-          } else {
-            exportRecord[columnLabel] = record[sourceKey];
-          }
+          exportRecord[columnLabel] = await resolveExportCell(
+            record[sourceKey],
+            {
+              dataProvider,
+              resource: exportRelationResource(sourceKey, columnLabel),
+            }
+          );
         } else {
           exportRecord[columnLabel] = '';
         }
       }
-    });
+    })
+    );
 
     return exportRecord;
-  });
+  })
+  );
 
   // Export to CSV
   jsonExport(exportData, (err, csv) => {

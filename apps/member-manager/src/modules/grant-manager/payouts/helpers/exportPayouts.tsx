@@ -1,7 +1,11 @@
 import jsonExport from 'jsonexport/dist'
-import { downloadCSV, ConfigurableDatagridColumn, DataProvider, RaRecord } from 'react-admin'
+import { downloadCSV, ConfigurableDatagridColumn, DataProvider, Identifier, RaRecord } from 'react-admin'
 import { balance } from '../../payouts/components/BalanceField'
 import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
+import {
+  fetchRelatedRecord,
+  relationDisplayValue,
+} from '../../../../helpers/fetchRelatedRecord'
 
 const exportPayouts = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
   // When you use async functions within map, it returns an array of promises, 
@@ -17,27 +21,38 @@ const exportPayouts = async (RecordList: RaRecord[], availableColumns: Configura
       columns = availableColumns.filter(column => columnIds?.includes(column.index))
     }
 
+    const application = await fetchRelatedRecord(
+      dataProvider,
+      'grant-application-finals',
+      payout.application
+    )
+    const payoutStatus = await fetchRelatedRecord(
+      dataProvider,
+      'payout-statuses',
+      payout.payout_status
+    )
+    const applicationId = (application.id ?? payout.application) as Identifier
+
     for (const column of columns) {
 
       if (column.label && column.label.trim() !== '') {
         let value
        
         if (column.label === 'Application') {
-          value = await dataProvider.getOne('grant-application-finals', { id: payout.application }).then(({ data }) => {return (data.legal_entity_name)})
+          value = application.legal_entity_name ?? ''
         }
         else if (column.label === 'Awarded') { 
-          value = await dataProvider.getOne('grant-application-finals', { id: payout.application }).then(({ data }) => {return (data.award_amount)})
+          value = application.award_amount ?? ''
         } 
         else if (column.label === 'Status') { 
-          value = await dataProvider.getOne('payout-statuses', { id: payout.payout_status }).then(({ data }) => {return (data.name)})
+          value = payoutStatus.name ?? ''
         }
         else if (column.label === 'Balance') {
-          value = await balance(dataProvider, payout.application)
+          value = applicationId != null ? await balance(dataProvider, applicationId) : ''
         } else if (column.label === 'Total Paid Out') {
-          value = await totalPaidOut(dataProvider, payout.application)
+          value = applicationId != null ? await totalPaidOut(dataProvider, applicationId) : ''
         } else {
-          value = payout[column.source as keyof typeof payout]
-          value = typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value
+          value = relationDisplayValue(payout[column.source as keyof typeof payout])
         }
 
         // Assign the value to the corresponding label in the filtered record

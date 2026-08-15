@@ -1,5 +1,6 @@
 import jsonExport from 'jsonexport/dist'
 import { downloadCSV, ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
+import { fetchRelatedRecord, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
 
 const exportContestants = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
 
@@ -13,27 +14,18 @@ const exportContestants = async (RecordList: RaRecord[], availableColumns: Confi
       columns = availableColumns.filter(column => columnIds?.includes(column.index))
     }
 
-    const { data: team } = (typeof record.team  === 'number') ?  await dataProvider.getOne('conference-teams', { id: record.team }) : { data: {} }
+    const team = await fetchRelatedRecord(dataProvider, 'conference-teams', record.team)
 
     for (const column of columns) {
 
       // Check if the column has a label and it's not empty
       if (column.label && column.label.trim() !== '') {
 
-        let value = typeof column.source !== 'undefined'
-
-          ? Array.isArray(record[column.source as keyof typeof record])
-            ? record[column.source as keyof typeof record].map((item: ConfigurableDatagridColumn) => `${item.label}`).join(', ')
-            : typeof record[column.source as keyof typeof record] === 'boolean'
-              ? record[column.source as keyof typeof record] ? 'Yes' : 'No'
-              : record[column.source as keyof typeof record]
-          : typeof record[column.label.toLowerCase() as keyof typeof record] !== 'undefined'
-            ? Array.isArray(record[column.label.toLowerCase() as keyof typeof record])
-              ? record[column.label.toLowerCase() as keyof typeof record].map((item: ConfigurableDatagridColumn) => `${item.label}`).join(', ')
-              : typeof record[column.label.toLowerCase() as keyof typeof record] === 'boolean'
-                ? record[column.label.toLowerCase() as keyof typeof record] ? 'Yes' : 'No'
-                : record[column.label.toLowerCase() as keyof typeof record]
-            : ''
+        let value = relationDisplayValue(
+          typeof column.source !== 'undefined'
+            ? record[column.source as keyof typeof record]
+            : record[column.label.toLowerCase() as keyof typeof record]
+        )
 
         if (column.label === 'Team' && team.name) {       
           value = team.name
