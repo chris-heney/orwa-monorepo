@@ -49,9 +49,10 @@ export interface IExtra {
   name: string
   price_online: number
   price_event: number
-  context: number[]
+  context: string | number[]
   excluded: number[]
   quantity_selection?: boolean | null
+  max_qty_each?: number | null
   min_qty_each?: number | null
   requires_selection?: boolean | null
   selection_name?: string | null

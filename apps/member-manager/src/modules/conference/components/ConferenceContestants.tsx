@@ -30,7 +30,8 @@ import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
 import { ISharedMeta } from "../types/IConference";
 import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
-//TODO fix so tickets and extras work theyre turning the contact into a null object
+import { groupItemsByExtra } from "../helpers/contestantExtras";
+import ContestantExtrasEditor from "./ContestantExtrasEditor";
 
 const ContestantFormFields = () => {
 
@@ -135,6 +136,7 @@ const ContestantFormFields = () => {
           <NumberInput source="fee" label="Fee" fullWidth />
         </Grid>
       </Grid>
+      <ContestantExtrasEditor conferenceId={filterConferenceId} />
     </Grid>
   );
 };
@@ -256,24 +258,9 @@ const ConferenceContestants = () => {
           label="Items"
           sortBy="items.label"
           render={(record: RaRecord) => {
-            // Quantity extras are stored as one field-meta row per unit —
-            // group by item/label and show Mulligan (x4), etc.
-            const grouped = new Map<
-              string,
-              { label: string; count: number }
-            >();
-            for (const item of (record?.items ?? []) as ISharedMeta[]) {
-              const label = (item.label || item.key || "Item").trim();
-              const itemRef = item.item as { id?: number | string } | number | string | null;
-              const itemId =
-                itemRef != null && typeof itemRef === "object"
-                  ? itemRef.id
-                  : itemRef;
-              const groupKey = String(itemId ?? label);
-              const existing = grouped.get(groupKey);
-              if (existing) existing.count += 1;
-              else grouped.set(groupKey, { label, count: 1 });
-            }
+            const grouped = groupItemsByExtra(
+              (record?.items ?? []) as ISharedMeta[]
+            );
             return [...grouped.entries()].map(([groupKey, { label, count }]) => (
               <Chip
                 key={`item-${record.id}-${groupKey}`}
