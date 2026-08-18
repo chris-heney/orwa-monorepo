@@ -16,6 +16,7 @@ import {
 } from "react-admin";
 import Grid from "@mui/material/Grid";
 import { Box, Theme, useMediaQuery } from "@mui/material";
+import dayjs from "dayjs";
 import { FieldValues } from "react-hook-form";
 import CustomSecondaryHeader from "../../../_components/CustomSecondaryHeader";
 import {
@@ -122,7 +123,9 @@ const ModalMakePayout = React.forwardRef<HTMLDivElement, ModalMakePayoutProps>(
               grant: grantId,
               application: id,
               payout_status: defaultStatusId,
-              transaction_date: new Date(),
+              // Local YYYY-MM-DD string, never a raw Date: an untouched Date
+              // default reaches the write payload as-is and used to 400.
+              transaction_date: dayjs().format("YYYY-MM-DD"),
             }}
           >
             <Grid container spacing={2}>
@@ -192,7 +195,7 @@ const ModalMakePayout = React.forwardRef<HTMLDivElement, ModalMakePayoutProps>(
               </Grid>
               <Grid item xs={6}>
                 <DateInput
-                  defaultValue={new Date()}
+                  defaultValue={dayjs().format("YYYY-MM-DD")}
                   source="transaction_date"
                   label="Transaction Date"
                   fullWidth

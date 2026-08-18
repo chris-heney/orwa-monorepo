@@ -166,6 +166,36 @@ describe("sanitizeWriteValue — components / repeaters", () => {
   });
 });
 
+describe("sanitizeWriteValue — dates", () => {
+  it("converts a Date instance to a LOCAL no-offset string instead of collapsing it to {}", () => {
+    // new Date(y, m, d, h, min) is constructed in local time, so the output
+    // must echo the same local wall-clock parts with no Z/offset suffix.
+    const d = new Date(2026, 7, 18, 12, 0, 0);
+    expect(sanitizeWriteValue(d)).toBe("2026-08-18T12:00:00.000");
+  });
+
+  it("keeps the LOCAL calendar day for an evening save (never the UTC next day)", () => {
+    // 11:30 PM local on Aug 18. toISOString() in any timezone west of UTC
+    // would roll this into Aug 19 once Strapi truncates to a date.
+    const evening = new Date(2026, 7, 18, 23, 30);
+    const out = sanitizeWriteValue(evening) as string;
+    expect(out.startsWith("2026-08-18")).toBe(true);
+    expect(out).toBe("2026-08-18T23:30:00.000");
+    expect(out).not.toContain("Z");
+  });
+
+  it("converts a Date nested inside a component/repeater item", () => {
+    const d = new Date(2026, 7, 18, 12, 0, 0);
+    expect(
+      sanitizeWriteValue([{ id: 3, label: "Session", starts_at: d }])
+    ).toEqual([{ id: 3, label: "Session", starts_at: "2026-08-18T12:00:00.000" }]);
+  });
+
+  it("turns an invalid Date into null", () => {
+    expect(sanitizeWriteValue(new Date(NaN))).toBeNull();
+  });
+});
+
 describe("sanitizeStrapiWritePayload", () => {
   it("strips top-level system fields and collapses mixed relation + repeater + media", () => {
     expect(
@@ -198,6 +228,22 @@ describe("sanitizeStrapiWritePayload", () => {
   it("turns empty strings into null", () => {
     expect(sanitizeStrapiWritePayload({ comments: "" })).toEqual({
       comments: null,
+    });
+  });
+
+  it("keeps an untouched DateInput defaultValue as a string, not {} (payout modal 400)", () => {
+    expect(
+      sanitizeStrapiWritePayload({
+        type: "Reimbursement",
+        amount: 17046,
+        application: "l8g7ystnu1d2r1erg09splgl",
+        transaction_date: new Date(2026, 7, 18, 12, 0, 0),
+      })
+    ).toEqual({
+      type: "Reimbursement",
+      amount: 17046,
+      application: "l8g7ystnu1d2r1erg09splgl",
+      transaction_date: "2026-08-18T12:00:00.000",
     });
   });
 

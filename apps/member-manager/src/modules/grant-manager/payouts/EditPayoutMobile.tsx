@@ -1,5 +1,6 @@
 import React from 'react'
 import { DateInput, Edit, NumberInput, ReferenceField, SimpleForm, TextInput } from 'react-admin'
+import dayjs from 'dayjs'
 import CustomHeader from '../../_components/CustomHeader'
 
 const EditPayoutMobile = () => {
@@ -14,7 +15,7 @@ const EditPayoutMobile = () => {
         <>{ }</>
         <>{ }</>
         <NumberInput source="amount" label="Payout" fullWidth helperText={false} key="payout-field-amounbt" />),
-        <DateInput defaultValue={new Date()} source="transaction_date" label="Payout Date" fullWidth helperText={false} key="payout-field-4" />)
+        <DateInput defaultValue={dayjs().format('YYYY-MM-DD')} source="transaction_date" label="Payout Date" fullWidth helperText={false} key="payout-field-4" />)
         <>{ }</>
       </SimpleForm>
     </Edit>

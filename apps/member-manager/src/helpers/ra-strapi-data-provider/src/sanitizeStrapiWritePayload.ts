@@ -19,6 +19,8 @@
  *   their contents are sanitized recursively.
  */
 
+import dayjs from "dayjs";
+
 const TOP_LEVEL_SYSTEM_FIELDS = new Set([
   "id",
   "documentId",
@@ -77,6 +79,22 @@ export const sanitizeWriteValue = (value: unknown): unknown => {
   if (value === "") return null;
   if (value == null) return value;
   if (typeof value !== "object") return value;
+
+  // Date must be handled before any object branch: react-hook-form submits
+  // untouched `defaultValue={new Date()}` as a raw Date, which the component
+  // branch would collapse to {} (Object.entries(Date) is empty) → Strapi 400
+  // "Invalid format, expected yyyy-MM-dd".
+  //
+  // Use LOCAL time parts WITHOUT a Z/offset — never toISOString(). Strapi
+  // truncates a Z-suffixed value to the UTC date, so an evening save (UTC-5)
+  // would silently land on the NEXT calendar day. A no-offset string keeps
+  // the local date part on any server timezone (probed against Strapi:
+  // "…T23:30:00.000" → 2026-08-18, "…T04:30:00.000Z" → 2026-08-19).
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime())
+      ? null
+      : dayjs(value).format("YYYY-MM-DDTHH:mm:ss.SSS");
+  }
 
   if (Array.isArray(value)) {
     return value.map((item) => sanitizeWriteValue(item));

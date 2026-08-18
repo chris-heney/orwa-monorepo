@@ -10,9 +10,13 @@ import {
   TextInput,
   useRecordContext,
 } from "react-admin";
+import dayjs from "dayjs";
 import { CurrencyOptions } from "../../../config/Settings";
 import TotalPayoutsField from "./components/TotalPayoutField";
 import BalanceField from "./components/BalanceField";
+
+/** Local YYYY-MM-DD string, never a raw Date: an untouched Date default reaches the write payload as-is and used to 400. */
+const todayLocal = () => dayjs().format("YYYY-MM-DD");
 
 /** ReferenceInput needs a scalar id; list queries populate payout_status as an object. */
 const formatRelationId = (value: unknown) => {
@@ -31,7 +35,7 @@ const EditPayout = ({ type }: { type: "Administrative" | "Reimbursement" }) => {
     return (
       <RowForm expand>
         <DateInput
-          defaultValue={new Date()}
+          defaultValue={todayLocal()}
           source="transaction_date"
           label="Payout Date"
           fullWidth
@@ -78,7 +82,7 @@ const EditPayout = ({ type }: { type: "Administrative" | "Reimbursement" }) => {
   return (
     <RowForm expand>
       <DateInput
-        defaultValue={new Date()}
+        defaultValue={todayLocal()}
         source="transaction_date"
         label="Payout Date"
         fullWidth
