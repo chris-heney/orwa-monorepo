@@ -91,10 +91,18 @@ const configureUserPreferencesPermissions = async (strapi) => {
     await ensureRolePermissions(
       strapi,
       { type: 'authenticated' },
-      USER_PREFERENCES_ACTIONS
+      USER_PREFERENCES_ACTIONS,
     );
-    await ensureRolePermissions(strapi, { type: 'admin' }, USER_PREFERENCES_ACTIONS);
-    await ensureRolePermissions(strapi, { type: 'staff' }, USER_PREFERENCES_ACTIONS);
+    await ensureRolePermissions(
+      strapi,
+      { type: 'admin' },
+      USER_PREFERENCES_ACTIONS,
+    );
+    await ensureRolePermissions(
+      strapi,
+      { type: 'staff' },
+      USER_PREFERENCES_ACTIONS,
+    );
   } catch (error) {
     strapi.log.warn(
       `Unable to configure user preferences permissions: ${error.message}`,
@@ -244,6 +252,13 @@ export default {
    * This gives you an opportunity to extend code.
    */
   register({ strapi }) {
+    // Admin "test as role": after JWT auth, optionally rebuild ability from
+    // X-Impersonate-Role. See src/utils/role-impersonation.ts.
+    const {
+      wrapAuthWithRoleImpersonation,
+    } = require('./utils/role-impersonation');
+    wrapAuthWithRoleImpersonation(strapi);
+
     // Strapi 4 coerced write-payload primitive types; Strapi 5 validates
     // strictly. Restore v4-compatible coercion (and strip system fields)
     // for every api:: create/update so legacy clients and intake forms

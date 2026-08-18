@@ -54,15 +54,30 @@ export default (plugin: any) => {
       return;
     }
 
-    const user = await strapi.db
-      .query('plugin::users-permissions.user')
-      .findOne({
-        where: { id: ctx.state.user.id },
-        populate: ['role'],
-      });
+    // When Admin is testing as another role, expose that role's modules /
+    // permissions so useModuleAccess / useCan stay server-driven.
+    const impersonating = ctx.state.impersonator;
+    const roleFromAuth = ctx.state.user.role;
 
-    if (user?.role) {
-      const { id, name, description, type, modules } = user.role;
+    let role = roleFromAuth;
+    if (!impersonating) {
+      const user = await strapi.db
+        .query('plugin::users-permissions.user')
+        .findOne({
+          where: { id: ctx.state.user.id },
+          populate: ['role'],
+        });
+      role = user?.role ?? roleFromAuth;
+    } else if (roleFromAuth?.id != null && roleFromAuth.modules === undefined) {
+      // Authenticate may only have a partial role row; reload for modules.
+      role =
+        (await strapi.db.query('plugin::users-permissions.role').findOne({
+          where: { id: roleFromAuth.id },
+        })) ?? roleFromAuth;
+    }
+
+    if (role) {
+      const { id, name, description, type, modules } = role;
       const permissionRows = await strapi.db
         .query('plugin::users-permissions.permission')
         .findMany({
@@ -77,6 +92,13 @@ export default (plugin: any) => {
         type,
         modules,
         permissions: permissionRows.map((permission: any) => permission.action),
+      };
+    }
+
+    if (impersonating && role) {
+      ctx.body.impersonating = {
+        roleId: role.id,
+        roleName: role.name,
       };
     }
   };

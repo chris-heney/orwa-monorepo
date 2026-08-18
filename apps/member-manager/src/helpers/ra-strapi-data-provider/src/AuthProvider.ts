@@ -1,7 +1,7 @@
-import CookieStore from "./CookieStore";
-import { AuthProvider, UserIdentity } from "react-admin";
-import RoleController, { TRole } from "../../../config/Roles";
-import { userPreferencesStore } from "../../userPreferencesStore";
+import CookieStore from './CookieStore';
+import { AuthProvider, UserIdentity } from 'react-admin';
+import RoleController, { TRole } from '../../../config/Roles';
+import { userPreferencesStore } from '../../userPreferencesStore';
 export interface IUserIdentity extends UserIdentity {
   role: string;
   token: string;
@@ -91,12 +91,12 @@ const authProvider: AuthProvider = {
               );
             }
 
-            CookieStore.setCookie("token", userData.jwt, 1);
-            CookieStore.setCookie("role", roleName, 1);
-            CookieStore.setCookie("email", userData.user.email, 1);
+            CookieStore.setCookie('token', userData.jwt, 1);
+            CookieStore.setCookie('role', roleName, 1);
+            CookieStore.setCookie('email', userData.user.email, 1);
             const userId = userWithRole?.id ?? userData.user?.id;
             if (userId != null) {
-              CookieStore.setCookie("id", String(userId), 1);
+              CookieStore.setCookie('id', String(userId), 1);
             }
             return { success: true, user: userWithRole };
           });
@@ -107,12 +107,20 @@ const authProvider: AuthProvider = {
     try {
       await userPreferencesStore.flush();
     } catch (err) {
-      console.warn("[authProvider] preferences flush on logout failed", err);
+      console.warn('[authProvider] preferences flush on logout failed', err);
     }
-    CookieStore.deleteCookie("token");
-    CookieStore.deleteCookie("role");
-    CookieStore.deleteCookie("email");
-    CookieStore.deleteCookie("id");
+    try {
+      const { clearRolePreview } = await import(
+        '../../../modules/rbac-manager/rolePreview'
+      );
+      clearRolePreview();
+    } catch {
+      // ignore
+    }
+    CookieStore.deleteCookie('token');
+    CookieStore.deleteCookie('role');
+    CookieStore.deleteCookie('email');
+    CookieStore.deleteCookie('id');
     return;
   },
 

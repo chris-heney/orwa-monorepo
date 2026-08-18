@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { Title, useNotify } from 'react-admin';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -25,10 +26,17 @@ import AddIcon from '@mui/icons-material/Add';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
 import PageHeadingBar from '../_components/PageHeadingBar';
-import { ALL_MODULE_KEYS, APP_MODULES } from '../../config/modules';
+import {
+  ALL_MODULE_KEYS,
+  APP_MODULES,
+  firstAllowedPath,
+} from '../../config/modules';
 import { deleteRole, getRoles, RoleSummary } from './api';
 import RoleEditor from './RoleEditor';
+import { useMeQuery } from './useModuleAccess';
+import { previewModulesForRole, setRolePreview } from './rolePreview';
 
 /** Built-in Strapi roles (plus admin) that must never be deleted. */
 const PROTECTED_ROLE_TYPES = ['public', 'authenticated', 'admin'];
@@ -90,12 +98,23 @@ const ModulesCell = ({ role }: { role: RoleSummary }) => {
  */
 const RbacDashboard = () => {
   const notify = useNotify();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: me } = useMeQuery();
 
   const [editorRole, setEditorRole] = useState<number | 'new' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<RoleSummary | null>(null);
+  const [confirmPreview, setConfirmPreview] = useState<RoleSummary | null>(
+    null
+  );
 
   const rolesQuery = useQuery<RoleSummary[], Error>('rbac-roles', getRoles);
+
+  const realRole = me?.role;
+  const isRealAdmin =
+    !me?.impersonating &&
+    realRole != null &&
+    (realRole.type === 'admin' || realRole.name === 'Admin');
 
   const deleteMutation = useMutation<{ ok: boolean }, Error, RoleSummary>(
     (role) => deleteRole(role.id),
@@ -119,6 +138,15 @@ const RbacDashboard = () => {
     }
   };
 
+  const startPreview = (role: RoleSummary) => {
+    setRolePreview({ roleId: role.id, roleName: role.name });
+    setConfirmPreview(null);
+    queryClient.invalidateQueries(['auth', 'moduleAccess']);
+    const modules = previewModulesForRole(role);
+    navigate(firstAllowedPath(modules));
+    notify(`Testing as ${role.name}`, { type: 'info' });
+  };
+
   if (editorRole !== null) {
     return (
       <RoleEditor
@@ -136,16 +164,10 @@ const RbacDashboard = () => {
       <Title title="RBAC Manager" />
       <PageHeadingBar
         title="RBAC Manager"
-        info="Create roles, choose which modules each role can see in the admin, and grant per-endpoint API permissions. Module access is UX-only; the API permissions are enforced by the server."
-        // Sit below the fixed hide-on-scroll app bar (layout compensates with
-        // 48px margin, 56px on xs) so the bar actions are never buried under it.
+        info="Create roles, choose which modules each role can see in the admin, and grant per-endpoint API permissions. Module access is UX-only; the API permissions are enforced by the server. Use Test as role to preview UI and API grants."
         sx={{ top: { xs: 56, sm: 48 } }}
         actions={
           <>
-            {/* The app-bar Refresh is not wired to these custom react-query
-                fetches, so the page provides its own refresh — same choice as
-                MediaLibraryPage. The editor always reloads on open
-                (cacheTime: 0). */}
             <Tooltip title="Refresh roles">
               <IconButton
                 size="small"
@@ -171,9 +193,6 @@ const RbacDashboard = () => {
           {rolesQuery.error.message}
         </Alert>
       )}
-      {/* width: 0 + minWidth: '100%' zeroes the table's intrinsic width so
-          the layout's `minWidth: fit-content` root never grows past the
-          viewport — the table scrolls inside this box, never the page. */}
       <Box
         sx={{ width: 0, minWidth: '100%', maxWidth: '100%', overflowX: 'auto' }}
       >
@@ -221,6 +240,17 @@ const RbacDashboard = () => {
                           <EditIcon color="primary" />
                         </IconButton>
                       </Tooltip>
+                      {isRealAdmin && (
+                        <Tooltip title="Test as this role">
+                          <IconButton
+                            size="small"
+                            onClick={() => setConfirmPreview(role)}
+                            aria-label={`Test as ${role.name}`}
+                          >
+                            <SupervisedUserCircleIcon color="primary" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       <Tooltip
                         title={
                           isProtected
@@ -286,6 +316,35 @@ const RbacDashboard = () => {
             }
           >
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={Boolean(confirmPreview)}
+        onClose={() => setConfirmPreview(null)}
+      >
+        <DialogTitle>Test as &quot;{confirmPreview?.name}&quot;?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            You will see the admin UI and API permission checks as this role.
+            Your login stays Admin; role management endpoints still use your
+            Admin grants. Use Exit preview on the banner anytime.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="inherit"
+            onClick={() => setConfirmPreview(null)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => confirmPreview && startPreview(confirmPreview)}
+          >
+            Start preview
           </Button>
         </DialogActions>
       </Dialog>

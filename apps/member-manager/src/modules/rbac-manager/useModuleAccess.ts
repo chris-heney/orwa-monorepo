@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from 'react-query';
 import { CookieStore } from '../../helpers/ra-strapi-data-provider';
 import { ALL_MODULE_KEYS, ModuleKey } from '../../config/modules';
+import { clearRolePreview, getImpersonateRoleHeader } from './rolePreview';
 
 interface MeRole {
   id: number;
@@ -15,22 +16,30 @@ interface MeRole {
 export interface MeResponse {
   id: number;
   role?: MeRole | null;
+  impersonating?: { roleId: number; roleName: string } | null;
 }
 
 const fetchMe = async (): Promise<MeResponse> => {
   const token = CookieStore.getCookie('token');
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
+
+  const impersonateRoleId = getImpersonateRoleHeader();
+  if (impersonateRoleId) {
+    headers['X-Impersonate-Role'] = impersonateRoleId;
+  }
 
   const res = await fetch(
     `${import.meta.env.VITE_API_ENDPOINT}/api/users/me?populate=role`,
-    {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    }
+    { headers }
   );
 
   if (!res.ok) {
+    if (res.status === 400 && impersonateRoleId) {
+      clearRolePreview();
+    }
     throw new Error(`Failed to fetch current user (status ${res.status})`);
   }
 

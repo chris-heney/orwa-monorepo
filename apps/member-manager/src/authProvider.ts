@@ -120,15 +120,25 @@ const authProvider: AuthProvider = {
   },
   logout: async () => {
     try {
-      const { userPreferencesStore } = await import('./helpers/userPreferencesStore')
-      await userPreferencesStore.flush()
+      const { userPreferencesStore } = await import(
+        './helpers/userPreferencesStore'
+      );
+      await userPreferencesStore.flush();
     } catch (err) {
-      console.warn('[authProvider] preferences flush on logout failed', err)
+      console.warn('[authProvider] preferences flush on logout failed', err);
     }
-    Cookies.deleteCookie('token')
-    Cookies.deleteCookie('role')
-    Cookies.deleteCookie('email')
-    Cookies.deleteCookie('id')
+    try {
+      const { clearRolePreview } = await import(
+        './modules/rbac-manager/rolePreview'
+      );
+      clearRolePreview();
+    } catch {
+      // ignore
+    }
+    Cookies.deleteCookie('token');
+    Cookies.deleteCookie('role');
+    Cookies.deleteCookie('email');
+    Cookies.deleteCookie('id');
   },
 
   checkAuth: () => {

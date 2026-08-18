@@ -1,5 +1,6 @@
 import { CookieStore } from '../../helpers/ra-strapi-data-provider';
 import { ModuleKey } from '../../config/modules';
+import { getImpersonateRoleHeader } from './rolePreview';
 
 /**
  * Direct-fetch client for the Strapi users-permissions role endpoints.
@@ -50,14 +51,20 @@ const apiBase = `${import.meta.env.VITE_API_ENDPOINT}/api`;
 
 const request = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
   const token = CookieStore.getCookie('token');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+    ...(init.headers as Record<string, string> | undefined),
+  };
+
+  const impersonateRoleId = getImpersonateRoleHeader();
+  if (impersonateRoleId) {
+    headers['X-Impersonate-Role'] = impersonateRoleId;
+  }
 
   const res = await fetch(`${apiBase}${path}`, {
     ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...init.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {

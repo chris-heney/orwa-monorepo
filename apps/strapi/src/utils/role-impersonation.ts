@@ -1,0 +1,122 @@
+/**
+ * Role impersonation for Admin "test as role".
+ *
+ * After users-permissions JWT auth succeeds, if `X-Impersonate-Role` is set,
+ * rebuild the CASL ability from the target role's permissions (unless the
+ * route is an exempt RBAC management action).
+ */
+
+const HEADER = 'x-impersonate-role';
+
+/** Role/permission management actions always authorize as the real Admin. */
+export const EXEMPT_IMPERSONATION_ACTIONS = new Set([
+  'plugin::users-permissions.role.find',
+  'plugin::users-permissions.role.findOne',
+  'plugin::users-permissions.role.createRole',
+  'plugin::users-permissions.role.updateRole',
+  'plugin::users-permissions.role.deleteRole',
+  'plugin::users-permissions.permissions.getPermissions',
+]);
+
+const isAdminRole = (
+  role: { type?: string; name?: string } | null | undefined,
+) => role != null && (role.type === 'admin' || role.name === 'Admin');
+
+const routeScopes = (ctx: any): string[] => {
+  const scope = ctx.state?.route?.config?.auth?.scope;
+  if (!scope) return [];
+  return Array.isArray(scope) ? scope : [scope];
+};
+
+/**
+ * Mutates ctx.state when impersonating. Returns false if the response was
+ * already sent (forbidden/badRequest); true to continue the middleware chain.
+ */
+export const applyRoleImpersonation = async (
+  strapi: any,
+  ctx: any,
+): Promise<boolean> => {
+  const raw = ctx.request?.headers?.[HEADER];
+  if (raw == null || raw === '') {
+    return true;
+  }
+
+  const user = ctx.state.user;
+  if (!user?.role) {
+    ctx.forbidden('Role impersonation requires an authenticated Admin');
+    return false;
+  }
+
+  const realRole = user.role;
+  if (!isAdminRole(realRole)) {
+    ctx.forbidden('Only Admin can impersonate a role');
+    return false;
+  }
+
+  const scopes = routeScopes(ctx);
+  if (scopes.some((action) => EXEMPT_IMPERSONATION_ACTIONS.has(action))) {
+    return true;
+  }
+
+  const roleId = Number(Array.isArray(raw) ? raw[0] : raw);
+  if (!Number.isFinite(roleId) || roleId <= 0) {
+    ctx.badRequest('Invalid X-Impersonate-Role header');
+    return false;
+  }
+
+  const targetRole = await strapi.db
+    .query('plugin::users-permissions.role')
+    .findOne({ where: { id: roleId } });
+
+  if (!targetRole) {
+    ctx.badRequest('Impersonation role not found');
+    return false;
+  }
+
+  const permissionService = strapi
+    .plugin('users-permissions')
+    .service('permission');
+  const permissionRows = await permissionService.findRolePermissions(
+    targetRole.id,
+  );
+  const contentApiPermissions = permissionRows.map(
+    permissionService.toContentAPIPermission,
+  );
+  const ability = await strapi.contentAPI.permissions.engine.generateAbility(
+    contentApiPermissions,
+  );
+
+  ctx.state.impersonator = {
+    roleId: realRole.id,
+    roleName: realRole.name,
+    roleType: realRole.type,
+  };
+  ctx.state.user.role = targetRole;
+
+  if (ctx.state.auth) {
+    ctx.state.auth.ability = ability;
+    ctx.state.auth.credentials = ctx.state.user;
+  }
+
+  return true;
+};
+
+/**
+ * Wrap strapi auth.authenticate so impersonation runs after JWT auth sets
+ * ctx.state.user / ability, and before the rest of the middleware chain
+ * (including verify/authorize).
+ */
+export const wrapAuthWithRoleImpersonation = (strapi: any) => {
+  const auth = strapi.get('auth');
+  const originalAuthenticate = auth.authenticate.bind(auth);
+
+  auth.authenticate = async (ctx: any, next: () => Promise<void>) => {
+    await originalAuthenticate(ctx, async () => {
+      const ok = await applyRoleImpersonation(strapi, ctx);
+      if (!ok) {
+        return;
+      }
+      return next();
+    });
+  };
+};
