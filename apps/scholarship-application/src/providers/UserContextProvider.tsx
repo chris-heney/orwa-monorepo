@@ -15,7 +15,7 @@ interface UserContext {
   isAdminView: boolean;
   setIsAdminView: Dispatch<SetStateAction<boolean>>;
   viewingEntries: boolean;
-  setViewingEntries: Dispatch<SetStateAction<boolean>>;
+  setViewingEntries: Dispatch<SetStateAction<boolean>>; 
 }
 
 export const User = createContext<UserContext>({
