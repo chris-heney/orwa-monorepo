@@ -1,8 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { useQuery } from 'react-query';
 import { CookieStore } from '../../helpers/ra-strapi-data-provider';
-import { ALL_MODULE_KEYS, ModuleKey } from '../../config/modules';
-import { clearRolePreview, getImpersonateRoleHeader } from './rolePreview';
+import { ModuleKey } from '../../config/modules';
+import {
+  clearRolePreview,
+  getImpersonateRoleHeader,
+  getRolePreviewRaw,
+  parseRolePreview,
+  previewModulesForRole,
+  ROLE_PREVIEW_EVENT,
+  ROLE_PREVIEW_STORAGE_KEY,
+} from './rolePreview';
 
 interface MeRole {
   id: number;
@@ -69,6 +77,26 @@ export interface ModuleAccess {
   isLoading: boolean;
 }
 
+const modulesFromRole = (role: {
+  type?: string;
+  name?: string;
+  modules?: ModuleKey[] | null;
+}): ModuleKey[] => previewModulesForRole(role);
+
+const subscribePreview = (onStoreChange: () => void) => {
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === ROLE_PREVIEW_STORAGE_KEY || event.key === null) {
+      onStoreChange();
+    }
+  };
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(ROLE_PREVIEW_EVENT, onStoreChange);
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(ROLE_PREVIEW_EVENT, onStoreChange);
+  };
+};
+
 /**
  * Module access for the current user, from server truth
  * (`GET /users/me?populate=role`) — never from the client-writable `role`
@@ -79,14 +107,25 @@ export interface ModuleAccess {
  * - Admin role (type `admin` or name `Admin`) always gets ALL modules, so an
  *   admin can never be locked out by a bad stored value.
  * - `settings` is always included.
+ * - While role-previewing, prefer `/users/me` modules when present; otherwise
+ *   fall back to the modules snapshotted at preview start (so a slow/failed
+ *   me fetch cannot hide Memberships and bounce you to Settings-only).
  * - Fetch errors never hard-fail the app (login must not break on a role
- *   fetch): the hook falls back to `['settings']`.
+ *   fetch): the hook falls back to `['settings']` when not previewing.
  */
 export const useModuleAccess = (): ModuleAccess => {
   const { data, isError, isLoading } = useMeQuery();
+  // Stable primitive — parsed object would break useMemo every render.
+  const previewRaw = useSyncExternalStore(
+    subscribePreview,
+    getRolePreviewRaw,
+    () => null
+  );
 
   return useMemo(() => {
-    if (isLoading) {
+    const preview = parseRolePreview(previewRaw);
+
+    if (isLoading && !preview) {
       return {
         modules: [],
         roleName: null,
@@ -98,6 +137,31 @@ export const useModuleAccess = (): ModuleAccess => {
 
     const role = data?.role ?? null;
 
+    // Active preview: keep UI gated to the role under test even if /users/me
+    // is still loading or briefly errors (Strapi restart lag, etc.).
+    if (preview) {
+      const fromMe =
+        role &&
+        (data?.impersonating?.roleId === preview.roleId ||
+          role.id === preview.roleId)
+          ? modulesFromRole(role)
+          : null;
+      const modules =
+        fromMe && fromMe.length > 0
+          ? fromMe
+          : preview.modules.length > 0
+          ? preview.modules
+          : (['settings'] as ModuleKey[]);
+
+      return {
+        modules,
+        roleName: role?.name ?? preview.roleName,
+        roleId: role?.id ?? preview.roleId,
+        roleType: role?.type ?? null,
+        isLoading: false,
+      };
+    }
+
     if (isError || !role) {
       return {
         modules: ['settings' as ModuleKey],
@@ -108,20 +172,12 @@ export const useModuleAccess = (): ModuleAccess => {
       };
     }
 
-    const isAdmin = role.type === 'admin' || role.name === 'Admin';
-    const stored = role.modules ?? [];
-    const modules = isAdmin
-      ? [...ALL_MODULE_KEYS]
-      : stored.includes('settings')
-      ? [...stored]
-      : [...stored, 'settings' as ModuleKey];
-
     return {
-      modules,
+      modules: modulesFromRole(role),
       roleName: role.name,
       roleId: role.id,
       roleType: role.type,
       isLoading: false,
     };
-  }, [data, isError, isLoading]);
+  }, [data, isError, isLoading, previewRaw]);
 };

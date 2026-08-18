@@ -40,7 +40,6 @@ import DashboardAppBar from '../modules/dashboard/_components/DashboardBar';
 import { Email, Gavel } from '@mui/icons-material';
 import useCurrentUser from '../modules/_helpers/useCurrentUser';
 import { useModuleAccess } from '../modules/rbac-manager/useModuleAccess';
-import RolePreviewBanner from '../modules/rbac-manager/RolePreviewBanner';
 import {
   APP_MODULES,
   AppModule,
@@ -288,7 +287,6 @@ const DashBoard = (props: LayoutProps) => {
       <StyledLayout className={clsx('layout', className)} {...rest}>
         <SkipNavigationButton />
         <Box className={LayoutClasses.appFrame}>
-          <RolePreviewBanner />
           {isDashboard ? <DashboardAppBar /> : <AdminAppBar />}
           <main className={LayoutClasses.contentWithSidebar}>
             <Sidebar>

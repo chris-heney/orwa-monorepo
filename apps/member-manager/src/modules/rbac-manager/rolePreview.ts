@@ -1,17 +1,36 @@
 import { ALL_MODULE_KEYS, ModuleKey } from '../../config/modules';
 
-const STORAGE_KEY = 'orwa.rbac.rolePreview';
+export const ROLE_PREVIEW_STORAGE_KEY = 'orwa.rbac.rolePreview';
+/** sessionStorage writes don't fire `storage` in the writing tab. */
+export const ROLE_PREVIEW_EVENT = 'orwa-role-preview-change';
 
 export interface RolePreviewState {
   roleId: number;
   roleName: string;
+  /** Modules snapshotted at preview start — used if /users/me is slow/fails. */
+  modules: ModuleKey[];
 }
 
-export const getRolePreview = (): RolePreviewState | null => {
+/**
+ * Raw stored value. Subscribers must snapshot this (a stable primitive) rather
+ * than a parsed object: `useSyncExternalStore` compares snapshots with
+ * `Object.is`, so returning a freshly parsed object every call re-renders
+ * forever ("Maximum update depth exceeded").
+ */
+export const getRolePreviewRaw = (): string | null => {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as RolePreviewState;
+    return sessionStorage.getItem(ROLE_PREVIEW_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+};
+
+export const parseRolePreview = (
+  raw: string | null
+): RolePreviewState | null => {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<RolePreviewState>;
     if (
       typeof parsed?.roleId !== 'number' ||
       !Number.isFinite(parsed.roleId) ||
@@ -19,20 +38,36 @@ export const getRolePreview = (): RolePreviewState | null => {
     ) {
       return null;
     }
-    return parsed;
+    const modules = Array.isArray(parsed.modules)
+      ? (parsed.modules.filter(
+          (key): key is ModuleKey => typeof key === 'string'
+        ) as ModuleKey[])
+      : [];
+    return {
+      roleId: parsed.roleId,
+      roleName: parsed.roleName,
+      modules,
+    };
   } catch {
     return null;
   }
 };
 
+export const getRolePreview = (): RolePreviewState | null =>
+  parseRolePreview(getRolePreviewRaw());
+
+const notifyChange = () => {
+  window.dispatchEvent(new Event(ROLE_PREVIEW_EVENT));
+};
+
 export const setRolePreview = (state: RolePreviewState): void => {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  window.dispatchEvent(new Event('orwa-role-preview-change'));
+  sessionStorage.setItem(ROLE_PREVIEW_STORAGE_KEY, JSON.stringify(state));
+  notifyChange();
 };
 
 export const clearRolePreview = (): void => {
-  sessionStorage.removeItem(STORAGE_KEY);
-  window.dispatchEvent(new Event('orwa-role-preview-change'));
+  sessionStorage.removeItem(ROLE_PREVIEW_STORAGE_KEY);
+  notifyChange();
 };
 
 /** Header value for active preview, or null when not previewing. */

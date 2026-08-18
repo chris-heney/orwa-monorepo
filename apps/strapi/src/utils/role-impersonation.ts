@@ -18,6 +18,15 @@ export const EXEMPT_IMPERSONATION_ACTIONS = new Set([
   'plugin::users-permissions.permissions.getPermissions',
 ]);
 
+/**
+ * Identity actions keep the real Admin ability (so the session survives
+ * previewing a role without the `user.me` grant, e.g. Public) but still report
+ * the previewed role in the response, which is what the frontend gates on.
+ */
+export const IDENTITY_IMPERSONATION_ACTIONS = new Set([
+  'plugin::users-permissions.user.me',
+]);
+
 const isAdminRole = (
   role: { type?: string; name?: string } | null | undefined,
 ) => role != null && (role.type === 'admin' || role.name === 'Admin');
@@ -73,19 +82,6 @@ export const applyRoleImpersonation = async (
     return false;
   }
 
-  const permissionService = strapi
-    .plugin('users-permissions')
-    .service('permission');
-  const permissionRows = await permissionService.findRolePermissions(
-    targetRole.id,
-  );
-  const contentApiPermissions = permissionRows.map(
-    permissionService.toContentAPIPermission,
-  );
-  const ability = await strapi.contentAPI.permissions.engine.generateAbility(
-    contentApiPermissions,
-  );
-
   ctx.state.impersonator = {
     roleId: realRole.id,
     roleName: realRole.name,
@@ -93,9 +89,25 @@ export const applyRoleImpersonation = async (
   };
   ctx.state.user.role = targetRole;
 
+  const keepRealAbility = scopes.some((action) =>
+    IDENTITY_IMPERSONATION_ACTIONS.has(action),
+  );
+
   if (ctx.state.auth) {
-    ctx.state.auth.ability = ability;
     ctx.state.auth.credentials = ctx.state.user;
+
+    if (!keepRealAbility) {
+      const permissionService = strapi
+        .plugin('users-permissions')
+        .service('permission');
+      const permissionRows = await permissionService.findRolePermissions(
+        targetRole.id,
+      );
+      ctx.state.auth.ability =
+        await strapi.contentAPI.permissions.engine.generateAbility(
+          permissionRows.map(permissionService.toContentAPIPermission),
+        );
+    }
   }
 
   return true;

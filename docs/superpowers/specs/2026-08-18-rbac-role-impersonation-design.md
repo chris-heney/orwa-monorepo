@@ -22,16 +22,17 @@ Exit restores the real Admin session without changing DB role assignment or JWT 
 
 ## Security model
 
-| Rule                 | Behavior                                                                                                                                                |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Who may start        | Only users whose **real** role is Admin (`type === 'admin'` or name `Admin`).                                                                           |
-| Credential           | Real Admin JWT unchanged.                                                                                                                               |
-| Signal               | Request header `X-Impersonate-Role: <numericRoleId>`.                                                                                                   |
-| Authorization        | After authenticate, before authorize: swap `ctx.state.user.role` to the target role for permission checks.                                              |
-| Exception (option B) | `users-permissions` **role** and **permissions** management actions always authorize as the **real** Admin role so RBAC Manager and Exit remain usable. |
-| Persistence          | Frontend preview state in `sessionStorage` (survives refresh; cleared on tab close, Exit, logout).                                                      |
-| Non-Admin + header   | `403`.                                                                                                                                                  |
-| Unknown role id      | `400`; frontend clears preview.                                                                                                                         |
+| Rule                 | Behavior                                                                                                                                                                       |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Who may start        | Only users whose **real** role is Admin (`type === 'admin'` or name `Admin`).                                                                                                  |
+| Credential           | Real Admin JWT unchanged.                                                                                                                                                      |
+| Signal               | Request header `X-Impersonate-Role: <numericRoleId>`.                                                                                                                          |
+| Authorization        | After authenticate, before authorize: swap `ctx.state.user.role` to the target role for permission checks.                                                                     |
+| Exception (option B) | `users-permissions` **role** and **permissions** management actions always authorize as the **real** Admin role so RBAC Manager and Exit remain usable.                        |
+| Identity (`user.me`) | `/users/me` keeps the real Admin ability (so previewing a role without the `me` grant does not 403), but the response still reports the **target** role’s modules/permissions. |
+| Persistence          | Frontend preview state in `sessionStorage` (survives refresh; cleared on tab close, Exit, logout).                                                                             |
+| Non-Admin + header   | `403`.                                                                                                                                                                         |
+| Unknown role id      | `400`; frontend clears preview.                                                                                                                                                |
 
 ### Exempt API actions (always real Admin)
 
@@ -66,7 +67,7 @@ When impersonating, the existing `me` override that attaches `role` must attach 
 - `id`, `name`, `description`, `type`, `modules`
 - `permissions`: flat array of action UIDs (same shape as today)
 
-Also attach a small flag for the UI banner, e.g.:
+Also attach a small flag for the UI chip, e.g.:
 
 ```json
 "impersonating": { "roleId": 3, "roleName": "Staff" }
@@ -91,8 +92,8 @@ Confirm dialog: explain that UI and API will behave as that role; Exit is always
 
 ### On confirm
 
-1. Write `{ roleId, roleName }` to `sessionStorage`.
-2. Invalidate react-query key `['auth', 'moduleAccess']` so `/users/me` refetches with the header.
+1. Write `{ roleId, roleName, modules }` to `sessionStorage` (`modules` = `previewModulesForRole` snapshot so the menu survives a slow/failed `/users/me`).
+2. Await refetch of react-query key `['auth', 'moduleAccess']` so `/users/me` runs with the header before navigation.
 3. Navigate to `firstAllowedPath(modules)` for the target role’s modules (same rules as login / `ModuleRouteGuard`: Admin → all modules; others use stored modules with `settings` always available).
 
 ### HTTP clients
@@ -104,12 +105,13 @@ Attach `X-Impersonate-Role` when sessionStorage has an active preview:
 
 Clear the header when preview is cleared.
 
-### Exit banner
+### Exit chip
 
-Sticky banner outside module gating:
+Warning chip in the main app bar (right side, beside theme toggle) — not module-gated:
 
-- Copy: “Testing as **{roleName}**”
-- Action: **Exit preview** → clear sessionStorage → invalidate me query → navigate to `/rbac/dashboard`
+- Label: “Testing as **{roleName}**”
+- Click / X → clear sessionStorage → invalidate me query → navigate to `/rbac/dashboard`
+- Tooltip explains that role-management endpoints still use Admin grants
 
 ### Logout
 
@@ -124,19 +126,20 @@ If `/users/me` or any request returns 400 for a bad impersonation id: clear prev
 ```text
 Admin clicks Test as Staff
   → confirm
-  → sessionStorage { roleId, roleName }
+  → sessionStorage { roleId, roleName, modules }
+  → refetch /users/me with header
   → navigate firstAllowedPath(Staff modules)
   → all API calls: Authorization: Bearer <adminJwt>
                    X-Impersonate-Role: <staffRoleId>
-  → Strapi: authorize as Staff (except role/permission mgmt)
+  → Strapi: authorize as Staff (except role/permission mgmt + user.me ability)
   → /users/me: role = Staff modules + permissions
   → useModuleAccess / useCan reflect Staff
-Exit → clear storage → me as Admin → /rbac/dashboard
+Exit (app-bar chip) → clear storage → me as Admin → /rbac/dashboard
 ```
 
 ## Testing (manual)
 
-1. As Admin, Test as Staff → banner, Memberships (or first allowed) home; create/edit UI matches Staff.
+1. As Admin, Test as Staff → app-bar chip, Memberships (or first allowed) home; create/edit UI matches Staff.
 2. Staff-forbidden mutation/list → API `403`.
 3. Open RBAC / list roles while previewing → still works (exempt actions).
 4. Exit → Admin UI/API restored; land on `/rbac/dashboard`.

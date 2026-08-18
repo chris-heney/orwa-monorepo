@@ -138,11 +138,17 @@ const RbacDashboard = () => {
     }
   };
 
-  const startPreview = (role: RoleSummary) => {
-    setRolePreview({ roleId: role.id, roleName: role.name });
-    setConfirmPreview(null);
-    queryClient.invalidateQueries(['auth', 'moduleAccess']);
+  const startPreview = async (role: RoleSummary) => {
     const modules = previewModulesForRole(role);
+    setRolePreview({ roleId: role.id, roleName: role.name, modules });
+    setConfirmPreview(null);
+    // Wait for /users/me under the new header before navigating so the route
+    // guard does not bounce Memberships → Settings on a stale Admin cache.
+    try {
+      await queryClient.refetchQueries(['auth', 'moduleAccess']);
+    } catch {
+      // Preview modules in sessionStorage still gate the UI.
+    }
     navigate(firstAllowedPath(modules));
     notify(`Testing as ${role.name}`, { type: 'info' });
   };
@@ -328,7 +334,7 @@ const RbacDashboard = () => {
           <DialogContentText>
             You will see the admin UI and API permission checks as this role.
             Your login stays Admin; role management endpoints still use your
-            Admin grants. Use Exit preview on the banner anytime.
+            Admin grants. Use the app-bar chip anytime to exit.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

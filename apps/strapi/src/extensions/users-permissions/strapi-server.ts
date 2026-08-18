@@ -68,8 +68,9 @@ export default (plugin: any) => {
           populate: ['role'],
         });
       role = user?.role ?? roleFromAuth;
-    } else if (roleFromAuth?.id != null && roleFromAuth.modules === undefined) {
-      // Authenticate may only have a partial role row; reload for modules.
+    } else if (roleFromAuth?.id != null) {
+      // Always reload — auth may hand us a partial row (or modules: null
+      // from an incomplete findOne) and module gating must see the DB value.
       role =
         (await strapi.db.query('plugin::users-permissions.role').findOne({
           where: { id: roleFromAuth.id },
