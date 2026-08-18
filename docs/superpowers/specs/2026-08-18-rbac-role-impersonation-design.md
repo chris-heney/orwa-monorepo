@@ -22,17 +22,18 @@ Exit restores the real Admin session without changing DB role assignment or JWT 
 
 ## Security model
 
-| Rule                 | Behavior                                                                                                                                                                       |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Who may start        | Only users whose **real** role is Admin (`type === 'admin'` or name `Admin`).                                                                                                  |
-| Credential           | Real Admin JWT unchanged.                                                                                                                                                      |
-| Signal               | Request header `X-Impersonate-Role: <numericRoleId>`.                                                                                                                          |
-| Authorization        | After authenticate, before authorize: swap `ctx.state.user.role` to the target role for permission checks.                                                                     |
-| Exception (option B) | `users-permissions` **role** and **permissions** management actions always authorize as the **real** Admin role so RBAC Manager and Exit remain usable.                        |
-| Identity (`user.me`) | `/users/me` keeps the real Admin ability (so previewing a role without the `me` grant does not 403), but the response still reports the **target** role’s modules/permissions. |
-| Persistence          | Frontend preview state in `sessionStorage` (survives refresh; cleared on tab close, Exit, logout).                                                                             |
-| Non-Admin + header   | `403`.                                                                                                                                                                         |
-| Unknown role id      | `400`; frontend clears preview.                                                                                                                                                |
+| Rule                 | Behavior                                                                                                                                                                                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who may start        | Only users whose **real** role is Admin (`type === 'admin'` or name `Admin`).                                                                                                                                                                         |
+| Credential           | Real Admin JWT unchanged.                                                                                                                                                                                                                             |
+| Signal               | Request header `X-Impersonate-Role: <numericRoleId>`.                                                                                                                                                                                                 |
+| Authorization        | After authenticate, before authorize: swap `ctx.state.user.role` to the target role for permission checks.                                                                                                                                            |
+| Exception (option B) | `users-permissions` **role** and **permissions** management actions always authorize as the **real** Admin role so RBAC Manager and Exit remain usable.                                                                                               |
+| Identity (`user.me`) | `/users/me` keeps the real Admin ability (so previewing a role without the `me` grant does not 403), but the response still reports the **target** role’s modules/permissions.                                                                        |
+| Persistence          | Frontend preview state in `sessionStorage` (survives refresh; cleared on tab close, Exit, logout).                                                                                                                                                    |
+| Non-Admin + header   | `403`.                                                                                                                                                                                                                                                |
+| Unknown role id      | `400`; frontend clears preview.                                                                                                                                                                                                                       |
+| Unauthenticated pass | No-op. Routes with `auth: false` short-circuit authenticate before any strategy runs, and every request hits such a pass before its real authenticated route — so the hook must continue instead of rejecting (rejecting 403'd every previewed list). |
 
 ### Exempt API actions (always real Admin)
 

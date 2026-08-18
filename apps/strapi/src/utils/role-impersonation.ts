@@ -50,10 +50,13 @@ export const applyRoleImpersonation = async (
     return true;
   }
 
+  // Routes configured `auth: false` short-circuit Strapi's authenticate before
+  // any strategy runs, and every request passes through such a pass before its
+  // real authenticated route. Nothing is authorized there, so impersonation is
+  // a no-op instead of a 403 — rejecting here failed every previewed list.
   const user = ctx.state.user;
   if (!user?.role) {
-    ctx.forbidden('Role impersonation requires an authenticated Admin');
-    return false;
+    return true;
   }
 
   const realRole = user.role;
