@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Tab, Divider } from "@mui/material";
+import { Box, Tab, Divider, Modal } from "@mui/material";
 import { Create, Edit, Loading, Show, SimpleForm, Title } from "react-admin";
 
 import { TabContext, TabPanel, TabList } from "@mui/lab";
@@ -30,6 +30,7 @@ import { Map } from "@mui/icons-material";
 import ReimbursementPayoutsList from "./payouts/PayoutsList";
 import AdministrativePayoutsList from "./payouts/AdministrativePayoutList";
 import GrantMapEmbed from "./_components/GrantMapEmbed";
+import ModalMakePayout from "./grant-application/components/MadalMakePayout";
 
 const GrantDashboard = () => {
   
@@ -44,6 +45,9 @@ const GrantDashboard = () => {
     isActivitySidebarOpen,
     isEmailSidebarOpen,
     setResource,
+    isCreatePayoutModalOpen,
+    closeCreatePayoutModal,
+    createPayoutType,
   } = useGrantContext();
 
   // @SEE: https://orwa.org/staff-dashboard/conference-summary-report/
@@ -275,6 +279,18 @@ const GrantDashboard = () => {
       {/* ASIDE COMPONENTS */}
 
       <GrantManagementSidebars />
+
+      <Modal
+        open={isCreatePayoutModalOpen}
+        onClose={closeCreatePayoutModal}
+        aria-labelledby="create-payout-modal"
+      >
+        <ModalMakePayout
+          setIsModalOpen={closeCreatePayoutModal}
+          grantId={grantId}
+          defaultType={createPayoutType}
+        />
+      </Modal>
     </Box>
   );
 };

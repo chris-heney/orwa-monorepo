@@ -19,6 +19,10 @@ import {
   SearchableTab,
   hasPersistedSearch,
 } from "./helpers/searchBarTabs";
+import {
+  PayoutType,
+  payoutTypeFromTab,
+} from "./payouts/helpers/payoutCreateDefaults";
 
 const emptySearchBarOpen = (): Record<SearchableTab, boolean> => ({
   applications: false,
@@ -88,6 +92,10 @@ export const GrantContext = createContext<IGrantContextProvider>({
   searchBarOpen: emptySearchBarOpen(),
   setSearchBarOpenForTab: () => {},
   toggleSearchBarForTab: () => {},
+  isCreatePayoutModalOpen: false,
+  createPayoutType: "Reimbursement",
+  openCreatePayoutModal: () => {},
+  closeCreatePayoutModal: () => {},
 });
 
 export const useGrantContext = () => useContext(GrantContext);
@@ -176,6 +184,15 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
     setSearchBarOpen((prev) => ({ ...prev, [tab]: !prev[tab] }));
   };
 
+  const openCreatePayoutModal = (type?: PayoutType) => {
+    setCreatePayoutType(type ?? payoutTypeFromTab(selectedTab));
+    setIsCreatePayoutModalOpen(true);
+  };
+
+  const closeCreatePayoutModal = () => {
+    setIsCreatePayoutModalOpen(false);
+  };
+
   // Dashboard
   const [dashboardContext, setDashboardContext] = useState<"create" | "edit">(
     "edit"
@@ -186,6 +203,9 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
     "grants-resource",
     null
   );
+  const [isCreatePayoutModalOpen, setIsCreatePayoutModalOpen] = useState(false);
+  const [createPayoutType, setCreatePayoutType] =
+    useState<PayoutType>("Reimbursement");
 
   const { data: grants, isLoading: grantsLoading } = useGetList<IGrant>(
     "grants",
@@ -309,6 +329,10 @@ const GrantContextProvider = ({ children }: PropsWithChildren) => {
         searchBarOpen,
         setSearchBarOpenForTab,
         toggleSearchBarForTab,
+        isCreatePayoutModalOpen,
+        createPayoutType,
+        openCreatePayoutModal,
+        closeCreatePayoutModal,
       }}
     >
       {children}

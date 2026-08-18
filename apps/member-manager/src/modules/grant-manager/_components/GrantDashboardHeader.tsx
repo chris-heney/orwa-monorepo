@@ -1,12 +1,14 @@
 import React from "react";
 import {
   Box,
+  Button,
   IconButton,
   Tooltip,
   Theme,
   Typography,
   useMediaQuery,
 } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -14,7 +16,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import RecordCount from "../../_components/RecordCount";
 import {
   ConfigurableDatagridColumn,
-  CreateButton,
   ExportButton,
   ListBase,
   RaRecord,
@@ -53,6 +54,7 @@ const GrantDashboardHeader = () => {
     searchBarOpen,
     setSearchBarOpenForTab,
     setApplicationSearchFilter,
+    openCreatePayoutModal,
   } = useGrantContext();
 
   const searchableTab = isSearchableTab(selectedTab) ? selectedTab : null;
@@ -203,16 +205,11 @@ const GrantDashboardHeader = () => {
               <SelectColumnsButton style={{ color: "white" }} />
               {(selectedTab === "payouts" ||
                 selectedTab === "Admin Payouts") && (
-                <CreateButton
-                  label="Payout"
-                  state={{
-                    record: {
-                      type:
-                        selectedTab === "Admin Payouts"
-                          ? "Administrative"
-                          : "Reimbursement",
-                    },
-                  }}
+                <Button
+                  variant="contained"
+                  size="small"
+                  startIcon={<AddIcon />}
+                  onClick={() => openCreatePayoutModal()}
                   sx={{
                     backgroundColor: "primary.main",
                     color: "white",
@@ -220,7 +217,9 @@ const GrantDashboardHeader = () => {
                       backgroundColor: "primary.dark",
                     },
                   }}
-                />
+                >
+                  Payout
+                </Button>
               )}
             </ListBase>
           )}

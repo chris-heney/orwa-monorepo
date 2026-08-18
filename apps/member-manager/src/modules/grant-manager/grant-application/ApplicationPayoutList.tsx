@@ -25,12 +25,9 @@ import {
 import ModalMakePayout from "./components/MadalMakePayout";
 import { Money } from "@mui/icons-material";
 import { getRelationFilterId } from "../helpers/getRelationFilterId";
+import { toRelationWriteId } from "../../../helpers/strapiIds";
+import { isPayoutEligibleStatusName } from "../payouts/helpers/payoutCreateDefaults";
 import getContrastColor from "../../_helpers/getContrastColor";
-
-const statusesForPayout = [
-  "Grant Agreement Signed/Sealed/Returned",
-  "Revised per COR",
-];
 
 const money = (n: number) =>
   new Intl.NumberFormat("en-US", CurrencyOptions).format(n || 0);
@@ -242,9 +239,7 @@ const ApplicationPayoutList = () => {
         <Typography variant="h6" sx={{ fontWeight: 700 }}>
           Payouts
         </Typography>
-        {statusesForPayout.includes(
-          record?.status?.name?.replace(" PFY", "")
-        ) && (
+        {isPayoutEligibleStatusName(record?.status?.name) && (
           <Button
             size="small"
             variant="contained"
@@ -350,18 +345,18 @@ const ApplicationPayoutList = () => {
         aria-labelledby="modal-title"
         aria-describedby="modal-description"
       >
-        <>
-          <ModalMakePayout
-            name={record ? record.legal_entity_name : " "}
-            setIsModalOpen={payoutMade}
-            id={applicationFilterId ?? record?.id}
-            grantId={
-              getRelationFilterId(
-                typeof record?.grant === "object" ? record.grant : null
-              ) ?? record?.grant
-            }
-          />
-        </>
+        <ModalMakePayout
+          name={record ? record.legal_entity_name : " "}
+          setIsModalOpen={payoutMade}
+          id={record?.id ?? applicationFilterId}
+          grantId={
+            toRelationWriteId(record?.grant) ??
+            getRelationFilterId(
+              typeof record?.grant === "object" ? record.grant : null
+            )
+          }
+          defaultType="Reimbursement"
+        />
       </Modal>
     </>
   );

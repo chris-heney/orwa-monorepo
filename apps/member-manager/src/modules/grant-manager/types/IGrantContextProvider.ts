@@ -3,6 +3,7 @@ import { IGrantApplication } from '../grant-application/GrantApplicationTypes'
 import { IGrant } from '../grants/components/GrantTypes'
 import { Dayjs } from 'dayjs'
 import type { SearchableTab } from '../helpers/searchBarTabs'
+import type { PayoutType } from '../payouts/helpers/payoutCreateDefaults'
 
 export type TabValue = 'summary' | 'edit' | 'applications' | 'grant' | 'payouts' | 'Admin Payouts' | 'application scores' | 'tokens' | 'map' 
 
@@ -50,4 +51,8 @@ export interface IGrantContextProvider {
     searchBarOpen: Record<SearchableTab, boolean>
     setSearchBarOpenForTab: (tab: SearchableTab, open: boolean) => void
     toggleSearchBarForTab: (tab: SearchableTab) => void
+    isCreatePayoutModalOpen: boolean
+    createPayoutType: PayoutType
+    openCreatePayoutModal: (type?: PayoutType) => void
+    closeCreatePayoutModal: () => void
 }
