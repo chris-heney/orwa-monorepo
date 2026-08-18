@@ -113,6 +113,67 @@ describe("convertRaParamsToStrapiParams", () => {
     expect(qs).toContain("filters[$or][1][grant]=4");
   });
 
+  it("keeps grant/status siblings when $or is also present", () => {
+    const qs = convertRaParamsToStrapiParams({
+      filter: {
+        grant: 4,
+        status: ["3"],
+        $or: [
+          { createdAt: { $between: ["2026-07-01", "2027-06-30"] } },
+          { committee_date: { $between: ["2026-07-01", "2027-06-30"] } },
+        ],
+      },
+      pagination: page,
+    });
+    expect(qs).toContain("filters[grant]=4");
+    expect(qs).toContain("filters[status][$in][]=3");
+    expect(qs).toContain(
+      "filters[$or][0][createdAt][$between][0]=2026-07-01"
+    );
+    expect(qs).toContain(
+      "filters[$or][1][committee_date][$between][1]=2027-06-30"
+    );
+  });
+
+  it("serializes nested $or under a relation (scores → application FY)", () => {
+    const qs = convertRaParamsToStrapiParams({
+      filter: {
+        grant_application: {
+          $or: [
+            {
+              status: { name: { $in: ["New Application"] } },
+              createdAt: { $between: ["2026-07-01", "2027-06-30"] },
+            },
+            {
+              committee_date: { $between: ["2026-07-01", "2027-06-30"] },
+            },
+          ],
+        },
+      },
+      pagination: page,
+    });
+    expect(qs).toContain(
+      "filters[grant_application][$or][0][status][name][$in][]=New%20Application"
+    );
+    expect(qs).toContain(
+      "filters[grant_application][$or][0][createdAt][$between][0]=2026-07-01"
+    );
+    expect(qs).toContain(
+      "filters[grant_application][$or][1][committee_date][$between][1]=2027-06-30"
+    );
+  });
+
+  it("serializes $notIn the same way as $nin", () => {
+    const out: string[] = [];
+    appendFilterQuery(out, "name", {
+      $notIn: ["New Application", "Awaiting Committee"],
+    });
+    expect(out).toEqual([
+      "filters[name][$notIn][]=New%20Application",
+      "filters[name][$notIn][]=Awaiting%20Committee",
+    ]);
+  });
+
   it("rewrites bare id arrays as documentId $in", () => {
     const qs = convertRaParamsToStrapiParams({
       filter: { id: [DOC, DOC2] },

@@ -4,6 +4,7 @@ import React from 'react'
 import { ListContextProvider, ListControllerResult } from 'react-admin'
 import SummaryRangeSelection from './SummaryRangeSelect'
 import LegendToggleFilter from './LegendToggleFilter'
+import SelectFiscalYearRange from './SelectFiscalYearRange'
 import { useGrantContext } from '../GrantContextProvider'
 import { getRelationFilterId } from '../helpers/getRelationFilterId'
 
@@ -75,6 +76,11 @@ const GrantsAccordionFilter = () => {
         </FormControl>
         {selectedTab === 'summary' && <SummaryRangeSelection/>}
         {selectedTab === 'applications' && <LegendToggleFilter/>}
+        {(selectedTab === 'summary' ||
+          selectedTab === 'applications' ||
+          selectedTab === 'payouts' ||
+          selectedTab === 'Admin Payouts' ||
+          selectedTab === 'application scores') && <SelectFiscalYearRange />}
       </AccordionDetails>
     </Accordion>
   )

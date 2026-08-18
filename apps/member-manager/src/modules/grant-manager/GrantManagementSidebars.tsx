@@ -106,7 +106,9 @@ const GrantManagementSidebars = () => {
         )}
         {(selectedTab === "Admin Payouts" ||
           selectedTab === "payouts" ||
-          selectedTab === "summary") && <SelectFiscalYearRange />}
+          selectedTab === "summary" ||
+          selectedTab === "applications" ||
+          selectedTab === "application scores") && <SelectFiscalYearRange />}
       </FilterSidebarShell>
 
       {isActivitySidebarOpen && (

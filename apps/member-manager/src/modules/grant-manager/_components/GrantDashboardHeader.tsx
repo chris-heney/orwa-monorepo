@@ -31,6 +31,10 @@ import ExportApplications from "../../grant-manager/grant-application/helpers/Ex
 import ExportAdminPayouts from "../grant-application/helpers/ExportAdminPayouts";
 import { IGrantApplication } from "../grant-application/GrantApplicationTypes";
 import { isSearchableTab } from "../helpers/searchBarTabs";
+import {
+  buildApplicationListFilter,
+  buildScoreFiscalYearFilter,
+} from "../helpers/fiscalYearFilters";
 
 const GrantDashboardHeader = () => {
   const {
@@ -184,9 +188,12 @@ const GrantDashboardHeader = () => {
               resource={resource}
               filter={
                 resource === "grant-application-finals"
-                  ? applicationStatuses.length > 0
-                    ? { grant: grantFilterId, status: applicationStatuses }
-                    : { grant: grantFilterId }
+                  ? buildApplicationListFilter(
+                      grantFilterId,
+                      applicationStatuses,
+                      fiscalYearStart,
+                      fiscalYearEnd
+                    )
                   : resource === "grant-payouts"
                   ? {
                       grant: grantFilterId,
@@ -197,6 +204,11 @@ const GrantDashboardHeader = () => {
                           : "Reimbursement",
                       ...payoutFiscalYearFilter,
                     }
+                  : resource === "grant-application-scores"
+                  ? buildScoreFiscalYearFilter(
+                      fiscalYearStart,
+                      fiscalYearEnd
+                    ) ?? undefined
                   : undefined
               }
             >

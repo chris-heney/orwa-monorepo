@@ -23,6 +23,7 @@ import BalanceField from "../payouts/components/BalanceField";
 import { isAwardPaidInFull } from "../payouts/helpers/payoutAmounts";
 import { getGrantStatus } from "../../emails-magement/Helper";
 import { useGrantContext } from "../GrantContextProvider";
+import { buildApplicationListFilter } from "../helpers/fiscalYearFilters";
 import CustomPagination from "../../_components/CustomPagination";
 import TotalPayoutsField from "../payouts/components/TotalPayoutField";
 import AgDatagrid from "../../_components/AgDatagrid";
@@ -71,8 +72,13 @@ const GrantApplicationList = () => {
   const [isCreating, setIsCreating] = React.useState(false);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-  const { grantFilterId, applicationStatuses, applicationSearchFilter } =
-    useGrantContext();
+  const {
+    grantFilterId,
+    applicationStatuses,
+    applicationSearchFilter,
+    fiscalYearStart,
+    fiscalYearEnd,
+  } = useGrantContext();
   const dataProvider = useDataProvider();
   // useEffect(() => {
   //   refresh();
@@ -167,11 +173,12 @@ const GrantApplicationList = () => {
         disableSyncWithLocation
         component="div"
         filterDefaultValues={applicationSearchFilter.length > 0 ? { q: applicationSearchFilter } : {}}
-        filter={
-          applicationStatuses.length > 0
-            ? { grant: grantFilterId, status: applicationStatuses }
-            : { grant: grantFilterId }
-        }
+        filter={buildApplicationListFilter(
+          grantFilterId,
+          applicationStatuses,
+          fiscalYearStart,
+          fiscalYearEnd
+        )}
         title={" "}
         resource="grant-application-finals"
         actions={<ApplicationsSearchActions />}

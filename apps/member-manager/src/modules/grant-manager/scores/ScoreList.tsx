@@ -18,6 +18,7 @@ import { Box, Typography, useTheme } from "@mui/material";
 import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
 import GrantOrLiveSearch from "../_components/GrantOrLiveSearch";
 import { useGrantContext } from "../GrantContextProvider";
+import { buildScoreFiscalYearFilter } from "../helpers/fiscalYearFilters";
 import {
   buildScoresOrFilter,
   LEGACY_SCORE_SEARCH_KEYS,
@@ -83,6 +84,8 @@ const ScoresSearchActions = () => {
 
 const ScoreList = () => {
   const theme = useTheme();
+  const { fiscalYearStart, fiscalYearEnd } = useGrantContext();
+  const fyFilter = buildScoreFiscalYearFilter(fiscalYearStart, fiscalYearEnd);
   return (
     <List
       title={" "}
@@ -91,6 +94,7 @@ const ScoreList = () => {
       actions={<ScoresSearchActions />}
       sort={{ field: "date", order: "DESC" }}
       disableSyncWithLocation
+      filter={fyFilter ?? undefined}
       sx={{
         ".RaList-actions": {
           p: 0,

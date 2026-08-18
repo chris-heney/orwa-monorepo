@@ -59,7 +59,29 @@ export const appendFilterQuery = (
           return;
         }
 
-        if (["$in", "$nin"].includes(operator) && Array.isArray(opValue)) {
+        if (operator === "$or" && Array.isArray(opValue)) {
+          opValue.forEach((cond, index) => {
+            if (!cond || typeof cond !== "object" || Array.isArray(cond)) {
+              return;
+            }
+            Object.entries(cond as Record<string, unknown>).forEach(
+              ([nestedKey, nestedValue]) => {
+                appendFilterQuery(
+                  out,
+                  nestedKey,
+                  nestedValue,
+                  `${prefix}[${key}][$or][${index}]`
+                );
+              }
+            );
+          });
+          return;
+        }
+
+        if (
+          ["$in", "$nin", "$notIn"].includes(operator) &&
+          Array.isArray(opValue)
+        ) {
           opValue.forEach((v) => {
             if (isDocumentId(v)) {
               // Mix of documentIds in $in: filter via documentId field.
@@ -180,17 +202,18 @@ export const convertRaParamsToStrapiParams = (
         appendFilterQuery(filters, key, value, `filters[$or][${index}]`);
       });
     });
-  } else if ("$and" in f && Array.isArray(f.$and)) {
+  }
+  if ("$and" in f && Array.isArray(f.$and)) {
     f.$and.forEach((andCondition: Record<string, unknown>, index: number) => {
       Object.entries(andCondition).forEach(([key, value]) => {
         appendFilterQuery(filters, key, value, `filters[$and][${index}]`);
       });
     });
-  } else {
-    Object.entries(f).forEach(([key, value]) => {
-      appendFilterQuery(filters, key, value);
-    });
   }
+  Object.entries(f).forEach(([key, value]) => {
+    if (key === "$or" || key === "$and") return;
+    appendFilterQuery(filters, key, value);
+  });
 
   const start = (pagination.page - 1) * pagination.perPage;
   const paginationParams = `pagination[start]=${start}&pagination[limit]=${pagination.perPage}`;
