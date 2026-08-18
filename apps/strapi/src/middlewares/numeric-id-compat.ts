@@ -165,6 +165,23 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
   };
 
   /**
+   * Auto timestamps / document ids appear on content-type attributes but
+   * Strapi 5 still 400s them on write ("Invalid key createdAt"). Drop them
+   * along with unknown keys so EditableDatagrid / legacy clients match v4.
+   */
+  const NON_WRITABLE_KEYS = new Set([
+    "id",
+    "documentId",
+    "entityId",
+    "createdAt",
+    "updatedAt",
+    "publishedAt",
+    "createdBy",
+    "updatedBy",
+    "locale",
+  ]);
+
+  /**
    * Strapi 4 silently stripped unknown body keys; Strapi 5 rejects the whole
    * request with a 400 ("Invalid key <k>"). Legacy clients still send extra
    * keys (e.g. member-manager sends `denial_reason` on grant-payout updates),
@@ -173,7 +190,7 @@ export default (_config: unknown, { strapi }: { strapi: Core.Strapi }) => {
   const stripUnknownKeys = (uid: string, data: Record<string, any>) => {
     const attributes = (strapi.contentTypes as any)[uid]?.attributes ?? {};
     for (const key of Object.keys(data)) {
-      if (!(key in attributes)) {
+      if (NON_WRITABLE_KEYS.has(key) || !(key in attributes)) {
         delete data[key];
       }
     }
