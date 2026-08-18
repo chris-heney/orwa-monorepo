@@ -61,24 +61,26 @@ export const sumPayoutAmounts = (
   }, 0);
 
 /** Remaining award after countable reimbursements. Never returns NaN. */
-export const computeBalance = (application: {
-  award_amount?: unknown;
-  payouts?: PayoutLike[] | null;
-}): number =>
-  toMoney(application.award_amount) -
-  sumPayoutAmounts(application.payouts, isCountableTowardAward);
+export const computeBalance = (
+  application?: {
+    award_amount?: unknown;
+    payouts?: PayoutLike[] | null;
+  } | null
+): number =>
+  toMoney(application?.award_amount) -
+  sumPayoutAmounts(application?.payouts, isCountableTowardAward);
 
 /**
  * True only when Paid reimbursements cover the award. Admin draws, Requested /
  * Not Approved rows, missing award, and empty payout lists do not qualify.
  */
-export const isAwardPaidInFull = (application: {
+export const isAwardPaidInFull = (application?: {
   award_amount?: unknown;
   payouts?: PayoutLike[] | null;
-}): boolean => {
-  const award = toMoney(application.award_amount);
+} | null): boolean => {
+  const award = toMoney(application?.award_amount);
   if (award <= 0) return false;
-  const paid = sumPayoutAmounts(application.payouts, isPaidReimbursement);
+  const paid = sumPayoutAmounts(application?.payouts, isPaidReimbursement);
   if (paid <= 0) return false;
   return Math.abs(award - paid) < 0.005;
 };

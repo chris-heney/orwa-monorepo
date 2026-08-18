@@ -205,6 +205,14 @@ const GrantDashboardHeader = () => {
                 selectedTab === "Admin Payouts") && (
                 <CreateButton
                   label="Payout"
+                  state={{
+                    record: {
+                      type:
+                        selectedTab === "Admin Payouts"
+                          ? "Administrative"
+                          : "Reimbursement",
+                    },
+                  }}
                   sx={{
                     backgroundColor: "primary.main",
                     color: "white",

@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import {
   AutocompleteInput,
   Button,
@@ -17,11 +18,14 @@ import { Grid } from "@mui/material";
 import CustomHeader from "../../_components/CustomHeader";
 import { FieldValues } from "react-hook-form";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { payoutTypeFromCreateState } from "./helpers/payoutCreateDefaults";
 
 const CreatePayout = () => {
   const notify = useNotify();
   const redirect = useRedirect();
   const dataProvider = useDataProvider();
+  const location = useLocation();
+  const defaultType = payoutTypeFromCreateState(location.state);
 
   const createPayout = async (data: FieldValues) => {
     try {
@@ -142,7 +146,7 @@ const CreatePayout = () => {
                 { id: "Reimbursement", name: "Reimbursement" },
                 { id: "Administrative", name: "Administrative" },
               ]}
-              defaultValue={"Administrative"}
+              defaultValue={defaultType}
               fullWidth
               helperText={false}
               key="payout-field-6"

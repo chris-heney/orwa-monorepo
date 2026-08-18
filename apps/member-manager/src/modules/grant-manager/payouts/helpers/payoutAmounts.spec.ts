@@ -26,6 +26,11 @@ describe("toMoney", () => {
 });
 
 describe("computeBalance", () => {
+  it("returns 0 when the application getOne misses (Award Payouts BalanceField)", () => {
+    expect(computeBalance(undefined)).toBe(0);
+    expect(computeBalance(null)).toBe(0);
+  });
+
   it("does not concatenate decimal strings across multiple payouts", () => {
     // Burnt Cabin 20274: $100,000 award, $71,715 + $20,280 paid.
     expect(

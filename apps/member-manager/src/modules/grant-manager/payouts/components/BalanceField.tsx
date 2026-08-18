@@ -20,7 +20,8 @@ const BALANCE_META = {
 const BalanceField = ({ applicationId }: { applicationId: Identifier }) => {
   const { data: application, isLoading } = useGetOne(
     "grant-application-finals",
-    { id: applicationId, meta: BALANCE_META }
+    { id: applicationId, meta: BALANCE_META },
+    { enabled: applicationId != null && applicationId !== "" }
   );
 
   if (isLoading) return <Loading />;

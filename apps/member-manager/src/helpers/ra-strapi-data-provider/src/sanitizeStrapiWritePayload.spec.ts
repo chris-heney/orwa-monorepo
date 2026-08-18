@@ -200,4 +200,23 @@ describe("sanitizeStrapiWritePayload", () => {
       comments: null,
     });
   });
+
+  it("strips timestamps so Award Payouts row saves do not 400 Invalid key createdAt", () => {
+    expect(
+      sanitizeStrapiWritePayload({
+        amount: 100,
+        type: "Reimbursement",
+        createdAt: "2026-08-14T20:49:27.058Z",
+        updatedAt: "2026-08-17T23:07:33.212Z",
+        publishedAt: "2026-08-17T23:07:33.208Z",
+        totalPayouts: 999,
+        balance: 0,
+      })
+    ).toEqual({
+      amount: 100,
+      type: "Reimbursement",
+      totalPayouts: 999,
+      balance: 0,
+    });
+  });
 });
