@@ -5,65 +5,9 @@ import { useEntryList } from "../providers/EntryListProvider";
 import EntryListSidebar from "./EntryListSidebar";
 import { useUserContext } from "../providers/UserContextProvider";
 import { useEntryPayload } from "../providers/AppContextProvider";
+import { matchesAwardNominationSearch } from "../helpers/awardEntrySearch";
 
 const ITEMS_PER_PAGE = 10;
-
-// export interface IGrantApplicationFormPayload {
-//   legal_entity_name: string;
-//   facility_id: string;
-//   population_served: number;
-//   county: string;
-//   physical_address_street: string;
-//   physical_address_line_two: string;
-//   physical_address_city: string;
-//   physical_address_state: string;
-//   physical_address_zip: string;
-//   physical_same_as_mailing: boolean;
-//   mailing_address_street: string;
-//   mailing_address_line_two: string;
-//   mailing_address_city: string;
-//   mailing_address_state: string;
-//   mailing_address_zip: string;
-//   point_of_contact: IContactPayload;
-//   chairman: IContactPayload;
-//   chairman_also_mayer_of_municipal_city: boolean;
-//   has_engineer: boolean;
-//   engineer: IContactPayload;
-//   drinking_or_wastewater: "Drinking Water" | "Wastewater";
-//   other_describe: string;
-//   description_justification_estimated_cost: string;
-//   combined_cost_of_projects: number;
-//   requested_grant_amount: number;
-//   minimum_utility_financial_contribution?: number;
-//   engineering_report: "Yes" | "No" | "N/A";
-//   report_approved_by_deq: string;
-//   engineering_report_deq_approved: "Yes" | "No";
-//   resolves_violation: string;
-//   signatory_name: string;
-//   signatory_title: string;
-//   signature: string;
-//   other_needs: string;
-//   change_order_request: "Yes" | "No";
-//   original_application_number: string;
-//   grant: Identifier;
-//   // committee_date: Date
-//   application_date: Date;
-//   status: Identifier;
-//   selected_projects: string[];
-//   proposals: StrapiFormattedFile[];
-//   uploaded_engineering_report: StrapiFormattedFile[];
-//   uploaded_notice_of_violation: StrapiFormattedFile[];
-//   uploaded_additional_files: StrapiFormattedFile[];
-//   satisfy_deq_issued_order: boolean;
-//   consent_order: StrapiFormattedFile;
-//   consent_order_number: string;
-//   money_set_aside: boolean;
-//   applied_to_other_loans: boolean;
-//   additional_information: string;
-//   lrsp_plan: boolean;
-//   more_info_lrsp: boolean;
-// }
-
 
 const EntryList = () => {
   const { data: submissions, status: submissionsStatus } = useGetSubmissions();
@@ -91,24 +35,12 @@ const EntryList = () => {
     );
   }
 
-  const filteredSubmissions = (submissions as unknown as entryPayload[]).filter(
-    (submission) => {
-      const searchLower = searchTerm.toLowerCase();
+  const submissionRows = Array.isArray(submissions)
+    ? (submissions as unknown as entryPayload[])
+    : [];
 
-      // Check if the search term matches any of the fields
-      const registrantName =
-          `${submission.data?.nominee_name}`.toLowerCase() ||
-        "";
-      const legal_entity_name = String(submission.data?.system_name || "").toLowerCase();
-
-      const change_order_request = submission.data?.award_type.toLowerCase() || "";
-
-      return (
-        registrantName.includes(searchLower) ||
-        legal_entity_name.includes(searchLower) ||
-        change_order_request.includes(searchLower)
-      );
-    }
+  const filteredSubmissions = submissionRows.filter((submission) =>
+    matchesAwardNominationSearch(submission, searchTerm)
   );
 
   // Sort by `createdAt` instead of `id`
@@ -210,7 +142,11 @@ const EntryList = () => {
                       {submission.data?.nominee_name}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 text-nowrap">
-                      {submission.data?.watersystem}
+                      {submission.data?.system_name ||
+                        (typeof submission.data?.watersystem === "string" ||
+                        typeof submission.data?.watersystem === "number"
+                          ? String(submission.data.watersystem)
+                          : "")}
                     </td>
                     <td className="border border-gray-300 px-4 py-2 hidden sm:table-cell">
                       {submission.data?.award_type}

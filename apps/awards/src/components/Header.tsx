@@ -2,7 +2,7 @@ import { useUserContext } from "../providers/UserContextProvider";
 import ProfileMenu from "./ProfileMenu";
 
 export const Header = () => {
-  const { isLoggedIn } = useUserContext();
+  const { isLoggedIn, isAdminView } = useUserContext();
 
   return (
     <header className="bg-black">
@@ -25,7 +25,12 @@ export const Header = () => {
               alt="ORWA Logo"
             />
             {isLoggedIn && (
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
+                {isAdminView && (
+                  <span className="rounded-full border border-amber-300 bg-amber-400 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-black">
+                    Admin View
+                  </span>
+                )}
                 <ProfileMenu />
               </div>
             )}

@@ -19,9 +19,9 @@ export type ValidationField =
   | "city"
   | "state"
   | "zip"
-  | "county"
   | "award_year"
   | "system_name"
+  | "award_name_printed"
   | "watersystem"
   | "nominator_first_name"
   | "nominator_last_name"
@@ -33,7 +33,7 @@ export type ValidationField =
   | "nominator_country"
   | "nominator_phone"
   | "nominator_email"
-  | "nomination_description"
+  | "justification"
   | "biography_method"
   | "biography_text"
   | "biography_file"
@@ -184,9 +184,9 @@ const KNOWN_FIELDS: ValidationField[] = [
   "city",
   "state",
   "zip",
-  "county",
   "award_year",
   "system_name",
+  "award_name_printed",
   "watersystem",
   "nominator_first_name",
   "nominator_last_name",
@@ -198,7 +198,7 @@ const KNOWN_FIELDS: ValidationField[] = [
   "nominator_country",
   "nominator_phone",
   "nominator_email",
-  "nomination_description",
+  "justification",
   "biography_method",
   "biography_text",
   "biography_file",

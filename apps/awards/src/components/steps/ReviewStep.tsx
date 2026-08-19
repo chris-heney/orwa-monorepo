@@ -3,6 +3,18 @@ import { Card, CardContent, Typography, Divider, Box, Chip, Paper } from "@mui/m
 import Grid from "@mui/material/GridLegacy";
 import { useFormContext } from "react-hook-form";
 import { IAwardNominationPayload } from "../../types/types";
+import { isSystemOfTheYearAward } from "../../helpers/awardType";
+import ReviewMetricTile from "../_components/ReviewMetricTile";
+
+const DOCUMENT_ID_SHAPE = /^[a-z0-9]{16,64}$/;
+
+const humanSystemName = (payload: IAwardNominationPayload) => {
+  const picker = String(payload.system_name || "").trim();
+  if (picker && !DOCUMENT_ID_SHAPE.test(picker)) return picker;
+  const printed = String(payload.award_name_printed || "").trim();
+  if (printed && !DOCUMENT_ID_SHAPE.test(printed)) return printed;
+  return picker || "System";
+};
 // Helper function to format dates
 const formatDate = (dateString: string | null | undefined) => {
   if (!dateString) return 'N/A';
@@ -13,6 +25,9 @@ const formatDate = (dateString: string | null | undefined) => {
 const ReviewStep: React.FC = () => {
   const { watch } = useFormContext<IAwardNominationPayload>();
   const awardNominationFormPayload = watch();
+  const showEmployeeCounts = isSystemOfTheYearAward(
+    awardNominationFormPayload.award_type
+  );
 
   const renderSection = (title: string, content: React.ReactNode) => (
     <Box sx={{ mb: 3 }}>
@@ -66,14 +81,16 @@ const ReviewStep: React.FC = () => {
             {renderSection("Nominee Information", (
               <>
                 {renderField("Name", awardNominationFormPayload.nominee_name)}
+                {renderField(
+                  "Name as printed on award",
+                  awardNominationFormPayload.award_name_printed
+                )}
                 {renderField("Email", awardNominationFormPayload.email)}
                 {renderField("Phone", awardNominationFormPayload.daytime_phone)}
                 {renderField("Address", awardNominationFormPayload.address)}
                 {renderField("City", awardNominationFormPayload.city)}
                 {renderField("State", awardNominationFormPayload.state)}
                 {renderField("ZIP", awardNominationFormPayload.zip)}
-                {renderField("County", awardNominationFormPayload.county)}
-                {renderField("Award Year", awardNominationFormPayload.award_year)}
               </>
             ))}
           </Grid>
@@ -99,61 +116,65 @@ const ReviewStep: React.FC = () => {
             ))}
           </Grid>
 
-          <Grid item xs={12} md={6}>
-            {renderSection("System Information", (
+          <Grid item xs={12}>
+            {renderSection(humanSystemName(awardNominationFormPayload), (
               <>
-                {renderField("System Name", awardNominationFormPayload.system_name)}
-                {renderField("Water System ID", awardNominationFormPayload.watersystem)}
                 {renderField("Date System Began Operation", awardNominationFormPayload.operation_start_date)}
                 {renderField("Date Employed", awardNominationFormPayload.employment_date)}
-                {renderField("Number of Beginning Meter Connections", awardNominationFormPayload.beginning_members)}
-                {renderField("Number of Current Meter Connections", awardNominationFormPayload.current_members)}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 2,
+                    mt: 0.5,
+                  }}
+                >
+                  <Box sx={{ flex: "1 1 160px", minWidth: 140, maxWidth: 240 }}>
+                    <ReviewMetricTile
+                      value={awardNominationFormPayload.beginning_members}
+                      label="Beginning Meter Connections"
+                    />
+                  </Box>
+                  <Box sx={{ flex: "1 1 160px", minWidth: 140, maxWidth: 240 }}>
+                    <ReviewMetricTile
+                      value={awardNominationFormPayload.current_members}
+                      label="Current Meter Connections"
+                    />
+                  </Box>
+                  {showEmployeeCounts && (
+                    <>
+                      <Box sx={{ flex: "1 1 160px", minWidth: 140, maxWidth: 240 }}>
+                        <ReviewMetricTile
+                          value={awardNominationFormPayload.clerical_employees}
+                          label="Clerical Employees"
+                        />
+                      </Box>
+                      <Box sx={{ flex: "1 1 160px", minWidth: 140, maxWidth: 240 }}>
+                        <ReviewMetricTile
+                          value={awardNominationFormPayload.operation_maintenance_employees}
+                          label="O&M Employees"
+                        />
+                      </Box>
+                      <Box sx={{ flex: "1 1 160px", minWidth: 140, maxWidth: 240 }}>
+                        <ReviewMetricTile
+                          value={awardNominationFormPayload.management_employees}
+                          label="Management"
+                        />
+                      </Box>
+                    </>
+                  )}
+                </Box>
               </>
             ))}
           </Grid>
 
           <Grid item xs={12}>
-            {renderSection("Employee Counts", (
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {awardNominationFormPayload.clerical_employees || 0}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Clerical Employees
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {awardNominationFormPayload.operation_maintenance_employees || 0}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      O&M Employees
-                    </Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary">
-                      {awardNominationFormPayload.management_employees || 0}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary">
-                      Management
-                    </Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
-            ))}
-          </Grid>
-
-          <Grid item xs={12}>
-            {renderSection("Nomination Description", (
+            {renderSection("Justification", (
               <Paper sx={{ p: 2, backgroundColor: '#f5f5f5' }}>
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                  {awardNominationFormPayload.nomination_description || 'No description provided'}
+                  {awardNominationFormPayload.justification ||
+                    awardNominationFormPayload.nomination_description ||
+                    'No description provided'}
                 </Typography>
               </Paper>
             ))}

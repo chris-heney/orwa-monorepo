@@ -8,26 +8,37 @@ import {
 } from "../providers/AppContextProvider";
 import { useUserContext } from "../providers/UserContextProvider";
 import { awardDefaultPayload } from "../helpers/awardDefaultPayload";
+import { nextConferenceYear } from "../helpers/nextConferenceYear";
 import { loadWizardDraft } from "../helpers/wizardPersistence";
 import SimpleStepNavigation from "./_components/SimpleStepNavigation";
 import WizardStateSync from "./WizardStateSync";
 import { ValidationHighlightProvider } from "../helpers/validationHighlight";
+import EntryListSidebar from "../entries/EntryListSidebar";
 
 const GRANT_LEFTOVER_STORAGE_KEY = "grant_application_form_data";
 
 const ScholarshipApplicationForm = () => {
   const { steps, stepIndex, setStepIndex } = useFormSteps();
+  const activeSteps = steps.filter((step) => step.active);
   const { entryPayload } = useEntryPayload();
-  const { isAdminView } = useUserContext();
+  const { isAdminView, isLoggedIn } = useUserContext();
   const { isFormSubmitted } = useFormSubmittedContext();
+  const showAdminSidebar = isLoggedIn && isAdminView;
   const [formDefaultValues] = useState<Record<string, any> | undefined>(() => {
+    const conferenceYear = nextConferenceYear();
     if (entryPayload) return entryPayload;
-    if (isAdminView) return awardDefaultPayload;
+    if (isAdminView) {
+      return { ...awardDefaultPayload, award_year: conferenceYear };
+    }
     const wizardDraft = loadWizardDraft("orwa-awards", "online");
     if (wizardDraft?.values) {
-      return { ...awardDefaultPayload, ...wizardDraft.values };
+      return {
+        ...awardDefaultPayload,
+        ...wizardDraft.values,
+        award_year: conferenceYear,
+      };
     }
-    return awardDefaultPayload;
+    return { ...awardDefaultPayload, award_year: conferenceYear };
   });
 
   useEffect(() => {
@@ -102,13 +113,21 @@ const ScholarshipApplicationForm = () => {
         <FormStepper stepIndex={stepIndex} setStepIndex={setStepIndex} />
 
         {/* Main Form Container */}
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div
+          className={`${
+            showAdminSidebar ? "max-w-7xl" : "max-w-4xl"
+          } mx-auto px-4 sm:px-6 lg:px-8 py-8`}
+        >
           <div className="bg-white rounded-xl shadow-lg overflow-hidden">
             {/* Progress Bar */}
             <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2">
               <div 
                 className="h-full bg-gradient-to-r from-green-400 to-green-500 transition-all duration-300 ease-out"
-                style={{ width: `${((stepIndex + 1) / steps.length) * 100}%` }}
+                style={{
+                  width: `${
+                    ((stepIndex + 1) / Math.max(activeSteps.length, 1)) * 100
+                  }%`
+                }}
               />
             </div>
 
@@ -119,8 +138,15 @@ const ScholarshipApplicationForm = () => {
               >
                 <ValidationHighlightProvider clearOn={stepIndex}>
                 <WizardStateSync />
-                <div className="min-h-[500px]">
-                  {steps.filter((step) => step.active)[stepIndex]?.component}
+                <div className="grid grid-cols-12 gap-4 min-h-[500px]">
+                  <div
+                    className={
+                      showAdminSidebar ? "col-span-12 lg:col-span-9" : "col-span-12"
+                    }
+                  >
+                    {activeSteps[stepIndex]?.component}
+                  </div>
+                  {showAdminSidebar && <EntryListSidebar />}
                 </div>
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <SimpleStepNavigation />

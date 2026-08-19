@@ -438,6 +438,11 @@ export const awardAllFieldsRows = (
   payload: Record<string, unknown>
 ): AllFieldsRow[] => [
   { section: "Nominee", label: "Name", value: payload.nominee_name },
+  {
+    section: "Nominee",
+    label: "Name as printed on award",
+    value: payload.award_name_printed || payload.system_name,
+  },
   { section: "Nominee", label: "Award", value: payload.award_type },
   { section: "Nominee", label: "Year", value: payload.award_year },
   { section: "Nominee", label: "Email", value: payload.email },
@@ -449,7 +454,6 @@ export const awardAllFieldsRows = (
       .filter(Boolean)
       .join(", "),
   },
-  { section: "Nominee", label: "County", value: payload.county },
   {
     section: "Nominator",
     label: "Name",
@@ -511,8 +515,8 @@ export const awardAllFieldsRows = (
   },
   {
     section: "Nomination",
-    label: "Description",
-    value: payload.nomination_description,
+    label: "Justification",
+    value: payload.justification || payload.nomination_description,
   },
   {
     section: "Biography",

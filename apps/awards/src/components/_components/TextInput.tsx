@@ -14,6 +14,7 @@ interface InputProps {
   validation?: any;
   defaultValue?: string;
   placeholder?: string;
+  onValueChange?: (value: string) => void;
 }
 
 export const TextInput = ({
@@ -28,6 +29,7 @@ export const TextInput = ({
   validation,
   defaultValue,
   placeholder,
+  onValueChange,
 }: InputProps) => {
   const { register, setValue, formState: { errors } } = useFormContext();
 
@@ -63,6 +65,7 @@ export const TextInput = ({
     }
 
     setValue(name, value);
+    onValueChange?.(value);
   };
 
   return (

@@ -198,6 +198,7 @@ export interface IAwardNominationPayload {
   city: string;
   state: string;
   zip: string;
+  /** Legacy form field; not collected on the public nomination wizard. */
   county?: string;
   
   // Nominator Information
@@ -214,6 +215,8 @@ export interface IAwardNominationPayload {
 
   // System Information
   system_name: string;
+  /** Printed line on the physical award (system or nominee, by award type). */
+  award_name_printed?: string;
   watersystem?: number | string;
   operation_start_date?: string | null;
   employment_date?: string | null;
@@ -226,7 +229,9 @@ export interface IAwardNominationPayload {
   management_employees?: number;
   
   // Nomination Details
-  nomination_description: string;
+  justification: string;
+  /** Legacy form/API key; mapper still reads this if present. */
+  nomination_description?: string;
   award_type:
     | "System of the Year"
     | "Water/Wastewater System of the Year"

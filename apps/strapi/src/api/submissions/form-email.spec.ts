@@ -105,12 +105,14 @@ describe("all_fields HTML", () => {
         nominator_last_name: "Cole",
         nominator_email: "sam@example.org",
         system_name: "City of Edmond",
-        nomination_description: "Outstanding operator.",
+        award_name_printed: "Alex Rivera",
+        justification: "Outstanding operator.",
       },
       { currentYear: 2026 }
     );
     expect(variables.form_title).toBe(AWARD_FORM_TITLE);
     expect(variables.all_fields).toContain("Alex Rivera");
+    expect(variables.all_fields).toContain("Name as printed on award");
     expect(variables.all_fields).toContain("Sam Cole");
     expect(variables.all_fields).toContain("Excellence in Operations");
     expect(variables.all_fields).toContain("Outstanding operator.");

@@ -1,4 +1,5 @@
 import { IAwardNominationPayload } from "../types/types";
+import { nextConferenceYear } from "./nextConferenceYear";
 
 export const awardDefaultPayload: IAwardNominationPayload = {
   // Nominee Information
@@ -9,7 +10,6 @@ export const awardDefaultPayload: IAwardNominationPayload = {
   city: "",
   state: "OK",
   zip: "",
-  county: "",
 
   // Nominator Information
   nominator_first_name: "",
@@ -25,6 +25,7 @@ export const awardDefaultPayload: IAwardNominationPayload = {
 
   // System Information
   system_name: "",
+  award_name_printed: "",
   watersystem: undefined,
   operation_start_date: null,
   employment_date: null,
@@ -37,9 +38,9 @@ export const awardDefaultPayload: IAwardNominationPayload = {
   management_employees: 0,
 
   // Nomination Details
-  nomination_description: "",
+  justification: "",
   award_type: "System of the Year",
-  award_year: new Date().getFullYear(),
+  award_year: nextConferenceYear(),
 
   biography_method: "Copy/Paste or Type Biography",
   biography_text: "",

@@ -19,6 +19,9 @@ interface NumberInputProps {
   step?: number;
   defaultValue?: number;
   placeholder?: string;
+  wrapperClassName?: string;
+  labelClassName?: string;
+  inputClassName?: string;
 }
 
 const NumberInput = ({
@@ -37,6 +40,9 @@ const NumberInput = ({
   step,
   defaultValue,
   placeholder,
+  wrapperClassName,
+  labelClassName,
+  inputClassName,
 }: NumberInputProps) => {
   const { register, setValue, watch } = useFormContext();
   const number = watch(name);
@@ -61,8 +67,12 @@ const NumberInput = ({
 
   return (
     <HighlightByName name={name}>
-    <div className="mb-6">
-      <label className="block mb-1 text-sm font-bold text-left">
+    <div className={wrapperClassName ?? "mb-6"}>
+      <label
+        className={
+          labelClassName ?? "block mb-1 text-sm font-bold text-left"
+        }
+      >
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
@@ -100,7 +110,9 @@ const NumberInput = ({
           },
         })}
         disabled={disabled}
-        className={`block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-2 ${
+        className={`block w-full border shadow-sm focus:outline-none focus:ring-2 ${
+          inputClassName ?? "px-3 py-2 rounded-md"
+        } ${
           disabled
             ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
             : "bg-white text-gray-900 border-gray-300 focus:ring-blue-500"

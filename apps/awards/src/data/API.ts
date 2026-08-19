@@ -99,7 +99,16 @@ export const useGetWatersystems = () => {
 
 
 export const useGetSubmissions = () => {
-  return useQuery({ queryKey: ['logs', 'award-nomination'], queryFn: async () => _get('logs', `?filters[resource][$eq]=award-nomination&pagination[limit]=1000&sort=createdAt:DESC`) })
+  return useQuery({
+    queryKey: ['logs', 'award-nomination'],
+    queryFn: async () => {
+      const submissions = await _get(
+        'logs',
+        '?filters[resource][$eq]=award-nomination&pagination[limit]=1000&populate=*&sort=createdAt:DESC'
+      )
+      return Array.isArray(submissions) ? submissions : submissions ? [submissions] : []
+    },
+  })
 }
 
 export const getWatersystems = async () => {

@@ -54,7 +54,7 @@ const AwardNominationList = () => {
         sort={{ field: "award_year", order: "DESC" }}
         perPage={listPerPage}
         pagination={<CustomPagination />}
-        queryOptions={{ meta: { populate: LIST_POPULATE } }}
+        queryOptions={{ meta: { populate: LIST_POPULATE, raw: true } }}
         sx={{
           "& .RaList-main": { marginTop: 0 },
           "& .RaList-content": { boxShadow: "none" },
@@ -65,15 +65,20 @@ const AwardNominationList = () => {
           <TextField source="nominee_name" label="Nominee" />
           <TextField source="email" label="Email" />
           <TextField source="system_name" label="System" />
+          <TextField
+            source="award_name_printed"
+            label="Name as printed on award"
+          />
           <TextField source="award_type" label="Award" />
           <TextField source="award_year" label="Year" />
           <TextField source="nomination_status" label="Status" />
           <FunctionField
             label="County"
+            source="watersystem.county"
+            sortable={false}
             render={(record: {
               watersystem?: { county?: string | null } | null;
-            }) => watersystemCounty(record)}
-            sortable={false}
+            }) => watersystemCounty(record) || "—"}
           />
 
           <FunctionField
@@ -149,9 +154,9 @@ const AwardNominationList = () => {
 
           <FunctionField
             label="What makes the nominee deserving of this award?"
-            source="nomination_description"
-            render={(record: { nomination_description?: string }) =>
-              truncateText(record.nomination_description)
+            source="justification"
+            render={(record: { justification?: string }) =>
+              truncateText(record.justification)
             }
           />
 

@@ -1,17 +1,22 @@
 /**
- * Seed local Strapi with realistic scholarship applications + award nominations
+ * Seed Strapi with realistic scholarship applications + award nominations
  * via the same public submit path the SPAs use (upload → map*Payload → POST /submissions/…).
  *
- * Usage (from repo root, local Strapi on VITE_API_ENDPOINT):
+ * Usage (from repo root):
  *   npx tsx scripts/seed-scholarship-awards.ts
  *   npx tsx scripts/seed-scholarship-awards.ts --count=10
  *   npx tsx scripts/seed-scholarship-awards.ts --only=scholarship
  *   npx tsx scripts/seed-scholarship-awards.ts --only=awards --count=5
  *   npm run seed:scholarship-awards
  *
- * Loads API URL + key from apps/scholarship-application/.env (fallback: apps/awards/.env).
- * Does not print the API key. Prefixes names/emails with "E2E Seed" + run id so reruns are additive.
- * Sets adminOptions notifications off so seed runs do not spam mailers.
+ * Production (explicit flag required; refuses admin.orwa.org / orwa.org otherwise):
+ *   npx tsx scripts/seed-scholarship-awards.ts --api=production --emails --count=12
+ *   SEED_API_ENDPOINT=https://admin.orwa.org/api npx tsx scripts/seed-scholarship-awards.ts --api=production --emails
+ *
+ * Local loads API URL + key from apps/scholarship-application/.env (fallback: apps/awards/.env).
+ * `--api=production` loads each app's .env.production instead.
+ * Does not print the API key. Prefixes names with "E2E Seed" (local) or "E2E Prod" (production) + run id.
+ * Notifications default OFF. Pass `--emails` / `--notify` to fire Email Manager templates.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -32,11 +37,13 @@ const ROOT = resolve(__dirname, "..");
 const FIXTURES = join(__dirname, "fixtures", "seed-submissions");
 
 const RUN_ID = faker.string.alphanumeric(8).toLowerCase();
-const PREFIX = `E2E Seed ${RUN_ID}`;
+let PREFIX = `E2E Seed ${RUN_ID}`;
 
 type CliArgs = {
   count: number;
   only: "all" | "scholarship" | "awards";
+  production: boolean;
+  emails: boolean;
 };
 
 type WatersystemRow = {
@@ -51,6 +58,8 @@ type UploadResult = { id: number; documentId?: string };
 function parseArgs(argv: string[]): CliArgs {
   let count = 10;
   let only: CliArgs["only"] = "all";
+  let production = false;
+  let emails = false;
   for (const arg of argv) {
     if (arg.startsWith("--count=")) {
       const n = Number(arg.slice("--count=".length));
@@ -64,48 +73,91 @@ function parseArgs(argv: string[]): CliArgs {
         throw new Error(`Invalid --only (use scholarship|awards|all): ${arg}`);
       }
       only = v;
+    } else if (
+      arg === "--api=production" ||
+      arg === "--production" ||
+      arg === "--api=prod"
+    ) {
+      production = true;
+    } else if (arg === "--emails" || arg === "--notify") {
+      emails = true;
     } else if (arg === "--help" || arg === "-h") {
       console.log(
-        "Usage: npx tsx scripts/seed-scholarship-awards.ts [--count=10] [--only=scholarship|awards]"
+        [
+          "Usage: npx tsx scripts/seed-scholarship-awards.ts [options]",
+          "  --count=10",
+          "  --only=scholarship|awards|all",
+          "  --api=production   target admin.orwa.org using apps/*/.env.production",
+          "  --emails|--notify  send Email Manager notifications (default: off)",
+        ].join("\n")
       );
       process.exit(0);
     }
   }
-  return { count, only };
+  return { count, only, production, emails };
 }
 
-function loadApiConfig(): { apiBase: string; apiKey: string } {
-  const candidates = [
-    join(ROOT, "apps/scholarship-application/.env"),
-    join(ROOT, "apps/scholarship-application/.env.development"),
-    join(ROOT, "apps/awards/.env"),
-    join(ROOT, "apps/awards/.env.development"),
-  ];
+function isProductionHost(endpoint: string): boolean {
+  try {
+    const host = new URL(endpoint).hostname;
+    return host === "admin.orwa.org" || host === "orwa.org";
+  } catch {
+    return false;
+  }
+}
+
+function loadApiConfig(production: boolean): { apiBase: string; apiKey: string } {
+  const candidates = production
+    ? [
+        join(ROOT, "apps/scholarship-application/.env.production"),
+        join(ROOT, "apps/awards/.env.production"),
+        join(ROOT, "apps/conference-registration/.env.production"),
+      ]
+    : [
+        join(ROOT, "apps/scholarship-application/.env"),
+        join(ROOT, "apps/scholarship-application/.env.development"),
+        join(ROOT, "apps/awards/.env"),
+        join(ROOT, "apps/awards/.env.development"),
+      ];
   for (const file of candidates) {
     if (existsSync(file)) loadEnv({ path: file, override: false, quiet: true });
   }
 
-  const endpoint =
-    process.env.VITE_API_ENDPOINT?.trim() || "http://localhost:13370/api";
+  const endpoint = (
+    process.env.SEED_API_ENDPOINT?.trim() ||
+    process.env.VITE_API_ENDPOINT?.trim() ||
+    (production ? "https://admin.orwa.org/api" : "http://localhost:13370/api")
+  ).replace(/\/$/, "");
   const apiKey = process.env.VITE_API_KEY?.trim();
   if (!apiKey) {
     throw new Error(
-      "Missing VITE_API_KEY in apps/scholarship-application/.env or apps/awards/.env"
+      production
+        ? "Missing VITE_API_KEY in apps/*/.env.production"
+        : "Missing VITE_API_KEY in apps/scholarship-application/.env or apps/awards/.env"
     );
   }
 
-  const host = new URL(endpoint).hostname;
-  if (host === "admin.orwa.org" || host === "orwa.org") {
+  if (isProductionHost(endpoint) && !production) {
     throw new Error(
-      `Refusing to seed production host (${host}). Point VITE_API_ENDPOINT at local Strapi.`
+      `Refusing to seed production host (${new URL(endpoint).hostname}). Pass --api=production.`
+    );
+  }
+  if (production && !isProductionHost(endpoint)) {
+    throw new Error(
+      `--api=production requires admin.orwa.org / orwa.org (got ${endpoint}). Set SEED_API_ENDPOINT or apps/*/.env.production.`
     );
   }
 
-  return { apiBase: endpoint.replace(/\/$/, ""), apiKey };
+  return { apiBase: endpoint, apiKey };
 }
 
-function assertLocalTarget(apiBase: string) {
-  console.log(`API: ${apiBase}`);
+function notificationAdmin(emails: boolean) {
+  return {
+    registrantNotification: emails,
+    adminNotification: emails,
+    customEmail: "",
+    resubmit: true,
+  };
 }
 
 async function apiGet<T>(
@@ -188,7 +240,7 @@ async function fetchWatersystems(
   const rows = Array.isArray(json.data) ? json.data : [];
   const usable = rows.filter((w) => w.documentId || w.id);
   if (usable.length === 0) {
-    throw new Error("No watersystems returned from local API");
+    throw new Error("No watersystems returned from API");
   }
   return usable;
 }
@@ -238,13 +290,6 @@ const OK_COUNTIES = [
   "Garfield",
   "Kay",
 ];
-
-const quietAdmin = {
-  registrantNotification: false,
-  adminNotification: false,
-  customEmail: "",
-  resubmit: true,
-};
 
 type FixtureIds = {
   pdf: string | number;
@@ -432,7 +477,7 @@ function buildScholarshipDraft(
     guardian_certification_date: under18 ? todayIso() : undefined,
 
     accepted_terms: [],
-    adminOptions: quietAdmin,
+    adminOptions: notificationAdmin(false),
   };
 
   return draft;
@@ -512,7 +557,7 @@ function buildAwardDraft(
     operation_maintenance_employees: faker.number.int({ min: 1, max: 12 }),
     management_employees: faker.number.int({ min: 1, max: 4 }),
 
-    nomination_description: faker.lorem.paragraphs(2),
+    justification: faker.lorem.paragraphs(2),
     award_type,
     award_year: new Date().getFullYear(),
 
@@ -551,21 +596,42 @@ function buildAwardDraft(
 
     nomination_status: "Submitted",
     accepted_terms: [],
-    adminOptions: quietAdmin,
+    adminOptions: notificationAdmin(false),
   };
 
   return draft;
 }
 
+type SeededScholarship = {
+  index: number;
+  name: string;
+  relationship: string;
+  documentId?: string;
+  id?: unknown;
+  createdAt?: string;
+};
+
+type SeededAward = {
+  index: number;
+  name: string;
+  awardType: string;
+  documentId?: string;
+  id?: unknown;
+  createdAt?: string;
+};
+
 async function seedScholarships(
   apiBase: string,
   apiKey: string,
   count: number,
-  watersystems: WatersystemRow[]
+  watersystems: WatersystemRow[],
+  emails: boolean
 ) {
-  console.log(`\nSeeding ${count} scholarship application(s)…`);
-  const created: Array<{ index: number; documentId?: string; id?: unknown }> =
-    [];
+  console.log(
+    `\nSeeding ${count} scholarship application(s)… emails=${emails ? "ON" : "off"}`
+  );
+  const created: SeededScholarship[] = [];
+  const adminOptions = notificationAdmin(emails);
 
   for (let i = 0; i < count; i += 1) {
     const ws = watersystems[i % watersystems.length]!;
@@ -574,26 +640,34 @@ async function seedScholarships(
     const payload = mapScholarshipPayload({
       ...draft,
       accepted_terms: [],
-      adminOptions: quietAdmin,
+      adminOptions,
     } as IScholarshipApplicationPayload & Record<string, unknown>);
 
     const response = await apiPostJson<{
       message: string;
-      scholarshipApplication?: { documentId?: string; id?: unknown };
+      scholarshipApplication?: {
+        documentId?: string;
+        id?: unknown;
+        createdAt?: string;
+      };
     }>(apiBase, apiKey, "submissions/scholarship-application", {
       ...payload,
       accepted_terms: [],
-      adminOptions: quietAdmin,
+      adminOptions,
     });
 
     const row = response.scholarshipApplication;
+    const name = `${draft.applicant_last_name}, ${draft.applicant_first_name}`;
     created.push({
       index: i,
+      name,
+      relationship: String(draft.relationship),
       documentId: row?.documentId,
       id: row?.id,
+      createdAt: row?.createdAt,
     });
     console.log(
-      `  [${i + 1}/${count}] ${draft.applicant_last_name}, ${draft.applicant_first_name} → documentId=${row?.documentId ?? "?"} id=${row?.id ?? "?"}`
+      `  [${i + 1}/${count}] ${name} (${draft.relationship}) → documentId=${row?.documentId ?? "?"} createdAt=${row?.createdAt ?? "?"}`
     );
   }
 
@@ -604,11 +678,14 @@ async function seedAwards(
   apiBase: string,
   apiKey: string,
   count: number,
-  watersystems: WatersystemRow[]
+  watersystems: WatersystemRow[],
+  emails: boolean
 ) {
-  console.log(`\nSeeding ${count} award nomination(s)…`);
-  const created: Array<{ index: number; documentId?: string; id?: unknown }> =
-    [];
+  console.log(
+    `\nSeeding ${count} award nomination(s)… emails=${emails ? "ON" : "off"}`
+  );
+  const created: SeededAward[] = [];
+  const adminOptions = notificationAdmin(emails);
 
   for (let i = 0; i < count; i += 1) {
     const ws = watersystems[i % watersystems.length]!;
@@ -617,26 +694,33 @@ async function seedAwards(
     const payload = mapAwardNominationPayload({
       ...draft,
       accepted_terms: [],
-      adminOptions: quietAdmin,
+      adminOptions,
     } as IAwardNominationPayload & Record<string, unknown>);
 
     const response = await apiPostJson<{
       message: string;
-      awardNomination?: { documentId?: string; id?: unknown };
+      awardNomination?: {
+        documentId?: string;
+        id?: unknown;
+        createdAt?: string;
+      };
     }>(apiBase, apiKey, "submissions/award-nomination", {
       ...payload,
       accepted_terms: [],
-      adminOptions: quietAdmin,
+      adminOptions,
     });
 
     const row = response.awardNomination;
     created.push({
       index: i,
+      name: draft.nominee_name,
+      awardType: draft.award_type,
       documentId: row?.documentId,
       id: row?.id,
+      createdAt: row?.createdAt,
     });
     console.log(
-      `  [${i + 1}/${count}] ${draft.award_type} / ${draft.nominee_name} → documentId=${row?.documentId ?? "?"} id=${row?.id ?? "?"}`
+      `  [${i + 1}/${count}] ${draft.award_type} / ${draft.nominee_name} → documentId=${row?.documentId ?? "?"} createdAt=${row?.createdAt ?? "?"}`
     );
   }
 
@@ -645,34 +729,46 @@ async function seedAwards(
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  const { apiBase, apiKey } = loadApiConfig();
-  assertLocalTarget(apiBase);
+  PREFIX = args.production ? `E2E Prod ${RUN_ID}` : `E2E Seed ${RUN_ID}`;
+  const { apiBase, apiKey } = loadApiConfig(args.production);
 
+  console.log(`API: ${apiBase}`);
   console.log(`Run id: ${RUN_ID} (prefix "${PREFIX}")`);
-  console.log(`Count: ${args.count}  only: ${args.only}`);
+  console.log(
+    `Count: ${args.count}  only: ${args.only}  production: ${args.production}  emails: ${args.emails}`
+  );
 
   const watersystems = await fetchWatersystems(apiBase, apiKey);
   console.log(`Watersystems available: ${watersystems.length}`);
 
-  let scholarships: Awaited<ReturnType<typeof seedScholarships>> = [];
-  let awards: Awaited<ReturnType<typeof seedAwards>> = [];
+  let scholarships: SeededScholarship[] = [];
+  let awards: SeededAward[] = [];
 
   if (args.only === "all" || args.only === "scholarship") {
     scholarships = await seedScholarships(
       apiBase,
       apiKey,
       args.count,
-      watersystems
+      watersystems,
+      args.emails
     );
   }
   if (args.only === "all" || args.only === "awards") {
-    awards = await seedAwards(apiBase, apiKey, args.count, watersystems);
+    awards = await seedAwards(
+      apiBase,
+      apiKey,
+      args.count,
+      watersystems,
+      args.emails
+    );
   }
 
   console.log("\nDone.");
   console.log(
     `Scholarships created: ${scholarships.length}  Awards created: ${awards.length}`
   );
+  console.log("\nSCHOLARSHIPS_JSON " + JSON.stringify(scholarships));
+  console.log("AWARDS_JSON " + JSON.stringify(awards));
   if (scholarships.some((s) => !s.documentId)) {
     console.warn(
       "Some scholarship responses lacked documentId (check Strapi logs)."
