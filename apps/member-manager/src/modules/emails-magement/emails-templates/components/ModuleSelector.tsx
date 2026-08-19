@@ -43,6 +43,10 @@ const ModuleSelector = ({ moduleValue }: ModuleSelectorProps) => {
           { id: "Conference Registrations", name: "Conference Registrations" },
           { id: "Conference Schedules", name: "Conference Schedules" },
           
+          // Scholarships / Awards
+          { id: "Scholarships", name: "Scholarships" },
+          { id: "Awards", name: "Awards" },
+
           // Grants related
           { id: "Grant Management", name: "Grant Management" },
           { id: "Grants", name: "Grants" },

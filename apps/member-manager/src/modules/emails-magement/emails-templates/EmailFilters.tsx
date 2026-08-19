@@ -81,6 +81,11 @@ const EmailFilters = () => {
           <FilterListItem label="Training" value={{ module: "Training" }} />
           <FilterListItem label="Contacts" value={{ module: "Contacts" }} />
           <FilterListItem label="Conference" value={{ module: "Conference" }} />
+          <FilterListItem
+            label="Scholarships"
+            value={{ module: "Scholarships" }}
+          />
+          <FilterListItem label="Awards" value={{ module: "Awards" }} />
         </FilterList>
       </CardContent>
     </Card>
