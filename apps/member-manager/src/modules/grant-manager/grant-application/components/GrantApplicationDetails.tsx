@@ -31,7 +31,11 @@ import { Link } from "react-router-dom";
 import { formatDate } from "../../../../helpers/dateFormatter";
 import GrantStatus from "./GrantStatus";
 import ApplicationEmailModal from "./ApplicationEmailModal";
-import AssetModal, { AssetModalFile } from "../../../_components/AssetModal";
+import AssetModal, {
+  AssetModalFile,
+  getAssetUrl,
+  isAssetPreviewable,
+} from "../../../_components/AssetModal";
 import StarIcon from '@mui/icons-material/Star';
 
 const projectCostSourceLabel = (source?: ProjectCostSource): string | null => {
@@ -218,7 +222,18 @@ export const FileLinkList = ({ files }: { files: StrapiFile | StrapiFile[] }) =>
               href={`${import.meta.env.VITE_API_ENDPOINT}${file.url}`}
               onClick={(e) => {
                 e.preventDefault();
-                setPreviewFile({ url: file.url, name: file.name, mime: file.mime });
+                const asset: AssetModalFile = {
+                  url: file.url,
+                  name: file.name,
+                  mime: file.mime,
+                };
+                // No inline preview possible (docx, xlsx, ...): skip the
+                // dead-end modal and open the file directly in a new tab.
+                if (!isAssetPreviewable(asset)) {
+                  window.open(getAssetUrl(asset.url), "_blank", "noopener");
+                  return;
+                }
+                setPreviewFile(asset);
               }}
               style={{
                 color: "#1a73e8", // Consistent link color
@@ -564,7 +579,7 @@ const GrantApplicationDetails = () => {
             <ResponsiveListItem
               label="Point of Contact"
               value={
-                <Link to={`/contacts/${record.point_of_contact.id}`}>
+                <Link to={`/contacts/${record.point_of_contact.id}/show`}>
                   {record.point_of_contact.first +
                     " " +
                     record.point_of_contact.last}
@@ -577,7 +592,7 @@ const GrantApplicationDetails = () => {
             <ResponsiveListItem
               label="Chairman"
               value={
-                <Link to={`/contacts/${record.chairman.id}`}>
+                <Link to={`/contacts/${record.chairman.id}/show`}>
                   {record.chairman.first + " " + record.chairman.last}
                 </Link>
               }
@@ -602,7 +617,7 @@ const GrantApplicationDetails = () => {
             <ResponsiveListItem
               label="Engineer Name"
               value={
-                <Link to={`/contacts/${record.engineer.id}`}>
+                <Link to={`/contacts/${record.engineer.id}/show`}>
                   {record.engineer.first + " " + record.engineer.last}
                 </Link>
               }
@@ -615,7 +630,7 @@ const GrantApplicationDetails = () => {
               value={
                 <Box component="span" sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                   {record.additional_contacts.map((contact: RaRecord) => (
-                    <Link key={contact.id} to={`/contacts/${contact.id}`}>
+                    <Link key={contact.id} to={`/contacts/${contact.id}/show`}>
                       {contact.first + " " + contact.last}
                     </Link>
                   ))}
