@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useFormContext } from "react-hook-form";
+import { HighlightByName } from "../../helpers/validationHighlight";
 
 interface SelectInputProps {
   name: string;
@@ -64,6 +65,7 @@ export const SelectInput = ({
   }, []);
 
   return (
+    <HighlightByName name={name}>
     <div className="mb-6 relative" ref={dropdownRef}>
       <label className="block mb-2 text-left text-sm font-semibold text-gray-700">
         {label}
@@ -122,5 +124,6 @@ export const SelectInput = ({
         <p className="text-red-500 text-sm mt-1 text-left">{`${errors[name]?.message}*`}</p>
       )}
     </div>
+    </HighlightByName>
   );
 };

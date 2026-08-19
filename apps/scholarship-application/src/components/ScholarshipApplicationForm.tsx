@@ -1,34 +1,38 @@
-import { Divider } from "@mui/material";
 import { useContext, useEffect, useState } from "react";
 import FormStepper from "./_components/FormStepper";
 import { Form } from "../FormProvider";
 import SimpleStepNavigation from "./SimpleStepNavigation";
+import WizardStateSync from "./WizardStateSync";
 import {
   FormSteps,
-  PayloadProvider,
   useEntryPayload,
 } from "../providers/AppContextProvider";
 import { useUserContext } from "../providers/UserContextProvider";
-// Removed grant-specific entry list sidebar
-// Removed grant-specific upload test component
 import PreviousSessionModal from "./PreviousSessionModal";
-import { 
-  getSavedFormData, 
+import {
+  getSavedFormData,
   clearSavedFormData,
-  restoreFilesFromCache
+  restoreFilesFromCache,
 } from "../helpers/formPersistence";
+import { loadWizardDraft } from "../helpers/wizardPersistence";
+import { ValidationHighlightProvider } from "../helpers/validationHighlight";
 import { scholarshipDefaultPayload } from "../helpers/scholarshipDefaultPayload";
+import { hydrateFinancialResources } from "../helpers/mapScholarshipPayload";
+
+const withFinancialResources = (payload: Record<string, any>) => ({
+  ...payload,
+  financial_resources: hydrateFinancialResources(payload),
+});
 
 const ScholarshipApplicationForm = () => {
   const { steps, setStepIndex, stepIndex } = useContext(FormSteps);
-  const payload = useContext(PayloadProvider);
   const { entryPayload } = useEntryPayload();
   const { isAdminView, isLoggedIn } = useUserContext();
   
   const [showPreviousSessionModal, setShowPreviousSessionModal] = useState(false);
   const [savedTimestamp, setSavedTimestamp] = useState<number>(0);
   const [formDefaultValues, setFormDefaultValues] = useState<Record<string, any> | undefined>(
-    entryPayload ?? scholarshipDefaultPayload
+    withFinancialResources(entryPayload ?? scholarshipDefaultPayload)
   );
   const [formKey, setFormKey] = useState(0); // Force form re-render when needed
 
@@ -48,6 +52,15 @@ const ScholarshipApplicationForm = () => {
 
     // Only check for saved data if we're not in admin view and no entryPayload exists
     if (!isAdminView && !entryPayload) {
+      const wizardDraft = loadWizardDraft("orwef-scholarship", "online");
+      if (wizardDraft?.values) {
+        setFormDefaultValues(
+          withFinancialResources({
+            ...scholarshipDefaultPayload,
+            ...wizardDraft.values,
+          })
+        );
+      }
       const savedData = getSavedFormData();
       if (savedData) {
         setSavedTimestamp(savedData.timestamp);
@@ -62,13 +75,13 @@ const ScholarshipApplicationForm = () => {
       try {
         // Restore files from cache before setting form data
         const restoredData = await restoreFilesFromCache(savedData.data);
-        setFormDefaultValues(restoredData);
+        setFormDefaultValues(withFinancialResources(restoredData));
         setStepIndex(savedData.stepIndex || 0);
         setFormKey(prev => prev + 1); // Force form re-render with new data
       } catch (error) {
         console.warn('Failed to restore files from cache:', error);
         // Fallback to data without files
-        setFormDefaultValues(savedData.data);
+        setFormDefaultValues(withFinancialResources(savedData.data));
         setStepIndex(savedData.stepIndex || 0);
         setFormKey(prev => prev + 1);
       }
@@ -81,7 +94,7 @@ const ScholarshipApplicationForm = () => {
     setShowPreviousSessionModal(false);
     // Reset to default values
     setFormDefaultValues(
-      entryPayload ?? scholarshipDefaultPayload
+      withFinancialResources(entryPayload ?? scholarshipDefaultPayload)
     );
     setStepIndex(0);
     setFormKey(prev => prev + 1); // Force form re-render with fresh data
@@ -116,15 +129,18 @@ const ScholarshipApplicationForm = () => {
                 key={formKey}
                 defaultValues={formDefaultValues}
               >
+                <ValidationHighlightProvider clearOn={stepIndex}>
+                  <WizardStateSync />
                 {/* Step Content */}
                 <div className="min-h-[500px]">
-                  {steps.filter((step) => step.active)[stepIndex].component}
+                  {steps.filter((step) => step.active)[stepIndex]?.component}
                 </div>
                 
                 {/* Navigation */}
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <SimpleStepNavigation />
                 </div>
+                </ValidationHighlightProvider>
               </Form>
             </div>
           </div>

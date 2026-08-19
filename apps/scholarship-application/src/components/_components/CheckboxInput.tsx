@@ -1,4 +1,5 @@
 import { useFormContext } from "react-hook-form";
+import { HighlightByName } from "../../helpers/validationHighlight";
 
 // Checkbox Input Component
 interface CheckboxInputProps {
@@ -35,22 +36,23 @@ export const CheckboxInput = ({
   };
 
   return (
+    <HighlightByName name={name}>
     <div className="mb-4">
-      <div className="flex items-center">
+      <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-slate-50 px-3 py-3 cursor-pointer hover:bg-slate-100">
         <input
           {...register(name, { required })}
           type="checkbox"
-          checked={isChecked}
+          checked={Boolean(isChecked)}
           onChange={handleChange}
-          className={`mr-2 h-4 w-4 ${
+          className={`h-4 w-4 cursor-pointer ${
             errors[name] ? "border-red-500" : "border-gray-300"
           }`}
         />
-        <label className="block text-left text-sm font-semibold">
+        <span className="block text-left text-sm font-semibold">
           {label}
           {required && <span className="text-red-500 ml-0.5">*</span>}
-        </label>
-      </div>
+        </span>
+      </label>
       {helperText && (
         <p className="text-gray-500 text-sm mt-1 text-left">{helperText}</p>
       )}
@@ -58,5 +60,6 @@ export const CheckboxInput = ({
         <p className="text-red-500 text-sm mt-1 text-left">{`${errors[name]?.message}*`}</p>
       )}
     </div>
+    </HighlightByName>
   );
 };

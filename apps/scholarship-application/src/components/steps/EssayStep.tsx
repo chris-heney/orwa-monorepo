@@ -12,7 +12,7 @@ const EssayStep = () => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="essay_upload"
+            name="essay"
             label="Upload Essay"
             required
             maxSizeMB={50}

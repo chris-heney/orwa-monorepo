@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction } from 'react'
+import { Dispatch, SetStateAction, type ReactNode } from 'react'
 import PersonalDataStep from './steps/PersonalDataStep'
 import EligibilityStep from './steps/EligibilityStep'
 import HighSchoolDataStep from './steps/HighSchoolDataStep'
@@ -14,7 +14,7 @@ import CertificationStep from './steps/CertificationStep'
 export interface IFormStep {
   label: string
   key: string
-  component: JSX.Element
+  component: ReactNode
   active: boolean
 }
 
@@ -82,7 +82,7 @@ const DefaultScholarshipFormSteps = () => {
       active: true
     },
     {
-      label: "Photo",
+      label: "High Quality Photograph",
       key: "photo",
       component: <PhotoStep />,
       active: true

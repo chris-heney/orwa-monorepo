@@ -1,5 +1,7 @@
 import { useFormContext } from "react-hook-form";
 import { NumericFormat } from "react-number-format";
+import { HighlightByName } from "../../helpers/validationHighlight";
+import { getError } from "../../helpers/getError";
 
 interface NumberInputProps {
   name: string;
@@ -36,13 +38,21 @@ const NumberInput = ({
   defaultValue,
   placeholder,
 }: NumberInputProps) => {
-  const {
-    register,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useFormContext();
+  const { register, setValue, watch } = useFormContext();
   const number = watch(name);
+  const fieldError = getError(name);
+  const numericValue =
+    typeof number === "number" && Number.isFinite(number)
+      ? number
+      : typeof number === "string" &&
+          number.trim() !== "" &&
+          Number.isFinite(Number(number))
+        ? Number(number)
+        : undefined;
+  const showMinHint =
+    numericValue !== undefined && min !== undefined && numericValue < min;
+  const showMaxHint =
+    numericValue !== undefined && max !== undefined && numericValue > max;
 
   const handleValueChange = (values: any) => {
     const { floatValue } = values;
@@ -50,6 +60,7 @@ const NumberInput = ({
   };
 
   return (
+    <HighlightByName name={name}>
     <div className="mb-6">
       <label className="block mb-1 text-sm font-bold text-left">
         {label}
@@ -60,11 +71,30 @@ const NumberInput = ({
           required: required
             ? `${label} ${requiredMessage ? requiredMessage : "is required"}`
             : false,
-          min: min,
-          max: max,
-          validate: (value: number) => {
-            if (maxLength && value.toString().length > maxLength) {
+          validate: (value: number | string | null | undefined) => {
+            if (
+              value === undefined ||
+              value === null ||
+              value === "" ||
+              (typeof value === "number" && !Number.isFinite(value))
+            ) {
+              if (required) {
+                return `${label} ${requiredMessage ? requiredMessage : "is required"}`;
+              }
+              return true;
+            }
+            const n = typeof value === "number" ? value : Number(value);
+            if (!Number.isFinite(n)) {
+              return true;
+            }
+            if (maxLength && n.toString().length > maxLength) {
               return `${label} must be ${maxLength} digits or less`;
+            }
+            if (min !== undefined && n < min) {
+              return `${label} must be greater than or equal to ${min}`;
+            }
+            if (max !== undefined && n > max) {
+              return `${label} must be less than or equal to ${max}`;
             }
             return true;
           },
@@ -74,7 +104,7 @@ const NumberInput = ({
           disabled
             ? "bg-gray-100 text-gray-500 border-gray-200 cursor-not-allowed"
             : "bg-white text-gray-900 border-gray-300 focus:ring-blue-500"
-        } ${errors[name] ? "border-red-500 focus:ring-red-500" : ""}`}
+        } ${fieldError ? "border-red-500 focus:ring-red-500" : ""}`}
         thousandSeparator={
           mask === "currency" || mask === "percentage" ? "," : undefined
         }
@@ -93,36 +123,28 @@ const NumberInput = ({
             return false;
           }
 
-          return (
-            !(max && floatValue && floatValue > max) &&
-            !(min && floatValue && floatValue < min)
-          );
+          return !(max != null && floatValue != null && floatValue > max);
         }}
       />
-      {helperText && (
+      {helperText && !fieldError && (
         <p className="text-gray-500 text-sm mt-1 text-left">{helperText}</p>
       )}
-      {errors[name] && (
-        <p className="text-red-500 text-sm mt-1 text-left">{`${errors[name]?.message}`}</p>
+      {fieldError && !showMinHint && !showMaxHint && (
+        <p className="text-red-500 text-sm mt-1 text-left">{`${fieldError}`}</p>
       )}
-      {number !== undefined &&
-        number !== null &&
-        max !== undefined &&
-        number > max && (
+      {showMaxHint && (
           <p className="text-red-500 text-sm mt-1 text-left">
             {`${label} must be less than or equal to ${max}`}
           </p>
         )}
 
-      {number !== undefined &&
-        number !== null &&
-        min !== undefined &&
-        number < min && (
+      {showMinHint && (
           <p className="text-red-500 text-sm mt-1 text-left">
             {`${label} must be greater than or equal to ${min}`}
           </p>
         )}
     </div>
+    </HighlightByName>
   );
 };
 

@@ -1,47 +1,59 @@
 import uploadService from "../services/uploadService";
 import { StrapiFormattedFile } from "../types/types";
 
-export const processAndUploadFiles = async (payload: any, notify: {
-    (message: string, severity: "success" | "error"): void;
-}) => {
+const SINGLE_MEDIA_FIELDS = new Set([
+  "transcript",
+  "test_scores",
+  "recommendation_letter_1",
+  "recommendation_letter_2",
+  "essay",
+  "biography",
+  "photograph",
+  "applicant_pdf",
+]);
 
-    const processedPayload = { ...payload };
+const isFormattedFile = (value: unknown): value is StrapiFormattedFile =>
+  Boolean(value && typeof value === "object" && (value as StrapiFormattedFile).rawFile);
 
-    for (const key in processedPayload) {
-      if (Array.isArray(processedPayload[key])) {
-        // If the key holds an array, check if it contains StrapiFormattedFiles
-        const fileArray = processedPayload[key];
-        if (fileArray.length > 0 && fileArray[0]?.rawFile) {
-          try {
-            const uploadedFiles = await uploadService.uploadFiles(
-              fileArray.map((file: StrapiFormattedFile) => file.rawFile)
-            );
-            processedPayload[key] = uploadedFiles;
-          } catch (error) {
-            notify(
-              `Error uploading files for ${key}. Please try again later.`,
-              "error"
-            );
-          }
-        }
-      } else if (processedPayload[key]?.rawFile) {
-        // If the key holds a single StrapiFormattedFile
-        try {
-          // uploadService.uploadFile resolves to the numeric file id;
-          // link it directly (Strapi 5 media fields accept file ids in JSON writes)
-          const uploadedFileId = await uploadService.uploadFile(
-            processedPayload[key].rawFile
-          );
-          processedPayload[key] = uploadedFileId;
-        } catch (error) {
-          console.error(`Error uploading file for ${key}:`, error);
-          notify(
-            `Error uploading file for ${key}. Please try again later.`,
-            "error"
-          );
-        }
-      }
+const uploadValue = async (
+  value: unknown,
+  key: string,
+  notify: (message: string, severity: "success" | "error") => void
+) => {
+  if (Array.isArray(value) && value.length > 0 && isFormattedFile(value[0])) {
+    try {
+      const uploaded = await uploadService.uploadFiles(
+        value.map((file) => file.rawFile)
+      );
+      return SINGLE_MEDIA_FIELDS.has(key) ? uploaded[0] ?? null : uploaded;
+    } catch (error) {
+      notify(`Error uploading files for ${key}. Please try again later.`, "error");
+      throw error;
     }
+  }
 
-    return processedPayload;
-  };
+  if (isFormattedFile(value)) {
+    try {
+      return await uploadService.uploadFile(value.rawFile);
+    } catch (error) {
+      notify(`Error uploading file for ${key}. Please try again later.`, "error");
+      throw error;
+    }
+  }
+
+  return value;
+};
+
+export const processAndUploadFiles = async (
+  payload: Record<string, unknown>,
+  notify: (message: string, severity: "success" | "error") => void
+) => {
+  const processed: Record<string, unknown> = { ...payload };
+
+  for (const key of Object.keys(processed)) {
+    const value = processed[key];
+    processed[key] = await uploadValue(value, key, notify);
+  }
+
+  return processed;
+};

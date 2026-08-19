@@ -3,6 +3,7 @@ import { useFormContext } from "react-hook-form";
 import { transformFile } from "../../helpers/transformFile";
 import { StrapiFormattedFile } from "../../types/types";
 import { fileCache } from "../../helpers/fileCache";
+import { HighlightByName } from "../../helpers/validationHighlight";
 
 interface FileInputProps {
   name: string;
@@ -10,6 +11,8 @@ interface FileInputProps {
   required?: boolean;
   multiple?: boolean;
   helperText?: string;
+  maxSizeMB?: number;
+  acceptedTypes?: string[];
 }
 
 const FileInput = ({
@@ -18,6 +21,8 @@ const FileInput = ({
   required = false,
   multiple = false,
   helperText,
+  maxSizeMB,
+  acceptedTypes,
 }: FileInputProps) => {
   const {
     register,
@@ -35,7 +40,9 @@ const FileInput = ({
       const transformedFiles = [];
 
       for (const file of files) {
-        // Save file to cache first
+        if (maxSizeMB && file.size > maxSizeMB * 1024 * 1024) {
+          continue;
+        }
         let cacheId: string | undefined;
         try {
           cacheId = await fileCache.saveFile(file, name, facilityId || 'unknown');
@@ -43,7 +50,11 @@ const FileInput = ({
           console.warn('Failed to cache file:', error);
         }
 
-        const transformedFile = transformFile(file, facilityId, cacheId);
+        const transformedFile = transformFile(
+          file,
+          typeof facilityId === "string" ? facilityId : undefined,
+          cacheId
+        );
         transformedFiles.push(transformedFile);
       }
 
@@ -61,6 +72,7 @@ const FileInput = ({
   };
 
   return (
+    <HighlightByName name={name}>
     <div className="max-w-lg p-4">
       <div className="grid grid-cols-12 gap-4">
         <div className="col-span-5">
@@ -87,7 +99,7 @@ const FileInput = ({
               type="file"
               id="file-input"
               name="files"
-              accept="*/*"
+              accept={acceptedTypes?.join(",") || "*/*"}
               multiple={multiple}
               onChange={handleFileChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -153,6 +165,7 @@ const FileInput = ({
       <div className=" flex-grow"/>
       <p className="text-sm text-gray-500 mt-8 text-left">{helperText}</p>
     </div>
+    </HighlightByName>
   );
 };
 

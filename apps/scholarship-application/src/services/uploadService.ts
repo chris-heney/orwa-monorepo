@@ -15,7 +15,7 @@ const uploadService = {
         })
             .then((httpResponse) => httpResponse.json())
             .then((data) => {
-                return data[0].id
+                return data[0].documentId || data[0].id
             });
     },
     uploadFiles: async (files: File[]) => {
@@ -31,7 +31,7 @@ const uploadService = {
             },
         })
             .then((httpResponse) => httpResponse.json())
-            .then((data) => data.map((file: any) => file.id));
+            .then((data) => data.map((file: any) => file.documentId || file.id));
     },
 };
 

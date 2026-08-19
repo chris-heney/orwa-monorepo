@@ -1,12 +1,10 @@
 import { useForm, FormProvider } from 'react-hook-form';
 import { useEffect } from 'react';
-import { testPayload } from './data/payload-examples';
 import { useFormAutoSave } from './hooks/useFormAutoSave';
 
 interface FormProps {
     children: React.ReactNode;
     defaultValues?: Record<string, any>;
-    test?: boolean;
     autoSave?: boolean;
 }
 
@@ -20,16 +18,16 @@ const FormContent = ({ children, autoSave = true }: { children: React.ReactNode;
   );
 };
 
-const Form = ({ children, defaultValues, test = false, autoSave = true }: FormProps) => {
+const Form = ({ children, defaultValues, autoSave = true }: FormProps) => {
   
-  const methods = useForm({ defaultValues: test ? testPayload : defaultValues});
+  const methods = useForm({ defaultValues });
 
   // Reset form when defaultValues change (for restoring saved data)
   useEffect(() => {
-    if (defaultValues && !test) {
+    if (defaultValues) {
       methods.reset(defaultValues);
     }
-  }, [defaultValues, test, methods]);
+  }, [defaultValues, methods]);
 
   return (
     <FormProvider {...methods}>

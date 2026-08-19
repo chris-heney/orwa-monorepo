@@ -1,38 +1,49 @@
-import React from 'react';
-import { Grid } from '@mui/material';
-import SectionHeading from '../_components/SectionHeading';
-import { TextInput } from '../_components/TextInput';
-import { SelectInput } from '../_components/SelectInput';
-import { CheckboxInput } from '../_components/CheckboxInput';
-import FormSection from '../_components/FormSection';
+import React from "react";
+import { Grid } from "@mui/material";
+import { useFormContext } from "react-hook-form";
+import { TextInput } from "../_components/TextInput";
+import { RadioGroupInput } from "../_components/RadioGroupInput";
+import { CheckboxInput } from "../_components/CheckboxInput";
+import FormSection from "../_components/FormSection";
 
 const CertificationStep = () => {
+  const { watch } = useFormContext();
+  const ageConfirm = watch("age_confirm");
+  const under18 = ageConfirm === "No, I am under the age of 18";
+
   const ageConfirmOptions = [
-    { value: 'Yes, I am 18 years or older', label: 'Yes, I am 18 years or older' },
-    { value: 'No, I am under the age of 18', label: 'No, I am under the age of 18' }
+    {
+      value: "Yes, I am 18 years or older",
+      label: "Yes, I am 18 years or older.",
+    },
+    {
+      value: "No, I am under the age of 18",
+      label: "No, I am under the age of 18.",
+    },
   ];
 
   return (
     <FormSection title="Scholarship Application Certification">
       <Grid container spacing={3}>
-        {/* Age Confirmation */}
         <Grid size={{ xs: 12 }}>
-          <SelectInput
+          <RadioGroupInput
             name="age_confirm"
-            label="Please indicate the following"
+            label="Please indicate the following:"
             options={ageConfirmOptions}
             required
           />
         </Grid>
 
-        {/* Applicant Certification */}
         <Grid size={{ xs: 12 }}>
+          <p className="text-sm font-semibold text-gray-700 text-left mb-2">
+            Scholarship Applicant Certification{" "}
+            <span className="text-red-500">*</span>
+          </p>
           <CheckboxInput
             name="applicant_certification"
-            label="Scholarship Applicant Certification"
-            options={[{ value: 'I agree', label: 'I agree' }]}
-            helperText="Applicant certifies information is complete and accurate."
+            label="I agree"
             required
+            helperText="In submitting this application, I certify that the information provided is complete and accurate to the best of my knowledge. False Information will result in the revocation of any scholarship granted. All eligibility requirements must be met."
           />
         </Grid>
 
@@ -42,45 +53,57 @@ const CertificationStep = () => {
             label="Date"
             type="date"
             required
+            helperText="(Date of submission)"
           />
         </Grid>
 
-        {/* Guardian Information */}
-        <Grid size={{ xs: 12 }}>
-          <h3 className="text-lg font-semibold mb-4 mt-6">Guardian Information (if under 18)</h3>
-        </Grid>
+        {under18 && (
+          <>
+            <Grid size={{ xs: 12 }}>
+              <p className="text-sm font-semibold text-gray-700 text-left mb-1 mt-4">
+                Name of Guardian <span className="text-red-500">*</span>
+              </p>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            name="guardian_name.first"
-            label="Guardian First Name"
-            required
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            name="guardian_name.last"
-            label="Guardian Last Name"
-            required
-          />
-        </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextInput
+                name="guardian_name.first"
+                label="First"
+                required
+              />
+            </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextInput
+                name="guardian_name.last"
+                label="Last"
+                required
+              />
+            </Grid>
 
-        <Grid size={{ xs: 12 }}>
-          <CheckboxInput
-            name="guardian_certification"
-            label="Applicant's Guardian Certification"
-            options={[{ value: 'I/We Certify', label: 'I/We Certify' }]}
-            helperText="Guardian certifies accuracy if applicant is under 18."
-          />
-        </Grid>
+            <Grid size={{ xs: 12 }}>
+              <p className="text-sm font-semibold text-gray-700 text-left mb-2 mt-2">
+                Applicant&apos;s Guardian Certification (If applicant is under 18){" "}
+                <span className="text-red-500">*</span>
+              </p>
+              <CheckboxInput
+                name="guardian_certification"
+                label="I/We Certify"
+                required
+                helperText="In submitting this application, I/we certify that the information provided is complete and accurate to the best of My/Our knowledge. False Information will result in the revocation of any scholarship granted. All eligibility requirements must be met."
+              />
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextInput
-            name="guardian_certification_date"
-            label="Guardian Certification Date"
-            type="date"
-          />
-        </Grid>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <TextInput
+                name="guardian_certification_date"
+                label="Date"
+                type="date"
+                required
+                helperText="(Date of submission)"
+              />
+            </Grid>
+          </>
+        )}
       </Grid>
     </FormSection>
   );
