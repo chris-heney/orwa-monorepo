@@ -1,7 +1,32 @@
 export default [
   'strapi::logger',
   'strapi::errors',
-  'strapi::security',
+  {
+    name: 'strapi::security',
+    config: {
+      contentSecurityPolicy: {
+        useDefaults: true,
+        directives: {
+          'connect-src': ["'self'", 'https:'],
+          'img-src': ["'self'", 'data:', 'blob:', 'https://market-assets.strapi.io'],
+          'media-src': ["'self'", 'data:', 'blob:'],
+          // Allow the member-manager frontend to embed uploads (PDF preview
+          // iframes). Localhost is included only for local dev servers.
+          'frame-ancestors': [
+            "'self'",
+            'https://orwa.org',
+            ...(process.env.NODE_ENV !== 'production'
+              ? ['http://localhost:*', 'http://127.0.0.1:*']
+              : []),
+          ],
+          upgradeInsecureRequests: null,
+        },
+      },
+      // Modern browsers ignore X-Frame-Options when frame-ancestors is set,
+      // but koa-helmet would still send SAMEORIGIN, which some logic honors.
+      frameguard: false,
+    },
+  },
   'strapi::cors',
   'strapi::poweredBy',
   'strapi::query',
