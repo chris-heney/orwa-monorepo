@@ -3,11 +3,9 @@ import { IStep } from "../types/types";
 import NomineeDataStep from "./steps/NomineeDataStep";
 import NominatorDataStep from "./steps/NominatorDataStep";
 import SystemDataStep from "./steps/SystemDataStep";
-import EmployeeDataStep from "./steps/EmployeeDataStep";
-import NominationDescriptionStep from "./steps/NominationDescriptionStep";
+import JustificationStep from "./steps/JustificationStep";
 import BiographyStep from "./steps/BiographyStep";
 import PhotographsStep from "./steps/PhotographsStep";
-import SupportingDocumentsStep from "./steps/SupportingDocumentsStep";
 import ReviewStep from "./steps/ReviewStep";
 
 const AwardFormSteps: IStep[] = [
@@ -18,27 +16,21 @@ const AwardFormSteps: IStep[] = [
     active: true,
   },
   {
-    label: "Nominator Information",
-    key: "nominator",
-    component: <NominatorDataStep />,
-    active: true,
-  },
-  {
     label: "Nominee Information",
     key: "nominee",
     component: <NomineeDataStep />,
     active: true,
   },
   {
-    label: "Employee Counts",
-    key: "employees",
-    component: <EmployeeDataStep />,
+    label: "Nominator Information",
+    key: "nominator",
+    component: <NominatorDataStep />,
     active: true,
   },
   {
-    label: "Nomination Description",
-    key: "description",
-    component: <NominationDescriptionStep />,
+    label: "Justification",
+    key: "justification",
+    component: <JustificationStep />,
     active: true,
   },
   {
@@ -51,12 +43,6 @@ const AwardFormSteps: IStep[] = [
     label: "Photographs",
     key: "photographs",
     component: <PhotographsStep />,
-    active: true,
-  },
-  {
-    label: "Supporting Documents",
-    key: "documents",
-    component: <SupportingDocumentsStep />,
     active: true,
   },
   {

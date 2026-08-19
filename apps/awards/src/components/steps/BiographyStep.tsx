@@ -26,9 +26,6 @@ const BiographyStep: React.FC = () => {
         <Typography variant="h5" gutterBottom>
           Biography
         </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-          How would you like to provide your biography?
-        </Typography>
 
         <Grid container spacing={3}>
           <Grid item xs={12}>

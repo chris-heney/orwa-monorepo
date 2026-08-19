@@ -42,9 +42,11 @@ const WizardStateSync = () => {
       setHasRestoredStep(true);
       return;
     }
+    const restoreKey =
+      preferredKey === "employees" ? "system" : preferredKey;
     const nextIndex = resolveActiveStepIndex(
       activeSteps.map((step) => step.key),
-      preferredKey
+      restoreKey
     );
     if (nextIndex !== stepIndex) setStepIndex(nextIndex);
     setHasRestoredStep(true);

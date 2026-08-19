@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, Typography, Button } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import { useFieldArray, useFormContext } from "react-hook-form";
-import { countyOptions } from "../../data/countyOptions";
 import { TextInput } from "../_components/TextInput";
-import { SelectInput } from "../_components/SelectInput";
 import { RadioGroupInput } from "../_components/RadioGroupInput";
 import FileInput from "../_components/FileInput";
+import { nextConferenceYear } from "../../helpers/nextConferenceYear";
+import { useEntryPayload } from "../../providers/AppContextProvider";
+import { isSystemOfTheYearAward } from "../../helpers/awardType";
+import AwardNamePrintedField from "../_components/AwardNamePrintedField";
 
 const boardListMethodOptions = [
   { value: "File You Upload", label: "File You Upload" },
@@ -25,20 +27,23 @@ const DOCUMENT_ACCEPT = [
   ".csv",
 ];
 
-const isSystemOfTheYear = (awardType: string | undefined) =>
-  awardType === "System of the Year" ||
-  awardType === "Water/Wastewater System of the Year";
-
 const NomineeDataStep: React.FC = () => {
-  const { watch, control } = useFormContext();
+  const { watch, control, register, setValue } = useFormContext();
+  const { entryPayload } = useEntryPayload();
   const awardType = watch("award_type");
   const boardListMethod = watch("board_list_method");
-  const showBoardList = isSystemOfTheYear(awardType);
+  const showBoardList = isSystemOfTheYearAward(awardType);
+  const showPrintedNomineeName = !isSystemOfTheYearAward(awardType);
 
   const { fields, append, remove } = useFieldArray({
     control,
     name: "board_members",
   });
+
+  useEffect(() => {
+    if (entryPayload) return;
+    setValue("award_year", nextConferenceYear(), { shouldDirty: false });
+  }, [entryPayload, setValue]);
 
   return (
     <Card sx={{ mt: 2 }}>
@@ -51,23 +56,15 @@ const NomineeDataStep: React.FC = () => {
         </Typography>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12}>
             <TextInput
               label="Nominee Full Name"
               name="nominee_name"
               required
               placeholder="Enter nominee's full name"
-              helperText="Name must be spelled exactly the way you would like it to appear on the award (if awarded)"
             />
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <TextInput
-              label="Award Year"
-              name="award_year"
-              type="number"
-              placeholder={new Date().getFullYear().toString()}
-            />
+            <AwardNamePrintedField visible={showPrintedNomineeName} />
+            <input type="hidden" {...register("award_year", { valueAsNumber: true })} />
           </Grid>
 
           {showBoardList && (
@@ -203,15 +200,6 @@ const NomineeDataStep: React.FC = () => {
               name="zip"
               required
               placeholder="73101"
-            />
-          </Grid>
-
-          <Grid item xs={12} md={6}>
-            <SelectInput
-              label="County"
-              name="county"
-              required
-              options={countyOptions}
             />
           </Grid>
         </Grid>

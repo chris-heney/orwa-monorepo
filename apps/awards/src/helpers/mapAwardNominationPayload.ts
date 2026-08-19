@@ -1,4 +1,6 @@
 import { IAwardNominationPayload } from "../types/types";
+import { nextConferenceYear } from "./nextConferenceYear";
+import { resolveAwardNamePrinted } from "./awardType";
 
 const asNumber = (value: unknown) => {
   if (value === "" || value == null) return undefined;
@@ -32,8 +34,8 @@ export const mapAwardNominationPayload = (
   city: payload.city,
   state: payload.state || "OK",
   zip: payload.zip,
-  county: payload.county,
   system_name: payload.system_name,
+  award_name_printed: resolveAwardNamePrinted(payload),
   nominator_first_name: payload.nominator_first_name,
   nominator_last_name: payload.nominator_last_name,
   nominator_address: payload.nominator_address,
@@ -54,9 +56,9 @@ export const mapAwardNominationPayload = (
     payload.operation_maintenance_employees
   ),
   management_employees: asNumber(payload.management_employees),
-  nomination_description: payload.nomination_description,
+  justification: payload.justification || payload.nomination_description,
   award_type: normalizeAwardType(payload.award_type),
-  award_year: asNumber(payload.award_year) ?? new Date().getFullYear(),
+  award_year: asNumber(payload.award_year) ?? nextConferenceYear(),
   biography_method: payload.biography_method || undefined,
   biography_text: payload.biography_text || undefined,
   biography_file: payload.biography_file ?? null,

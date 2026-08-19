@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Card, CardContent, Typography } from "@mui/material";
-import Grid from "@mui/material/GridLegacy";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -9,6 +8,8 @@ import { TextInput } from "../_components/TextInput";
 import { SelectInput } from "../_components/SelectInput";
 import { useFormContext } from "react-hook-form";
 import WatersystemAutocomplete from "../_components/WatersystemAutocomplete";
+import AwardNamePrintedField from "../_components/AwardNamePrintedField";
+import { isSystemOfTheYearAward } from "../../helpers/awardType";
 
 const awardTypeOptions = [
   { value: "System of the Year", label: "System of the Year" },
@@ -20,19 +21,39 @@ const awardTypeOptions = [
   },
 ];
 
+const EMPLOYEE_FIELDS = [
+  "clerical_employees",
+  "operation_maintenance_employees",
+  "management_employees",
+] as const;
+
 const isIndividualAward = (awardType: string | undefined) =>
-  awardType === "Excellence in Operations" ||
-  awardType === "Excellence in Management" ||
-  awardType === "Excellence in Office Operations";
+  !isSystemOfTheYearAward(awardType) && Boolean(awardType);
+
+const FieldPair: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:items-start md:gap-6">
+    {children}
+  </div>
+);
 
 const SystemDataStep: React.FC = () => {
-  const { watch, setValue } = useFormContext();
+  const { watch, setValue, register, unregister } = useFormContext();
   const awardType = watch("award_type");
   const showEmploymentDate = isIndividualAward(awardType);
+  const showPrintedSystemName = isSystemOfTheYearAward(awardType);
+  const showEmployeeCounts = isSystemOfTheYearAward(awardType);
 
   const handleChange = (name: string, value: string | null) => {
     setValue(name, value);
   };
+
+  useEffect(() => {
+    if (showEmployeeCounts) return;
+    for (const field of EMPLOYEE_FIELDS) {
+      unregister(field);
+      setValue(field, 0, { shouldDirty: false, shouldValidate: false });
+    }
+  }, [setValue, showEmployeeCounts, unregister]);
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -45,36 +66,26 @@ const SystemDataStep: React.FC = () => {
             Please provide information about the water system
           </Typography>
 
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+          <div className="flex flex-col gap-6">
+            <FieldPair>
               <SelectInput
                 label="Please select the type of award"
                 name="award_type"
                 required
                 options={awardTypeOptions}
               />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
               <WatersystemAutocomplete
                 label="System Name"
                 name="watersystem"
                 required
                 helperText="ORWA Membership Required. Applicable to ORWA Member System Employees and Directors only. Note: If you do not see your water system listed, please contact your eligible participant's water system and request an ORWA Membership Renewal."
               />
-            </Grid>
+            </FieldPair>
 
-            <Grid item xs={12} md={6}>
-              <TextInput
-                label="System Name (if not in list)"
-                name="system_name"
-                required
-                placeholder="Enter system name"
-                helperText="Required if water system is not selected from the list above. NAME MUST BE SPELLED THE WAY YOU WANT IT ON THE AWARD"
-              />
-            </Grid>
+            <input type="hidden" {...register("system_name")} />
+            <AwardNamePrintedField visible={showPrintedSystemName} />
 
-            <Grid item xs={12} md={6}>
+            <FieldPair>
               <DatePicker
                 label="Date System Began Operation"
                 value={
@@ -96,10 +107,7 @@ const SystemDataStep: React.FC = () => {
                   },
                 }}
               />
-            </Grid>
-
-            {showEmploymentDate && (
-              <Grid item xs={12} md={6}>
+              {showEmploymentDate ? (
                 <DatePicker
                   label="Date Employed"
                   value={
@@ -122,10 +130,12 @@ const SystemDataStep: React.FC = () => {
                     },
                   }}
                 />
-              </Grid>
-            )}
+              ) : (
+                <div aria-hidden className="hidden md:block" />
+              )}
+            </FieldPair>
 
-            <Grid item xs={12} md={6}>
+            <FieldPair>
               <TextInput
                 label="Number of Beginning Meter Connections"
                 name="beginning_members"
@@ -133,9 +143,6 @@ const SystemDataStep: React.FC = () => {
                 required
                 placeholder="0"
               />
-            </Grid>
-
-            <Grid item xs={12} md={6}>
               <TextInput
                 label="Number of Current Meter Connections"
                 name="current_members"
@@ -143,8 +150,60 @@ const SystemDataStep: React.FC = () => {
                 required
                 placeholder="0"
               />
-            </Grid>
-          </Grid>
+            </FieldPair>
+
+            {showEmployeeCounts && (
+              <div className="flex flex-col gap-4">
+                <div className="rounded-lg bg-gray-100 p-4 text-left">
+                  <p className="m-0 text-base font-semibold text-gray-800">
+                    Employee Counts by Department
+                  </p>
+                  <p className="mt-1 mb-0 text-sm text-gray-600">
+                    Enter the number of employees in each department. Leave
+                    blank or enter 0 if not applicable.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
+                  <TextInput
+                    label="Clerical Employees"
+                    name="clerical_employees"
+                    type="number"
+                    required
+                    placeholder="0"
+                    helperText="The number of system employees"
+                  />
+                  <TextInput
+                    label="Operation & Maintenance Employees"
+                    name="operation_maintenance_employees"
+                    type="number"
+                    required
+                    placeholder="0"
+                    helperText="The number of system employees"
+                  />
+                  <TextInput
+                    label="Management Employees"
+                    name="management_employees"
+                    type="number"
+                    required
+                    placeholder="0"
+                    helperText="The number of system employees"
+                  />
+                </div>
+                <div className="rounded-lg bg-blue-50 p-4 text-left">
+                  <p className="m-0 text-base font-semibold text-gray-800">
+                    Total Employees
+                  </p>
+                  <p className="mt-1 mb-0 text-3xl font-semibold text-blue-700">
+                    {(parseInt(watch("clerical_employees") || "0") || 0) +
+                      (parseInt(
+                        watch("operation_maintenance_employees") || "0"
+                      ) || 0) +
+                      (parseInt(watch("management_employees") || "0") || 0)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </LocalizationProvider>

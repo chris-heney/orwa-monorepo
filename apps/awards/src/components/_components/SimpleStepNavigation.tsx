@@ -17,6 +17,7 @@ import {
 
 const SimpleStepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useFormSteps();
+  const activeSteps = steps.filter((step) => step.active);
   const { trigger, getValues, formState } = useFormContext();
   const { notify } = useNotify();
   const { setIsFormSubmitted } = useFormSubmittedContext();
@@ -42,7 +43,7 @@ const SimpleStepNavigation = () => {
       );
     }
 
-    if (stepIndex < steps.length - 1) {
+    if (stepIndex < activeSteps.length - 1) {
       setStepIndex(stepIndex + 1);
       return;
     }
@@ -113,7 +114,7 @@ const SimpleStepNavigation = () => {
   };
 
   const isFirstStep = stepIndex === 0;
-  const isLastStep = stepIndex === steps.length - 1;
+  const isLastStep = stepIndex === activeSteps.length - 1;
 
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -132,7 +133,7 @@ const SimpleStepNavigation = () => {
 
       <div className="hidden sm:flex items-center space-x-2">
         <div className="text-sm text-gray-600 font-medium">
-          Step {stepIndex + 1} of {steps.length}
+          Step {stepIndex + 1} of {activeSteps.length}
         </div>
       </div>
 

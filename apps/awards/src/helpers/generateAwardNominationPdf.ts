@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { IAwardNominationPayload } from "../types/types";
+import { isSystemOfTheYearAward } from "./awardType";
 
 export async function generateAwardNominationPDF(
   payload: IAwardNominationPayload
@@ -62,6 +63,7 @@ export async function generateAwardNominationPDF(
 
   write("Nominee", { header: true });
   field("Name", payload.nominee_name);
+  field("Name as printed on award", payload.award_name_printed || payload.system_name);
   field("Award", payload.award_type);
   field("Year", payload.award_year);
   field("Email", payload.email);
@@ -72,7 +74,6 @@ export async function generateAwardNominationPDF(
       .filter(Boolean)
       .join(", ")
   );
-  field("County", payload.county);
 
   y -= 8;
   write("Nominator", { header: true });
@@ -105,13 +106,17 @@ export async function generateAwardNominationPDF(
   field("Date employed", payload.employment_date);
   field("Beginning meter connections", payload.beginning_members);
   field("Current meter connections", payload.current_members);
-  field("Clerical employees", payload.clerical_employees);
-  field("O&M employees", payload.operation_maintenance_employees);
-  field("Management employees", payload.management_employees);
+  if (isSystemOfTheYearAward(payload.award_type)) {
+    field("Clerical employees", payload.clerical_employees);
+    field("O&M employees", payload.operation_maintenance_employees);
+    field("Management employees", payload.management_employees);
+  }
 
   y -= 8;
   write("Nomination", { header: true });
-  const description = String(payload.nomination_description || "")
+  const description = String(
+    payload.justification || payload.nomination_description || ""
+  )
     .replace(/\s+/g, " ")
     .trim();
   if (!description) {

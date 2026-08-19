@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 import authProvider from "./authProvider";
+import { loadAdminView, saveAdminView } from "../helpers/adminViewPersistence";
 
 interface UserContext {
   isLoggedIn: boolean;
@@ -31,8 +32,12 @@ export const useUserContext = () => useContext(User);
 
 const UserContextProvider = ({ children }: PropsWithChildren) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [isAdminView, setIsAdminView] = useState<boolean>(false);
+  const [isAdminView, setIsAdminView] = useState<boolean>(() => loadAdminView());
   const [viewingEntries, setViewingEntries] = useState<boolean>(false);
+
+  useEffect(() => {
+    saveAdminView(isAdminView);
+  }, [isAdminView]);
 
   useEffect(() => {
     const checkUserAuth = async () => {
@@ -41,6 +46,7 @@ const UserContextProvider = ({ children }: PropsWithChildren) => {
         setIsLoggedIn(true);
       } catch {
         setIsLoggedIn(false);
+        setIsAdminView(false);
       }
     };
     checkUserAuth();

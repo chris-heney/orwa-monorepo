@@ -41,6 +41,7 @@ export const testPayload: IAwardNominationPayload = {
     
     // System Information
     system_name: 'Norman Rural Water District #1',
+    award_name_printed: 'Norman Rural Water District #1',
     watersystem: 42,
     operation_start_date: '2018-03-15',
     employment_date: '2015-06-01',
@@ -53,7 +54,7 @@ export const testPayload: IAwardNominationPayload = {
     management_employees: 1,
     
     // Nomination Details
-    nomination_description: 'John Rodriguez has demonstrated exceptional leadership and dedication to the Norman Rural Water District #1 over the past 8 years. As the Operations Manager, he has implemented innovative water treatment processes that improved water quality by 15% while reducing operational costs by 20%. His commitment to safety has resulted in zero workplace accidents for the past 3 years. John has also been instrumental in securing $2.5M in infrastructure grants and has mentored 3 new operators who have all successfully obtained their certifications. His community involvement includes organizing annual water conservation workshops and serving on the local emergency response team. John\'s expertise in water system management and his dedication to serving the community make him an exemplary candidate for the Operator of the Year award.',
+    justification: 'John Rodriguez has demonstrated exceptional leadership and dedication to the Norman Rural Water District #1 over the past 8 years. As the Operations Manager, he has implemented innovative water treatment processes that improved water quality by 15% while reducing operational costs by 20%. His commitment to safety has resulted in zero workplace accidents for the past 3 years. John has also been instrumental in securing $2.5M in infrastructure grants and has mentored 3 new operators who have all successfully obtained their certifications. His community involvement includes organizing annual water conservation workshops and serving on the local emergency response team. John\'s expertise in water system management and his dedication to serving the community make him an exemplary candidate for the Operator of the Year award.',
     award_type: 'System of the Year',
     award_year: 2024,
 

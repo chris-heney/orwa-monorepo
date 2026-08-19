@@ -15,7 +15,7 @@ function App() {
   const terms = useMemo(() => ["ORWA Awards"], []);
 
   const content: ReactNode = (
-    <ErrorBoundary>
+    <ErrorBoundary key={viewingEntries ? "entries" : "form"}>
       {!isLoggedIn && <LoginModal />}
       <Header />
       <EntryListProvider>
