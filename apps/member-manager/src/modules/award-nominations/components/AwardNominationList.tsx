@@ -21,6 +21,7 @@ import {
   hasMedia,
   mediaSummary,
   truncateText,
+  watersystemCounty,
   watersystemName,
 } from "../helpers/recordDisplay";
 
@@ -67,7 +68,13 @@ const AwardNominationList = () => {
           <TextField source="award_type" label="Award" />
           <TextField source="award_year" label="Year" />
           <TextField source="nomination_status" label="Status" />
-          <TextField source="county" label="County" />
+          <FunctionField
+            label="County"
+            render={(record: {
+              watersystem?: { county?: string | null } | null;
+            }) => watersystemCounty(record)}
+            sortable={false}
+          />
 
           <FunctionField
             label="Water System"

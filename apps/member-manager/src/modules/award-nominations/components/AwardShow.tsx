@@ -17,6 +17,7 @@ import {
   boardMembersSummary,
   contactSummary,
   employeeTotal,
+  watersystemCounty,
   watersystemName,
 } from "../helpers/recordDisplay";
 
@@ -30,14 +31,13 @@ type AwardRecord = Record<string, unknown> & {
   city?: string;
   state?: string;
   zip?: string;
-  county?: string;
   award_type?: string;
   award_year?: number;
   nomination_status?: NominationStatus;
   review_notes?: string | null;
   submission_date?: string | null;
   system_name?: string;
-  watersystem?: { name?: string } | null;
+  watersystem?: { name?: string; county?: string | null } | null;
   operation_start_date?: string | null;
   employment_date?: string | null;
   current_members?: number | null;
@@ -122,7 +122,7 @@ const AwardPacket = () => {
         <PacketField label="Please select the type of award" value={record?.award_type} />
         <PacketField label="Email Address" value={record?.email} email />
         <PacketField label="Daytime Phone" value={record?.daytime_phone} />
-        <PacketField label="County" value={record?.county} />
+        <PacketField label="County" value={watersystemCounty(record || {})} />
         <PacketField label="Award Year" value={record?.award_year} />
         <PacketField
           label="Street Address"

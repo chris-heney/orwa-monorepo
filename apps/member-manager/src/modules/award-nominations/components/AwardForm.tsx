@@ -26,6 +26,7 @@ import {
   BIOGRAPHY_METHOD_CHOICES,
   BOARD_LIST_METHOD_CHOICES,
   contactSummary,
+  watersystemCounty,
   watersystemName,
 } from "../helpers/recordDisplay";
 import { AWARD_STATUSES } from "../helpers/listFilters";
@@ -212,14 +213,6 @@ const AwardForm = () => {
                     sx={fullFieldSx}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextInput
-                    source="county"
-                    label="County"
-                    fullWidth
-                    sx={fullFieldSx}
-                  />
-                </Grid>
                 <Grid item xs={12}>
                   <TextInput
                     source="address"
@@ -261,7 +254,10 @@ const AwardForm = () => {
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Typography variant="body2" color="text.secondary" sx={{ pt: 1 }}>
-                    System Name: {watersystemName(record || {}) || "—"}
+                    Water System: {watersystemName(record || {}) || "—"}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    County: {watersystemCounty(record || {}) || "—"}
                   </Typography>
                 </Grid>
                 <Grid item xs={12} md={6}>

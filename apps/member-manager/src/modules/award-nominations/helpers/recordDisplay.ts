@@ -44,6 +44,10 @@ export const watersystemName = (record: {
   watersystem?: { name?: string } | null;
 }): string => record.watersystem?.name || "";
 
+export const watersystemCounty = (record: {
+  watersystem?: { county?: string | null } | null;
+}): string => record.watersystem?.county || "";
+
 export const contactSummary = (record: {
   contact?: {
     first?: string;
