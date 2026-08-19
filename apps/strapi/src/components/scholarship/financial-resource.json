@@ -1,0 +1,17 @@
+{
+  "collectionName": "components_scholarship_financial_resources",
+  "info": {
+    "displayName": "Financial Resource",
+    "description": "Institution and amount of other financial aid"
+  },
+  "options": {},
+  "attributes": {
+    "institution": {
+      "type": "string"
+    },
+    "amount": {
+      "type": "decimal",
+      "min": 0
+    }
+  }
+}

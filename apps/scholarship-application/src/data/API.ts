@@ -1,124 +1,86 @@
-import { useQuery } from '@tanstack/react-query'
-import { EmailPayload, IGrantApplicationFormPayload } from '../types/types'
-
+import { useQuery } from "@tanstack/react-query";
+import { getAcceptedTerms } from "@orwa/terms-gate";
+import {
+  IScholarshipApplicationPayload,
+  IWatersystemOption,
+} from "../types/types";
 
 interface IStrapiResponse {
-  data: IStrapiRecord | IStrapiRecord[]
+  data: IStrapiRecord | IStrapiRecord[];
 }
 
 interface IStrapiRecord extends Record<string, unknown> {
-  id: string
+  id: string | number;
+  documentId?: string;
 }
 
-const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT
-const API_KEY = import.meta.env.VITE_API_KEY
+const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
+const API_KEY = import.meta.env.VITE_API_KEY;
 
-const _get = async (resource: string, query = '', method = 'GET') => {
-
-  const target = query ? `${resource}/${query}` : resource
+const _get = async (resource: string, query = "", method = "GET") => {
+  const target = query ? `${resource}${query}` : resource;
 
   return fetch(`${API_ENDPOINT}/${target}`, {
     method,
     headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-    }
-  }).then(httpResponse => httpResponse.json())
-  .then((strapiResponse: IStrapiResponse) => Array.isArray(strapiResponse.data) ? _transform_list(strapiResponse.data) : _transform_single(strapiResponse.data))
-}
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+  })
+    .then((httpResponse) => httpResponse.json())
+    .then((strapiResponse: IStrapiResponse) => {
+      if (Array.isArray(strapiResponse.data)) return strapiResponse.data;
+      return strapiResponse.data ? [strapiResponse.data] : [];
+    });
+};
 
-const _submitApplication = async (resource: string, data: IGrantApplicationFormPayload) => {
+const _submitApplication = async (
+  resource: string,
+  data: IScholarshipApplicationPayload
+) => {
+  const payload = {
+    ...data,
+    accepted_terms: data.accepted_terms?.length
+      ? data.accepted_terms
+      : getAcceptedTerms(),
+  };
 
   return fetch(`${API_ENDPOINT}/${resource}`, {
-    method: 'POST',
-    body: JSON.stringify(data),
+    method: "POST",
+    body: JSON.stringify(payload),
     headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-    }
-  }).then(httpResponse => httpResponse.json())
-  .then( data => data)
-}
-
-
-const _uploadFile = async ( file: File) => {
-  
-  const data = new FormData()
-
-  data.append('files', file)
-
-  // No explicit Content-Type: the browser must set the multipart boundary for FormData
-  return fetch(`${API_ENDPOINT}/upload`, {
-    method: 'POST',
-    body: data,
-    headers: {
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-    }
-  }).then(httpResponse => httpResponse.json())
-  .then( data => data)
-}
-
-const _sendEmail = async ( data: EmailPayload) => {
-  return fetch(`${API_ENDPOINT}/mailer/send-email`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-    }
-  }).then(httpResponse => httpResponse.json())
-  .then( data => data)
-}
-
-const _transform_single = (data: IStrapiRecord) => ({
-  ...data,
-})
-
-const _transform_list = (data: IStrapiRecord[]) => data.map(_transform_single)
-
-// add hook to fetch projects
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+  }).then((httpResponse) => httpResponse.json());
+};
 
 export const useGetWatersystems = () => {
-  return useQuery({ queryKey: ['watersystems'], queryFn: async () => _get('watersystems', '?filters[active][$eq]=1&pagination[limit]=1000&populate=*&sort=name:ASC&fields[0]=id&fields[1]=name&fields[2]=active') })
-}
+  return useQuery({
+    queryKey: ["watersystems"],
+    queryFn: async () =>
+      _get(
+        "watersystems",
+        "?pagination[limit]=1000&sort=name:ASC&fields[0]=id&fields[1]=documentId&fields[2]=name&fields[3]=county"
+      ) as unknown as Promise<IWatersystemOption[]>,
+  });
+};
 
 export const useGetSubmissions = () => {
-  return useQuery({ queryKey: ['logs'], queryFn: async () => _get('logs', `?filters[resource]=grant-application&pagination[limit]=1000&populate=*`) })
-}
-
-export const useGetApplicationId = () => {
   return useQuery({
-    queryKey: ['grant-application-finals'],
-    queryFn: async () => {
-      const data = await _get('grant-application-finals', '?pagination[limit]=10000')
-      // get the last application id and add 1
-      return Array.isArray(data) ? data[data.length - 1].id + 1 : 0
-    }
-  })
-}
+    queryKey: ["logs", "scholarship-application"],
+    queryFn: async () =>
+      _get(
+        "logs",
+        "?filters[resource][$eq]=scholarship-application&pagination[limit]=1000&sort=createdAt:DESC"
+      ),
+  });
+};
 
+export const submitApplication = (payload: IScholarshipApplicationPayload) =>
+  _submitApplication("submissions/scholarship-application", payload);
 
-
-export const useGetProjects = () => {
-  return useQuery({ queryKey: ['projects-types'], queryFn: async () => _get('project-types', '?pagination[limit]=1000&populate=*') })
-}
-
-export const useGetCriterias = () => {
-  return useQuery({ queryKey: ['grant-application-scorings'], queryFn: async () => _get('grant-application-scorings', '?pagination[limit]=1000&populate=*') })
-}
-
-export const useSubmitApplication = (payload: IGrantApplicationFormPayload) => {
-  return _submitApplication('grant-application', payload as IGrantApplicationFormPayload) 
-}
-
-export const useSendEmail = (email: EmailPayload) => {
-  _sendEmail(email)
-}
-
-export const useUploadFile = (file: File) => {
-  _uploadFile(file)
-}
+export const useSubmitApplication = (payload: IScholarshipApplicationPayload) =>
+  submitApplication(payload);

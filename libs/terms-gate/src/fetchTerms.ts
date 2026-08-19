@@ -15,11 +15,7 @@ function normalizeTerm(raw: Record<string, unknown>): TermDocument {
   };
 }
 
-export async function fetchTerms(
-  apiEndpoint: string,
-  apiKey?: string
-): Promise<TermDocument[]> {
-  const base = apiEndpoint.replace(/\/$/, '');
+function requestTerms(base: string, apiKey?: string): Promise<Response> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
   };
@@ -27,10 +23,23 @@ export async function fetchTerms(
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
-  const res = await fetch(
+  return fetch(
     `${base}/terms?pagination[pageSize]=100&sort=updatedAt:asc`,
     { headers }
   );
+}
+
+export async function fetchTerms(
+  apiEndpoint: string,
+  apiKey?: string
+): Promise<TermDocument[]> {
+  const base = apiEndpoint.replace(/\/$/, '');
+  let res = await requestTerms(base, apiKey);
+
+  // An invalid/deleted API token 401s even when Public can GET /terms.
+  if (!res.ok && apiKey && (res.status === 401 || res.status === 403)) {
+    res = await requestTerms(base);
+  }
 
   if (!res.ok) {
     throw new Error(`Failed to load terms (${res.status})`);

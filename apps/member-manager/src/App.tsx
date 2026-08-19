@@ -3,17 +3,13 @@ import { Route } from 'react-router-dom';
 import {
   AuthProvider,
   StrapiRestDataProviderFactory,
-} from "./helpers/ra-strapi-data-provider";
-import {
-  Admin,
-  CustomRoutes,
-  Resource,
-} from "react-admin";
-import { AdminLayout } from "./layouts";
-import { userPreferencesStore } from "./helpers/userPreferencesStore";
-import UserPreferencesSync from "./components/UserPreferencesSync";
-import { queryClient } from "./helpers/queryClient";
-import { darkTheme, lightTheme } from "./theme";
+} from './helpers/ra-strapi-data-provider';
+import { Admin, CustomRoutes, Resource } from 'react-admin';
+import { AdminLayout } from './layouts';
+import { userPreferencesStore } from './helpers/userPreferencesStore';
+import UserPreferencesSync from './components/UserPreferencesSync';
+import { queryClient } from './helpers/queryClient';
+import { darkTheme, lightTheme } from './theme';
 import {
   Asset,
   Associate,
@@ -42,6 +38,8 @@ import {
   EmailsTemplates,
   EmailTasks,
   Terms,
+  ScholarshipApplications,
+  AwardNominations,
 } from './modules';
 import {
   AdminDashboard,
@@ -56,6 +54,8 @@ import {
   SettingsDashboard,
   MediaLibraryPage,
   RbacDashboard,
+  OrwefManagement,
+  AwardManagement,
 } from './modules/dashboards';
 import { LoginPage } from './pages';
 import EventSettings from './modules/training/settings/EventSettings';
@@ -218,6 +218,11 @@ export const App = () => {
               <Resource name="email-templates" {...EmailsTemplates} />
               <Resource name="scheduled-email-tasks" {...EmailTasks} />
               <Resource name="terms" {...Terms} />
+              <Resource
+                name="scholarship-applications"
+                {...ScholarshipApplications}
+              />
+              <Resource name="award-nominations" {...AwardNominations} />
 
               {/* --- MUI Pages--- */}
               <CustomRoutes>
@@ -241,6 +246,14 @@ export const App = () => {
                 />
                 <Route path="grant/dashboard" element={<GrantManagement />} />
                 <Route path="rbac/dashboard" element={<RbacDashboard />} />
+                <Route
+                  path="orwef-scholarships/dashboard"
+                  element={<OrwefManagement />}
+                />
+                <Route
+                  path="orwa-awards/dashboard"
+                  element={<AwardManagement />}
+                />
                 <Route
                   path="membership-management"
                   element={<MembershipManagement />}

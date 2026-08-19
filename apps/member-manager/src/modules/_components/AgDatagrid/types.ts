@@ -29,4 +29,10 @@ export type AgDatagridProps = {
   rowClick?: AgDatagridRowClick;
   height?: string | number;
   className?: string;
+  /**
+   * Enable multi-row checkboxes. Selected row ids are written to
+   * `useStore(selectionStoreKey)` (defaults to `<resource>.selectedIds`).
+   */
+  rowSelection?: boolean;
+  selectionStoreKey?: string;
 };

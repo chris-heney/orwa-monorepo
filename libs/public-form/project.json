@@ -1,0 +1,7 @@
+{
+  "name": "public-form",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/public-form/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:ui"]
+}

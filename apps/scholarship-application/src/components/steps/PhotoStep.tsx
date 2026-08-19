@@ -1,6 +1,5 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import SectionHeading from '../_components/SectionHeading';
 import FileInput from '../_components/FileInput';
 import FormSection from '../_components/FormSection';
 
@@ -10,12 +9,12 @@ const PhotoStep = () => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="photo_upload"
-            label="Upload High Quality Photograph"
+            name="photograph"
+            label="Please Upload Your High Quality Photograph."
             required
             maxSizeMB={50}
             acceptedTypes={['.jpg', '.jpeg', '.gif', '.png', '.tiff', '.tif']}
-            helperText="Please upload a high quality photograph. Accepted formats: JPG, GIF, PNG, TIFF."
+            helperText="Max. file size: 50 MB."
           />
         </Grid>
       </Grid>

@@ -37,7 +37,7 @@ import {
 } from 'react-admin';
 import { Box } from '@mui/material';
 import DashboardAppBar from '../modules/dashboard/_components/DashboardBar';
-import { Email, Gavel } from '@mui/icons-material';
+import { Email, EmojiEvents, Gavel, School } from '@mui/icons-material';
 import useCurrentUser from '../modules/_helpers/useCurrentUser';
 import { useModuleAccess } from '../modules/rbac-manager/useModuleAccess';
 import {
@@ -232,6 +232,24 @@ const MyMenu = () => {
           label="Grant Manager"
           title="Grant Manager"
           icon={<RequestPageIcon />}
+        />
+      )}
+      {has('scholarships') && (
+        <MultiLevelMenu.Item
+          name="orwef-scholarships"
+          to="/orwef-scholarships/dashboard"
+          label="ORWEF Scholarships"
+          title="ORWEF Scholarships"
+          icon={<School />}
+        />
+      )}
+      {has('awards') && (
+        <MultiLevelMenu.Item
+          name="orwa-awards"
+          to="/orwa-awards/dashboard"
+          label="ORWA Awards"
+          title="ORWA Awards"
+          icon={<EmojiEvents />}
         />
       )}
       {has('rbac') && (

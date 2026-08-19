@@ -37,6 +37,14 @@ const isImage = (file: AssetModalFile) =>
 const isPdf = (file: AssetModalFile) =>
   file.mime === "application/pdf" || PDF_EXTENSIONS.test(file.url);
 
+/**
+ * Whether the modal can actually render the file inline (image or PDF).
+ * Callers should open non-previewable files in a new tab instead of
+ * showing the modal's dead-end fallback.
+ */
+export const isAssetPreviewable = (file: AssetModalFile) =>
+  isImage(file) || isPdf(file);
+
 export const getAssetUrl = (url: string) =>
   url.startsWith("http")
     ? url

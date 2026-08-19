@@ -11,6 +11,8 @@ const MODULE_KEYS = [
   'conference',
   'terms',
   'grants',
+  'scholarships',
+  'awards',
   'rbac',
   'settings',
 ];
@@ -85,6 +87,60 @@ const USER_PREFERENCES_ACTIONS = [
   'api::user.user.getMyPreferences',
   'api::user.user.updateMyPreferences',
 ];
+
+const SCHOLARSHIP_CRUD = [
+  'api::scholarship-application.scholarship-application.find',
+  'api::scholarship-application.scholarship-application.findOne',
+  'api::scholarship-application.scholarship-application.create',
+  'api::scholarship-application.scholarship-application.update',
+  'api::scholarship-application.scholarship-application.delete',
+];
+
+const AWARD_CRUD = [
+  'api::award-nomination.award-nomination.find',
+  'api::award-nomination.award-nomination.findOne',
+  'api::award-nomination.award-nomination.create',
+  'api::award-nomination.award-nomination.update',
+  'api::award-nomination.award-nomination.delete',
+];
+
+const SUBMISSION_PUBLIC_ACTIONS = [
+  'api::submissions.submissions.createScholarshipApplication',
+  'api::submissions.submissions.createAwardNomination',
+];
+
+const configureScholarshipAwardPermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(
+      strapi,
+      { type: 'public' },
+      SUBMISSION_PUBLIC_ACTIONS,
+    );
+    await ensureRolePermissions(strapi, { type: 'authenticated' }, [
+      ...SCHOLARSHIP_CRUD,
+      ...AWARD_CRUD,
+      ...SUBMISSION_PUBLIC_ACTIONS,
+    ]);
+    await ensureRolePermissions(strapi, { type: 'admin' }, [
+      ...SCHOLARSHIP_CRUD,
+      ...AWARD_CRUD,
+      ...SUBMISSION_PUBLIC_ACTIONS,
+    ]);
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure scholarship/award permissions: ${error.message}`,
+    );
+  }
+};
+
+const seedOrwefFormEmails = async (strapi) => {
+  try {
+    const { seedOrwefEmailTemplates } = require('./api/submissions/form-email');
+    await seedOrwefEmailTemplates(strapi);
+  } catch (error) {
+    strapi.log.warn(`Unable to seed ORWEF email templates: ${error.message}`);
+  }
+};
 
 const configureUserPreferencesPermissions = async (strapi) => {
   try {
@@ -310,6 +366,8 @@ export default {
     await configureTermPermissions(strapi);
     await configureUserPreferencesPermissions(strapi);
     await configureAdminRbacPermissions(strapi);
+    await configureScholarshipAwardPermissions(strapi);
+    await seedOrwefFormEmails(strapi);
     await seedDefaultRoleModules(strapi);
   },
 };

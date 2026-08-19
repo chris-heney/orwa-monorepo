@@ -1,5 +1,6 @@
 import { useFormContext } from "react-hook-form";
 import { ChangeEvent } from "react";
+import { HighlightByName } from "../../helpers/validationHighlight";
 
 interface InputProps {
   name: string;
@@ -65,6 +66,7 @@ export const TextInput = ({
   };
 
   return (
+    <HighlightByName name={name}>
     <div className="mb-4">
       <label className="block mb-2 text-left text-sm font-semibold text-gray-700">
         {label}
@@ -92,5 +94,6 @@ export const TextInput = ({
         <p className="text-red-500 text-sm mt-1 text-left">{`${fieldError}*`}</p>
       )}
     </div>
+    </HighlightByName>
   );
 };

@@ -11,3 +11,5 @@ export { default as SettingsDashboard } from './setting/SettingsDashboard';
 export { default as ConferenceDashboard } from './conference/ConferenceDashboard';
 export { default as MediaLibraryPage } from './media-library/MediaLibraryPage';
 export { default as RbacDashboard } from './rbac-manager';
+export { default as OrwefManagement } from './orwef-scholarships/OrwefManagement';
+export { default as AwardManagement } from './award-nominations/AwardManagement';

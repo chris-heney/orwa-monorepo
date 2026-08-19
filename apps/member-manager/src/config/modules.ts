@@ -22,6 +22,8 @@ export type ModuleKey =
   | 'conference'
   | 'terms'
   | 'grants'
+  | 'scholarships'
+  | 'awards'
   | 'rbac'
   | 'settings';
 
@@ -199,6 +201,20 @@ export const APP_MODULES: AppModule[] = [
       'grant-statuses',
       'grant-sub-statuses',
     ],
+  },
+  {
+    key: 'scholarships',
+    label: 'ORWEF Scholarships',
+    to: '/orwef-scholarships/dashboard',
+    pathPrefixes: ['/orwef-scholarships', '/scholarship-applications'],
+    resources: ['scholarship-applications'],
+  },
+  {
+    key: 'awards',
+    label: 'ORWA Awards',
+    to: '/orwa-awards/dashboard',
+    pathPrefixes: ['/orwa-awards', '/award-nominations'],
+    resources: ['award-nominations'],
   },
   {
     key: 'rbac',

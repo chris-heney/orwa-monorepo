@@ -877,6 +877,108 @@ export interface ApiAssociateAssociate extends Struct.CollectionTypeSchema {
   };
 }
 
+export interface ApiAwardNominationAwardNomination
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'award_nominations';
+  info: {
+    description: 'ORWA Awards Nomination submissions';
+    displayName: 'Award Nomination';
+    pluralName: 'award-nominations';
+    singularName: 'award-nomination';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    address: Schema.Attribute.String & Schema.Attribute.Required;
+    award_type: Schema.Attribute.Enumeration<
+      [
+        'System of the Year',
+        'Water/Wastewater System of the Year',
+        'Excellence in Operations',
+        'Excellence in Management',
+        'Excellence in Office Operations',
+      ]
+    > &
+      Schema.Attribute.Required;
+    award_year: Schema.Attribute.Integer & Schema.Attribute.Required;
+    beginning_members: Schema.Attribute.Integer;
+    biography_file: Schema.Attribute.Media<'files' | 'images'>;
+    biography_method: Schema.Attribute.Enumeration<
+      ['Copy/Paste or Type Biography', 'Upload Biography']
+    >;
+    biography_text: Schema.Attribute.Text;
+    board_list_file: Schema.Attribute.Media<'files' | 'images'>;
+    board_list_method: Schema.Attribute.Enumeration<
+      ['File You Upload', 'Keyed In List']
+    >;
+    board_members: Schema.Attribute.JSON;
+    city: Schema.Attribute.String & Schema.Attribute.Required;
+    clerical_employees: Schema.Attribute.Integer;
+    contact: Schema.Attribute.Relation<'manyToOne', 'api::contact.contact'>;
+    county: Schema.Attribute.String & Schema.Attribute.Required;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    current_members: Schema.Attribute.Integer;
+    daytime_phone: Schema.Attribute.String & Schema.Attribute.Required;
+    email: Schema.Attribute.Email & Schema.Attribute.Required;
+    employment_date: Schema.Attribute.Date;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::award-nomination.award-nomination'
+    > &
+      Schema.Attribute.Private;
+    management_employees: Schema.Attribute.Integer;
+    nomination_description: Schema.Attribute.Text & Schema.Attribute.Required;
+    nomination_pdf: Schema.Attribute.Media<'files'>;
+    nomination_status: Schema.Attribute.Enumeration<
+      [
+        'Draft',
+        'Submitted',
+        'Under Review',
+        'Winner',
+        'Runner Up',
+        'Not Selected',
+      ]
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Submitted'>;
+    nominator_address: Schema.Attribute.String;
+    nominator_address_2: Schema.Attribute.String;
+    nominator_city: Schema.Attribute.String;
+    nominator_country: Schema.Attribute.String &
+      Schema.Attribute.DefaultTo<'United States'>;
+    nominator_email: Schema.Attribute.Email;
+    nominator_first_name: Schema.Attribute.String;
+    nominator_last_name: Schema.Attribute.String;
+    nominator_phone: Schema.Attribute.String;
+    nominator_state: Schema.Attribute.String;
+    nominator_zip: Schema.Attribute.String;
+    nominee_name: Schema.Attribute.String & Schema.Attribute.Required;
+    operation_maintenance_employees: Schema.Attribute.Integer;
+    operation_start_date: Schema.Attribute.Date;
+    photographs: Schema.Attribute.Media<'images', true>;
+    publishedAt: Schema.Attribute.DateTime;
+    review_notes: Schema.Attribute.Text;
+    state: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'OK'>;
+    submission_date: Schema.Attribute.DateTime;
+    supporting_documents: Schema.Attribute.Media<'files' | 'images', true>;
+    system_name: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    watersystem: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::watersystem.watersystem'
+    >;
+    zip: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface ApiConferenceAttendeeConferenceAttendee
   extends Struct.CollectionTypeSchema {
   collectionName: 'conference_attendees';
@@ -1669,6 +1771,10 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
       'images' | 'files' | 'videos' | 'audios',
       true
     >;
+    award_nominations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::award-nomination.award-nomination'
+    >;
     badges: Schema.Attribute.Relation<
       'oneToMany',
       'api::contact-badge.contact-badge'
@@ -1693,6 +1799,10 @@ export interface ApiContactContact extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     phone: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    scholarship_applicant: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::scholarship-application.scholarship-application'
+    >;
     title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -3081,6 +3191,178 @@ export interface ApiScheduledEmailTaskScheduledEmailTask
   };
 }
 
+export interface ApiScholarshipApplicationScholarshipApplication
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'scholarship_applications';
+  info: {
+    description: 'ORWEF scholarship applications';
+    displayName: 'Scholarship Application';
+    pluralName: 'scholarship-applications';
+    singularName: 'scholarship-application';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    act_score: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 36;
+          min: 1;
+        },
+        number
+      >;
+    age_confirm: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_certification: Schema.Attribute.Boolean &
+      Schema.Attribute.Required;
+    applicant_certification_date: Schema.Attribute.Date &
+      Schema.Attribute.Required;
+    applicant_city: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_email: Schema.Attribute.Email & Schema.Attribute.Required;
+    applicant_first_name: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_last_name: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_middle_name: Schema.Attribute.String;
+    applicant_pdf: Schema.Attribute.Media<'files'>;
+    applicant_phone: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_state: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_street: Schema.Attribute.String & Schema.Attribute.Required;
+    applicant_zip: Schema.Attribute.String & Schema.Attribute.Required;
+    application_status: Schema.Attribute.Enumeration<
+      ['Draft', 'Submitted', 'Under Review', 'Approved', 'Denied']
+    > &
+      Schema.Attribute.DefaultTo<'Draft'>;
+    awards: Schema.Attribute.Text;
+    biography: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    college_gpa: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 4;
+          min: 0;
+        },
+        number
+      >;
+    contact: Schema.Attribute.Relation<'oneToOne', 'api::contact.contact'>;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    credits_completed: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    credits_required: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          min: 0;
+        },
+        number
+      >;
+    education_type: Schema.Attribute.Enumeration<
+      ['FourYearCollege', 'TwoYearCollege', 'VocationalSchool']
+    > &
+      Schema.Attribute.Required;
+    eligible_participant_address: Schema.Attribute.Component<
+      'scholarship.address',
+      false
+    >;
+    eligible_participant_email: Schema.Attribute.Email &
+      Schema.Attribute.Required;
+    eligible_participant_name: Schema.Attribute.Component<
+      'scholarship.eligible-participant-name',
+      false
+    >;
+    eligible_participant_phone: Schema.Attribute.String &
+      Schema.Attribute.Required;
+    eligible_participant_title: Schema.Attribute.String &
+      Schema.Attribute.Required;
+    essay: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    financial_resources: Schema.Attribute.Component<
+      'scholarship.financial-resource',
+      true
+    > &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 10;
+        },
+        number
+      >;
+    first_year: Schema.Attribute.String & Schema.Attribute.Required;
+    gpa: Schema.Attribute.Decimal &
+      Schema.Attribute.Required &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 4;
+          min: 0;
+        },
+        number
+      >;
+    graduation_date: Schema.Attribute.Date & Schema.Attribute.Required;
+    guardian_certification: Schema.Attribute.Boolean;
+    guardian_certification_date: Schema.Attribute.Date;
+    guardian_name: Schema.Attribute.Component<
+      'scholarship.guardian-name',
+      false
+    >;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::scholarship-application.scholarship-application'
+    > &
+      Schema.Attribute.Private;
+    major: Schema.Attribute.String;
+    photograph: Schema.Attribute.Media<'images'> & Schema.Attribute.Required;
+    publishedAt: Schema.Attribute.DateTime;
+    recommendation_letter_1: Schema.Attribute.Media<'files'> &
+      Schema.Attribute.Required;
+    recommendation_letter_2: Schema.Attribute.Media<'files'> &
+      Schema.Attribute.Required;
+    recommender1_email: Schema.Attribute.Email & Schema.Attribute.Required;
+    recommender1_name: Schema.Attribute.Component<
+      'scholarship.recommender-name',
+      false
+    >;
+    recommender1_phone: Schema.Attribute.String & Schema.Attribute.Required;
+    recommender2_email: Schema.Attribute.Email & Schema.Attribute.Required;
+    recommender2_name: Schema.Attribute.Component<
+      'scholarship.recommender-name',
+      false
+    >;
+    recommender2_phone: Schema.Attribute.String & Schema.Attribute.Required;
+    relationship: Schema.Attribute.Enumeration<
+      ['Self', 'DependentChild', 'DependentGrandchild']
+    > &
+      Schema.Attribute.Required;
+    review_notes: Schema.Attribute.Text;
+    sat_score: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 1600;
+          min: 400;
+        },
+        number
+      >;
+    school_address: Schema.Attribute.Component<'scholarship.address', false>;
+    school_name: Schema.Attribute.String & Schema.Attribute.Required;
+    submission_date: Schema.Attribute.DateTime;
+    system_name: Schema.Attribute.String & Schema.Attribute.Required;
+    test_scores: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    transcript: Schema.Attribute.Media<'images' | 'files'> &
+      Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    watersystem: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::watersystem.watersystem'
+    >;
+  };
+}
+
 export interface ApiSettingSetting extends Struct.CollectionTypeSchema {
   collectionName: 'settings';
   info: {
@@ -4427,6 +4709,10 @@ export interface ApiWatersystemWatersystem extends Struct.CollectionTypeSchema {
         maxLength: 10;
       }>;
     application_date: Schema.Attribute.Date;
+    award_nominations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::award-nomination.award-nomination'
+    >;
     board_meeting: Schema.Attribute.String;
     contacts: Schema.Attribute.Relation<'oneToMany', 'api::contact.contact'>;
     county: Schema.Attribute.Enumeration<
@@ -4551,6 +4837,10 @@ export interface ApiWatersystemWatersystem extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime;
     region: Schema.Attribute.Enumeration<
       ['Region 1', 'Region 2', 'Region 3', 'Region 4']
+    >;
+    scholarship_applications: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::scholarship-application.scholarship-application'
     >;
     soonerwarn: Schema.Attribute.Boolean;
     system_type_dirty: Schema.Attribute.Enumeration<
@@ -5153,6 +5443,7 @@ declare module '@strapi/strapi' {
       'api::activity.activity': ApiActivityActivity;
       'api::asset.asset': ApiAssetAsset;
       'api::associate.associate': ApiAssociateAssociate;
+      'api::award-nomination.award-nomination': ApiAwardNominationAwardNomination;
       'api::conference-attendee.conference-attendee': ApiConferenceAttendeeConferenceAttendee;
       'api::conference-booth.conference-booth': ApiConferenceBoothConferenceBooth;
       'api::conference-contestant.conference-contestant': ApiConferenceContestantConferenceContestant;
@@ -5198,6 +5489,7 @@ declare module '@strapi/strapi' {
       'api::request-status.request-status': ApiRequestStatusRequestStatus;
       'api::saved-query.saved-query': ApiSavedQuerySavedQuery;
       'api::scheduled-email-task.scheduled-email-task': ApiScheduledEmailTaskScheduledEmailTask;
+      'api::scholarship-application.scholarship-application': ApiScholarshipApplicationScholarshipApplication;
       'api::setting.setting': ApiSettingSetting;
       'api::soonerwarn-request.soonerwarn-request': ApiSoonerwarnRequestSoonerwarnRequest;
       'api::soonerwarn-status.soonerwarn-status': ApiSoonerwarnStatusSoonerwarnStatus;

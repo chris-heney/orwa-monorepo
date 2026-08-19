@@ -1,0 +1,18 @@
+{
+  "collectionName": "components_scholarship_recommender_names",
+  "info": {
+    "displayName": "Recommender Name",
+    "description": "Name fields for recommender"
+  },
+  "options": {},
+  "attributes": {
+    "first": {
+      "type": "string",
+      "required": true
+    },
+    "last": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

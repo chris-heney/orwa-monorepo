@@ -25,19 +25,20 @@
       }
     },
     "serve": {
-      "executor": "@nx/vite:dev-server",
+      "executor": "nx:run-commands",
       "defaultConfiguration": "development",
       "options": {
-        "buildTarget": "scholarship-application:build"
+        "command": "npm run dev",
+        "cwd": "apps/scholarship-application"
       },
       "configurations": {
         "development": {
-          "buildTarget": "scholarship-application:build:development",
-          "hmr": true
+          "command": "npm run dev",
+          "cwd": "apps/scholarship-application"
         },
         "production": {
-          "buildTarget": "scholarship-application:build:production",
-          "hmr": false
+          "command": "npm run preview",
+          "cwd": "apps/scholarship-application"
         }
       }
     },
