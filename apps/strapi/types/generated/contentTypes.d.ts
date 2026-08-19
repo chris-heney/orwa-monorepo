@@ -891,6 +891,7 @@ export interface ApiAwardNominationAwardNomination
   };
   attributes: {
     address: Schema.Attribute.String & Schema.Attribute.Required;
+    award_name_printed: Schema.Attribute.String;
     award_type: Schema.Attribute.Enumeration<
       [
         'System of the Year',
@@ -924,6 +925,7 @@ export interface ApiAwardNominationAwardNomination
     daytime_phone: Schema.Attribute.String & Schema.Attribute.Required;
     email: Schema.Attribute.Email & Schema.Attribute.Required;
     employment_date: Schema.Attribute.Date;
+    justification: Schema.Attribute.Text & Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
@@ -931,7 +933,6 @@ export interface ApiAwardNominationAwardNomination
     > &
       Schema.Attribute.Private;
     management_employees: Schema.Attribute.Integer;
-    nomination_description: Schema.Attribute.Text & Schema.Attribute.Required;
     nomination_pdf: Schema.Attribute.Media<'files'>;
     nomination_status: Schema.Attribute.Enumeration<
       [

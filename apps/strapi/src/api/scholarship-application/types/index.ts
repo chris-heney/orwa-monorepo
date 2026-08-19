@@ -99,6 +99,7 @@ export interface IScholarshipApplicationPayload {
 export interface IAwardNominationPayload {
   nominee_name: string;
   system_name: string;
+  award_name_printed?: string;
   watersystem?: number | string | null;
   watersystem_id?: number | string | null;
   county: string;
@@ -125,7 +126,8 @@ export interface IAwardNominationPayload {
   clerical_employees?: number;
   operation_maintenance_employees?: number;
   management_employees?: number;
-  nomination_description: string;
+  justification: string;
+  nomination_description?: string;
   award_type:
     | "System of the Year"
     | "Water/Wastewater System of the Year"

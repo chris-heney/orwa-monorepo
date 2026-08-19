@@ -43,6 +43,9 @@
       "type": "string",
       "required": true
     },
+    "award_name_printed": {
+      "type": "string"
+    },
     "watersystem": {
       "type": "relation",
       "relation": "manyToOne",
@@ -130,7 +133,7 @@
     "management_employees": {
       "type": "integer"
     },
-    "nomination_description": {
+    "justification": {
       "type": "text",
       "required": true
     },

@@ -460,7 +460,7 @@ export default ({ strapi }) => {
             !body.nominee_name ||
             !body.system_name ||
             !body.award_type ||
-            !body.nomination_description
+            !(body.justification || body.nomination_description)
           ) {
             ctx.status = 400;
             ctx.body = { message: "Missing required fields." };
@@ -503,8 +503,9 @@ export default ({ strapi }) => {
             contact: contactDocumentId,
             nominee_name: body.nominee_name,
             system_name: body.system_name,
+            award_name_printed:
+              body.award_name_printed || body.system_name,
             watersystem: watersystem?.documentId ?? null,
-            county: body.county,
             address: body.address,
             city: body.city,
             state: body.state || "OK",
@@ -530,7 +531,7 @@ export default ({ strapi }) => {
               body.operation_maintenance_employees
             ),
             management_employees: emptyToNull(body.management_employees),
-            nomination_description: body.nomination_description,
+            justification: body.justification || body.nomination_description,
             award_type:
               body.award_type === "Water/Wastewater System of the Year"
                 ? "System of the Year"
