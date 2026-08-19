@@ -13,6 +13,12 @@ import {
 } from "../../_components/review-packet";
 import { NOMINATION_META, NominationStatus } from "../helpers/metrics";
 import MediaLink from "../../orwef-scholarships/components/MediaLink";
+import {
+  boardMembersSummary,
+  contactSummary,
+  employeeTotal,
+  watersystemName,
+} from "../helpers/recordDisplay";
 
 const AWARD_BACK = "/orwa-awards/dashboard";
 
@@ -31,6 +37,7 @@ type AwardRecord = Record<string, unknown> & {
   review_notes?: string | null;
   submission_date?: string | null;
   system_name?: string;
+  watersystem?: { name?: string } | null;
   operation_start_date?: string | null;
   employment_date?: string | null;
   current_members?: number | null;
@@ -42,6 +49,7 @@ type AwardRecord = Record<string, unknown> & {
   biography_text?: string | null;
   biography_file?: unknown;
   photographs?: unknown;
+  board_list_method?: string | null;
   board_list_file?: unknown;
   board_members?: unknown;
   supporting_documents?: unknown;
@@ -57,18 +65,18 @@ type AwardRecord = Record<string, unknown> & {
   nominator_country?: string;
   nominator_phone?: string;
   nominator_email?: string;
+  contact?: {
+    first?: string;
+    last?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    name?: string;
+  } | null;
 };
 
 const nomineeTitle = (record?: AwardRecord) =>
   record?.nominee_name || "Award Nomination";
-
-const employeeTotal = (record?: AwardRecord) => {
-  const total =
-    Number(record?.clerical_employees || 0) +
-    Number(record?.operation_maintenance_employees || 0) +
-    Number(record?.management_employees || 0);
-  return Number.isFinite(total) ? total : 0;
-};
 
 const AwardPacket = () => {
   const record = useRecordContext<AwardRecord>();
@@ -78,7 +86,11 @@ const AwardPacket = () => {
   return (
     <PacketLayout
       heading={
-        <ReviewPageBar title={nomineeTitle(record)} backTo={AWARD_BACK} showEdit />
+        <ReviewPageBar
+          title={nomineeTitle(record)}
+          backTo={AWARD_BACK}
+          showEdit
+        />
       }
       sidebar={
         <StaffSidebar
@@ -106,14 +118,14 @@ const AwardPacket = () => {
       }
     >
       <PacketSection title="Nominee Information">
-        <PacketField label="Nominee" value={record?.nominee_name} />
-        <PacketField label="Award type" value={record?.award_type} />
-        <PacketField label="Email" value={record?.email} email />
-        <PacketField label="Daytime phone" value={record?.daytime_phone} />
+        <PacketField label="Nominee Full Name" value={record?.nominee_name} />
+        <PacketField label="Please select the type of award" value={record?.award_type} />
+        <PacketField label="Email Address" value={record?.email} email />
+        <PacketField label="Daytime Phone" value={record?.daytime_phone} />
         <PacketField label="County" value={record?.county} />
-        <PacketField label="Award year" value={record?.award_year} />
+        <PacketField label="Award Year" value={record?.award_year} />
         <PacketField
-          label="Address"
+          label="Street Address"
           value={[
             record?.address,
             [record?.city, record?.state].filter(Boolean).join(", "),
@@ -123,20 +135,17 @@ const AwardPacket = () => {
             .join("\n")}
           span
         />
+        <PacketField label="Linked Contact" value={contactSummary(record || {})} />
       </PacketSection>
 
       <PacketSection title="Nominator Information">
-        <PacketField
-          label="Nominator"
-          value={[record?.nominator_first_name, record?.nominator_last_name]
-            .filter(Boolean)
-            .join(" ")}
-        />
-        <PacketField label="Email" value={record?.nominator_email} email />
-        <PacketField label="Phone" value={record?.nominator_phone} />
+        <PacketField label="First" value={record?.nominator_first_name} />
+        <PacketField label="Last" value={record?.nominator_last_name} />
+        <PacketField label="Nominator's Email" value={record?.nominator_email} email />
+        <PacketField label="Nominator's Phone" value={record?.nominator_phone} />
         <PacketField label="Country" value={record?.nominator_country} />
         <PacketField
-          label="Address"
+          label="Nominator's Address"
           value={[
             record?.nominator_address,
             record?.nominator_address_2,
@@ -152,53 +161,66 @@ const AwardPacket = () => {
       </PacketSection>
 
       <PacketSection title="System Information">
-        <PacketField label="System name" value={record?.system_name} />
+        <PacketField label="System Name" value={record?.system_name} />
         <PacketField
-          label="Date system began operation"
+          label="Water System"
+          value={watersystemName(record || {})}
+        />
+        <PacketField
+          label="Date System Began Operation"
           value={asDateString(record?.operation_start_date)}
         />
         <PacketField
-          label="Date employed"
+          label="Date Employed"
           value={asDateString(record?.employment_date)}
         />
         <PacketField
-          label="Beginning meter connections"
+          label="Number of Beginning Meter Connections"
           value={record?.beginning_members}
         />
         <PacketField
-          label="Current meter connections"
+          label="Number of Current Meter Connections"
           value={record?.current_members}
         />
       </PacketSection>
 
-      <PacketSection title="Employee Counts">
-        <PacketField label="Clerical" value={record?.clerical_employees} />
+      <PacketSection title="Employee Information">
+        <PacketField label="Clerical Employees" value={record?.clerical_employees} />
         <PacketField
-          label="Operation & maintenance"
+          label="Operation & Maintenance Employees"
           value={record?.operation_maintenance_employees}
         />
-        <PacketField label="Management" value={record?.management_employees} />
-        <PacketField label="Total employees" value={employeeTotal(record)} />
+        <PacketField
+          label="Management Employees"
+          value={record?.management_employees}
+        />
+        <PacketField label="Total Employees" value={employeeTotal(record || {})} />
       </PacketSection>
 
       <PacketSection title="Nomination Description" columns={1}>
         <PacketField
-          label="Why this nominee deserves the award"
+          label="What makes the nominee deserving of this award?"
           value={record?.nomination_description}
           span
         />
       </PacketSection>
 
-      <PacketSection title="Biography / Photographs">
-        <PacketField label="Biography method" value={record?.biography_method} />
-        <PacketField label="Biography text" value={record?.biography_text} span />
-        <PacketField label="Biography file" span>
+      <PacketSection title="Biography">
+        <PacketField
+          label="How would you like to provide your biography?"
+          value={record?.biography_method}
+        />
+        <PacketField label="Biography" value={record?.biography_text} span />
+        <PacketField label="Biography File" span>
           <MediaLink
             file={record?.biography_file}
-            label="Biography file"
+            label="Biography"
             variant="packet"
           />
         </PacketField>
+      </PacketSection>
+
+      <PacketSection title="Photographs" columns={1}>
         <PacketField label="Photographs" span>
           <MediaLink
             file={record?.photographs}
@@ -208,18 +230,37 @@ const AwardPacket = () => {
         </PacketField>
       </PacketSection>
 
-      <PacketSection title="Supporting Documents">
-        <PacketField label="Board list file" span>
+      <PacketSection title="Board Members & Employees" columns={1}>
+        <PacketField
+          label="Provide Board Members & Employee List via"
+          value={record?.board_list_method}
+        />
+        <PacketField label="Upload Board Member & Employee List" span>
           <MediaLink
             file={record?.board_list_file}
-            label="Board list file"
+            label="Board Member & Employee List"
             variant="packet"
           />
         </PacketField>
-        <PacketField label="Supporting documents" span>
+        <PacketField
+          label="Board Members & Employees"
+          value={boardMembersSummary(record?.board_members)}
+          span
+        />
+      </PacketSection>
+
+      <PacketSection title="Supporting Documents" columns={1}>
+        <PacketField label="Supporting Documents" span>
           <MediaLink
             file={record?.supporting_documents}
-            label="Supporting documents"
+            label="Supporting Documents"
+            variant="packet"
+          />
+        </PacketField>
+        <PacketField label="Nomination packet PDF" span>
+          <MediaLink
+            file={record?.nomination_pdf}
+            label="Nomination packet PDF"
             variant="packet"
           />
         </PacketField>

@@ -18,6 +18,7 @@ import { useAwardContext } from "../AwardContextProvider";
 import RecordCount from "../../_components/RecordCount";
 import type { AgDatagridPrefs } from "../../_components/AgDatagrid";
 import { buildAwardListFilter } from "../helpers/listFilters";
+import { useAwardColumnDefaults } from "../helpers/useAwardColumnDefaults";
 
 const AG_PREFS_KEY = "agGrid.award-nominations";
 const RESOURCE = "award-nominations";
@@ -38,6 +39,7 @@ const AwardDashboardHeader = () => {
   } = useAwardContext();
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
   const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
+  useAwardColumnDefaults();
 
   return (
     <Box

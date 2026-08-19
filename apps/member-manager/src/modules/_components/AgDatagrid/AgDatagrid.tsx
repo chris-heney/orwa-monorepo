@@ -48,6 +48,7 @@ const AgDatagrid = ({
   className,
   rowSelection = false,
   selectionStoreKey,
+  omit: omitProp,
 }: AgDatagridProps) => {
   const theme = useTheme();
   const translate = useTranslate();
@@ -85,6 +86,10 @@ const AgDatagrid = ({
     `preferences.${raColumnsKey}.columns`,
     undefined
   );
+  const [, setOmit] = useStore<string[]>(
+    `preferences.${raColumnsKey}.omit`,
+    omitProp ?? []
+  );
 
   type FieldChild = React.ReactElement<{
     source?: string;
@@ -117,20 +122,34 @@ const AgDatagrid = ({
     if (columns.length !== availableColumns.length) {
       setAvailableColumns(columns);
     }
-  }, [availableColumns.length, fieldChildren, setAvailableColumns, translate]);
+    if (omitProp) {
+      setOmit(omitProp);
+    }
+  }, [
+    availableColumns.length,
+    fieldChildren,
+    omitProp,
+    setAvailableColumns,
+    setOmit,
+    translate,
+  ]);
 
   const columnDefs = useMemo<ColDef[]>(() => {
     if (columnDefsProp?.length) return columnDefsProp;
 
     const ordered =
       columnIds === undefined
-        ? fieldChildren
+        ? fieldChildren.filter((child) => {
+            const source = child.props.source;
+            if (!source || !omitProp?.length) return true;
+            return !omitProp.includes(source);
+          })
         : columnIds
             .map((index) => fieldChildren[Number(index)])
             .filter(Boolean);
 
     return childrenToColumnDefs(ordered);
-  }, [children, columnDefsProp, columnIds, fieldChildren]);
+  }, [children, columnDefsProp, columnIds, fieldChildren, omitProp]);
 
   // Hydrate page size once, then persist later changes only.
   useEffect(() => {

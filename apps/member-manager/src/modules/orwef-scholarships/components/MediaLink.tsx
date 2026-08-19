@@ -25,14 +25,45 @@ const MediaLink = ({
 }: {
   file: MediaValue | MediaValue[] | undefined | unknown;
   label: string;
-  variant?: "inline" | "packet";
+  variant?: "inline" | "packet" | "cell";
 }) => {
   const items = asItems(file);
 
   if (items.length === 0) {
+    if (variant === "cell") {
+      return (
+        <Typography variant="body2" color="text.secondary" component="span">
+          —
+        </Typography>
+      );
+    }
     return (
       <Typography variant="body2" color="text.secondary">
         {label}: none
+      </Typography>
+    );
+  }
+
+  if (variant === "cell") {
+    const first = items[0];
+    const href = resolveMediaUrl(first.url as string) || "#";
+    const name = first.name || label;
+    return (
+      <Typography
+        variant="body2"
+        component="span"
+        sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}
+      >
+        <Link
+          href={href}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(event) => event.stopPropagation()}
+          sx={{ overflowWrap: "anywhere" }}
+        >
+          {name}
+        </Link>
+        {items.length > 1 ? ` · ${items.length} files` : null}
       </Typography>
     );
   }

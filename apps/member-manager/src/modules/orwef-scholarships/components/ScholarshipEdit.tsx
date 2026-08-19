@@ -18,6 +18,10 @@ const transformScholarship = (data: Record<string, unknown>) => ({
   ...data,
   submission_date: asDateString(data.submission_date) || null,
   graduation_date: asDateString(data.graduation_date) || null,
+  applicant_certification_date:
+    asDateString(data.applicant_certification_date) || null,
+  guardian_certification_date:
+    asDateString(data.guardian_certification_date) || null,
   financial_resources: listFinancialResources(data)
     .slice(0, MAX_FINANCIAL_RESOURCES)
     .map((row) => ({

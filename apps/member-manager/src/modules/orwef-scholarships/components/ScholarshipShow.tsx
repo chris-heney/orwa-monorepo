@@ -296,6 +296,16 @@ const ScholarshipPacket = () => {
           </PacketField>
         </PacketSection>
 
+        <PacketSection title="Submitted Application PDF" columns={1}>
+          <PacketField label="Application PDF" span>
+            <MediaLink
+              file={record?.applicant_pdf}
+              label="Application PDF"
+              variant="packet"
+            />
+          </PacketField>
+        </PacketSection>
+
         <PacketSection title="Certification">
           <PacketField label="Age confirmation" value={record?.age_confirm} span />
           <PacketField

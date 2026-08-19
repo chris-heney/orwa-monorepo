@@ -26,6 +26,11 @@ export type AgDatagridProps = {
    * Defaults to `<resource>.datagrid` — same as DatagridConfigurable.
    */
   columnsPreferenceKey?: string;
+  /**
+   * Field `source` values hidden until the user enables them in COLUMNS.
+   * Same store key as RA DatagridConfigurable (`preferences.<key>.omit`).
+   */
+  omit?: string[];
   rowClick?: AgDatagridRowClick;
   height?: string | number;
   className?: string;
