@@ -1,7 +1,23 @@
-const TERM_PUBLIC_ACTIONS = [
-  'api::term.term.find',
-  'api::term.term.findOne',
+// Frontend module keys. Must stay in sync with the frontend registry in
+// apps/member-manager/src/config/modules.ts.
+const MODULE_KEYS = [
+  'dashboard',
+  'emails',
+  'memberships',
+  'contacts',
+  'assets',
+  'media-library',
+  'training',
+  'conference',
+  'terms',
+  'grants',
+  'scholarships',
+  'awards',
+  'rbac',
+  'settings',
 ];
+
+const TERM_PUBLIC_ACTIONS = ['api::term.term.find', 'api::term.term.findOne'];
 
 const TERM_AUTHENTICATED_ACTIONS = [
   ...TERM_PUBLIC_ACTIONS,
@@ -12,7 +28,9 @@ const TERM_AUTHENTICATED_ACTIONS = [
 
 const ensureRolePermissions = async (strapi, roleWhere, actions) => {
   const roleQuery = strapi.db.query('plugin::users-permissions.role');
-  const permissionQuery = strapi.db.query('plugin::users-permissions.permission');
+  const permissionQuery = strapi.db.query(
+    'plugin::users-permissions.permission',
+  );
   const role = await roleQuery.findOne({ where: roleWhere });
   if (!role) {
     return;
@@ -32,21 +50,29 @@ const ensureRolePermissions = async (strapi, roleWhere, actions) => {
             action,
             role: role.id,
           },
-        })
-      )
+        }),
+      ),
   );
 };
 
 const configureTermPermissions = async (strapi) => {
   try {
-    await ensureRolePermissions(strapi, { type: 'public' }, TERM_PUBLIC_ACTIONS);
+    await ensureRolePermissions(
+      strapi,
+      { type: 'public' },
+      TERM_PUBLIC_ACTIONS,
+    );
     await ensureRolePermissions(
       strapi,
       { type: 'authenticated' },
-      TERM_AUTHENTICATED_ACTIONS
+      TERM_AUTHENTICATED_ACTIONS,
     );
     // Custom Admin role used by member-manager
-    await ensureRolePermissions(strapi, { type: 'admin' }, TERM_AUTHENTICATED_ACTIONS);
+    await ensureRolePermissions(
+      strapi,
+      { type: 'admin' },
+      TERM_AUTHENTICATED_ACTIONS,
+    );
   } catch (error) {
     strapi.log.warn(`Unable to configure Term permissions: ${error.message}`);
   }
@@ -85,20 +111,24 @@ const SUBMISSION_PUBLIC_ACTIONS = [
 
 const configureScholarshipAwardPermissions = async (strapi) => {
   try {
-    await ensureRolePermissions(strapi, { type: 'public' }, SUBMISSION_PUBLIC_ACTIONS);
     await ensureRolePermissions(
       strapi,
-      { type: 'authenticated' },
-      [...SCHOLARSHIP_CRUD, ...AWARD_CRUD, ...SUBMISSION_PUBLIC_ACTIONS]
+      { type: 'public' },
+      SUBMISSION_PUBLIC_ACTIONS,
     );
-    await ensureRolePermissions(
-      strapi,
-      { type: 'admin' },
-      [...SCHOLARSHIP_CRUD, ...AWARD_CRUD, ...SUBMISSION_PUBLIC_ACTIONS]
-    );
+    await ensureRolePermissions(strapi, { type: 'authenticated' }, [
+      ...SCHOLARSHIP_CRUD,
+      ...AWARD_CRUD,
+      ...SUBMISSION_PUBLIC_ACTIONS,
+    ]);
+    await ensureRolePermissions(strapi, { type: 'admin' }, [
+      ...SCHOLARSHIP_CRUD,
+      ...AWARD_CRUD,
+      ...SUBMISSION_PUBLIC_ACTIONS,
+    ]);
   } catch (error) {
     strapi.log.warn(
-      `Unable to configure scholarship/award permissions: ${error.message}`
+      `Unable to configure scholarship/award permissions: ${error.message}`,
     );
   }
 };
@@ -117,13 +147,42 @@ const configureUserPreferencesPermissions = async (strapi) => {
     await ensureRolePermissions(
       strapi,
       { type: 'authenticated' },
-      USER_PREFERENCES_ACTIONS
+      USER_PREFERENCES_ACTIONS,
     );
-    await ensureRolePermissions(strapi, { type: 'admin' }, USER_PREFERENCES_ACTIONS);
-    await ensureRolePermissions(strapi, { type: 'staff' }, USER_PREFERENCES_ACTIONS);
+    await ensureRolePermissions(
+      strapi,
+      { type: 'admin' },
+      USER_PREFERENCES_ACTIONS,
+    );
+    await ensureRolePermissions(
+      strapi,
+      { type: 'staff' },
+      USER_PREFERENCES_ACTIONS,
+    );
   } catch (error) {
     strapi.log.warn(
-      `Unable to configure user preferences permissions: ${error.message}`
+      `Unable to configure user preferences permissions: ${error.message}`,
+    );
+  }
+};
+
+// Scopes for the users-permissions role/permission endpoints consumed by the
+// RBAC Manager. Grant these to the Admin role only (never public/authenticated/staff).
+const ADMIN_RBAC_ACTIONS = [
+  'plugin::users-permissions.role.find',
+  'plugin::users-permissions.role.findOne',
+  'plugin::users-permissions.role.createRole',
+  'plugin::users-permissions.role.updateRole',
+  'plugin::users-permissions.role.deleteRole',
+  'plugin::users-permissions.permissions.getPermissions',
+];
+
+const configureAdminRbacPermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(strapi, { type: 'admin' }, ADMIN_RBAC_ACTIONS);
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure Admin RBAC permissions: ${error.message}`,
     );
   }
 };
@@ -144,12 +203,15 @@ const STAFF_ALLOWED_ACTIONS = [
   'api::my-preferences.my-preferences.updateMine',
   'api::user.user.getMyPreferences',
   'api::user.user.updateMyPreferences',
+  'plugin::users-permissions.user.me',
 ];
 
 const configureStaffRole = async (strapi) => {
   try {
     const roleQuery = strapi.db.query('plugin::users-permissions.role');
-    const permissionQuery = strapi.db.query('plugin::users-permissions.permission');
+    const permissionQuery = strapi.db.query(
+      'plugin::users-permissions.permission',
+    );
 
     let staffRole = await roleQuery.findOne({
       where: { $or: [{ type: STAFF_ROLE_TYPE }, { name: 'Staff' }] },
@@ -163,7 +225,23 @@ const configureStaffRole = async (strapi) => {
           type: STAFF_ROLE_TYPE,
         },
       });
-    } else if (staffRole.name !== 'Staff' || staffRole.type !== STAFF_ROLE_TYPE) {
+
+      // Seed defaults only on first creation; after that the RBAC Manager
+      // (and the Strapi admin UI) own this role's permissions.
+      await Promise.all(
+        STAFF_ALLOWED_ACTIONS.map((action) =>
+          permissionQuery.create({
+            data: {
+              action,
+              role: staffRole.id,
+            },
+          }),
+        ),
+      );
+    } else if (
+      staffRole.name !== 'Staff' ||
+      staffRole.type !== STAFF_ROLE_TYPE
+    ) {
       staffRole = await roleQuery.update({
         where: { id: staffRole.id },
         data: {
@@ -172,38 +250,53 @@ const configureStaffRole = async (strapi) => {
         },
       });
     }
-
-    const existingPermissions = await permissionQuery.findMany({
-      where: { role: { id: staffRole.id } },
-    });
-    const allowedActions = new Set(STAFF_ALLOWED_ACTIONS);
-
-    await Promise.all(
-      existingPermissions
-        .filter((permission) => !allowedActions.has(permission.action))
-        .map((permission) => permissionQuery.delete({ where: { id: permission.id } }))
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure Staff role permissions: ${error.message}`,
     );
+  }
+};
 
-    const existingActions = new Set(
-      existingPermissions
-        .filter((permission) => allowedActions.has(permission.action))
-        .map((permission) => permission.action)
+const configureStaffBaselinePermissions = async (strapi) => {
+  try {
+    // Existing Staff roles predate the /users/me whitelist entry; additively
+    // ensure the scope every logged-in role needs for module gating.
+    await ensureRolePermissions(strapi, { type: STAFF_ROLE_TYPE }, [
+      'plugin::users-permissions.user.me',
+    ]);
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure Staff baseline permissions: ${error.message}`,
     );
+  }
+};
 
+const seedDefaultRoleModules = async (strapi) => {
+  try {
+    const roleQuery = strapi.db.query('plugin::users-permissions.role');
+    const roles = await roleQuery.findMany();
+
+    // One-time defaults: only roles that have never had modules set.
+    // Never overwrite a non-null value.
     await Promise.all(
-      STAFF_ALLOWED_ACTIONS
-        .filter((action) => !existingActions.has(action))
-        .map((action) =>
-          permissionQuery.create({
+      roles
+        .filter((role) => role.modules === null || role.modules === undefined)
+        .map((role) =>
+          roleQuery.update({
+            where: { id: role.id },
             data: {
-              action,
-              role: staffRole.id,
+              modules:
+                role.type === 'admin'
+                  ? MODULE_KEYS
+                  : role.type === STAFF_ROLE_TYPE
+                    ? ['memberships']
+                    : [],
             },
-          })
-        )
+          }),
+        ),
     );
   } catch (error) {
-    strapi.log.warn(`Unable to configure Staff role permissions: ${error.message}`);
+    strapi.log.warn(`Unable to seed default role modules: ${error.message}`);
   }
 };
 
@@ -215,6 +308,13 @@ export default {
    * This gives you an opportunity to extend code.
    */
   register({ strapi }) {
+    // Admin "test as role": after JWT auth, optionally rebuild ability from
+    // X-Impersonate-Role. See src/utils/role-impersonation.ts.
+    const {
+      wrapAuthWithRoleImpersonation,
+    } = require('./utils/role-impersonation');
+    wrapAuthWithRoleImpersonation(strapi);
+
     // Strapi 4 coerced write-payload primitive types; Strapi 5 validates
     // strictly. Restore v4-compatible coercion (and strip system fields)
     // for every api:: create/update so legacy clients and intake forms
@@ -262,9 +362,12 @@ export default {
    */
   async bootstrap({ strapi }) {
     await configureStaffRole(strapi);
+    await configureStaffBaselinePermissions(strapi);
     await configureTermPermissions(strapi);
     await configureUserPreferencesPermissions(strapi);
+    await configureAdminRbacPermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
     await seedOrwefFormEmails(strapi);
+    await seedDefaultRoleModules(strapi);
   },
 };

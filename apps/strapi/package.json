@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "description": "A Strapi application",
   "scripts": {
-    "develop": "strapi ts:generate-types && strapi develop",
-    "start": "strapi start",
-    "build": "strapi build",
-    "strapi": "strapi"
+    "develop": "npx strapi ts:generate-types && npx strapi develop",
+    "start": "npx strapi start",
+    "build": "npx strapi build",
+    "strapi": "npx strapi"
   },
   "dependencies": {
     "@radix-ui/react-tooltip": "1.0.7",

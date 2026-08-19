@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
-import { PropsWithChildren, createContext, useContext, useState } from "react";
-import { Loading, useDataProvider, useStore } from "react-admin";
-import { IUser } from "../human-resources/users/types";
+import React, { useEffect } from 'react';
+import { PropsWithChildren, createContext, useContext, useState } from 'react';
+import { Loading, useDataProvider, useStore } from 'react-admin';
+import { IUser } from '../human-resources/users/types';
 
-export type TabValue = "contacts" | "user";
+export type TabValue = 'contacts' | 'user';
 
 export interface ISettingsContextProvider {
   selectedTab: TabValue;
@@ -16,7 +16,7 @@ export interface ISettingsContextProvider {
 }
 
 export const SettingsContext = createContext<ISettingsContextProvider>({
-  selectedTab: "contacts",
+  selectedTab: 'contacts',
   setSelectedTab: () => {},
   isLoading: true,
   setIsLoading: () => {},
@@ -27,7 +27,7 @@ export const SettingsContext = createContext<ISettingsContextProvider>({
 export const useSettingsContext = () => useContext(SettingsContext);
 
 const SettingsContextProvider = ({ children }: PropsWithChildren) => {
-  const [selectedTab, setSelectedTab] = useStore<TabValue>("contact", "user");
+  const [selectedTab, setSelectedTab] = useStore<TabValue>('contact', 'user');
   const [isLoading, setIsLoading] = useState(true);
   const [roles, setRoles] = useState<any[]>([]);
   const dataProvider = useDataProvider();
@@ -36,9 +36,9 @@ const SettingsContextProvider = ({ children }: PropsWithChildren) => {
     setIsLoading(true);
     const fetchRoles = async () => {
       try {
-        const { data } = await dataProvider.getList("users-permissions/roles", {
+        const { data } = await dataProvider.getList('users-permissions/roles', {
           pagination: { page: 1, perPage: 100 },
-          sort: { field: "name", order: "ASC" },
+          sort: { field: 'name', order: 'ASC' },
           meta: {
             raw: true,
           },
@@ -46,7 +46,11 @@ const SettingsContextProvider = ({ children }: PropsWithChildren) => {
         });
         setRoles(data);
       } catch (error) {
-        console.log("error", error);
+        // Non-admin roles get a 403 from users-permissions/roles. That is
+        // expected: `roles` feeds admin-only role selects, so an empty list
+        // (never a thrown/pending state) keeps Settings usable for everyone.
+        console.error('Failed to fetch roles:', error);
+        setRoles([]);
       }
     };
 
@@ -56,9 +60,9 @@ const SettingsContextProvider = ({ children }: PropsWithChildren) => {
 
   const fetchContact = async (user: IUser) => {
     try {
-      const { data: contacts } = await dataProvider.getList("contacts", {
+      const { data: contacts } = await dataProvider.getList('contacts', {
         pagination: { page: 1, perPage: 5000 },
-        sort: { field: "id", order: "DESC" },
+        sort: { field: 'id', order: 'DESC' },
         meta: {
           raw: true,
         },
@@ -66,11 +70,11 @@ const SettingsContextProvider = ({ children }: PropsWithChildren) => {
       });
       return contacts[0];
     } catch (error) {
-      console.log("error", error);
+      console.log('error', error);
     }
   };
 
-  if (isLoading ) {
+  if (isLoading) {
     return <Loading />;
   }
 
@@ -82,7 +86,7 @@ const SettingsContextProvider = ({ children }: PropsWithChildren) => {
         isLoading,
         setIsLoading,
         roles,
-        fetchContact
+        fetchContact,
       }}
     >
       {children}

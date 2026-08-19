@@ -1,23 +1,23 @@
-import CookieStore from "./CookieStore";
-import { AuthProvider, UserIdentity } from "react-admin";
-import RoleController, { TRole } from "../../../config/Roles";
-import { userPreferencesStore } from "../../userPreferencesStore";
-
+import CookieStore from './CookieStore';
+import { AuthProvider, UserIdentity } from 'react-admin';
+import RoleController, { TRole } from '../../../config/Roles';
+import { userPreferencesStore } from '../../userPreferencesStore';
 export interface IUserIdentity extends UserIdentity {
   role: string;
   token: string;
 }
 
-const getRoleName = (user: any) => user?.role?.name ?? user?.role?.attributes?.name;
+const getRoleName = (user: any) =>
+  user?.role?.name ?? user?.role?.attributes?.name;
 
 const fetchUserWithRole = async (userId: string | number, token: string) => {
   const response = await fetch(
     `${import.meta.env.VITE_API_ENDPOINT}/api/users/${userId}?populate=role`,
     {
-      method: "GET",
+      method: 'GET',
       headers: new Headers({
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer ' + token,
       }),
     }
   );
@@ -33,10 +33,10 @@ const authProvider: AuthProvider = {
   getIdentity: async (): Promise<IUserIdentity> => {
     try {
       return await Promise.resolve({
-        id: CookieStore.getCookie("email") as string,
-        role: CookieStore.getCookie("role") as string,
+        id: CookieStore.getCookie('email') as string,
+        role: CookieStore.getCookie('role') as string,
         // fullName: CookieStore.getCookie('fullName') as string,
-        token: CookieStore.getCookie("token") as string,
+        token: CookieStore.getCookie('token') as string,
       });
     } catch (error) {
       return await Promise.reject(error);
@@ -47,9 +47,9 @@ const authProvider: AuthProvider = {
     const request = new Request(
       `${import.meta.env.VITE_API_ENDPOINT}/api/auth/local`,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ identifier, password }),
-        headers: new Headers({ "Content-Type": "application/json" }),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
       }
     );
 
@@ -64,10 +64,10 @@ const authProvider: AuthProvider = {
         const userDataRequest = new Request(
           `${import.meta.env.VITE_API_ENDPOINT}/api/users/me?populate=role`,
           {
-            method: "GET",
+            method: 'GET',
             headers: new Headers({
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + userData.jwt,
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer ' + userData.jwt,
             }),
           }
         );
@@ -87,16 +87,16 @@ const authProvider: AuthProvider = {
 
             if (!roleName) {
               throw new Error(
-                "This user does not have a role assigned. Please assign a role before logging in."
+                'This user does not have a role assigned. Please assign a role before logging in.'
               );
             }
 
-            CookieStore.setCookie("token", userData.jwt, 1);
-            CookieStore.setCookie("role", roleName, 1);
-            CookieStore.setCookie("email", userData.user.email, 1);
+            CookieStore.setCookie('token', userData.jwt, 1);
+            CookieStore.setCookie('role', roleName, 1);
+            CookieStore.setCookie('email', userData.user.email, 1);
             const userId = userWithRole?.id ?? userData.user?.id;
             if (userId != null) {
-              CookieStore.setCookie("id", String(userId), 1);
+              CookieStore.setCookie('id', String(userId), 1);
             }
             return { success: true, user: userWithRole };
           });
@@ -107,23 +107,31 @@ const authProvider: AuthProvider = {
     try {
       await userPreferencesStore.flush();
     } catch (err) {
-      console.warn("[authProvider] preferences flush on logout failed", err);
+      console.warn('[authProvider] preferences flush on logout failed', err);
     }
-    CookieStore.deleteCookie("token");
-    CookieStore.deleteCookie("role");
-    CookieStore.deleteCookie("email");
-    CookieStore.deleteCookie("id");
+    try {
+      const { clearRolePreview } = await import(
+        '../../../modules/rbac-manager/rolePreview'
+      );
+      clearRolePreview();
+    } catch {
+      // ignore
+    }
+    CookieStore.deleteCookie('token');
+    CookieStore.deleteCookie('role');
+    CookieStore.deleteCookie('email');
+    CookieStore.deleteCookie('id');
     return;
   },
 
   checkAuth: () => {
-    return CookieStore.getCookie("token")
+    return CookieStore.getCookie('token')
       ? Promise.resolve()
       : Promise.reject();
   },
 
   getPermissions: () => {
-    const role = new RoleController(CookieStore.getCookie("role") as TRole);
+    const role = new RoleController(CookieStore.getCookie('role') as TRole);
     return Promise.resolve(role.permissions);
   },
 
@@ -131,9 +139,9 @@ const authProvider: AuthProvider = {
     return fetch(
       `${import.meta.env.VITE_API_ENDPOINT}/api/auth/forgot-password`,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ email }),
-        headers: new Headers({"Content-Type": "application/json" ,}),  
+        headers: new Headers({ 'Content-Type': 'application/json' }),
       }
     )
       .then((response) => {
@@ -147,13 +155,17 @@ const authProvider: AuthProvider = {
       });
   },
 
-  resetUserPassword: (code: string, password: string, passwordConfirmation: string) => {
+  resetUserPassword: (
+    code: string,
+    password: string,
+    passwordConfirmation: string
+  ) => {
     return fetch(
       `${import.meta.env.VITE_API_ENDPOINT}/api/auth/reset-password`,
       {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify({ code, password, passwordConfirmation }),
-        headers: new Headers({ "Content-Type": "application/json" }),
+        headers: new Headers({ 'Content-Type': 'application/json' }),
       }
     )
       .then((response) => {
@@ -166,12 +178,16 @@ const authProvider: AuthProvider = {
         return Promise.resolve(data);
       });
   },
+  // react-admin contract: reject → logout + redirect to login; resolve → stay.
+  // Only 401 (unauthenticated) ends the session. 403 means "authenticated but
+  // not permitted" — non-admins routinely hit admin-only endpoints (e.g.
+  // users-permissions metadata) and must NOT be logged out for it.
   checkError: ({ status }) => {
-    if (status === 401 || status === 403) {
-      CookieStore.deleteCookie("token");
-      CookieStore.deleteCookie("role");
-      CookieStore.deleteCookie("email");
-      CookieStore.deleteCookie("id");
+    if (status === 401) {
+      CookieStore.deleteCookie('token');
+      CookieStore.deleteCookie('role');
+      CookieStore.deleteCookie('email');
+      CookieStore.deleteCookie('id');
       return Promise.reject();
     }
     return Promise.resolve();

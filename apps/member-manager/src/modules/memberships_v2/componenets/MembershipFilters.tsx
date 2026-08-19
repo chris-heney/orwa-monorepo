@@ -6,8 +6,8 @@ import AssociateListFilterSidebar from "../associate/components/AssociateListFil
 import { Box, IconButton, Tooltip } from "@mui/material";
 import InvoicesFilters from "./InvoicesFilters";
 import { Favorite } from "@mui/icons-material";
-import useCurrentUser from "../../_helpers/useCurrentUser";
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
+import { useCan } from "../../rbac-manager/useCan";
 
 const MembershipFilters = () => {
   const {
@@ -22,7 +22,7 @@ const MembershipFilters = () => {
     membershipFilters,
     setSavingQuery,
   } = useMembershipContext();
-  const { role } = useCurrentUser();
+  const { can } = useCan();
 
   if (selectedTab === "summary" || isLoading) {
     return null;
@@ -33,7 +33,7 @@ const MembershipFilters = () => {
       open={isFilterSidebarOpen}
       onClose={() => setIsFilterSidebarOpen(false)}
       headerActions={
-        role === "Staff" ? undefined : (
+        !can("create", "saved-query") ? undefined : (
           <Tooltip title="Save Current Filter">
             <IconButton
               onClick={() => setSavingQuery((prev) => !prev)}

@@ -1,40 +1,53 @@
-import React, { ReactNode } from 'react'
-import { Box, IconButton, Tooltip, Typography, useMediaQuery } from '@mui/material'
-import { Theme } from '@mui/material/styles'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
+import React, { ReactNode } from 'react';
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
+import { SxProps, Theme } from '@mui/material/styles';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 
 type PageHeadingBarProps = {
-  title: string
+  title: string;
   /** Shown on the info (i) tooltip next to the title */
-  info?: string
+  info?: string;
   /** Optional right-side actions (filters, buttons, etc.) */
-  actions?: ReactNode
-}
+  actions?: ReactNode;
+  /** Extra styles merged onto the bar, e.g. a sticky `top` offset. */
+  sx?: SxProps<Theme>;
+};
 
 /** Sticky dark heading bar matching Media Library. */
-const PageHeadingBar = ({ title, info, actions }: PageHeadingBarProps) => {
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+const PageHeadingBar = ({ title, info, actions, sx }: PageHeadingBarProps) => {
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
     <Box
-      sx={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 1,
-        backgroundColor: '#262626',
-        px: 1.5,
-        py: 0.75,
-        minHeight: 48,
-        mb: 1.5,
-        mx: { xs: -1, sm: 0 },
-      }}
+      sx={[
+        {
+          position: 'sticky',
+          top: 0,
+          zIndex: 10,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 1,
+          backgroundColor: '#262626',
+          px: 1.5,
+          py: 0.75,
+          minHeight: 48,
+          mb: 1.5,
+          mx: { xs: -1, sm: 0 },
+        },
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 0 }}>
+      <Box
+        sx={{ display: 'flex', alignItems: 'center', gap: 0.25, minWidth: 0 }}
+      >
         <Typography
           variant="h6"
           component="h1"
@@ -78,7 +91,7 @@ const PageHeadingBar = ({ title, info, actions }: PageHeadingBarProps) => {
         </Box>
       ) : null}
     </Box>
-  )
-}
+  );
+};
 
-export default PageHeadingBar
+export default PageHeadingBar;

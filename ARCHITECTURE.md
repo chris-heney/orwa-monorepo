@@ -18,7 +18,7 @@ orwa-monorepo/
 ├── Dockerfile.{app-name}          # 🐳 Monorepo-aware Dockerfiles
 ├── apps/
 │   ├── grant-application/          # ⚛️ React/Vite app
-│   ├── membership-application/     # ⚛️ React/Vite app  
+│   ├── membership-application/     # ⚛️ React/Vite app
 │   ├── conference-registration/    # ⚛️ React/Vite app
 │   ├── grant-map/                  # ⚛️ React/Vite app
 │   ├── grant-scoring-directory/    # ⚛️ Scoresheet viewer (/application-search)
@@ -37,18 +37,21 @@ orwa-monorepo/
 **Used for**: React/Vite frontend applications
 
 **Characteristics**:
+
 - ✅ **Build Context**: Workspace root (`.`)
 - ✅ **Dockerfile**: `Dockerfile.{app-name}` at root level
 - ✅ **Dependencies**: Managed at workspace root
 - ✅ **Package.json**: Scripts only, no dependencies
 
 **Benefits**:
+
 - 🚀 **Faster builds**: Shared dependencies and build tools
 - 💾 **Smaller images**: Only specific app code included
 - 🔧 **Nx integration**: Full access to Nx build system
 - ⚡ **Parallel builds**: Independent app builds
 
 **Example Structure**:
+
 ```dockerfile
 # Dockerfile.grant-application
 FROM node:18-alpine as build
@@ -75,6 +78,7 @@ COPY --from=build /workspace/dist/apps/grant-application /usr/share/nginx/html
 ```
 
 **App Package.json**:
+
 ```json
 {
   "name": "grant-application",
@@ -91,18 +95,21 @@ COPY --from=build /workspace/dist/apps/grant-application /usr/share/nginx/html
 **Used for**: Strapi CMS and other complex backend services
 
 **Characteristics**:
+
 - ✅ **Build Context**: App directory (`./apps/strapi`)
 - ✅ **Dockerfile**: `Dockerfile` within app directory
 - ✅ **Dependencies**: Self-contained in app's package.json
 - ✅ **Isolation**: Complete independence from monorepo complexity
 
 **Benefits**:
+
 - 🎯 **Simplicity**: No path resolution issues
 - 🔒 **Isolation**: Self-contained and portable
 - 🛠️ **Framework compatibility**: Works with framework expectations
 - 📦 **Standard deployment**: Can be deployed independently
 
 **Example Structure**:
+
 ```dockerfile
 # apps/strapi/Dockerfile
 FROM node:18-alpine
@@ -121,12 +128,13 @@ CMD ["pnpm", "run", "develop"]
 ```
 
 **App Package.json**:
+
 ```json
 {
   "name": "strapi",
   "dependencies": {
     "@strapi/strapi": "5.22.0",
-    "mysql2": "^3.14.3",
+    "mysql2": "^3.14.3"
     // ... all required dependencies
   },
   "scripts": {
@@ -142,47 +150,51 @@ CMD ["pnpm", "run", "develop"]
 ## 🎯 **Service Definitions**
 
 ### **Frontend Applications (Pattern 1)**
-| Service | Port | Type | Build Pattern |
-|---------|------|------|---------------|
-| grant-application | 4200 | React/Vite | Monorepo-Aware |
-| membership-application | 4201 | React/Vite | Monorepo-Aware |
-| conference-registration | 4202 | React/Vite | Monorepo-Aware |
-| grant-map | 4203 | React/Vite | Monorepo-Aware |
-| grant-scoring-directory | 4204 | React/Vite | Monorepo-Aware (`/application-search`) |
-| associate-directory | 4205 | React/Vite | Monorepo-Aware |
-| grant-scoring | 4206 | React/Vite | Monorepo-Aware (`/grant-administration`) |
-| conference-hub | 4208 | React/Vite | Monorepo-Aware (`/conference-hub`) |
+
+| Service                 | Port | Type       | Build Pattern                            |
+| ----------------------- | ---- | ---------- | ---------------------------------------- |
+| grant-application       | 4200 | React/Vite | Monorepo-Aware                           |
+| membership-application  | 4201 | React/Vite | Monorepo-Aware                           |
+| conference-registration | 4202 | React/Vite | Monorepo-Aware                           |
+| grant-map               | 4203 | React/Vite | Monorepo-Aware                           |
+| grant-scoring-directory | 4204 | React/Vite | Monorepo-Aware (`/application-search`)   |
+| associate-directory     | 4205 | React/Vite | Monorepo-Aware                           |
+| grant-scoring           | 4206 | React/Vite | Monorepo-Aware (`/grant-administration`) |
+| conference-hub          | 4208 | React/Vite | Monorepo-Aware (`/conference-hub`)       |
 
 ### **Backend Services (Pattern 2)**
-| Service | Port | Type | Build Pattern |
-|---------|------|------|---------------|
-| strapi | 1337 | Strapi 5.x CMS | Standalone |
-| mysql | 3306 | Database | External Image |
+
+| Service | Port | Type           | Build Pattern  |
+| ------- | ---- | -------------- | -------------- |
+| strapi  | 1337 | Strapi 5.x CMS | Standalone     |
+| mysql   | 3306 | Database       | External Image |
 
 ---
 
 ## 🔧 **Dependency Management**
 
 ### **Workspace Root (`package.json`)**
+
 ```json
 {
   "dependencies": {
     "react": "19.0.0",
-    "react-dom": "19.0.0", 
-    "@strapi/strapi": "^5.22.0",
+    "react-dom": "19.0.0",
+    "@strapi/strapi": "^5.22.0"
     // ... all shared dependencies
   },
   "devDependencies": {
     "@nx/react": "21.4.0",
     "@nx/vite": "21.4.0",
     "vite": "^6.0.0",
-    "typescript": "~5.8.2",
+    "typescript": "~5.8.2"
     // ... all build tools
   }
 }
 ```
 
 ### **React Apps (`apps/{app}/package.json`)**
+
 ```json
 {
   "name": "{app-name}",
@@ -196,12 +208,13 @@ CMD ["pnpm", "run", "develop"]
 ```
 
 ### **Strapi App (`apps/strapi/package.json`)**
+
 ```json
 {
   "name": "strapi",
   "dependencies": {
     "@strapi/strapi": "5.22.0",
-    "mysql2": "^3.14.3",
+    "mysql2": "^3.14.3"
     // ... all Strapi-specific dependencies
   },
   "scripts": {
@@ -217,35 +230,37 @@ CMD ["pnpm", "run", "develop"]
 ## 🐳 **Docker Configuration**
 
 ### **Docker Compose Structure**
+
 ```yaml
 services:
   # Pattern 1: Monorepo-Aware (React Apps)
   grant-application:
     build:
-      context: .                    # 🎯 Workspace root
+      context: . # 🎯 Workspace root
       dockerfile: Dockerfile.grant-application
-    ports: ["4200:80"]
+    ports: ['4200:80']
 
-  # Pattern 2: Standalone (Backend Services)  
+  # Pattern 2: Standalone (Backend Services)
   strapi:
     build:
-      context: ./apps/strapi    # 🎯 App directory
+      context: ./apps/strapi # 🎯 App directory
       dockerfile: Dockerfile
-    ports: ["1337:1337"]
+    ports: ['1337:1337']
 ```
 
 ### **Build Context Comparison**
 
-| Pattern | Context | Copies | Dependencies | Use Case |
-|---------|---------|---------|--------------|----------|
-| **Monorepo-Aware** | `.` (workspace root) | Workspace + specific app | Workspace-managed | React/Frontend |
-| **Standalone** | `./apps/{app}` | App directory only | App-managed | Backend/Complex services |
+| Pattern            | Context              | Copies                   | Dependencies      | Use Case                 |
+| ------------------ | -------------------- | ------------------------ | ----------------- | ------------------------ |
+| **Monorepo-Aware** | `.` (workspace root) | Workspace + specific app | Workspace-managed | React/Frontend           |
+| **Standalone**     | `./apps/{app}`       | App directory only       | App-managed       | Backend/Complex services |
 
 ---
 
 ## 🎛️ **Development Workflows**
 
 ### **Available Commands**
+
 ```bash
 # Development
 npm run dev                 # Start all services with docker-compose
@@ -264,6 +279,7 @@ npm run build:docker      # Build Docker images only
 ```
 
 ### **Service URLs (Development)**
+
 - **Strapi Admin**: http://localhost:1337/admin
 - **Strapi API**: http://localhost:1337/api
 - **Grant Application**: http://localhost:4200
@@ -280,6 +296,7 @@ npm run build:docker      # Build Docker images only
 ## 🔄 **Build Process Flow**
 
 ### **React Apps (Pattern 1)**
+
 ```mermaid
 graph TD
     A[Docker Build Context: workspace root] --> B[Copy workspace files]
@@ -291,6 +308,7 @@ graph TD
 ```
 
 ### **Strapi (Pattern 2)**
+
 ```mermaid
 graph TD
     A[Docker Build Context: ./apps/strapi] --> B[Copy app package.json]
@@ -307,7 +325,8 @@ graph TD
 
 ### **Why Two Patterns?**
 
-1. **React Apps**: 
+1. **React Apps**:
+
    - Benefit from shared build tools (Vite, TypeScript, etc.)
    - Simple applications with no interdependencies
    - Compile to static files (nginx serving)
@@ -320,11 +339,13 @@ graph TD
    - Better as standalone for simplicity
 
 ### **Dependency Strategy**
+
 - **Workspace Root**: Build tools, shared libraries, framework packages
 - **React Apps**: No dependencies (inherit from workspace)
 - **Strapi**: Full dependency list (self-contained)
 
 ### **Performance Optimizations**
+
 - **Build Context Size**: React apps ~55KB, Strapi ~77MB (appropriate for each)
 - **Image Size**: React apps ~52MB, Strapi ~2.5GB (framework differences)
 - **Build Speed**: Parallel builds, cached layers, minimal contexts
@@ -334,6 +355,7 @@ graph TD
 ## 🚀 **Migration Summary (Strapi 4.x → 5.x)**
 
 ### **Migrated Components**
+
 - ✅ **68 Content Types**: All API entities migrated
 - ✅ **Configuration**: Database, email, middleware, cron tasks
 - ✅ **Custom Plugins**: Activity feed, grant management
@@ -341,10 +363,57 @@ graph TD
 - ✅ **TypeScript**: Full type generation and compilation
 
 ### **Breaking Changes Handled**
+
 - 📦 **Package versions**: @strapi/strapi 4.19.0 → 5.22.0
 - 🗄️ **Database client**: mysql → mysql2
 - ⚛️ **React compatibility**: 18.x maintained (v5 requirement)
 - 🔧 **Configuration format**: CommonJS maintained for compatibility
+
+---
+
+## 🔐 **RBAC (Roles, Modules, Permissions)**
+
+Access control is built on Strapi's users-permissions plugin and managed through the
+**RBAC Manager** module in member-manager (`/rbac/dashboard`, Admin-role only).
+
+### **Data model**
+
+- **Roles** live in `plugin::users-permissions.role`, extended with a `modules` JSON
+  attribute (`apps/strapi/src/extensions/users-permissions/content-types/role/schema.json`
+  — a full-copy schema extension; keep every stock attribute when editing it).
+- **API permissions** are the plugin's `up_permissions` rows (action strings like
+  `api::watersystem.watersystem.find`). This table is the **enforcement layer** — all
+  frontend gating is cosmetic UX on top of it.
+- **Module registry**: `apps/member-manager/src/config/modules.ts` maps the 12 module
+  keys to menu labels, routes, and react-admin resources. Must stay in sync with
+  `MODULE_KEYS` in `apps/strapi/src/index.ts`.
+
+### **Backend behavior** (`apps/strapi/src/extensions/users-permissions/strapi-server.ts`)
+
+- `updateRole` is wrapped to persist `modules` (stock service drops unknown fields on PUT).
+- `createRole`/`updateRole` always re-ensure `plugin::users-permissions.user.me` on the
+  role — every role's users need `GET /api/users/me` to hold a session.
+- The `me` controller attaches the caller's own role as
+  `{ id, name, description, type, modules, permissions: string[] }` (action strings
+  only) — non-admins cannot read the roles endpoints, so this is the frontend's
+  capability source.
+- Bootstrap (`apps/strapi/src/index.ts`) is **additive only**: it seeds the Staff role
+  once on creation, backfills baseline scopes, grants the Admin role the six
+  users-permissions role/permission scopes, and sets one-time `modules` defaults.
+  It never deletes permission rows, so RBAC Manager changes survive restarts.
+
+### **Frontend gating** (member-manager)
+
+- `useModuleAccess()` → allowed module keys (menu + `ModuleRouteGuard` in
+  `src/layouts/Admin.tsx`). Admin-type roles bypass; `settings` is always allowed;
+  fetch errors fail open to settings-only.
+- `useCan()(action, apiName)` / `canAction(uid)` → per-action capability checks from
+  the role's permission strings; used instead of role-name comparisons everywhere
+  (do NOT add new `role === "Admin"`-style gates).
+- Role management endpoints (`/api/users-permissions/roles*`) require the six scopes
+  held only by the Admin role. When saving a role, always PUT the **complete**
+  permission matrix — the server replaces the whole set and deletes omitted rows.
+- `checkError` logs out only on 401; 403 means "not permitted" and keeps the session.
 
 ---
 
@@ -353,15 +422,18 @@ graph TD
 ### **When Working on This Project**
 
 1. **Identify Service Type**:
+
    - **React/Frontend**: Use Pattern 1 (Monorepo-Aware)
    - **Backend/Complex**: Use Pattern 2 (Standalone)
 
 2. **Package.json Rules**:
+
    - **React apps**: Scripts only, NO dependencies
    - **Backend services**: Full dependencies + scripts
    - **Workspace root**: ALL shared dependencies
 
 3. **Docker Context**:
+
    - **React**: Build from workspace root
    - **Backend**: Build from app directory
 
@@ -370,14 +442,16 @@ graph TD
    - **Standalone**: Direct tool names (`vite`, `strapi`)
 
 ### **Common Pitfalls to Avoid**
+
 - ❌ Don't mix dependency management patterns
 - ❌ Don't use workspace paths in standalone containers
 - ❌ Don't copy entire apps/ directory for single-app builds
 - ❌ Don't remove package.json scripts (Nx needs them)
 
 ### **Architecture Validation Checklist**
+
 - [ ] Dependencies match the chosen pattern
-- [ ] Docker context matches package.json script assumptions  
+- [ ] Docker context matches package.json script assumptions
 - [ ] Build commands work in the target execution environment
 - [ ] TypeScript paths resolve correctly in containers
 - [ ] Services can communicate via docker network
@@ -387,6 +461,7 @@ graph TD
 ## 🎯 **Success Metrics**
 
 ### **Current Status** ✅
+
 - **All React Apps**: Building and running (~52MB images)
 - **Strapi CMS**: Migrated to v5.x with 68 content types
 - **Database**: MySQL 8.x connected and operational
@@ -394,6 +469,7 @@ graph TD
 - **Development**: Full stack runs with `npm run dev`
 
 ### **Performance Benchmarks**
+
 - **React Build Time**: ~20 seconds per app
 - **Strapi Build Time**: ~2-3 minutes (acceptable for backend)
 - **Total Stack Startup**: ~5 minutes (cold start)
@@ -404,12 +480,14 @@ graph TD
 ## 🔮 **Future Considerations**
 
 ### **Scaling Strategies**
+
 1. **Add shared libraries**: Use `libs/` directory for common React components
 2. **Microservices**: Additional backend services can use Pattern 2
 3. **CI/CD**: Each pattern supports independent deployment pipelines
 4. **Monitoring**: Add health checks and logging services
 
 ### **Technology Upgrades**
+
 - **React 19**: Already implemented (with Strapi compatibility notes)
 - **Node.js 20**: Planned upgrade path available
 - **Strapi 6.x**: Migration path documented for future
@@ -430,6 +508,6 @@ When modifying this project:
 
 ---
 
-*Last Updated: September 2025*  
-*Architecture Pattern: Hybrid Nx Monorepo (Dual-Pattern)*  
-*Status: Production Ready* ✅
+_Last Updated: September 2025_  
+_Architecture Pattern: Hybrid Nx Monorepo (Dual-Pattern)_  
+_Status: Production Ready_ ✅

@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useMembershipContext } from "../MembershipsContextProvider";
+import React, { useState } from 'react';
+import { useMembershipContext } from '../MembershipsContextProvider';
 import {
   Box,
   Theme,
@@ -12,7 +12,7 @@ import {
   Popover,
   Switch,
   Divider,
-} from "@mui/material";
+} from '@mui/material';
 import {
   Button,
   ConfigurableDatagridColumn,
@@ -23,35 +23,35 @@ import {
   useDataProvider,
   useResourceContext,
   useTranslate,
-} from "react-admin";
-import ViewWeekIcon from "@mui/icons-material/ViewWeek";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import RestartAltIcon from "@mui/icons-material/RestartAlt";
-import CustomCreateButton from "../../_components/CustomCreateButton";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import GridViewIcon from "@mui/icons-material/GridView";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import RecordCount from "../../_components/RecordCount";
-import { NaylorExportWaterSystem } from "../helpers/naylorExportWaterSystem";
-import { NaylorExportAssociate } from "../helpers/naylorExportAssociate";
-import useCurrentUser from "../../_helpers/useCurrentUser";
-import { defaultWatersystemExport } from "../helpers/defaultWatersystemExport";
-import { defaultAssociateExport } from "../helpers/defaultAssociateExport";
-import { styled } from "@mui/material/styles";
+} from 'react-admin';
+import ViewWeekIcon from '@mui/icons-material/ViewWeek';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import CustomCreateButton from '../../_components/CustomCreateButton';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import RecordCount from '../../_components/RecordCount';
+import { NaylorExportWaterSystem } from '../helpers/naylorExportWaterSystem';
+import { NaylorExportAssociate } from '../helpers/naylorExportAssociate';
+import { useCan, resourceToApiName } from '../../rbac-manager/useCan';
+import { defaultWatersystemExport } from '../helpers/defaultWatersystemExport';
+import { defaultAssociateExport } from '../helpers/defaultAssociateExport';
+import { styled } from '@mui/material/styles';
 
-const FieldToggleItem = styled("li")(({ theme }) => ({
-  display: "flex",
-  justifyContent: "space-between",
+const FieldToggleItem = styled('li')(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'space-between',
   paddingLeft: 0,
-  "& svg": {
-    cursor: "move",
+  '& svg': {
+    cursor: 'move',
   },
-  "&.drag-active": {
-    background: "transparent",
-    color: "transparent",
+  '&.drag-active': {
+    background: 'transparent',
+    color: 'transparent',
     outline: `1px solid ${theme.palette.action.selected}`,
-    "& .MuiSwitch-root, & svg": {
-      visibility: "hidden",
+    '& .MuiSwitch-root, & svg': {
+      visibility: 'hidden',
     },
   },
 }));
@@ -75,15 +75,15 @@ const CustomSelectColumnsButton = (props: {
   const [columns, setColumns] = useStore<string[]>(
     `preferences.${finalPreferenceKey}.columns`,
     availableColumns
-      .filter((column) => !omit?.includes(column.source ?? ""))
+      .filter((column) => !omit?.includes(column.source ?? ''))
       .map((column) => column.index)
   );
   const translate = useTranslate();
   const isXSmall = useMediaQuery<Theme>((theme) =>
-    theme.breakpoints.down("sm")
+    theme.breakpoints.down('sm')
   );
 
-  const title = translate("ra.action.select_columns", { _: "Columns" });
+  const title = translate('ra.action.select_columns', { _: 'Columns' });
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -179,12 +179,12 @@ const CustomSelectColumnsButton = (props: {
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "center",
+          vertical: 'bottom',
+          horizontal: 'center',
         }}
         transformOrigin={{
-          vertical: "top",
-          horizontal: "center",
+          vertical: 'top',
+          horizontal: 'center',
         }}
       >
         <Box display="flex" justifyContent="center" gap={1} p={1}>
@@ -192,7 +192,7 @@ const CustomSelectColumnsButton = (props: {
             label="Select All"
             size="small"
             onClick={handleSelectAll}
-            style={{ color: "#1976d2" }}
+            style={{ color: '#1976d2' }}
           >
             <RestartAltIcon />
           </Button>
@@ -200,7 +200,7 @@ const CustomSelectColumnsButton = (props: {
             label="Unselect All"
             size="small"
             onClick={handleUnselectAll}
-            style={{ color: "#d32f2f" }}
+            style={{ color: '#d32f2f' }}
           >
             <RestartAltIcon />
           </Button>
@@ -238,35 +238,32 @@ const FieldToggleRow = (props: {
   const x = React.useRef<number>(0);
   const y = React.useRef<number>(0);
 
-  const handleDocumentDragOver = React.useCallback(
-    (event: DragEvent) => {
-      x.current = event.clientX;
-      y.current = event.clientY;
-    },
-    []
-  );
+  const handleDocumentDragOver = React.useCallback((event: DragEvent) => {
+    x.current = event.clientX;
+    y.current = event.clientY;
+  }, []);
 
   const handleDragStart = () => {
-    document.addEventListener("dragover", handleDocumentDragOver);
+    document.addEventListener('dragover', handleDocumentDragOver);
   };
 
   const handleDrag = (event: React.DragEvent<HTMLLIElement>) => {
     const selectedItem = event.target as HTMLElement;
-    selectedItem.classList.add("drag-active");
-    const list = selectedItem.closest("ul");
+    selectedItem.classList.add('drag-active');
+    const list = selectedItem.closest('ul');
     let dropItem =
       document.elementFromPoint(x.current, y.current) === null
         ? selectedItem
-        : (document
-            .elementFromPoint(x.current, y.current) as HTMLElement)
-            ?.closest("li");
+        : (
+            document.elementFromPoint(x.current, y.current) as HTMLElement
+          )?.closest('li');
 
     if (!dropItem) return;
-    if (dropItem.classList.contains("dragIcon")) {
+    if (dropItem.classList.contains('dragIcon')) {
       dropItem = dropItem.parentNode as HTMLElement;
     }
     if (dropItem === selectedItem) return;
-    if (list === (dropItem.parentNode as HTMLElement)?.closest("ul")) {
+    if (list === (dropItem.parentNode as HTMLElement)?.closest('ul')) {
       dropIndex.current = (dropItem as HTMLElement).dataset.index ?? null;
       if (dropItem === selectedItem.nextSibling) {
         dropItem = dropItem.nextSibling as HTMLElement;
@@ -277,18 +274,18 @@ const FieldToggleRow = (props: {
 
   const handleDragEnd = (event: React.DragEvent<HTMLLIElement>) => {
     const selectedItem = event.target as HTMLElement;
-    const list = selectedItem.closest("ul");
+    const list = selectedItem.closest('ul');
     let dropItem =
       document.elementFromPoint(x.current, y.current) === null
         ? selectedItem
-        : (document
-            .elementFromPoint(x.current, y.current) as HTMLElement)
-            ?.closest("li");
+        : (
+            document.elementFromPoint(x.current, y.current) as HTMLElement
+          )?.closest('li');
 
     if (!dropItem) {
       if (
         y.current >
-        (selectedItem.closest("ul")?.getBoundingClientRect().bottom ?? 0)
+        (selectedItem.closest('ul')?.getBoundingClientRect().bottom ?? 0)
       ) {
         dropItem = list?.lastChild as HTMLElement;
       } else {
@@ -296,22 +293,19 @@ const FieldToggleRow = (props: {
       }
     }
 
-    if (dropItem && list === dropItem.closest("ul")) {
-      onMove(
-        selectedItem.dataset.index!,
-        dropIndex.current!
-      );
+    if (dropItem && list === dropItem.closest('ul')) {
+      onMove(selectedItem.dataset.index!, dropIndex.current!);
     } else {
       event.preventDefault();
       event.stopPropagation();
     }
-    selectedItem.classList.remove("drag-active");
-    document.removeEventListener("dragover", handleDocumentDragOver);
+    selectedItem.classList.remove('drag-active');
+    document.removeEventListener('dragover', handleDocumentDragOver);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLLIElement>) => {
     event.preventDefault();
-    event.dataTransfer.dropEffect = "move";
+    event.dataTransfer.dropEffect = 'move';
   };
 
   return (
@@ -357,12 +351,12 @@ const Membershipheader = () => {
     setIsGridView,
   } = useMembershipContext();
 
-  const { role } = useCurrentUser();
+  const { can } = useCan();
 
-  const resource = selectedTab === "summary" ? null : selectedTab;
+  const resource = selectedTab === 'summary' ? null : selectedTab;
   const title =
-    selectedTab === "invoices"
-      ? "Transactions"
+    selectedTab === 'invoices'
+      ? 'Transactions'
       : selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1);
 
   const preferenceKey = `${resource}.datagrid`;
@@ -378,30 +372,30 @@ const Membershipheader = () => {
   );
 
   const dataProvider = useDataProvider();
-  const [exportType, setExportType] = useState<string>("");
+  const [exportType, setExportType] = useState<string>('');
 
   const handleExport = async (exportType: string) => {
     if (!resource) {
-      console.error("Resource is null, cannot perform export.");
+      console.error('Resource is null, cannot perform export.');
       return;
     }
 
     const { data: records } = await dataProvider.getList(resource, {
       pagination: { page: 1, perPage: 1000 }, // Adjust pagination as needed
-      sort: { field: "id", order: "ASC" }, // Adjust sorting as needed
+      sort: { field: 'id', order: 'ASC' }, // Adjust sorting as needed
       filter:
-        exportType === "default"
-          ? resource === "watersystems"
+        exportType === 'default'
+          ? resource === 'watersystems'
             ? watersystemFilters
             : associateFilters
           : {},
-      ...(resource === "watersystems"
-        ? { meta: { raw: true, populate: ["contacts"] } }
+      ...(resource === 'watersystems'
+        ? { meta: { raw: true, populate: ['contacts'] } }
         : {}),
     });
 
-    if (exportType === "default") {
-      if (resource === "watersystems") {
+    if (exportType === 'default') {
+      if (resource === 'watersystems') {
         defaultWatersystemExport(
           records,
           availableColumns,
@@ -409,7 +403,7 @@ const Membershipheader = () => {
           `${title}-${new Date().toLocaleDateString()}`,
           dataProvider
         );
-      } else if (resource === "associates") {
+      } else if (resource === 'associates') {
         defaultAssociateExport(
           records,
           availableColumns,
@@ -418,8 +412,8 @@ const Membershipheader = () => {
           dataProvider
         );
       }
-    } else if (exportType === "naylor") {
-      if (resource === "watersystems") {
+    } else if (exportType === 'naylor') {
+      if (resource === 'watersystems') {
         NaylorExportWaterSystem(
           records,
           availableColumns,
@@ -427,7 +421,7 @@ const Membershipheader = () => {
           `${title}-${new Date().toLocaleDateString()}`,
           dataProvider
         );
-      } else if (resource === "associates") {
+      } else if (resource === 'associates') {
         NaylorExportAssociate(
           records,
           `${title}-${new Date().toLocaleDateString()}`,
@@ -437,10 +431,10 @@ const Membershipheader = () => {
     }
 
     // Reset the select input after export
-    setExportType("");
+    setExportType('');
   };
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   const handleViewToggle = () => {
     setIsGridView(!isGridView);
@@ -449,26 +443,26 @@ const Membershipheader = () => {
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#262626",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#262626',
         px: 1,
       }}
     >
       <Typography
         variant="h6"
         sx={{
-          fontSize: isSmall ? "10px" : null,
-          alignItems: "center",
-          color: "white",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          textAlign: "left",
+          fontSize: isSmall ? '10px' : null,
+          alignItems: 'center',
+          color: 'white',
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          textAlign: 'left',
           ml: 1,
         }}
       >
-        {isSettingsOpen ? "Settings" : title}
+        {isSettingsOpen ? 'Settings' : title}
       </Typography>
       <TopToolbar>
         {resource !== null && !isSettingsOpen && (
@@ -476,9 +470,9 @@ const Membershipheader = () => {
             disableSyncWithLocation
             exporter={undefined}
             filter={
-              resource === "watersystems"
+              resource === 'watersystems'
                 ? watersystemFilters
-                : resource === "associates"
+                : resource === 'associates'
                 ? associateFilters
                 : {}
             }
@@ -486,17 +480,17 @@ const Membershipheader = () => {
           >
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "row",
+                display: 'flex',
+                flexDirection: 'row',
                 gap: 2,
-                alignItems: "center",
+                alignItems: 'center',
               }}
             >
               <RecordCount />
-              {role === "Admin" && (
+              {can('create', resourceToApiName(resource)) && (
                 <CustomCreateButton
                   sx={{
-                    color: "white",
+                    color: 'white',
                   }}
                   label={`Add ${title.slice(0, title.length - 1)}`}
                 />
@@ -504,7 +498,7 @@ const Membershipheader = () => {
 
               <CustomSelectColumnsButton
                 style={{
-                  color: "white",
+                  color: 'white',
                 }}
               />
 
@@ -512,7 +506,7 @@ const Membershipheader = () => {
                 value={exportType}
                 displayEmpty
                 sx={{
-                  color: "white",
+                  color: 'white',
                 }}
                 size="small"
                 onChange={(e) => {
@@ -528,12 +522,16 @@ const Membershipheader = () => {
               </Select>
 
               {/* Grid View Toggle Button - Only show for associates */}
-              {resource === "associates" && (
-                <Tooltip title={isGridView ? "Switch to List View" : "Switch to Grid View"}>
+              {resource === 'associates' && (
+                <Tooltip
+                  title={
+                    isGridView ? 'Switch to List View' : 'Switch to Grid View'
+                  }
+                >
                   <IconButton
                     onClick={handleViewToggle}
                     sx={{
-                      color: "white",
+                      color: 'white',
                     }}
                   >
                     {isGridView ? <ViewListIcon /> : <GridViewIcon />}
@@ -544,7 +542,7 @@ const Membershipheader = () => {
               <Button
                 label="Filter"
                 sx={{
-                  color: "white",
+                  color: 'white',
                   mr: 2,
                 }}
                 onClick={() => {

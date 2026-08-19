@@ -1,28 +1,28 @@
-import React, { useState, useEffect } from "react";
-import { useListContext, useRedirect, useDataProvider } from "react-admin";
-import { Grid, Card, Typography, Box, Chip, Avatar } from "@mui/material";
-import getExpirationDate from "../../../_helpers/getExpirationDate";
-import getExpiryBackground from "../../../_helpers/getExpiryBackground";
-import getContrastColor from "../../../_helpers/getContrastColor";
-import uploadService from "../../../../services/uploadService/uploadService";
-import useCurrentUser from "../../../_helpers/useCurrentUser";
+import React, { useState, useEffect } from 'react';
+import { useListContext, useRedirect, useDataProvider } from 'react-admin';
+import { Grid, Card, Typography, Box, Chip, Avatar } from '@mui/material';
+import getExpirationDate from '../../../_helpers/getExpirationDate';
+import getExpiryBackground from '../../../_helpers/getExpiryBackground';
+import getContrastColor from '../../../_helpers/getContrastColor';
+import uploadService from '../../../../services/uploadService/uploadService';
+import { useCan } from '../../../rbac-manager/useCan';
 
 // Membership level color mapping based on the image provided
 const getMembershipLevelColor = (level: string) => {
-  if (!level) return "#BDBDBD";
+  if (!level) return '#BDBDBD';
   switch (true) {
-    case level.includes("Basic"):
-      return "#9E9E9E"; // Gray
-    case level.includes("Bronze"):
-      return "#CD7F32"; // Bronze
-    case level.includes("Silver"):
-      return "#C0C0C0"; // Silver
-    case level.includes("Gold"):
-      return "#FFD700"; // Gold
-    case level.includes("Platinum"):
-      return "#E5E4E2"; // Platinum
+    case level.includes('Basic'):
+      return '#9E9E9E'; // Gray
+    case level.includes('Bronze'):
+      return '#CD7F32'; // Bronze
+    case level.includes('Silver'):
+      return '#C0C0C0'; // Silver
+    case level.includes('Gold'):
+      return '#FFD700'; // Gold
+    case level.includes('Platinum'):
+      return '#E5E4E2'; // Platinum
     default:
-      return "#BDBDBD"; // Default gray for "None" or undefined
+      return '#BDBDBD'; // Default gray for "None" or undefined
   }
 };
 
@@ -33,7 +33,7 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
   const [isLoading, setIsLoading] = useState(true);
   const dataProvider = useDataProvider();
   const redirect = useRedirect();
-  const { role } = useCurrentUser();
+  const { can } = useCan();
 
   useEffect(() => {
     const loadLogo = async () => {
@@ -44,19 +44,22 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
             setLogoUrl(`${import.meta.env.VITE_API_ENDPOINT}${logoData.url}`);
           }
         }
-        if (typeof associate?.membership === "number") {
-          const { data: membership} = await dataProvider.getOne("memberships", {
-            id: associate.membership,
-          });
-          console.log("membership", membership.name);
+        if (typeof associate?.membership === 'number') {
+          const { data: membership } = await dataProvider.getOne(
+            'memberships',
+            {
+              id: associate.membership,
+            }
+          );
+          console.log('membership', membership.name);
           setMembershipLevel(membership.name);
-        } else if (typeof associate?.member_level === "string") {
+        } else if (typeof associate?.member_level === 'string') {
           setMembershipLevel(associate.member_level);
         } else {
-          setMembershipLevel("None");
+          setMembershipLevel('None');
         }
       } catch (error) {
-        console.error("Error loading logo:", error);
+        console.error('Error loading logo:', error);
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +69,11 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
   }, [associate?.logo]);
 
   const handleAssociateClick = () => {
-    redirect(role === "Admin" ? "edit" : "show", "associates", associate.id);
+    redirect(
+      can('update', 'associate') ? 'edit' : 'show',
+      'associates',
+      associate.id
+    );
   };
 
   const expirationDate = getExpirationDate(
@@ -74,44 +81,44 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
     associate.payment_last_date
   );
   const displayDate = expirationDate.isValid()
-    ? expirationDate.format("MM/DD/YY")
-    : "N/A";
+    ? expirationDate.format('MM/DD/YY')
+    : 'N/A';
 
   return (
     <Grid item key={associate.id} xs={12} sm={6} md={4} lg={3}>
       <Box
         sx={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
         <Card
           sx={{
-            width: "100%",
-            display: "flex",
-            flexDirection: "column",
-            "&:hover": { boxShadow: 6, cursor: "pointer" },
-            position: "relative",
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            '&:hover': { boxShadow: 6, cursor: 'pointer' },
+            position: 'relative',
             mb: 2,
             borderRadius: 2,
-            overflow: "hidden",
+            overflow: 'hidden',
           }}
           onClick={handleAssociateClick}
         >
           {/* Membership Level Tag in Top Right */}
           <Chip
-            label={membershipLevel || "None"}
+            label={membershipLevel || 'None'}
             size="small"
             sx={{
-              position: "absolute",
+              position: 'absolute',
               top: 8,
               right: 8,
               zIndex: 2,
-              fontWeight: "bold",
-              backgroundColor: getMembershipLevelColor(membershipLevel || ""),
+              fontWeight: 'bold',
+              backgroundColor: getMembershipLevelColor(membershipLevel || ''),
               color: getContrastColor(
-                getMembershipLevelColor(membershipLevel || "")
+                getMembershipLevelColor(membershipLevel || '')
               ),
             }}
           />
@@ -119,39 +126,40 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
           {/* Image Container */}
           <Box
             sx={{
-              width: "100%",
+              width: '100%',
               height: 300,
-              position: "relative",
-              overflow: "hidden",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
+              position: 'relative',
+              overflow: 'hidden',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
               backgroundColor: (theme) =>
                 isLoading
-                  ? theme.palette.mode === "dark"
+                  ? theme.palette.mode === 'dark'
                     ? theme.palette.grey[800]
-                    : "#f5f5f5"
-                  : "transparent",
+                    : '#f5f5f5'
+                  : 'transparent',
             }}
           >
             {isLoading ? (
-              <Avatar sx={{ width: "50%", height: "50%" }} />
+              <Avatar sx={{ width: '50%', height: '50%' }} />
             ) : logoUrl ? (
               <img
                 src={logoUrl}
-                alt={associate.name || "Associate logo"}
+                alt={associate.name || 'Associate logo'}
                 style={{
-                  width: "100%",
-                  objectPosition: "center",
+                  width: '100%',
+                  objectPosition: 'center',
                 }}
                 onError={(e) => {
                   // Fallback to avatar if image fails to load
-                  e.currentTarget.style.display = "none";
-                  e.currentTarget.parentElement!.innerHTML = '<div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;"><div style="width: 50%; height: 50%; background-color: #bdbdbd; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 2rem;">?</div></div>';
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.parentElement!.innerHTML =
+                    '<div style="display: flex; justify-content: center; align-items: center; width: 100%; height: 100%;"><div style="width: 50%; height: 50%; background-color: #bdbdbd; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 2rem;">?</div></div>';
                 }}
               />
             ) : (
-              <Avatar sx={{ width: "50%", height: "50%" }} />
+              <Avatar sx={{ width: '50%', height: '50%' }} />
             )}
           </Box>
         </Card>
@@ -162,9 +170,9 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
           noWrap
           align="center"
           sx={{
-            fontWeight: "bold",
-            maxWidth: "100%",
-            fontSize: "1rem",
+            fontWeight: 'bold',
+            maxWidth: '100%',
+            fontSize: '1rem',
             mb: 1,
           }}
         >
@@ -177,12 +185,12 @@ const AssociateGridItem = ({ associate }: { associate: any }) => {
           size="small"
           variant="outlined"
           sx={{
-            fontSize: "0.75rem",
-            fontWeight: "medium",
+            fontSize: '0.75rem',
+            fontWeight: 'medium',
             color: getContrastColor(
               getExpiryBackground(displayDate) as `#${string}`
             ),
-            borderColor: displayDate === "N/A" ? "#f44336" : "#ccc",
+            borderColor: displayDate === 'N/A' ? '#f44336' : '#ccc',
             backgroundColor: getExpiryBackground(displayDate),
           }}
         />
@@ -203,7 +211,7 @@ const AssociateGrid = () => {
       sx={{
         boxShadow: 1,
         borderRadius: 2,
-        overflow: "hidden",
+        overflow: 'hidden',
       }}
     >
       <Grid container columnSpacing={2} rowSpacing={1} sx={{ pb: 4, p: 1 }}>

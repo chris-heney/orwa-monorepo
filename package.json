@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "node ./scripts/interactive-dev.js",
+    "postinstall": "node ./scripts/ensure-strapi-deps.js",
     "dc:up": "docker compose up -d",
     "dc:down": "docker compose down",
     "build": "nx run-many --target=build --all",
@@ -48,7 +49,7 @@
     "@svgr/webpack": "^8.0.1",
     "@swc-node/register": "~1.9.1",
     "@swc/cli": "~0.6.0",
-    "@swc/core": "~1.13.5",
+    "@swc/core": "1.13.5",
     "@swc/helpers": "~0.5.11",
     "@tailwindcss/postcss": "^4.1.13",
     "@tailwindcss/vite": "^4.1.13",

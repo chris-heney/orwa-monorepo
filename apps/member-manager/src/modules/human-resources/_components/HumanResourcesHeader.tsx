@@ -1,5 +1,5 @@
-import React from "react";
-import { Box, Theme, Typography, useMediaQuery } from "@mui/material";
+import React from 'react';
+import { Box, Theme, Typography, useMediaQuery } from '@mui/material';
 import {
   Button,
   ConfigurableDatagridColumn,
@@ -9,18 +9,18 @@ import {
   useStore,
   useDataProvider,
   ExportButton,
-} from "react-admin";
-import CustomCreateButton from "../../_components/CustomCreateButton";
-import CustomExportFunction from "../../../helpers/custom-export-function";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import RecordCount from "../../_components/RecordCount";
-import { useHumanResourcesContext } from "../HumanResourcesContext";
-import CreateUserModal from "../users/CreateUserModal";
-import SettingsIcon from "@mui/icons-material/Settings";
-import { formatTitle } from "../../../helpers/formatResourceTitle";
-import CustomContactExport from "../contacts/CustomContactExport";
-import useCurrentUser from "../../_helpers/useCurrentUser";
-import RolesContextProvider from "../../../context/RolesContextProvider";
+} from 'react-admin';
+import CustomCreateButton from '../../_components/CustomCreateButton';
+import CustomExportFunction from '../../../helpers/custom-export-function';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import RecordCount from '../../_components/RecordCount';
+import { useHumanResourcesContext } from '../HumanResourcesContext';
+import CreateUserModal from '../users/CreateUserModal';
+import SettingsIcon from '@mui/icons-material/Settings';
+import { formatTitle } from '../../../helpers/formatResourceTitle';
+import CustomContactExport from '../contacts/CustomContactExport';
+import { useCan, resourceToApiName } from '../../rbac-manager/useCan';
+import RolesContextProvider from '../../../context/RolesContextProvider';
 
 const HumanResourcesHeader = () => {
   const {
@@ -34,7 +34,7 @@ const HumanResourcesHeader = () => {
     userFilters,
   } = useHumanResourcesContext();
 
-  const { role } = useCurrentUser();
+  const { can } = useCan();
 
   const resource = selectedTab;
 
@@ -55,13 +55,13 @@ const HumanResourcesHeader = () => {
   // Get current filters based on selected tab
   const getCurrentFilters = () => {
     switch (selectedTab) {
-      case "contacts":
+      case 'contacts':
         return contactFilters || {};
-      case "staff":
+      case 'staff':
         return staffFilters || {};
-      case "training-instructors":
+      case 'training-instructors':
         return instructorFilters || {};
-      case "users":
+      case 'users':
         return userFilters || {};
       default:
         return {};
@@ -70,19 +70,19 @@ const HumanResourcesHeader = () => {
 
   const handleExport = async () => {
     if (!resource) {
-      console.error("Resource is null, cannot perform export.");
+      console.error('Resource is null, cannot perform export.');
       return;
     }
 
     const { data: records } = await dataProvider.getList(resource, {
       pagination: { page: 1, perPage: 1000 }, // Adjust pagination as needed
-      sort: { field: "id", order: "ASC" }, // Adjust sorting as needed
+      sort: { field: 'id', order: 'ASC' }, // Adjust sorting as needed
       filter: getCurrentFilters(),
     });
 
-    if (selectedTab === "contacts") {
+    if (selectedTab === 'contacts') {
       CustomContactExport(
-        "contacts",
+        'contacts',
         availableColumns,
         columnIds,
         dataProvider,
@@ -99,37 +99,37 @@ const HumanResourcesHeader = () => {
     }
   };
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#262626",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#262626',
         px: 1,
       }}
     >
       <Typography
         variant="h6"
         sx={{
-          fontSize: isSmall ? "10px" : null,
-          alignItems: "center",
-          color: "white",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          textAlign: "left",
+          fontSize: isSmall ? '10px' : null,
+          alignItems: 'center',
+          color: 'white',
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          textAlign: 'left',
         }}
       >
-        {isSettingsOpen ? "Settings" : formatTitle(resource)}
+        {isSettingsOpen ? 'Settings' : formatTitle(resource)}
       </Typography>
       <TopToolbar>
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
             gap: 1,
           }}
         >
@@ -141,43 +141,44 @@ const HumanResourcesHeader = () => {
               filter={getCurrentFilters()}
               filterDefaultValues={getCurrentFilters()}
             >
-              {resource !== "users" && <RecordCount />}
+              {resource !== 'users' && <RecordCount />}
 
-              {selectedTab === "contacts" && (
+              {selectedTab === 'contacts' && (
                 <SelectColumnsButton
                   style={{
-                    color: "white",
+                    color: 'white',
                   }}
                 />
               )}
 
-              {resource !== "users" && (
+              {resource !== 'users' && (
                 <ExportButton
                   size="small"
                   sx={{
-                    color: "white",
+                    color: 'white',
                   }}
                 />
               )}
-              {resource === "users" && (
+              {resource === 'users' && (
                 <RolesContextProvider>
                   <CreateUserModal isSmall />
                 </RolesContextProvider>
               )}
 
-              {resource !== "users" && role === "Admin" && (
-                <CustomCreateButton
-                  size="small"
-                  sx={{
-                    color: "white",
-                  }}
-                  label=""
-                />
-              )}
+              {resource !== 'users' &&
+                can('create', resourceToApiName(resource)) && (
+                  <CustomCreateButton
+                    size="small"
+                    sx={{
+                      color: 'white',
+                    }}
+                    label=""
+                  />
+                )}
 
               <Button
                 sx={{
-                  color: "white",
+                  color: 'white',
                 }}
                 size="small"
                 onClick={() => {
@@ -191,7 +192,8 @@ const HumanResourcesHeader = () => {
               </Button>
             </ListBase>
           )}
-          {role === "Admin" && (
+          {/* The settings panel (BadgeList) manages contact-badge records. */}
+          {can('create', 'contact-badge') && (
             <Button
               onClick={() => {
                 setIsSettingsOpen((prev) => !prev);
@@ -201,9 +203,9 @@ const HumanResourcesHeader = () => {
               <SettingsIcon
                 fontSize="small"
                 sx={{
-                  color: "white",
-                  "&:hover": {
-                    color: "white",
+                  color: 'white',
+                  '&:hover': {
+                    color: 'white',
                   },
                 }}
               />

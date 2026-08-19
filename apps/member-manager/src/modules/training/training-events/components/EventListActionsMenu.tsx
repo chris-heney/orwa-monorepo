@@ -1,9 +1,9 @@
-import React, { useState } from 'react'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
-import ListItemIcon from '@mui/material/ListItemIcon'
-import ListItemText from '@mui/material/ListItemText'
-import Divider from '@mui/material/Divider'
+import React, { useState } from 'react';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Divider from '@mui/material/Divider';
 import {
   CloneButton,
   DeleteButton,
@@ -12,31 +12,25 @@ import {
   useRecordContext,
   useRefresh,
   MenuItemLink,
-} from 'react-admin'
-import SendIcon from '@mui/icons-material/Send'
-import UploadFileIcon from '@mui/icons-material/UploadFile'
-import PublicIcon from '@mui/icons-material/Public'
-import CancelIcon from '@mui/icons-material/Cancel'
-import RestoreIcon from '@mui/icons-material/Restore'
-import EditIcon from '@mui/icons-material/Edit'
-import VisibilityIcon from '@mui/icons-material/Visibility'
-import authProvider from '../../../../authProvider'
-import SuccessNotification from '../../../_components/SuccessNotification'
-import useUserRole from '../../_components/useUserRole'
-import {
-  CRUD_ROLES,
-  DEQ_ROLES,
-  canCancel,
-  canReinstate,
-  sendReviewEmail,
-} from '../../workflow'
+} from 'react-admin';
+import SendIcon from '@mui/icons-material/Send';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import PublicIcon from '@mui/icons-material/Public';
+import CancelIcon from '@mui/icons-material/Cancel';
+import RestoreIcon from '@mui/icons-material/Restore';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import authProvider from '../../../../authProvider';
+import SuccessNotification from '../../../_components/SuccessNotification';
+import { useCan } from '../../../rbac-manager/useCan';
+import { canCancel, canReinstate, sendReviewEmail } from '../../workflow';
 
 interface ActionsMenuProps {
-  anchorEl: HTMLElement | null
-  setAnchorEl: (anchorEl: HTMLElement | null) => void
-  open: boolean
-  setModalIsOpen: (isOpen: boolean) => void
-  setPostModalIsOpen: (isOpen: boolean) => void
+  anchorEl: HTMLElement | null;
+  setAnchorEl: (anchorEl: HTMLElement | null) => void;
+  open: boolean;
+  setModalIsOpen: (isOpen: boolean) => void;
+  setPostModalIsOpen: (isOpen: boolean) => void;
 }
 
 const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
@@ -46,51 +40,63 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
   setModalIsOpen,
   setPostModalIsOpen,
 }) => {
-  const record = useRecordContext()
-  const dataProvider = useDataProvider()
-  const role = useUserRole()
-  const refresh = useRefresh()
-  const [notification, setSendNotification] = useState(false)
-  const [notificationText, setNotificationText] = useState('')
+  const record = useRecordContext();
+  const dataProvider = useDataProvider();
+  const { can } = useCan();
+  // Workflow capability tiers — see the tier mapping doc in workflow.ts.
+  const canCrud = can('update', 'training-event');
+  const canDeq = can('delete', 'training-event');
+  const canCreate = can('create', 'training-event');
+  const refresh = useRefresh();
+  const [notification, setSendNotification] = useState(false);
+  const [notificationText, setNotificationText] = useState('');
 
-  const handleClose = () => setAnchorEl(null)
+  const handleClose = () => setAnchorEl(null);
 
   const updateStatus = async (newStatus: string) => {
     const params: UpdateParams = {
       id: record.id,
       previousData: record,
       data: { status: newStatus },
-    }
-    await dataProvider.update('training-events', params)
-    refresh()
-    handleClose()
-  }
+    };
+    await dataProvider.update('training-events', params);
+    refresh();
+    handleClose();
+  };
 
   const handleSendForReview = async () => {
-    const identity = await authProvider.getIdentity?.()
-    await updateStatus('REVIEW')
-    const sent = await sendReviewEmail(record, identity)
+    const identity = await authProvider.getIdentity?.();
+    await updateStatus('REVIEW');
+    const sent = await sendReviewEmail(record, identity);
     setNotificationText(
       sent
         ? 'Event sent for review — the Training Manager has been notified.'
         : 'Event sent for review, but the notification email failed.'
-    )
-    setSendNotification(true)
-  }
+    );
+    setSendNotification(true);
+  };
 
-  const menuItemSx = { minWidth: 180 }
+  const menuItemSx = { minWidth: 180 };
 
   return (
     <>
       <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-        <MenuItemLink to={`/training-events/${record.id}/show`} onClick={handleClose} sx={menuItemSx}>
+        <MenuItemLink
+          to={`/training-events/${record.id}/show`}
+          onClick={handleClose}
+          sx={menuItemSx}
+        >
           <ListItemIcon>
             <VisibilityIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>View Event</ListItemText>
         </MenuItemLink>
-        {CRUD_ROLES.includes(role) && (
-          <MenuItemLink to={`/training-events/${record.id}/edit`} onClick={handleClose} sx={menuItemSx}>
+        {canCrud && (
+          <MenuItemLink
+            to={`/training-events/${record.id}/edit`}
+            onClick={handleClose}
+            sx={menuItemSx}
+          >
             <ListItemIcon>
               <EditIcon fontSize="small" />
             </ListItemIcon>
@@ -98,7 +104,7 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
           </MenuItemLink>
         )}
 
-        {record.status === 'DRAFT' && CRUD_ROLES.includes(role) && (
+        {record.status === 'DRAFT' && canCrud && (
           <MenuItem onClick={handleSendForReview} sx={menuItemSx}>
             <ListItemIcon>
               <UploadFileIcon fontSize="small" color="success" />
@@ -106,11 +112,11 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
             <ListItemText>Send for Review</ListItemText>
           </MenuItem>
         )}
-        {record.status === 'REVIEW' && DEQ_ROLES.includes(role) && (
+        {record.status === 'REVIEW' && canDeq && (
           <MenuItem
             onClick={() => {
-              setModalIsOpen(true)
-              handleClose()
+              setModalIsOpen(true);
+              handleClose();
             }}
             sx={menuItemSx}
           >
@@ -120,11 +126,11 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
             <ListItemText>Send to DEQ</ListItemText>
           </MenuItem>
         )}
-        {record.status === 'DEQ' && DEQ_ROLES.includes(role) && (
+        {record.status === 'DEQ' && canDeq && (
           <MenuItem
             onClick={() => {
-              setPostModalIsOpen(true)
-              handleClose()
+              setPostModalIsOpen(true);
+              handleClose();
             }}
             sx={menuItemSx}
           >
@@ -135,7 +141,7 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
           </MenuItem>
         )}
 
-        {canCancel(record.status, role) && (
+        {canCancel(record.status, canCrud) && (
           <MenuItem onClick={() => updateStatus('CANCELLED')} sx={menuItemSx}>
             <ListItemIcon>
               <CancelIcon fontSize="small" color="error" />
@@ -143,7 +149,7 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
             <ListItemText>Cancel Event</ListItemText>
           </MenuItem>
         )}
-        {canReinstate(record.status, role) && (
+        {canReinstate(record.status, canCrud) && (
           <MenuItem onClick={() => updateStatus('DRAFT')} sx={menuItemSx}>
             <ListItemIcon>
               <RestoreIcon fontSize="small" color="success" />
@@ -152,8 +158,8 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
           </MenuItem>
         )}
 
-        {(role === 'Admin' || CRUD_ROLES.includes(role)) && <Divider />}
-        {role === 'Admin' && (
+        {(canCreate || canDeq) && <Divider />}
+        {canCreate && (
           <MenuItem sx={menuItemSx}>
             <CloneButton
               sx={{ justifyContent: 'flex-start', p: 0 }}
@@ -177,7 +183,7 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
             />
           </MenuItem>
         )}
-        {CRUD_ROLES.includes(role) && (
+        {canDeq && (
           <MenuItem onClick={handleClose} sx={menuItemSx}>
             <DeleteButton
               size="small"
@@ -195,6 +201,6 @@ const EventListActionsMenu: React.FC<ActionsMenuProps> = ({
         setSendNotification={setSendNotification}
       />
     </>
-  )
-}
-export default EventListActionsMenu
+  );
+};
+export default EventListActionsMenu;
