@@ -18,7 +18,7 @@ const AwardEdit = () => (
     mutationMode="pessimistic"
     transform={transformAward}
     sx={reviewResourceSx}
-    queryOptions={{ meta: { populate: "*" } }}
+    queryOptions={{ meta: { populate: "*", raw: true } }}
   >
     <AwardForm />
   </Edit>

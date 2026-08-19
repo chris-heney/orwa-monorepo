@@ -37,6 +37,7 @@ type AwardRecord = Record<string, unknown> & {
   review_notes?: string | null;
   submission_date?: string | null;
   system_name?: string;
+  award_name_printed?: string;
   watersystem?: { name?: string; county?: string | null } | null;
   operation_start_date?: string | null;
   employment_date?: string | null;
@@ -54,7 +55,7 @@ type AwardRecord = Record<string, unknown> & {
   board_members?: unknown;
   supporting_documents?: unknown;
   nomination_pdf?: unknown;
-  nomination_description?: string | null;
+  justification?: string | null;
   nominator_first_name?: string;
   nominator_last_name?: string;
   nominator_address?: string;
@@ -119,10 +120,13 @@ const AwardPacket = () => {
     >
       <PacketSection title="Nominee Information">
         <PacketField label="Nominee Full Name" value={record?.nominee_name} />
+        <PacketField
+          label="Name as printed on award"
+          value={record?.award_name_printed || record?.system_name}
+        />
         <PacketField label="Please select the type of award" value={record?.award_type} />
         <PacketField label="Email Address" value={record?.email} email />
         <PacketField label="Daytime Phone" value={record?.daytime_phone} />
-        <PacketField label="County" value={watersystemCounty(record || {})} />
         <PacketField label="Award Year" value={record?.award_year} />
         <PacketField
           label="Street Address"
@@ -167,6 +171,10 @@ const AwardPacket = () => {
           value={watersystemName(record || {})}
         />
         <PacketField
+          label="County"
+          value={watersystemCounty(record || {})}
+        />
+        <PacketField
           label="Date System Began Operation"
           value={asDateString(record?.operation_start_date)}
         />
@@ -197,10 +205,10 @@ const AwardPacket = () => {
         <PacketField label="Total Employees" value={employeeTotal(record || {})} />
       </PacketSection>
 
-      <PacketSection title="Nomination Description" columns={1}>
+      <PacketSection title="Justification" columns={1}>
         <PacketField
           label="What makes the nominee deserving of this award?"
-          value={record?.nomination_description}
+          value={record?.justification}
           span
         />
       </PacketSection>
@@ -276,7 +284,7 @@ const AwardShow = () => (
     actions={false}
     sx={reviewResourceSx}
     queryOptions={{
-      meta: { populate: "*" },
+      meta: { populate: "*", raw: true },
     }}
   >
     <AwardPacket />

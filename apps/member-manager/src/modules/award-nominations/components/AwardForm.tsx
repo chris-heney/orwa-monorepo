@@ -246,8 +246,16 @@ const AwardForm = () => {
               <Grid container spacing={2}>
                 <Grid item xs={12} md={6}>
                   <TextInput
+                    source="award_name_printed"
+                    label="Name as printed on award"
+                    fullWidth
+                    sx={fullFieldSx}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <TextInput
                     source="system_name"
-                    label="System Name (if not in list)"
+                    label="System Name"
                     fullWidth
                     sx={fullFieldSx}
                   />
@@ -330,9 +338,9 @@ const AwardForm = () => {
           </Grid>
 
           <Grid item xs={12}>
-            <ReviewSectionCard title="Nomination Description">
+            <ReviewSectionCard title="Justification">
               <TextInput
-                source="nomination_description"
+                source="justification"
                 label="What makes the nominee deserving of this award?"
                 multiline
                 minRows={6}
