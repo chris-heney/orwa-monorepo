@@ -136,6 +136,18 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::contact-badge.contact-badge"
+    },
+    "scholarship_applicant": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::scholarship-application.scholarship-application",
+      "mappedBy": "contact"
+    },
+    "award_nominations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::award-nomination.award-nomination",
+      "mappedBy": "contact"
     }
   }
 }

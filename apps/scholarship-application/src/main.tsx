@@ -1,10 +1,10 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
+import App from "./App";
 import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import UserContextProvider from "./providers/UserContextProvider.tsx";
-import AppContextProvider from "./providers/AppContextProvider.tsx";
+import UserContextProvider from "./providers/UserContextProvider";
+import AppContextProvider from "./providers/AppContextProvider";
 
 const queryClient = new QueryClient();
 

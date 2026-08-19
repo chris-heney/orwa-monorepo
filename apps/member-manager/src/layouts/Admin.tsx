@@ -30,7 +30,7 @@ import {
 } from 'react-admin'
 import { Box } from '@mui/material'
 import DashboardAppBar from '../modules/dashboard/_components/DashboardBar'
-import { Email, Gavel } from '@mui/icons-material'
+import { Email, EmojiEvents, Gavel, School } from '@mui/icons-material'
 import useCurrentUser from '../modules/_helpers/useCurrentUser'
 
 const STAFF_HOME = '/membership-management'
@@ -168,6 +168,20 @@ const MyMenu = () => {
         label="Grant Manager"
         title="Grant Manager"
         icon={<RequestPageIcon />}
+      />
+      <MultiLevelMenu.Item
+        name="orwef-scholarships"
+        to="/orwef-scholarships/dashboard"
+        label="ORWEF Scholarships"
+        title="ORWEF Scholarships"
+        icon={<School />}
+      />
+      <MultiLevelMenu.Item
+        name="orwa-awards"
+        to="/orwa-awards/dashboard"
+        label="ORWA Awards"
+        title="ORWA Awards"
+        icon={<EmojiEvents />}
       />
       {/* <MultiLevelMenu.Item
         name="soonerwarn-dashboard"

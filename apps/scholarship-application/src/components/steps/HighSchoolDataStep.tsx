@@ -1,6 +1,5 @@
 import React from 'react';
 import { Grid } from '@mui/material';
-import SectionHeading from '../_components/SectionHeading';
 import { TextInput } from '../_components/TextInput';
 import { NumberInput } from '../_components/NumberInput';
 import FileInput from '../_components/FileInput';
@@ -8,9 +7,11 @@ import FormSection from '../_components/FormSection';
 
 const HighSchoolDataStep = () => {
   return (
-    <FormSection title="High School Data">
+    <FormSection
+      title="High School Data"
+      description="(Transcript of previous year whether high school or college must be submitted with application)"
+    >
       <Grid container spacing={3}>
-        {/* School Information */}
         <Grid size={{ xs: 12, md: 6 }}>
           <TextInput
             name="school_name"
@@ -27,7 +28,6 @@ const HighSchoolDataStep = () => {
           />
         </Grid>
 
-        {/* School Address */}
         <Grid size={{ xs: 12 }}>
           <TextInput
             name="school_address.street"
@@ -58,7 +58,6 @@ const HighSchoolDataStep = () => {
           />
         </Grid>
 
-        {/* Academic Information */}
         <Grid size={{ xs: 12, md: 4 }}>
           <NumberInput
             name="gpa"
@@ -88,23 +87,24 @@ const HighSchoolDataStep = () => {
           />
         </Grid>
 
-        {/* File Uploads */}
         <Grid size={{ xs: 12, md: 6 }}>
           <FileInput
-            name="upload_transcript"
+            name="transcript"
             label="Upload High School Transcript"
             required
             maxSizeMB={50}
             acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.png']}
+            helperText="Max. file size: 50 MB."
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <FileInput
-            name="upload_scores"
+            name="test_scores"
             label="Upload ACT/SAT Scores"
             required
             maxSizeMB={50}
             acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.png']}
+            helperText="Max. file size: 50 MB."
           />
         </Grid>
       </Grid>

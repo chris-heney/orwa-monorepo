@@ -1,3 +1,5 @@
+import { useMemo, type ReactNode } from "react";
+import { TermsGate } from "@orwa/terms-gate";
 import "./App.css";
 import ScholarshipApplicationForm from "./components/ScholarshipApplicationForm";
 import Header from "./components/Header";
@@ -9,9 +11,10 @@ import LoginModal from "./components/LoginModal";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
-  const { viewingEntries, isLoggedIn} = useUserContext();
+  const { viewingEntries, isLoggedIn } = useUserContext();
+  const terms = useMemo(() => ["ORWEF Scholarship"], []);
 
-  return (
+  const content: ReactNode = (
     <ErrorBoundary>
       {!isLoggedIn && <LoginModal />}
       <Header />
@@ -21,6 +24,16 @@ function App() {
         </NotifyProvider>
       </EntryListProvider>
     </ErrorBoundary>
+  );
+
+  return (
+    <TermsGate
+      terms={terms}
+      apiEndpoint={import.meta.env.VITE_API_ENDPOINT}
+      apiKey={import.meta.env.VITE_API_KEY}
+    >
+      {content}
+    </TermsGate>
   );
 }
 

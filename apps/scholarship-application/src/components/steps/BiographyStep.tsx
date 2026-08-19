@@ -10,7 +10,7 @@ const BiographyStep = () => {
       <Grid container spacing={3}>
         <Grid size={{ xs: 12 }}>
           <FileInput
-            name="bio_upload"
+            name="biography"
             label="Upload Biography"
             required
             maxSizeMB={50}

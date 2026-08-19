@@ -429,6 +429,18 @@
     },
     "expiration_notification_sent": {
       "type": "datetime"
+    },
+    "scholarship_applications": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::scholarship-application.scholarship-application",
+      "mappedBy": "watersystem"
+    },
+    "award_nominations": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::award-nomination.award-nomination",
+      "mappedBy": "watersystem"
     }
   }
 }

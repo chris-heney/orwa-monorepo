@@ -30,7 +30,7 @@ import type { AgDatagridPrefs, AgDatagridProps } from "./types";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 const INTERACTIVE_SELECTOR =
-  "input,button,a,label,textarea,select,.MuiCheckbox-root,.MuiSwitch-root,.MuiIconButton-root,[data-ag-skip-row-click]";
+  "input,button,a,label,textarea,select,.MuiCheckbox-root,.MuiSwitch-root,.MuiIconButton-root,.ag-checkbox-input,.ag-selection-checkbox,.ag-header-select-all,[data-ag-skip-row-click]";
 
 type RaColumnMeta = {
   index: string;
@@ -46,6 +46,8 @@ const AgDatagrid = ({
   rowClick = "show",
   height = "calc(100vh - 320px)",
   className,
+  rowSelection = false,
+  selectionStoreKey,
 }: AgDatagridProps) => {
   const theme = useTheme();
   const translate = useTranslate();
@@ -70,6 +72,8 @@ const AgDatagrid = ({
   const storeKey = preferenceKey || `agGrid.${resource}`;
   const raColumnsKey = columnsPreferenceKey || `${resource}.datagrid`;
   const [prefs, setPrefs] = useStore<AgDatagridPrefs>(storeKey, {});
+  const selectedIdsKey = selectionStoreKey || `${resource}.selectedIds`;
+  const [, setSelectedIds] = useStore<(string | number)[]>(selectedIdsKey, []);
 
   // Same preference shape as DatagridConfigurable so the black-bar
   // SelectColumnsButton (show/hide + reorder) drives this grid.
@@ -262,6 +266,23 @@ const AgDatagrid = ({
     [redirect, resource, rowClick]
   );
 
+  const handleSelectionChanged = useCallback(() => {
+    if (!rowSelection) return;
+    const api = gridRef.current?.api;
+    if (!api) return;
+    const ids = api
+      .getSelectedRows()
+      .map((row) => row?.id ?? row?.documentId)
+      .filter((id): id is string | number => id != null && id !== "");
+    setSelectedIds(ids);
+  }, [rowSelection, setSelectedIds]);
+
+  // Clear stale selection when list data is replaced.
+  useEffect(() => {
+    if (!rowSelection) return;
+    setSelectedIds([]);
+  }, [data, rowSelection, setSelectedIds]);
+
   const agTheme = useMemo(
     () =>
       themeQuartz.withPart(
@@ -311,6 +332,19 @@ const AgDatagrid = ({
             if (e.finished) persistColumnWidths();
           }}
           onRowClicked={handleRowClicked}
+          onSelectionChanged={
+            rowSelection ? handleSelectionChanged : undefined
+          }
+          rowSelection={
+            rowSelection
+              ? {
+                  mode: "multiRow",
+                  checkboxes: true,
+                  headerCheckbox: true,
+                  enableClickSelection: false,
+                }
+              : undefined
+          }
           rowStyle={rowClick ? { cursor: "pointer" } : undefined}
         />
       </Box>

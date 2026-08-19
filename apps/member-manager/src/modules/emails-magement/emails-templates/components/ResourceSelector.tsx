@@ -36,6 +36,10 @@ const ResourceSelector = ({ onResourceChange }: ResourceSelectorProps) => {
             { id: "conference-contestants", name: "Conference Contestants" },
             { id: "conference-registrations", name: "Conference Registrations" },
             
+            // Scholarships / Awards
+            { id: "scholarship-applications", name: "Scholarship Applications" },
+            { id: "award-nominations", name: "Award Nominations" },
+
             // Grant resources
             { id: "grant-application-finals", name: "Grant Applications" },
             

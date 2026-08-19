@@ -17,28 +17,34 @@ const FormStepper = ({ stepIndex, setStepIndex }: FormStepperProps) => {
 
     return (
         <section className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-10">
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-6">
                 {/* Mobile: Current Step Display */}
-                <div className="md:hidden mb-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                <div className="md:hidden">
+                    <div className="flex items-center justify-between gap-3 min-h-10">
+                        <h3 className="m-0 text-lg font-semibold leading-tight text-gray-900">
                             {steps.filter(step => step.active)[stepIndex]?.label}
                         </h3>
-                        <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                        <span className="inline-flex items-center justify-center shrink-0 text-sm leading-none text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full whitespace-nowrap">
                             {stepIndex + 1} of {steps.filter(step => step.active).length}
                         </span>
                     </div>
                 </div>
 
-                {/* Desktop: Full Stepper */}
-                <div className="hidden md:block overflow-x-auto px-4 py-2">
+                {/* Desktop: Full Stepper — overflow-y hidden avoids a vertical scrollbar when
+                    overflow-x is auto; py-3 keeps 1.75rem step icons fully inside the clip box. */}
+                <div className="hidden md:block overflow-x-auto overflow-y-hidden px-4 py-3 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                     <Stepper 
                         nonLinear 
                         activeStep={stepIndex}
                         sx={{
-                            py: 1,
+                            py: 0.5,
+                            minHeight: 40,
+                            alignItems: 'center',
+                            '& .MuiStep-root': {
+                                minHeight: 40,
+                            },
                             '& .MuiStepConnector-root': {
-                                top: 18,
+                                top: 20,
                                 left: 'calc(-50% + 16px)',
                                 right: 'calc(50% + 16px)',
                                 '& .MuiStepConnector-line': {
@@ -61,8 +67,8 @@ const FormStepper = ({ stepIndex, setStepIndex }: FormStepperProps) => {
                                         id={`step-index-${index}`}
                                         onClick={() => setStepIndex(index)}
                                         sx={{
-                                            p: 2,
-                                            py: 2,
+                                            p: 1,
+                                            py: 0.5,
                                             minWidth: 'auto',
                                             '& .MuiStepLabel-root': {
                                                 flexDirection: 'column',
@@ -73,6 +79,7 @@ const FormStepper = ({ stepIndex, setStepIndex }: FormStepperProps) => {
                                                     alignSelf: 'center',
                                                     '& .MuiStepIcon-root': {
                                                         fontSize: '1.75rem',
+                                                        overflow: 'visible',
                                                         color: index <= stepIndex ? '#3b82f6' : '#d1d5db',
                                                         '&.Mui-completed': {
                                                             color: '#10b981',

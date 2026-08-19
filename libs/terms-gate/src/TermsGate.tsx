@@ -30,7 +30,6 @@ export function TermsGate({
   );
 
   const [loading, setLoading] = useState(needed.length > 0);
-  const [error, setError] = useState<string | null>(null);
   const [queue, setQueue] = useState<TermDocument[]>([]);
   const [index, setIndex] = useState(0);
   const [canAgree, setCanAgree] = useState(false);
@@ -45,7 +44,6 @@ export function TermsGate({
 
     let cancelled = false;
     setLoading(true);
-    setError(null);
 
     fetchTerms(apiEndpoint, apiKey)
       .then((all) => {
@@ -57,9 +55,13 @@ export function TermsGate({
         setIndex(0);
         setCanAgree(false);
       })
-      .catch((err: Error) => {
+      .catch((err: unknown) => {
         if (cancelled) return;
-        setError(err.message || 'Unable to load terms');
+        const message =
+          err instanceof Error ? err.message : 'Unable to load terms';
+        console.warn('[terms-gate] Skipping terms overlay:', message);
+        setQueue([]);
+        setIndex(0);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -71,7 +73,7 @@ export function TermsGate({
   }, [apiEndpoint, apiKey, needed, termsKey, global]);
 
   const current = queue[index];
-  const locked = loading || !!error || !!current;
+  const locked = loading || !!current;
 
   useEffect(() => {
     setCanAgree(false);
@@ -113,12 +115,7 @@ export function TermsGate({
             {loading && (
               <div className="orwa-terms-status">Loading terms…</div>
             )}
-            {!loading && error && (
-              <div className="orwa-terms-status orwa-terms-status--error">
-                {error}
-              </div>
-            )}
-            {!loading && !error && current && (
+            {!loading && current && (
               <>
                 <header className="orwa-terms-header">
                   <h2 className="orwa-terms-title">{current.title}</h2>

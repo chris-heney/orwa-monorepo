@@ -5,9 +5,15 @@ interface MaskedPhoneInputProps {
   name: string;
   label?: string;
   required?: boolean;
+  helperText?: string;
 }
 
-const MaskedPhoneInput: React.FC<MaskedPhoneInputProps> = ({ name, label = "Phone", required = false }) => {
+const MaskedPhoneInput: React.FC<MaskedPhoneInputProps> = ({
+  name,
+  label = "Phone",
+  required = false,
+  helperText,
+}) => {
   const transformPhoneInput = (value: string) => {
     value = value.replace(/[^\d]/g, ''); // Remove non-digit characters
     const formattedValue = value.replace(
@@ -32,6 +38,7 @@ const MaskedPhoneInput: React.FC<MaskedPhoneInputProps> = ({ name, label = "Phon
       transformInput={transformPhoneInput}
       name={name}
       required={required}
+      helperText={helperText}
       maxLength={14}
     />
   );

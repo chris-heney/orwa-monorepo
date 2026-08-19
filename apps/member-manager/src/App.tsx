@@ -42,6 +42,8 @@ import {
   EmailsTemplates,
   EmailTasks,
   Terms,
+  ScholarshipApplications,
+  AwardNominations,
 } from "./modules";
 import {
   AdminDashboard,
@@ -55,6 +57,8 @@ import {
   EmailManagement,
   SettingsDashboard,
   MediaLibraryPage,
+  OrwefManagement,
+  AwardManagement,
 } from "./modules/dashboards";
 import { LoginPage } from "./pages";
 import EventSettings from "./modules/training/settings/EventSettings";
@@ -213,6 +217,11 @@ export const App = () => {
           <Resource name="email-templates" {...EmailsTemplates} />
           <Resource name="scheduled-email-tasks" {...EmailTasks} />
           <Resource name="terms" {...Terms} />
+          <Resource
+            name="scholarship-applications"
+            {...ScholarshipApplications}
+          />
+          <Resource name="award-nominations" {...AwardNominations} />
 
           {/* --- MUI Pages--- */}
           <CustomRoutes>
@@ -232,6 +241,14 @@ export const App = () => {
               element={<HumanResources />}
             />
             <Route path="grant/dashboard" element={<GrantManagement />} />
+            <Route
+              path="orwef-scholarships/dashboard"
+              element={<OrwefManagement />}
+            />
+            <Route
+              path="orwa-awards/dashboard"
+              element={<AwardManagement />}
+            />
             <Route
               path="membership-management"
               element={<MembershipManagement />}

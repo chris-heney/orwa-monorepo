@@ -9,6 +9,7 @@ interface TextAreaProps {
   helperText?: string;
   maxCharCount?: number;
   maxRows?: number; // New prop for maximum rows
+  placeholder?: string;
 }
 
 const TextAreaInput = ({
@@ -19,6 +20,7 @@ const TextAreaInput = ({
   helperText,
   maxCharCount,
   maxRows = 10,
+  placeholder,
 }: TextAreaProps) => {
   const {
     register,
@@ -75,6 +77,7 @@ const TextAreaInput = ({
             : undefined,
         })}
         rows={rows}
+        placeholder={placeholder}
         className={`input-field block w-full border rounded-lg p-3 focus:outline-none bg-white transition-all duration-200 ${
           errors[name]
             ? "border-red-500 focus:ring-2 focus:ring-red-500 focus:border-red-500"

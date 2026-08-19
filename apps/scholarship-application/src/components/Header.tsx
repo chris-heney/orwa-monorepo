@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import { useUserContext } from "../providers/UserContextProvider";
 import ProfileMenu from "./ProfileMenu";
 
@@ -6,36 +5,32 @@ export const Header = () => {
   const { isLoggedIn } = useUserContext();
 
   return (
-    <header className="bg-gradient-to-r from-gray-900 to-black shadow-lg">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <Box className="flex flex-col-reverse md:flex-row justify-between items-center">
-          {/* Conference Info Section */}
-          <div className="text-center md:text-left">
-            <h1 className="text-white text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">
+    <header className="bg-black">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-5">
+        <div className="flex flex-col items-center gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
+          {/* Brand copy — block stack; order-2 so logo sits above on mobile */}
+          <div className="order-2 md:order-1 flex flex-col items-center md:items-start gap-0.5 text-center md:text-left">
+            <h1 className="block m-0 text-white text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight">
               ORWEF SCHOLARSHIP
             </h1>
-            <p className="text-blue-200 text-sm sm:text-base font-medium mt-1">
+            <p className="block m-0 text-blue-200 text-sm sm:text-base font-medium leading-snug">
               Application Portal
             </p>
           </div>
 
-          {/* Logo and Profile Section */}
-          <div className="flex items-center gap-4 mb-4 md:mb-0">
-            {/* Logo */}
-            <img 
-              src="./orwa.webp" 
-              className="max-h-16 sm:max-h-20 object-contain drop-shadow-lg" 
-              alt="ORWA Logo" 
+          <div className="order-1 md:order-2 flex items-center justify-center gap-4 shrink-0">
+            <img
+              src="./orwa.png"
+              className="h-14 sm:h-16 md:h-20 w-auto object-contain"
+              alt="ORWA Logo"
             />
-
-            {/* Profile Menu */}
             {isLoggedIn && (
               <div className="flex items-center">
                 <ProfileMenu />
               </div>
             )}
           </div>
-        </Box>
+        </div>
       </div>
     </header>
   );

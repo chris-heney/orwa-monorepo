@@ -34,6 +34,7 @@ interface EmailFormFieldsProps {
 const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
   const form = useFormContext();
   const status = form.watch("grant_status");
+  const formResource = form.watch("resource");
   const [resource, setResource] = useState<string>("");
   const [schemaFields, setSchemaFields] = useState<string[]>([]);
   const [currentFocusField, setCurrentFocusField] = useState<string>("");
@@ -84,6 +85,12 @@ const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
       return fields.concat(fullKey); // Add flat field
     }, [] as string[]);
   };
+
+  useEffect(() => {
+    if (formResource && formResource !== resource) {
+      setResource(formResource);
+    }
+  }, [formResource, resource]);
 
   // Trigger field fetching on resource change
   useEffect(() => {
@@ -198,7 +205,22 @@ const EmailFormFields = ({ module }: EmailFormFieldsProps) => {
         <TemplateFieldDialog
           open={popupOpen}
           onClose={() => setPopupOpen(false)}
-          fields={schemaFields}
+          fields={[
+            ...(resource === "scholarship-applications"
+              ? [
+                  "all_fields",
+                  "currentYear",
+                  "Applicant first name",
+                  "Applicant first",
+                  "Applicant last",
+                  "Eligible Participant first name",
+                  "form_title",
+                ]
+              : resource === "award-nominations"
+              ? ["all_fields", "currentYear", "form_title"]
+              : []),
+            ...schemaFields,
+          ]}
           onFieldSelect={handleInsertField}
         />
       </Grid>

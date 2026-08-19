@@ -15,7 +15,8 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@orwa/terms-gate": ["libs/terms-gate/src/index.ts"]
+      "@orwa/terms-gate": ["libs/terms-gate/src/index.ts"],
+      "@orwa/public-form": ["libs/public-form/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
