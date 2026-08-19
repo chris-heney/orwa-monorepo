@@ -14,6 +14,7 @@ interface InputProps {
   validation?: any;
   defaultValue?: string;
   placeholder?: string;
+  wrapperClassName?: string;
 }
 
 export const TextInput = ({
@@ -28,6 +29,7 @@ export const TextInput = ({
   validation,
   defaultValue,
   placeholder,
+  wrapperClassName,
 }: InputProps) => {
   const { register, setValue, formState: { errors } } = useFormContext();
 
@@ -67,7 +69,7 @@ export const TextInput = ({
 
   return (
     <HighlightByName name={name}>
-    <div className="mb-4">
+    <div className={wrapperClassName ?? "mb-4"}>
       <label className="block mb-2 text-left text-sm font-semibold text-gray-700">
         {label}
         {required && <span className="text-red-500 ml-0.5">*</span>}

@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Grid } from "@mui/material";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { TextInput } from "../_components/TextInput";
 import { NumberInput } from "../_components/NumberInput";
@@ -10,6 +11,10 @@ import {
 } from "../../helpers/mapScholarshipPayload";
 
 const emptyResource = { institution: "", amount: "" as const };
+
+const rowLabelClass =
+  "block mb-2 text-left text-sm font-semibold text-gray-700";
+const rowInputClass = "p-3 rounded-lg";
 
 const FinancialDataStep = () => {
   const { control, getValues, setValue } = useFormContext();
@@ -47,6 +52,7 @@ const FinancialDataStep = () => {
   };
 
   const canAdd = fields.length < MAX_FINANCIAL_RESOURCES;
+  const canRemove = fields.length > 1;
 
   const addResource = () => {
     if (rowCount() >= MAX_FINANCIAL_RESOURCES) return;
@@ -60,47 +66,50 @@ const FinancialDataStep = () => {
     >
       <Grid container spacing={3}>
         {fields.map((field, index) => (
-          <React.Fragment key={field.fieldId}>
-            <Grid size={{ xs: 12 }}>
-              <div
-                className={`flex items-center justify-between ${
-                  index > 0 ? "mt-6" : ""
-                }`}
-              >
-                <h3 className="text-lg font-semibold">
+          <Grid key={field.fieldId} size={{ xs: 12 }}>
+            <div className={index > 0 ? "mt-2" : ""}>
+              <div className="mb-3 flex items-center gap-2">
+                <h3 className="text-lg font-semibold leading-none">
                   Financial Aid #{index + 1}
                 </h3>
-                {index > 0 ? (
+                {canRemove ? (
                   <button
                     type="button"
+                    aria-label="Remove financial aid"
                     onClick={() => {
                       if (rowCount() <= 1) return;
                       remove(index);
                     }}
-                    className="bg-gray-300 px-3 py-1.5 rounded-md text-sm font-semibold text-gray-800 hover:bg-gray-400 cursor-pointer"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-red-600 text-white transition hover:bg-red-500 active:bg-red-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2 cursor-pointer"
                   >
-                    Remove
+                    <DeleteOutlineIcon fontSize="small" />
                   </button>
                 ) : null}
               </div>
-            </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextInput
-                name={`financial_resources.${index}.institution`}
-                label="Institution"
-                placeholder="Name of institution providing financial aid"
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <NumberInput
-                name={`financial_resources.${index}.amount`}
-                label="Amount"
-                min={0}
-                step={0.01}
-              />
-            </Grid>
-          </React.Fragment>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+                <div className="min-w-0 flex-1">
+                  <TextInput
+                    name={`financial_resources.${index}.institution`}
+                    label="Institution"
+                    placeholder="Name of institution providing financial aid"
+                    wrapperClassName="mb-0"
+                  />
+                </div>
+                <div className="w-full shrink-0 sm:w-40">
+                  <NumberInput
+                    name={`financial_resources.${index}.amount`}
+                    label="Amount"
+                    min={0}
+                    step={0.01}
+                    wrapperClassName="mb-0"
+                    labelClassName={rowLabelClass}
+                    inputClassName={rowInputClass}
+                  />
+                </div>
+              </div>
+            </div>
+          </Grid>
         ))}
 
         <Grid size={{ xs: 12 }}>
