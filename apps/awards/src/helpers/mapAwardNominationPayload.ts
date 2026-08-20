@@ -35,6 +35,7 @@ export const mapAwardNominationPayload = (
   state: payload.state || "OK",
   zip: payload.zip,
   system_name: payload.system_name,
+  county: payload.county,
   award_name_printed: resolveAwardNamePrinted(payload),
   nominator_first_name: payload.nominator_first_name,
   nominator_last_name: payload.nominator_last_name,
