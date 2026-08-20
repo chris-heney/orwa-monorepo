@@ -1,4 +1,4 @@
-import { Box, Button, Grid, Typography } from '@mui/material';
+import { Box, Button, Chip, Grid, Tooltip, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
 import { useFormContext } from 'react-hook-form';
 import { useGetIdentity } from '../../../helpers/useGetIdentity';
 import CreateSavedQueryDialog from './components/CreateSavedQueryDialog';
+import { hasRelativeDates } from '../../../helpers/relativeDates';
 
 const cronOptions = [
   { label: 'Every Minute', value: '* * * * *' },
@@ -263,6 +264,15 @@ const ScheduledEmailTaskFormFields = () => {
     setUserHasCleared(false);
   };
 
+  // Whether the chosen query keeps itself current is read from its filters,
+  // not stored on the record — a stored flag would drift the moment someone
+  // edited the filters without updating it.
+  const selectedQuery = filteredSavedQueries.find(
+    (query) => query.id === selectedQueryId
+  );
+  const selectedQueryUpdatesItself =
+    selectedQuery != null && hasRelativeDates(selectedQuery.filters);
+
   const handleQuerySelect = (_event: any, value: any) =>
     selectQuery(!value ? null : typeof value === 'object' ? value.id : value);
 
@@ -340,6 +350,28 @@ const ScheduledEmailTaskFormFields = () => {
               selectedEntity ? ` for ${selectedEntity}` : ''
             }, or clear to remove all conditions`}
           />
+          {selectedQuery && (
+            <Tooltip
+              title={
+                selectedQueryUpdatesItself
+                  ? 'This query uses relative dates, recalculated every time the task runs. It never needs replacing.'
+                  : 'This query uses fixed dates. It will keep meaning the same dates and will go stale.'
+              }
+            >
+              <Chip
+                size="small"
+                color={selectedQueryUpdatesItself ? 'success' : 'warning'}
+                variant="outlined"
+                label={
+                  selectedQueryUpdatesItself
+                    ? 'Updates itself'
+                    : 'Fixed dates — will go stale'
+                }
+                sx={{ mt: 0.5 }}
+              />
+            </Tooltip>
+          )}
+
           <Button
             size="small"
             startIcon={<AddIcon />}

@@ -18,6 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useDataProvider, useNotify } from 'react-admin';
 import { useGetIdentity } from '../../../../helpers/useGetIdentity';
+import { RELATIVE_DATE_CHOICES as DATE_TOKENS } from '../../../../helpers/relativeDates';
 
 /**
  * Strapi query-engine operators, limited to the ones that make sense for a
@@ -36,22 +37,6 @@ const OPERATORS = [
 ];
 
 const OPERATORS_WITHOUT_VALUE = new Set(['$null', '$notNull']);
-
-/**
- * Relative dates store a token rather than a concrete date, so the query keeps
- * meaning the same thing every month instead of freezing on the day it was
- * built. The server expands them on every run — see
- * apps/strapi/src/utils/relative-dates.ts.
- */
-const DATE_TOKENS = [
-  { id: '$now', name: 'today' },
-  { id: '$now-1w', name: 'a week ago' },
-  { id: '$now-1M', name: 'a month ago' },
-  { id: '$now-1y', name: 'a year ago' },
-  { id: '$now+1w', name: 'a week from now' },
-  { id: '$now+1M', name: 'a month from now' },
-  { id: '$now+1y', name: 'a year from now' },
-];
 
 interface ConditionRow {
   field: string;
