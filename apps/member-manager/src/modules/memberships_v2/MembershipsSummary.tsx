@@ -64,7 +64,7 @@ const MembershipsSummary = () => {
 
         <Divider sx={{ borderColor: T.line }} />
 
-        <YearReportPanel metrics={metrics} />
+        <YearReportPanel />
 
         {showAudits && (
           <>

@@ -29,7 +29,6 @@ export type MembershipMetrics = {
   activeTotal: number;
   activeRate: number;
   roster: RosterSlice[];
-  yearReport: { year: number; systems: number; associates: number }[];
   expiredAssociates: number;
   expiredWaterSystems: number;
 };
@@ -100,18 +99,6 @@ const buildMetrics = (
     },
   ];
 
-  const currentYear = new Date().getFullYear();
-  const yearReport = [
-    { year: 2021, systems: 529, associates: 111 },
-    { year: 2022, systems: 380, associates: 96 },
-    { year: 2023, systems: 458, associates: 104 },
-    {
-      year: currentYear >= 2024 ? currentYear : 2024,
-      systems: expiredWaterSystems,
-      associates: expiredAssociates,
-    },
-  ];
-
   return {
     isLoading:
       associatesLoading ||
@@ -128,7 +115,6 @@ const buildMetrics = (
     activeTotal,
     activeRate,
     roster,
-    yearReport,
     expiredAssociates,
     expiredWaterSystems,
   };

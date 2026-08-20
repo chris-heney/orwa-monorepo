@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -17,6 +18,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { useDataProvider, useNotify } from 'react-admin';
 import { useGetIdentity } from '../../../../helpers/useGetIdentity';
+import { RELATIVE_DATE_CHOICES as DATE_TOKENS } from '../../../../helpers/relativeDates';
 
 /**
  * Strapi query-engine operators, limited to the ones that make sense for a
@@ -36,28 +38,18 @@ const OPERATORS = [
 
 const OPERATORS_WITHOUT_VALUE = new Set(['$null', '$notNull']);
 
-/**
- * Relative date shortcuts. These store a token rather than a date, so the
- * query keeps meaning the same thing every month instead of freezing on the
- * day it was built — see apps/strapi/src/utils/relative-dates.ts.
- */
-const DATE_TOKENS = [
-  { id: '$now', name: 'today' },
-  { id: '$now-1M', name: 'a month ago' },
-  { id: '$now-1y', name: 'a year ago' },
-  { id: '$now+1M', name: 'in a month' },
-  { id: '$now+1y', name: 'in a year' },
-];
-
 interface ConditionRow {
   field: string;
   operator: string;
+  /** 'relative' recalculates every run; 'fixed' is a literal that never moves. */
+  valueMode: 'relative' | 'fixed';
   value: string;
 }
 
 const emptyRow = (): ConditionRow => ({
   field: '',
   operator: '$eq',
+  valueMode: 'fixed',
   value: '',
 });
 
@@ -76,7 +68,14 @@ export const buildFilters = (rows: ConditionRow[]) => {
     .map((row) => ({
       [row.field.trim()]: OPERATORS_WITHOUT_VALUE.has(row.operator)
         ? { [row.operator]: true }
-        : { [row.operator]: parseValue(row.value) },
+        : {
+            // Relative values are stored as the token verbatim; the server
+            // expands them per run.
+            [row.operator]:
+              row.valueMode === 'relative'
+                ? row.value
+                : parseValue(row.value),
+          },
     }));
 
   if (clauses.length === 0) return null;
@@ -112,6 +111,13 @@ const CreateSavedQueryDialog = ({
   const [isPublic, setIsPublic] = useState(true);
   const [rows, setRows] = useState<ConditionRow[]>([emptyRow()]);
   const [saving, setSaving] = useState(false);
+
+  const hasRelativeValue = rows.some(
+    (row) =>
+      row.valueMode === 'relative' &&
+      row.value &&
+      !OPERATORS_WITHOUT_VALUE.has(row.operator)
+  );
 
   const updateRow = (index: number, patch: Partial<ConditionRow>) =>
     setRows((current) =>
@@ -210,32 +216,53 @@ const CreateSavedQueryDialog = ({
                 ))}
               </TextField>
               {!OPERATORS_WITHOUT_VALUE.has(row.operator) && (
-                <TextField
-                  label="Value"
-                  value={row.value}
-                  onChange={(event) =>
-                    updateRow(index, { value: event.target.value })
-                  }
-                  helperText="Or pick a date shortcut, which stays relative"
-                  sx={{ flex: 3 }}
-                />
+                <>
+                  <TextField
+                    select
+                    label="Value is"
+                    value={row.valueMode}
+                    onChange={(event) =>
+                      updateRow(index, {
+                        valueMode: event.target.value as ConditionRow['valueMode'],
+                        value: '',
+                      })
+                    }
+                    sx={{ flex: 2 }}
+                  >
+                    <MenuItem value="fixed">a fixed value</MenuItem>
+                    <MenuItem value="relative">a date, recalculated each run</MenuItem>
+                  </TextField>
+
+                  {row.valueMode === 'relative' ? (
+                    <TextField
+                      select
+                      label="Date"
+                      value={row.value}
+                      onChange={(event) =>
+                        updateRow(index, { value: event.target.value })
+                      }
+                      helperText="Recalculated every time the email runs"
+                      sx={{ flex: 3 }}
+                    >
+                      {DATE_TOKENS.map((token) => (
+                        <MenuItem key={token.id} value={token.id}>
+                          {token.name}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  ) : (
+                    <TextField
+                      label="Value"
+                      value={row.value}
+                      onChange={(event) =>
+                        updateRow(index, { value: event.target.value })
+                      }
+                      helperText="Stays exactly as entered"
+                      sx={{ flex: 3 }}
+                    />
+                  )}
+                </>
               )}
-              <TextField
-                select
-                label="Date shortcut"
-                value=""
-                onChange={(event) =>
-                  updateRow(index, { value: event.target.value })
-                }
-                sx={{ flex: 2 }}
-                disabled={OPERATORS_WITHOUT_VALUE.has(row.operator)}
-              >
-                {DATE_TOKENS.map((token) => (
-                  <MenuItem key={token.id} value={token.id}>
-                    {token.name}
-                  </MenuItem>
-                ))}
-              </TextField>
               <IconButton
                 aria-label="Remove condition"
                 onClick={() =>
@@ -258,6 +285,12 @@ const CreateSavedQueryDialog = ({
           >
             Add condition
           </Button>
+
+          <Alert severity={hasRelativeValue ? 'success' : 'info'}>
+            {hasRelativeValue
+              ? 'This query updates itself. Its dates are recalculated every time the email runs, so it never needs replacing.'
+              : 'This query is fixed. Set a value to “a date, recalculated each run” if you want it to keep up to date on its own — otherwise it will mean the same dates forever.'}
+          </Alert>
 
           <FormControlLabel
             control={
