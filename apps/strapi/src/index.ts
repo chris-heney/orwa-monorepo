@@ -187,6 +187,26 @@ const configureAdminRbacPermissions = async (strapi) => {
   }
 };
 
+// User impersonation ("test as user") is Admin-only. Never grant to
+// public/authenticated/staff — it mints a session token for any target user.
+const ADMIN_IMPERSONATION_ACTIONS = [
+  'api::impersonation.impersonation.start',
+];
+
+const configureAdminImpersonationPermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(
+      strapi,
+      { type: 'admin' },
+      ADMIN_IMPERSONATION_ACTIONS,
+    );
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure Admin impersonation permissions: ${error.message}`,
+    );
+  }
+};
+
 const STAFF_ROLE_TYPE = 'staff';
 const STAFF_ALLOWED_ACTIONS = [
   'api::associate.associate.find',
@@ -366,6 +386,7 @@ export default {
     await configureTermPermissions(strapi);
     await configureUserPreferencesPermissions(strapi);
     await configureAdminRbacPermissions(strapi);
+    await configureAdminImpersonationPermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
     await seedOrwefFormEmails(strapi);
     await seedDefaultRoleModules(strapi);
