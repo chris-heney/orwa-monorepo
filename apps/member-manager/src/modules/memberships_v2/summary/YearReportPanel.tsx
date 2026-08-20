@@ -116,9 +116,9 @@ const YearReportPanel: React.FC = () => {
     <Box>
       <SectionLabel>Membership over years</SectionLabel>
       <Typography sx={{ fontSize: 12.5, color: T.textFaint, mb: 1.5, maxWidth: 720 }}>
-        Water systems and associates by membership year. Years covered by the
-        transaction ledger are counted from recorded payments; earlier years
-        are the figures carried over from before it existed.
+        Water systems and associates by membership year. Recent years are
+        counted from recorded payments; earlier years are figures carried over
+        from before those records were kept.
       </Typography>
 
       <Box
@@ -153,9 +153,10 @@ const YearReportPanel: React.FC = () => {
         sx={{ mt: 1.25, fontSize: 11, color: T.textFaint, fontStyle: "italic" }}
       >
         Glossary · A member counts once per year, in the year their payment was
-        recorded. Years predating the ledger (2021–2023) are carried figures,
-        not transaction counts, and are replaced automatically if transactions
-        are ever recorded against them.
+        recorded. 2021–2023 are carried figures rather than transaction counts.
+        Years in between are omitted because payments were not yet being
+        recorded for a full year, and a partial count would read as a drop in
+        membership rather than the start of record keeping.
       </Typography>
     </Box>
   );

@@ -32,12 +32,22 @@ export const HISTORICAL_YEARS: MembershipYearRow[] = [
 ];
 
 /**
+ * The first year memberships were tracked through the ledger for a full year.
+ * 2024 has a handful of transactions from the ledger coming online mid-year —
+ * a couple of rows against four hundred in 2025 — which reads as a collapse in
+ * membership rather than the start of record keeping. Years before this are
+ * not reported at all.
+ */
+export const TRANSACTION_TRACKING_START_YEAR = 2025;
+
+/**
  * Reshapes the grouped SQL rows into one entry per year with both counts, then
  * layers them over the pre-ledger history. A year appears if it has either.
  */
 export const buildYearRows = (
   rows: { year: unknown; resource: string; members: unknown }[],
   historical: MembershipYearRow[] = HISTORICAL_YEARS,
+  trackingStartYear: number = TRANSACTION_TRACKING_START_YEAR,
 ): MembershipYearRow[] => {
   const byYear = new Map<number, MembershipYearRow>();
 
@@ -48,6 +58,10 @@ export const buildYearRows = (
     }
     const year = Number(row.year);
     if (!Number.isFinite(year) || year <= 0) {
+      continue;
+    }
+    // Partial years from before tracking was in place are not reportable.
+    if (year < trackingStartYear) {
       continue;
     }
 
