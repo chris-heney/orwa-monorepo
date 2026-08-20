@@ -1,6 +1,4 @@
-import type { SxProps, Theme } from "@mui/material/styles";
-
-export const reviewFormSx: SxProps<Theme> = {
+export const reviewFormSx = {
   p: 0,
   width: "100%",
   maxWidth: "none",
@@ -11,7 +9,7 @@ export const reviewFormSx: SxProps<Theme> = {
   },
 };
 
-export const reviewResourceSx: SxProps<Theme> = {
+export const reviewResourceSx = {
   width: "100%",
   maxWidth: "none",
   "& .RaEdit-main, & .RaShow-main": {
@@ -26,7 +24,7 @@ export const reviewResourceSx: SxProps<Theme> = {
   },
 };
 
-export const fullFieldSx: SxProps<Theme> = {
+export const fullFieldSx = {
   width: "100%",
   "& .MuiFormControl-root": { width: "100%" },
   "& .MuiInputBase-root": { width: "100%" },
@@ -36,7 +34,7 @@ export const fullFieldSx: SxProps<Theme> = {
   },
 };
 
-export const emailFieldSx: SxProps<Theme> = {
+export const emailFieldSx = {
   ...fullFieldSx,
   "& .MuiInputBase-input": {
     overflow: "visible",
@@ -45,7 +43,7 @@ export const emailFieldSx: SxProps<Theme> = {
   },
 };
 
-export const sectionCardSx: SxProps<Theme> = {
+export const sectionCardSx = {
   p: 2,
   m: 0,
   height: "auto",
@@ -60,7 +58,7 @@ export const sectionCardSx: SxProps<Theme> = {
   borderColor: "divider",
 };
 
-export const toolbarSx: SxProps<Theme> = {
+export const toolbarSx = {
   bgcolor: "background.paper",
   color: "text.primary",
   borderTop: 1,
