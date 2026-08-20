@@ -300,6 +300,65 @@ const seedDefaultRoleModules = async (strapi) => {
   }
 };
 
+/**
+ * Renewal queries that keep themselves current.
+ *
+ * `$now` tokens are expanded on every run (src/utils/relative-dates.ts), so
+ * "expiring within a month" keeps meaning that instead of freezing on the day
+ * it was saved — which is what left the renewal tasks matching nobody.
+ *
+ * Seeded rather than linked: creating a query sends no email, so an admin
+ * still chooses it on the task. Matched by name, so this is idempotent and
+ * never overwrites an edited query.
+ */
+const RENEWAL_SAVED_QUERIES = [
+  {
+    name: 'Water Systems — ORWAAG, expiring within a month',
+    resource: 'watersystems',
+    filters: {
+      $and: [
+        { orwaag: true },
+        { expiration_date: { $between: ['$now', '$now+1M'] } },
+      ],
+    },
+  },
+  {
+    name: 'Water Systems — expiring within a month',
+    resource: 'watersystems',
+    filters: { expiration_date: { $between: ['$now', '$now+1M'] } },
+  },
+  {
+    name: 'Associates — expiring within a month',
+    resource: 'associates',
+    filters: { expiration_date: { $between: ['$now', '$now+1M'] } },
+  },
+];
+
+const seedRenewalSavedQueries = async (strapi) => {
+  try {
+    const query = strapi.db.query('api::saved-query.saved-query');
+
+    for (const definition of RENEWAL_SAVED_QUERIES) {
+      const existing = await query.findOne({
+        where: { name: definition.name },
+      });
+      if (existing) {
+        continue;
+      }
+
+      await query.create({
+        data: {
+          ...definition,
+          is_public: true,
+        },
+      });
+      strapi.log.info(`Seeded saved query: ${definition.name}`);
+    }
+  } catch (error) {
+    strapi.log.warn(`Unable to seed renewal saved queries: ${error.message}`);
+  }
+};
+
 const MEMBERSHIP_YEAR_REPORT_ACTIONS = [
   'api::membership-year-report.membership-year-report.getYearReport',
 ];
@@ -450,6 +509,7 @@ export default {
     await configureScholarshipAwardPermissions(strapi);
     await seedOrwefFormEmails(strapi);
     await configureMembershipYearReportPermissions(strapi);
+    await seedRenewalSavedQueries(strapi);
     await seedDefaultRoleModules(strapi);
     await backfillMembershipExpirations(strapi);
   },
