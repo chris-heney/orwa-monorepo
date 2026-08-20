@@ -1,3 +1,8 @@
+# pnpm 9 requires this; pnpm 10 treats a missing packages list as root-only.
+# This repo is a single-importer Nx tree (see pnpm-lock.yaml `importers: .`), not a multi-package workspace.
+packages:
+  - '.'
+
 allowBuilds:
   '@parcel/watcher': true
   '@swc/core': true
