@@ -34,7 +34,7 @@ import ViewListIcon from '@mui/icons-material/ViewList';
 import RecordCount from '../../_components/RecordCount';
 import { NaylorExportWaterSystem } from '../helpers/naylorExportWaterSystem';
 import { NaylorExportAssociate } from '../helpers/naylorExportAssociate';
-import { useCan, resourceToApiName } from '../../rbac-manager/useCan';
+import { useCan } from '../../rbac-manager/useCan';
 import { defaultWatersystemExport } from '../helpers/defaultWatersystemExport';
 import { defaultAssociateExport } from '../helpers/defaultAssociateExport';
 import { styled } from '@mui/material/styles';
@@ -351,7 +351,7 @@ const Membershipheader = () => {
     setIsGridView,
   } = useMembershipContext();
 
-  const { can } = useCan();
+  const { canOnResource } = useCan();
 
   const resource = selectedTab === 'summary' ? null : selectedTab;
   const title =
@@ -487,7 +487,7 @@ const Membershipheader = () => {
               }}
             >
               <RecordCount />
-              {can('create', resourceToApiName(resource)) && (
+              {canOnResource('create', resource) && (
                 <CustomCreateButton
                   sx={{
                     color: 'white',

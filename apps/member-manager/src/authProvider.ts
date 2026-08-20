@@ -1,6 +1,5 @@
 import Cookies from './helpers/Cookies';
 import { AuthProvider, Identifier, UserIdentity } from 'react-admin';
-import RoleController, { TRole } from './config/Roles';
 
 export interface IUserIdentity extends UserIdentity {
   role: string;
@@ -145,11 +144,9 @@ const authProvider: AuthProvider = {
     return Cookies.getCookie('token') ? Promise.resolve() : Promise.reject();
   },
 
-  getPermissions: () => {
-    const role = new RoleController(Cookies.getCookie('role') as TRole);
-
-    return Promise.resolve(role.permissions);
-  },
+  // Required by react-admin's AuthProvider contract, but unused: capability
+  // checks read the role's real Strapi permissions via `useCan`.
+  getPermissions: () => Promise.resolve(null),
 
   // react-admin contract: reject → logout + redirect to login; resolve → stay.
   // Only 401 (unauthenticated) ends the session. 403 means "authenticated but

@@ -1,17 +1,24 @@
-import React, { useEffect, useState } from 'react'
-import { Box, FormControlLabel, Checkbox, FormLabel } from '@mui/material'
-import { Loading, useGetList, useNotify, useUpdate, useRecordContext } from 'react-admin'
-import { IExtra, ISharedMeta } from '../types/IConference'
-import { useConferenceContext } from '../ConferenceContext'
-import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters'
+import React, { useEffect, useState } from 'react';
+import { Box, FormControlLabel, Checkbox, FormLabel } from '@mui/material';
+import {
+  Loading,
+  useGetList,
+  useNotify,
+  useUpdate,
+  useRecordContext,
+} from 'react-admin';
+import { IExtra, ISharedMeta } from '../types/IConference';
+import { useCan } from '../../rbac-manager/useCan';
+import { useConferenceContext } from '../ConferenceContext';
+import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
 
 interface MetaComponentProps {
-  context: string
-  ticketType?: string
-  resource: string
-  setUpdated: React.Dispatch<React.SetStateAction<boolean>>
+  context: string;
+  ticketType?: string;
+  resource: string;
+  setUpdated: React.Dispatch<React.SetStateAction<boolean>>;
   /** When set (e.g. attendee’s saved conference), extras are loaded for this conference, not only dashboard filter. */
-  conferenceId?: number
+  conferenceId?: number;
 }
 
 const MetaComponent = ({
@@ -20,86 +27,118 @@ const MetaComponent = ({
   context,
   conferenceId: conferenceIdProp,
 }: MetaComponentProps) => {
-
-  const { currentFilter } = useConferenceContext()
-  const record = useRecordContext()
-  const [update] = useUpdate()
-  const notify = useNotify()
-  const [selectedExtras, setSelectedExtras] = useState<ISharedMeta[]>([])
+  const { currentFilter } = useConferenceContext();
+  const record = useRecordContext();
+  const [update] = useUpdate();
+  const notify = useNotify();
+  const { canOnResource } = useCan();
+  const canUpdate = canOnResource('update', resource);
+  const [selectedExtras, setSelectedExtras] = useState<ISharedMeta[]>([]);
 
   const filterConferenceId =
-    conferenceIdProp ?? getPrimaryConferenceId(currentFilter as Record<string, unknown>)
-  const extrasListEnabled = filterConferenceId != null && filterConferenceId > 0
+    conferenceIdProp ??
+    getPrimaryConferenceId(currentFilter as Record<string, unknown>);
+  const extrasListEnabled =
+    filterConferenceId != null && filterConferenceId > 0;
 
-  const { data: extras, isLoading } = useGetList('conference-extras', {
-    pagination: { page: 1, perPage: 100 },
-    sort: { field: 'id', order: 'ASC' },
-    meta: {
-      raw: true,
+  const { data: extras, isLoading } = useGetList(
+    'conference-extras',
+    {
+      pagination: { page: 1, perPage: 100 },
+      sort: { field: 'id', order: 'ASC' },
+      meta: {
+        raw: true,
+      },
+      filter: extrasListEnabled
+        ? { conferences: [filterConferenceId] }
+        : { conferences: [0] },
     },
-    filter: extrasListEnabled
-      ? { conferences: [filterConferenceId] }
-      : { conferences: [0] },
-  }, { enabled: extrasListEnabled })
+    { enabled: extrasListEnabled }
+  );
 
   useEffect(() => {
     if (record?.items) {
-      setSelectedExtras(record.items)
+      setSelectedExtras(record.items);
     }
-  }, [record])
+  }, [record]);
 
   const handleCheckboxChange = async (extra: IExtra, checked: boolean) => {
-    let updatedSelectedExtras
+    let updatedSelectedExtras;
     if (checked) {
-      updatedSelectedExtras = [...selectedExtras, {
-        key: extra.name + ' ' + extra.id,
-        label: extra.name,
-        value: extra.price_online.toString(),
-        item: extra.id
-      }]
+      updatedSelectedExtras = [
+        ...selectedExtras,
+        {
+          key: extra.name + ' ' + extra.id,
+          label: extra.name,
+          value: extra.price_online.toString(),
+          item: extra.id,
+        },
+      ];
     } else {
-      updatedSelectedExtras = selectedExtras.filter((selectedExtra) => selectedExtra.label !== extra.name)
+      updatedSelectedExtras = selectedExtras.filter(
+        (selectedExtra) => selectedExtra.label !== extra.name
+      );
     }
-    setSelectedExtras(updatedSelectedExtras as ISharedMeta[])
+    setSelectedExtras(updatedSelectedExtras as ISharedMeta[]);
 
+    await update(
+      `${resource}`,
+      {
+        id: record.id,
+        data: {
+          items: updatedSelectedExtras,
+        },
+        previousData: record,
+      },
+      {
+        // Notify from mutation callbacks — the returned promise resolves even
+        // when the API rejects, which used to show a false success toast.
+        onSuccess: () => {
+          notify('Extras Updated', { type: 'success' });
+        },
+        onError: (error: unknown) => {
+          console.error('Error updating extras:', error);
+          notify('Error updating extras', { type: 'error' });
+        },
+      }
+    );
 
-    await update(`${resource}`, {
-      id: record.id, data: {
-        items: updatedSelectedExtras
-      }, previousData: record
-    }).then(() => {
-      notify('Extras Updated', { type: 'success' })
-    }).catch((error) => {
-      console.error('Error updating extras:', error)
-      notify('Error updating extras', { type: 'error' })
-    })
+    setUpdated(true);
+  };
 
-
-    setUpdated(true)
-  }
-
-  return isLoading ? <Loading /> : (
-    <Box sx={{
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
+  return isLoading ? (
+    <Loading />
+  ) : (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
       <FormLabel>Extras</FormLabel>
-      {extras?.filter((extra) => {
-        return extra.context.toLowerCase() === context.toLowerCase()
-      })?.map((extra, index) => (
-        <FormControlLabel
-          label={extra.name ?? extra.label}
-          key={index}
-          control={
-            <Checkbox
-              checked={selectedExtras.some((selectedExtra) => selectedExtra.label === extra.name)}
-              onChange={(event) => handleCheckboxChange(extra, event.target.checked)}
-            />
-          }
-        />
-      ))}
+      {extras
+        ?.filter((extra) => {
+          return extra.context.toLowerCase() === context.toLowerCase();
+        })
+        ?.map((extra, index) => (
+          <FormControlLabel
+            label={extra.name ?? extra.label}
+            key={index}
+            control={
+              <Checkbox
+                checked={selectedExtras.some(
+                  (selectedExtra) => selectedExtra.label === extra.name
+                )}
+                disabled={!canUpdate}
+                onChange={(event) =>
+                  handleCheckboxChange(extra, event.target.checked)
+                }
+              />
+            }
+          />
+        ))}
     </Box>
-  )
-}
+  );
+};
 
-export default MetaComponent
+export default MetaComponent;

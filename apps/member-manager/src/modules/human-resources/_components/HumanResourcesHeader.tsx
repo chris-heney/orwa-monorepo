@@ -19,7 +19,7 @@ import CreateUserModal from '../users/CreateUserModal';
 import SettingsIcon from '@mui/icons-material/Settings';
 import { formatTitle } from '../../../helpers/formatResourceTitle';
 import CustomContactExport from '../contacts/CustomContactExport';
-import { useCan, resourceToApiName } from '../../rbac-manager/useCan';
+import { useCan } from '../../rbac-manager/useCan';
 import RolesContextProvider from '../../../context/RolesContextProvider';
 
 const HumanResourcesHeader = () => {
@@ -34,7 +34,7 @@ const HumanResourcesHeader = () => {
     userFilters,
   } = useHumanResourcesContext();
 
-  const { can } = useCan();
+  const { can, canOnResource } = useCan();
 
   const resource = selectedTab;
 
@@ -165,16 +165,15 @@ const HumanResourcesHeader = () => {
                 </RolesContextProvider>
               )}
 
-              {resource !== 'users' &&
-                can('create', resourceToApiName(resource)) && (
-                  <CustomCreateButton
-                    size="small"
-                    sx={{
-                      color: 'white',
-                    }}
-                    label=""
-                  />
-                )}
+              {resource !== 'users' && canOnResource('create', resource) && (
+                <CustomCreateButton
+                  size="small"
+                  sx={{
+                    color: 'white',
+                  }}
+                  label=""
+                />
+              )}
 
               <Button
                 sx={{

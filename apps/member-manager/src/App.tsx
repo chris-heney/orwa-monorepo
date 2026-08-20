@@ -57,6 +57,7 @@ import {
   OrwefManagement,
   AwardManagement,
 } from './modules/dashboards';
+import { guardResource } from './modules/rbac-manager/guardResource';
 import { LoginPage } from './pages';
 import EventSettings from './modules/training/settings/EventSettings';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -70,39 +71,10 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const makeReadOnlyResource = <T extends Record<string, any>>(
-  resource: T
-): T => {
-  const { create, edit, ...readOnlyResource } = resource;
-
-  return readOnlyResource as T;
-};
-
-type ResourcePermission = {
-  resource?: string;
-  action?: string | string[];
-};
-
-const permissionActions = (permission: ResourcePermission) =>
-  Array.isArray(permission.action) ? permission.action : [permission.action];
-
-const hasPermission = (
-  permissions: ResourcePermission[] | undefined,
-  resource: string,
-  action: string
-) =>
-  permissions?.some(
-    (permission) =>
-      permission.resource === resource &&
-      permissionActions(permission).includes(action)
-  ) ?? false;
-
-const isStaffPermissionSet = (permissions: ResourcePermission[] | undefined) =>
-  hasPermission(permissions, 'watersystems', 'export') &&
-  !hasPermission(permissions, '*', '*');
-
-const getResourceProps = (isStaff: boolean) =>
-  isStaff ? makeReadOnlyResource : (resource: Record<string, any>) => resource;
+// Create/edit pages are capability-guarded from server truth (the role's
+// Strapi permissions), so every role — Staff included — is gated by what the
+// RBAC Manager grants it.
+const resourceProps = guardResource;
 
 export const App = () => {
   const dataProvider = new StrapiRestDataProviderFactory({
@@ -128,164 +100,167 @@ export const App = () => {
         requireAuth
         disableTelemetry
       >
-        {(permissions: ResourcePermission[]) => {
-          const isStaff = isStaffPermissionSet(permissions);
-          const resourceProps = getResourceProps(isStaff);
+        <>
+          <UserPreferencesSync />
+          {/* --- Main Entities --- */}
+          <Route path="/login" />
+          {/* Reset Password */}
 
-          return (
-            <>
-              <UserPreferencesSync />
-              {/* --- Main Entities --- */}
-              <Route path="/login" />
-              {/* Reset Password */}
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
+          {/* SHARED */}
+          <Resource name="upload/files" recordRepresentation="url" />
+          <Resource name="shared.field-metas" />
+          <Resource name="components_shared_field_metas" />
 
-              {/* SHARED */}
-              <Resource name="upload/files" recordRepresentation="url" />
-              <Resource name="shared.field-metas" />
-              <Resource name="components_shared_field_metas" />
+          {/* MANAGEMENT */}
+          <Resource name="assets" {...resourceProps(Asset)} />
+          <Resource name="staff" {...resourceProps(Staff)} />
+          <Resource name="contacts" {...resourceProps(Contacts)} />
+          <Resource name="users" {...resourceProps(Users)} />
 
-              {/* MANAGEMENT */}
-              <Resource name="assets" {...Asset} />
-              <Resource name="staff" {...Staff} />
-              <Resource name="contacts" {...Contacts} />
-              <Resource name="users" {...Users} />
+          {/* MEMBERSHIP */}
+          <Resource name="associates" {...resourceProps(Associate)} />
+          <Resource name="watersystems" {...resourceProps(Watersystem)} />
+          <Resource
+            name="membership-items"
+            {...resourceProps(MembershipItems)}
+          />
+          <Resource name="memberships" {...resourceProps(Memberships)} />
+          <Resource name="invoices" {...resourceProps(Transactions)} />
 
-              {/* MEMBERSHIP */}
-              <Resource name="associates" {...resourceProps(Associate)} />
-              <Resource name="watersystems" {...resourceProps(Watersystem)} />
-              <Resource
-                name="membership-items"
-                {...resourceProps(MembershipItems)}
-              />
-              <Resource name="memberships" {...resourceProps(Memberships)} />
-              <Resource name="invoices" {...resourceProps(Transactions)} />
+          {/* TRAINING */}
+          <Resource name="training-events" {...resourceProps(TrainingEvent)} />
+          <Resource
+            name="training-event-logs"
+            {...resourceProps(TrainingHistory)}
+          />
+          <Resource
+            name="training-event-registrations"
+            {...resourceProps(EventRegistration)}
+          />
+          <Resource name="training-schedule-blocks" />
+          <Resource
+            name="training-instructors"
+            {...resourceProps(Instructors)}
+          />
+          <Resource name="training-topics" {...resourceProps(Topics)} />
+          <Resource
+            name="training-settings"
+            {...resourceProps(TrainingSettings)}
+          />
+          <Resource
+            name="training-instructor-certifications"
+            {...resourceProps(TrainingInstructorCertification)}
+          />
 
-              {/* TRAINING */}
-              <Resource name="training-events" {...TrainingEvent} />
-              <Resource name="training-event-logs" {...TrainingHistory} />
-              <Resource
-                name="training-event-registrations"
-                {...EventRegistration}
-              />
-              <Resource name="training-schedule-blocks" />
-              <Resource name="training-instructors" {...Instructors} />
-              <Resource name="training-topics" {...Topics} />
-              <Resource name="training-settings" {...TrainingSettings} />
-              <Resource
-                name="training-instructor-certifications"
-                {...TrainingInstructorCertification}
-              />
+          {/* NEW CONFERENCE */}
 
-              {/* NEW CONFERENCE */}
+          <Resource name="conference-attendees" {...resourceProps(Attendees)} />
+          <Resource name="conference-extras" {...resourceProps(Extras)} />
+          <Resource
+            name="conference-sponsorships"
+            recordRepresentation="name"
+          />
+          <Resource name="conference-sponsors" {...resourceProps(Sponsors)} />
+          <Resource name="conference-tickets" recordRepresentation="name" />
+          <Resource name="conference-booths" />
+          <Resource name="conference-contestants" />
+          <Resource name="conference-registrations" />
+          <Resource
+            name="conference-schedules"
+            hasCreate={false}
+            recordRepresentation="name"
+          />
+          <Resource name="conferences" {...resourceProps(Conference)} />
+          {/* <Resource name="corporate-sponsors" {...CorporateSponsors} /> */}
 
-              <Resource name="conference-attendees" {...Attendees} />
-              <Resource name="conference-extras" {...Extras} />
-              <Resource
-                name="conference-sponsorships"
-                recordRepresentation="name"
-              />
-              <Resource name="conference-sponsors" {...Sponsors} />
-              <Resource name="conference-tickets" recordRepresentation="name" />
-              <Resource name="conference-booths" />
-              <Resource name="conference-attendees" />
-              <Resource name="conference-contestants" />
-              <Resource name="conference-registrations" />
-              <Resource
-                name="conference-schedules"
-                hasCreate={false}
-                recordRepresentation="name"
-              />
-              <Resource name="conferences" {...Conference} />
-              {/* <Resource name="corporate-sponsors" {...CorporateSponsors} /> */}
+          {/* GRANT */}
+          <Resource name="grants" {...resourceProps(Grants)} />
+          <Resource
+            name="grant-application-finals"
+            {...resourceProps(Applicants)}
+          />
+          <Resource name="grant-payouts" {...resourceProps(Payouts)} />
+          <Resource name="grant-statuses" />
+          <Resource name="grant-sub-statuses" />
 
-              {/* GRANT */}
-              <Resource name="grants" {...Grants} />
-              <Resource name="grant-application-finals" {...Applicants} />
-              <Resource name="grant-payouts" {...Payouts} />
-              <Resource name="grant-statuses" />
-              <Resource name="grant-sub-statuses" />
+          {/* SOONERWARN */}
 
-              {/* SOONERWARN */}
+          {/* SHARED */}
+          <Resource name="activities" {...resourceProps(ActivityFeed)} />
+          <Resource name="activity-relations" />
 
-              {/* SHARED */}
-              <Resource name="contacts" {...Contacts} />
-              <Resource name="activities" {...ActivityFeed} />
-              <Resource name="activity-relations" />
+          {/* EMAILS */}
+          <Resource
+            name="email-templates"
+            {...resourceProps(EmailsTemplates)}
+          />
+          <Resource
+            name="scheduled-email-tasks"
+            {...resourceProps(EmailTasks)}
+          />
+          <Resource name="terms" {...resourceProps(Terms)} />
+          <Resource
+            name="scholarship-applications"
+            {...resourceProps(ScholarshipApplications)}
+          />
+          <Resource
+            name="award-nominations"
+            {...resourceProps(AwardNominations)}
+          />
 
-              {/* EMAILS */}
-              <Resource name="email-templates" {...EmailsTemplates} />
-              <Resource name="scheduled-email-tasks" {...EmailTasks} />
-              <Resource name="terms" {...Terms} />
-              <Resource
-                name="scholarship-applications"
-                {...ScholarshipApplications}
-              />
-              <Resource name="award-nominations" {...AwardNominations} />
-
-              {/* --- MUI Pages--- */}
-              <CustomRoutes>
-                {/* --- Settings Pages --- */}
-                <Route path="admin/settings" element={<SettingsDashboard />} />
-                <Route path="event/settings" element={<EventSettings />} />
-                {/* @TODO: */}
-                {/* <Route path="conference/settings" element={<ConferenceSettings/>}  />
+          {/* --- MUI Pages--- */}
+          <CustomRoutes>
+            {/* --- Settings Pages --- */}
+            <Route path="admin/settings" element={<SettingsDashboard />} />
+            <Route path="event/settings" element={<EventSettings />} />
+            {/* @TODO: */}
+            {/* <Route path="conference/settings" element={<ConferenceSettings/>}  />
         <Route path="training/settings" element={<TrainingSettings/>}  /> */}
 
-                {/* --- Dashboard Pages --- */}
-                <Route path="admin/dashboard" element={<AdminDashboard />} />
-                <Route
-                  path="training/dashboard"
-                  element={<TrainingDashboard />}
-                />
-                <Route path="conference/dashboard" element={<Conferences />} />
-                <Route
-                  path="human-resources/dashboard"
-                  element={<HumanResources />}
-                />
-                <Route path="grant/dashboard" element={<GrantManagement />} />
-                <Route path="rbac/dashboard" element={<RbacDashboard />} />
-                <Route
-                  path="orwef-scholarships/dashboard"
-                  element={<OrwefManagement />}
-                />
-                <Route
-                  path="orwa-awards/dashboard"
-                  element={<AwardManagement />}
-                />
-                <Route
-                  path="membership-management"
-                  element={<MembershipManagement />}
-                />
-                <Route
-                  path="soonerwarn/dashboard"
-                  element={<SoonerwarnManagement />}
-                />
+            {/* --- Dashboard Pages --- */}
+            <Route path="admin/dashboard" element={<AdminDashboard />} />
+            <Route path="training/dashboard" element={<TrainingDashboard />} />
+            <Route path="conference/dashboard" element={<Conferences />} />
+            <Route
+              path="human-resources/dashboard"
+              element={<HumanResources />}
+            />
+            <Route path="grant/dashboard" element={<GrantManagement />} />
+            <Route path="rbac/dashboard" element={<RbacDashboard />} />
+            <Route
+              path="orwef-scholarships/dashboard"
+              element={<OrwefManagement />}
+            />
+            <Route path="orwa-awards/dashboard" element={<AwardManagement />} />
+            <Route
+              path="membership-management"
+              element={<MembershipManagement />}
+            />
+            <Route
+              path="soonerwarn/dashboard"
+              element={<SoonerwarnManagement />}
+            />
 
-                <Route path="email-management" element={<EmailManagement />} />
-                <Route path="media-library" element={<MediaLibraryPage />} />
+            <Route path="email-management" element={<EmailManagement />} />
+            <Route path="media-library" element={<MediaLibraryPage />} />
 
-                {/* --- Other Pages --- */}
-                <Route
-                  path="financial-audits/dashboard"
-                  element={<FinancialAuditDashboard />}
-                />
-              </CustomRoutes>
+            {/* --- Other Pages --- */}
+            <Route
+              path="financial-audits/dashboard"
+              element={<FinancialAuditDashboard />}
+            />
+          </CustomRoutes>
 
-              {/* Custom Routes No Layout */}
-              <CustomRoutes noLayout>
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
-                <Route
-                  path="/forgot-password"
-                  element={<ForgotPasswordPage />}
-                />
-              </CustomRoutes>
+          {/* Custom Routes No Layout */}
+          <CustomRoutes noLayout>
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          </CustomRoutes>
 
-              <Resource name="upload" />
-            </>
-          );
-        }}
+          <Resource name="upload" />
+        </>
       </Admin>
     </LocalizationProvider>
   );

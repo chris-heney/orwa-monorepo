@@ -1,6 +1,6 @@
-import React from 'react'
-import { useMediaQuery } from '@mui/material'
-import { Theme } from '@mui/material/styles'
+import React from 'react';
+import { useMediaQuery } from '@mui/material';
+import { Theme } from '@mui/material/styles';
 import {
   List,
   TextField,
@@ -11,23 +11,25 @@ import {
   NumberField,
   RaRecord,
   useDataProvider,
-} from 'react-admin'
-import CustomExportFunction from '../../../helpers/custom-export-function'
-import CustomListActions from '../../_components/CustomListActions'
-
+} from 'react-admin';
+import CustomExportFunction from '../../../helpers/custom-export-function';
+import CustomListActions from '../../_components/CustomListActions';
+import { useEditRowClick } from '../../rbac-manager/useCan';
 
 const SessionList = () => {
-  const preferenceKey = 'training-topics.datagrid'
-  const [availableColumns] = useStore<
-    ConfigurableDatagridColumn[]
-  >(`preferences.${preferenceKey}.availableColumns`, [])
+  const rowClick = useEditRowClick();
+  const preferenceKey = 'training-topics.datagrid';
+  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
+    `preferences.${preferenceKey}.availableColumns`,
+    []
+  );
 
   const [columnIds] = useStore<string[]>(
     `preferences.${preferenceKey}.columns`,
     []
-  )
+  );
 
-  const dataProvider = useDataProvider()
+  const dataProvider = useDataProvider();
   const exporter = (records: RaRecord[]) => {
     CustomExportFunction(
       records,
@@ -35,22 +37,27 @@ const SessionList = () => {
       columnIds,
       'TopicsList',
       dataProvider
-    )
-  }
+    );
+  };
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
   return (
-    <List title={'Training Topics'} actions={<CustomListActions createButtonLabel="New Topics" />} exporter={exporter}>
+    <List
+      title={'Training Topics'}
+      actions={<CustomListActions createButtonLabel="New Topics" />}
+      exporter={exporter}
+    >
       {isSmall ? (
         <SimpleList
-          linkType='edit'
-          primaryText={(record) => record.name }
-          secondaryText={(record) => record.category} tertiaryText={(record) => record.hours}
+          linkType="edit"
+          primaryText={(record) => record.name}
+          secondaryText={(record) => record.category}
+          tertiaryText={(record) => record.hours}
         />
       ) : (
         <DatagridConfigurable
           bulkActionButtons={false}
-          rowClick="edit"
+          rowClick={rowClick}
           sx={{
             width: 'calc(100vw -500)',
           }}
@@ -63,8 +70,7 @@ const SessionList = () => {
         </DatagridConfigurable>
       )}
     </List>
+  );
+};
 
-  )
-}
-
-export default SessionList
+export default SessionList;

@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext } from 'react';
 import {
   DatagridConfigurable,
   TextField,
@@ -20,29 +20,29 @@ import {
   FunctionField,
   required,
   useListContext,
-} from "react-admin";
-import { Button, Chip, Divider, Grid, Typography } from "@mui/material";
-import { CurrencyOptions } from "../../../config/Settings";
-import { ConferenceContext } from "../ConferenceContext";
-import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import { createRecord } from "../../_helpers/createRecord";
-import { updateRecord } from "../../_helpers/updateRecord";
-import { customDatagridStyle, positionStickyComponent } from "../../../css";
-import { ISharedMeta } from "../types/IConference";
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
-import { groupItemsByExtra } from "../helpers/contestantExtras";
-import ContestantExtrasEditor from "./ContestantExtrasEditor";
+} from 'react-admin';
+import { Button, Chip, Divider, Grid, Typography } from '@mui/material';
+import { CurrencyOptions } from '../../../config/Settings';
+import { ConferenceContext } from '../ConferenceContext';
+import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
+import CustomToolBar from '../../_components/CustomToolbar';
+import { createRecord } from '../../_helpers/createRecord';
+import { updateRecord } from '../../_helpers/updateRecord';
+import { customDatagridStyle, positionStickyComponent } from '../../../css';
+import { ISharedMeta } from '../types/IConference';
+import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
+import { groupItemsByExtra } from '../helpers/contestantExtras';
+import ContestantExtrasEditor from './ContestantExtrasEditor';
 
 const ContestantFormFields = () => {
-
   const { filterValues } = useListContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
   return (
-    <Grid item xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
+    <Grid item xs={12} md={12} sx={{ p: 2, overflow: 'hidden' }}>
       <Typography variant="h6">Contestant Info.</Typography>
       <Divider />
-      <Grid display={"none"} item xs={12} md={6} lg={4}>
+      <Grid display={'none'} item xs={12} md={6} lg={4}>
         <ReferenceInput
           source="conference"
           reference="conferences"
@@ -56,7 +56,7 @@ const ContestantFormFields = () => {
           />
         </ReferenceInput>
       </Grid>
-      <Grid display={"none"} item xs={12} md={6} lg={4}>
+      <Grid display={'none'} item xs={12} md={6} lg={4}>
         <NumberInput
           source="year"
           label="Year"
@@ -72,7 +72,7 @@ const ContestantFormFields = () => {
             source="first"
             label="First Name"
             fullWidth
-            validate={required("First name is Required")}
+            validate={required('First name is Required')}
           />
         </Grid>
         <Grid item xs={12} md={6} lg={4}>
@@ -80,7 +80,7 @@ const ContestantFormFields = () => {
             source="last"
             label="Last Name"
             fullWidth
-            validate={required("Last name is Required")}
+            validate={required('Last name is Required')}
           />
         </Grid>
         <Grid item xs={12} md={6} lg={4}>
@@ -105,7 +105,7 @@ const ContestantFormFields = () => {
             source="organization"
             label="Organization"
             fullWidth
-            validate={required("Organization is Required")}
+            validate={required('Organization is Required')}
           />
         </Grid>
         <Grid item xs={12} md={6} lg={4}>
@@ -122,9 +122,9 @@ const ContestantFormFields = () => {
             helperText={false}
           >
             <AutocompleteInput
-              optionText={"name"}
+              optionText={'name'}
               helperText={false}
-              validate={required("Conference Ticket is required")}
+              validate={required('Conference Ticket is required')}
             />
           </ReferenceInput>
           {/* <SelectInput source="type" label='Type' fullWidth choices={[
@@ -142,10 +142,7 @@ const ContestantFormFields = () => {
 };
 
 const ConferenceContestants = () => {
-  const {
-    isCreating,
-    setIsCreating,
-  } = useContext(ConferenceContext);
+  const { isCreating, setIsCreating } = useContext(ConferenceContext);
 
   const notify = useNotify();
   const [create] = useCreate();
@@ -157,9 +154,9 @@ const ConferenceContestants = () => {
       sx={{
         mt: -2,
       }}
-      title={" "}
+      title={' '}
       resource="conference-contestants"
-      component={"div"}
+      component={'div'}
     >
       <CustomSecondaryHeader title="Add New Contestant" />
       <Button
@@ -167,7 +164,7 @@ const ConferenceContestants = () => {
           isCreating ? setIsCreating(false) : setIsCreating(true)
         }
       >
-        {" "}
+        {' '}
         Back
       </Button>
       <SimpleForm
@@ -177,7 +174,7 @@ const ConferenceContestants = () => {
             create,
             notify,
             setIsCreating,
-            "conference-contestants"
+            'conference-contestants'
           )
         }
       >
@@ -185,94 +182,95 @@ const ConferenceContestants = () => {
       </SimpleForm>
     </Create>
   ) : (
-      <DatagridConfigurable
-        sx={customDatagridStyle}
-        bulkActionButtons={false}
-        expandSingle={true}
-        isRowExpandable={() => true}
-        isRowSelectable={() => false}
-        rowClick="expand"
-        expand={(record: RaRecord) => {
-          return (
-            <Edit
-              sx={positionStickyComponent}
-              redirect={false}
-              title={" "}
-              resource="conference-contestants"
-              component={"div"}
-              id={record.id}
+    <DatagridConfigurable
+      sx={customDatagridStyle}
+      bulkActionButtons={false}
+      expandSingle={true}
+      isRowExpandable={() => true}
+      isRowSelectable={() => false}
+      rowClick="expand"
+      expand={(record: RaRecord) => {
+        return (
+          <Edit
+            sx={positionStickyComponent}
+            redirect={false}
+            title={' '}
+            resource="conference-contestants"
+            component={'div'}
+            id={record.id}
+          >
+            <SimpleForm
+              onSubmit={(formData) =>
+                updateRecord(
+                  formData,
+                  record,
+                  update,
+                  notify,
+                  remove,
+                  'conference-contestants'
+                )
+              }
+              toolbar={<CustomToolBar />}
             >
-              <SimpleForm
-                onSubmit={(formData) =>
-                  updateRecord(
-                    formData,
-                    record,
-                    update,
-                    notify,
-                    remove,
-                    "conference-contestants"
-                  )
-                }
-              >
-                <Grid container spacing={2}>
-                  <ContestantFormFields />
-                </Grid>
-              </SimpleForm>
-            </Edit>
-          );
-        }}
+              <Grid container spacing={2}>
+                <ContestantFormFields />
+              </Grid>
+            </SimpleForm>
+          </Edit>
+        );
+      }}
+    >
+      <ReferenceField
+        source="team"
+        reference="conference-teams"
+        label="Team"
+        sortBy="team.name"
       >
-        <ReferenceField
-          source="team"
-          reference="conference-teams"
-          label="Team"
-          sortBy="team.name"
-        >
-          <TextField source="name" label="Team" noWrap />
-        </ReferenceField>
+        <TextField source="name" label="Team" noWrap />
+      </ReferenceField>
 
-        <TextField source="organization" label="Organization" noWrap />
-        <TextField source="type" label="Type" />
-        <ReferenceField
-          source="conference_ticket"
-          reference="conference-tickets"
-          label="Ticket"
-          sortBy="conference_ticket.name"
-        >
-          <TextField source="name" noWrap />
-        </ReferenceField>
-        <TextField source="first" label="First Name" noWrap />
-        <TextField source="last" label="Last Name" noWrap />
-        <TextField source="email" label="Email" noWrap />
-        <TextField source="phone" label="Phone" noWrap />
-        <TextField source="year" label="Year" />
-        <DateField source="createdAt" label="Date Registered" />
-        <NumberField
-          source="fee"
-          label="Fee"
-          options={CurrencyOptions}
-          sortable={false}
-        />
-        <FunctionField
-          sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}
-          label="Items"
-          sortBy="items.label"
-          render={(record: RaRecord) => {
-            const grouped = groupItemsByExtra(
-              (record?.items ?? []) as ISharedMeta[]
-            );
-            return [...grouped.entries()].map(([groupKey, { label, count }]) => (
-              <Chip
-                key={`item-${record.id}-${groupKey}`}
-                size="small"
-                label={`${label} (x${count})`}
-              />
-            ));
-          }}
-        />
+      <TextField source="organization" label="Organization" noWrap />
+      <TextField source="type" label="Type" />
+      <ReferenceField
+        source="conference_ticket"
+        reference="conference-tickets"
+        label="Ticket"
+        sortBy="conference_ticket.name"
+      >
+        <TextField source="name" noWrap />
+      </ReferenceField>
+      <TextField source="first" label="First Name" noWrap />
+      <TextField source="last" label="Last Name" noWrap />
+      <TextField source="email" label="Email" noWrap />
+      <TextField source="phone" label="Phone" noWrap />
+      <TextField source="year" label="Year" />
+      <DateField source="createdAt" label="Date Registered" />
+      <NumberField
+        source="fee"
+        label="Fee"
+        options={CurrencyOptions}
+        sortable={false}
+      />
+      <FunctionField
+        sx={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}
+        label="Items"
+        sortBy="items.label"
+        render={(record: RaRecord) => {
+          const grouped = groupItemsByExtra(
+            (record?.items ?? []) as ISharedMeta[]
+          );
+          return [...grouped.entries()].map(([groupKey, { label, count }]) => (
+            <Chip
+              key={`item-${record.id}-${groupKey}`}
+              size="small"
+              label={`${label} (x${count})`}
+            />
+          ));
+        }}
+      />
 
-        {/* Address */}
-      </DatagridConfigurable>
+      {/* Address */}
+    </DatagridConfigurable>
   );
 };
 

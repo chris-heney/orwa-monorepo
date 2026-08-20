@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Box,
   Theme,
@@ -6,50 +6,47 @@ import {
   useMediaQuery,
   // Tooltip,
   // IconButton,
-} from "@mui/material";
-import { Button, CreateButton, ListBase, SelectColumnsButton, TopToolbar } from "react-admin";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
+} from '@mui/material';
+import { Button, ListBase, SelectColumnsButton, TopToolbar } from 'react-admin';
+import CreateButton from '../_components/CustomCreateButton';
+import FilterAltIcon from '@mui/icons-material/FilterAlt';
 // import SettingsIcon from "@mui/icons-material/Settings";
-import { useEmailManagementContext } from "./EmailManagementContextProvider";
-import RecordCount from "../_components/RecordCount";
-import AddIcon from "@mui/icons-material/Add";
+import { useEmailManagementContext } from './EmailManagementContextProvider';
+import RecordCount from '../_components/RecordCount';
 
 const EmailManagemenHeader = () => {
-  const {
-    selectedTab,
-    setIsFilterSidebarOpen,
-    isSettingsOpen,
-  } = useEmailManagementContext();
+  const { selectedTab, setIsFilterSidebarOpen, isSettingsOpen } =
+    useEmailManagementContext();
 
   const resource = selectedTab;
   const title = (
     selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)
-  ).replace(/-/g, " ");
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+  ).replace(/-/g, ' ');
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
     <Box
       sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#262626",
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#262626',
         px: 1,
       }}
     >
       <Typography
         variant="h6"
         sx={{
-          fontSize: isSmall ? "10px" : null,
-          alignItems: "center",
-          color: "white",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          textAlign: "left",
+          fontSize: isSmall ? '10px' : null,
+          alignItems: 'center',
+          color: 'white',
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          textAlign: 'left',
           ml: 1,
         }}
       >
-        {isSettingsOpen ? "Settings" : title}
+        {isSettingsOpen ? 'Settings' : title}
       </Typography>
       <TopToolbar>
         {resource !== null && !isSettingsOpen && (
@@ -60,26 +57,28 @@ const EmailManagemenHeader = () => {
           >
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "row",
+                display: 'flex',
+                flexDirection: 'row',
                 gap: 2,
-                alignItems: "center",
+                alignItems: 'center',
               }}
             >
               <RecordCount />
-            
-              {selectedTab !==  "email-logs"  && <CreateButton size="small" sx={{ color: "white" }}/>}
+
+              {selectedTab !== 'email-logs' && (
+                <CreateButton size="small" sx={{ color: 'white' }} />
+              )}
 
               <SelectColumnsButton
                 style={{
-                  color: "white",
+                  color: 'white',
                 }}
               />
 
               <Button
                 label="Filter"
                 sx={{
-                  color: "white",
+                  color: 'white',
                   mr: 2,
                 }}
                 onClick={() => {

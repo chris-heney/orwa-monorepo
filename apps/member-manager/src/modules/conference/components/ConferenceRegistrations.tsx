@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   DatagridConfigurable,
   TextField,
@@ -23,24 +23,25 @@ import {
   useCreate,
   useListContext,
   FunctionField,
-} from "react-admin";
-import { Box, Button, Chip, Divider, Grid, Typography } from "@mui/material";
-import { CurrencyOptions } from "../../../config/Settings";
+} from 'react-admin';
+import { Box, Button, Chip, Divider, Grid, Typography } from '@mui/material';
+import { CurrencyOptions } from '../../../config/Settings';
 import {
   RegistrationType,
   StateChoices,
   paymentOptions,
-} from "../../../helpers/Data";
-import CustomToolBar from "./CustomToolBar";
-import { useConferenceContext } from "../ConferenceContext";
-import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import { createRecord } from "../../_helpers/createRecord";
-import { updateRecord } from "../../_helpers/updateRecord";
-import { customDatagridStyle, positionStickyComponent } from "../../../css";
-import CustomPagination from "../../_components/CustomPagination";
-import RegistrationReceipt from "./RegistrationReceipt";
-import EditIcon from "@mui/icons-material/Edit";
-import { ISharedMeta } from "../types/IConference";
+} from '../../../helpers/Data';
+import CustomToolBar from './CustomToolBar';
+import { useConferenceContext } from '../ConferenceContext';
+import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
+import { createRecord } from '../../_helpers/createRecord';
+import { updateRecord } from '../../_helpers/updateRecord';
+import { customDatagridStyle, positionStickyComponent } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
+import RegistrationReceipt from './RegistrationReceipt';
+import EditIcon from '@mui/icons-material/Edit';
+import { ISharedMeta } from '../types/IConference';
+import { useCan } from '../../rbac-manager/useCan';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 
 interface RegistrationProps {
@@ -49,14 +50,13 @@ interface RegistrationProps {
 }
 
 const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
-
-  const {filterValues} = useListContext()
+  const { filterValues } = useListContext();
 
   return (
-    <Grid item xs={12} md={12} sx={{ p: 2, overflow: "hidden" }}>
+    <Grid item xs={12} md={12} sx={{ p: 2, overflow: 'hidden' }}>
       <Typography variant="h6">Registration Info.</Typography>
       <Divider />
-      <Grid display={"none"} item xs={12} md={6} lg={4}>
+      <Grid display={'none'} item xs={12} md={6} lg={4}>
         <ReferenceInput
           source="conference"
           reference="conferences"
@@ -70,7 +70,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
           />
         </ReferenceInput>
       </Grid>
-      <Grid display={"none"} item xs={12} md={6} lg={4}>
+      <Grid display={'none'} item xs={12} md={6} lg={4}>
         <NumberInput
           source="year"
           label="Year"
@@ -87,7 +87,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             label="Registrant"
           >
             <AutocompleteInput
-              optionText={(record) => record.first + " " + record.last}
+              optionText={(record) => record.first + ' ' + record.last}
               fullWidth
               helperText={false}
             />
@@ -157,7 +157,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             label="Attendees"
           >
             <AutocompleteArrayInput
-              optionText={(record) => record.first + " " + record.last}
+              optionText={(record) => record.first + ' ' + record.last}
               fullWidth
               helperText={false}
             />
@@ -171,7 +171,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             label="Contestants"
           >
             <AutocompleteArrayInput
-              optionText={(record) => record.first + " " + record.last}
+              optionText={(record) => record.first + ' ' + record.last}
               fullWidth
               helperText={false}
             />
@@ -191,7 +191,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             />
           </ReferenceInput>
         </Grid>
-        {ticketType === "Vendor" && (
+        {ticketType === 'Vendor' && (
           <Grid item xs={12} md={6} lg={4}>
             <ReferenceInput
               perPage={1000}
@@ -230,25 +230,24 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
 };
 
 const ConferenceRegistrations = () => {
-  const {
-    isCreating,
-    setIsCreating,
-  } = useConferenceContext();
+  const { isCreating, setIsCreating } = useConferenceContext();
 
   const [isEditing, setIsEditing] = React.useState(false);
   const notify = useNotify();
   const [create] = useCreate();
   const [update] = useUpdate();
   const remove = useRemoveFromStore();
+  const { can } = useCan();
+  const canUpdate = can('update', 'conference-registration');
 
   return isCreating ? (
     <Create
       sx={{
         mt: -2,
       }}
-      title={" "}
+      title={' '}
       resource="conference-registrations"
-      component={"div"}
+      component={'div'}
     >
       <CustomSecondaryHeader title="Add New Registration" />
       <Button
@@ -256,7 +255,7 @@ const ConferenceRegistrations = () => {
           isCreating ? setIsCreating(false) : setIsCreating(true)
         }
       >
-        {" "}
+        {' '}
         Back
       </Button>
       <SimpleForm
@@ -266,7 +265,7 @@ const ConferenceRegistrations = () => {
             create,
             notify,
             setIsCreating,
-            "conference-registrations"
+            'conference-registrations'
           )
         }
       >
@@ -287,9 +286,9 @@ const ConferenceRegistrations = () => {
             <Edit
               sx={positionStickyComponent}
               redirect={false}
-              title={" "}
+              title={' '}
               resource="conference-registrations"
-              component={"div"}
+              component={'div'}
               id={record.id}
             >
               <Button
@@ -297,7 +296,7 @@ const ConferenceRegistrations = () => {
                   isEditing ? setIsEditing(false) : setIsEditing(true);
                 }}
               >
-                {" "}
+                {' '}
                 Back
               </Button>
               <SimpleForm
@@ -309,7 +308,7 @@ const ConferenceRegistrations = () => {
                     update,
                     notify,
                     remove,
-                    "conference-registrations"
+                    'conference-registrations'
                   )
                 }
               >
@@ -324,9 +323,9 @@ const ConferenceRegistrations = () => {
           ) : (
             <Show
               sx={positionStickyComponent}
-              title={" "}
+              title={' '}
               resource="conference-registrations"
-              component={"div"}
+              component={'div'}
               queryOptions={{
                 meta: {
                   populate: false,
@@ -334,14 +333,16 @@ const ConferenceRegistrations = () => {
               }}
               id={record.id}
             >
-              <Button
-                onClick={() => {
-                  isEditing ? setIsEditing(false) : setIsEditing(true);
-                }}
-              >
-                {" "}
-                Edit <EditIcon />
-              </Button>
+              {canUpdate && (
+                <Button
+                  onClick={() => {
+                    isEditing ? setIsEditing(false) : setIsEditing(true);
+                  }}
+                >
+                  {' '}
+                  Edit <EditIcon />
+                </Button>
+              )}
               <RegistrationReceipt />
             </Show>
           );
@@ -357,7 +358,7 @@ const ConferenceRegistrations = () => {
           label="Registrant"
           link={false}
         >
-          <Box display={"flex"}>
+          <Box display={'flex'}>
             <TextField source="first" label="First Name" noWrap />
             <TextField ml={0.5} source="last" label="Last Name" noWrap />
           </Box>
@@ -394,15 +395,15 @@ const ConferenceRegistrations = () => {
         <TextField source="address.state" label="State" noWrap />
         <TextField source="address.zip" label="Zip" noWrap />
         <FunctionField
-          sx={{ display: "flex", gap: "5px" }}
+          sx={{ display: 'flex', gap: '5px' }}
           label="Items"
           sortBy="items.label"
           render={(record: RaRecord) => {
             return record?.items?.map((item: ISharedMeta, index: number) => {
               return (
                 <Chip
-                  key={`item-${record.id}-${item.key + " " + index}`}
-                  label={(item.label ?? item.key).replace(/\d/g, " ")}
+                  key={`item-${record.id}-${item.key + ' ' + index}`}
+                  label={(item.label ?? item.key).replace(/\d/g, ' ')}
                 />
               );
             });

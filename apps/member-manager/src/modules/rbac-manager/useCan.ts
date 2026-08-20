@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useResourceContext } from 'react-admin';
 import { useMeQuery } from './useModuleAccess';
 
 export type CrudAction = 'find' | 'findOne' | 'create' | 'update' | 'delete';
@@ -10,6 +11,11 @@ export interface CanApi {
    * resolves `api::watersystem.watersystem.update`).
    */
   can: (action: CrudAction, apiName: string) => boolean;
+  /**
+   * Same check keyed by react-admin resource name — resolves plugin-namespaced
+   * resources (users, uploads) and irregular plurals that `can` cannot.
+   */
+  canOnResource: (action: CrudAction, resource: string) => boolean;
   /** Same check for non-CRUD / custom actions, by full action UID. */
   canAction: (actionUid: string) => boolean;
   isLoading: boolean;
@@ -29,10 +35,33 @@ const RESOURCE_TO_API_NAME: Record<string, string> = {
   // Strapi api `staff-member` has pluralName "staff" (the fallback would
   // produce "staf").
   staff: 'staff-member',
+  // Irregular plurals the trailing-"s" fallback gets wrong.
+  activities: 'activity',
+  'activity-relations': 'activity-relation',
+  'training-settings': 'training-setting',
 };
 
 export const resourceToApiName = (resource: string): string =>
   RESOURCE_TO_API_NAME[resource] ?? resource.replace(/s$/, '');
+
+/**
+ * Resources whose permissions live outside the `api::` namespace, so the
+ * `api::<name>.<name>.<action>` shape would never match a real permission row.
+ */
+const RESOURCE_TO_ACTION_PREFIX: Record<string, string> = {
+  users: 'plugin::users-permissions.user',
+  'upload/files': 'plugin::upload.content-api',
+};
+
+/** Full Strapi action UID prefix for a react-admin resource name. */
+export const resourceToActionPrefix = (resource: string): string => {
+  const pluginPrefix = RESOURCE_TO_ACTION_PREFIX[resource];
+  if (pluginPrefix) {
+    return pluginPrefix;
+  }
+  const apiName = resourceToApiName(resource);
+  return `api::${apiName}.${apiName}`;
+};
 
 /**
  * Capability checks for the current user, from server truth
@@ -64,6 +93,22 @@ export const useCan = (): CanApi => {
     const can = (action: CrudAction, apiName: string): boolean =>
       canAction(`api::${apiName}.${apiName}.${action}`);
 
-    return { can, canAction, isLoading };
+    const canOnResource = (action: CrudAction, resource: string): boolean =>
+      canAction(`${resourceToActionPrefix(resource)}.${action}`);
+
+    return { can, canOnResource, canAction, isLoading };
   }, [data, isLoading]);
+};
+
+/**
+ * Datagrid `rowClick` value for the resource in context: navigate to the edit
+ * page only when the role may update it, otherwise make the row inert.
+ * Pass `resourceName` for lists rendered outside a resource route.
+ */
+export const useEditRowClick = (resourceName?: string): 'edit' | false => {
+  const contextResource = useResourceContext();
+  const { canOnResource } = useCan();
+  return canOnResource('update', resourceName ?? contextResource ?? '')
+    ? 'edit'
+    : false;
 };

@@ -247,3 +247,7 @@ export const firstAllowedPath = (
   const first = APP_MODULES.find((module) => modules?.includes(module.key));
   return first?.to ?? '/admin/settings';
 };
+
+/** The module owning a react-admin resource, if any. */
+export const moduleForResource = (resource: string): AppModule | undefined =>
+  APP_MODULES.find((module) => module.resources.includes(resource));
