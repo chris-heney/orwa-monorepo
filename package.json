@@ -26,7 +26,9 @@
     "start:directory": "nx serve associate-directory",
     "start:member-manager": "nx serve member-manager",
     "start:scholarship": "nx serve scholarship-application",
-    "seed:scholarship-awards": "tsx scripts/seed-scholarship-awards.ts"
+    "seed:scholarship-awards": "tsx scripts/seed-scholarship-awards.ts",
+    "seed:awards-csv": "tsx scripts/seed-awards-from-csv.ts",
+    "seed:award-winners": "tsx scripts/seed-award-winners.ts"
   },
   "private": true,
   "devDependencies": {
