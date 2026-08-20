@@ -91,12 +91,29 @@ const ModuleRouteGuard = ({ children }: { children: ReactNode }) => {
 
   const { pathname } = location;
 
-  // '/' is react-admin's root/dashboard redirect target — exact match only.
-  if (
-    pathname === '/' ||
-    ALWAYS_ALLOWED_PATHS.some((path) => ownsPath(path, pathname))
-  ) {
+  if (ALWAYS_ALLOWED_PATHS.some((path) => ownsPath(path, pathname))) {
     return <>{children}</>;
+  }
+
+  /**
+   * Redirect, unless we would only land back here. `firstAllowedPath` falls
+   * back to Settings for a role with no modules, and Settings is itself
+   * module-owned — redirecting to a path this guard also rejects would spin.
+   */
+  const redirectAway = () => {
+    const target = firstAllowedPath(modules);
+    return target === pathname ? (
+      <>{children}</>
+    ) : (
+      <Navigate to={target} replace />
+    );
+  };
+
+  // '/' renders react-admin's dashboard, which loads data from across the
+  // app. A role without the dashboard module cannot read most of that and
+  // would get an error page, so send it somewhere it can actually use.
+  if (pathname === '/') {
+    return modules.includes('dashboard') ? <>{children}</> : redirectAway();
   }
 
   const owningModules = APP_MODULES.filter((module) =>
@@ -112,7 +129,7 @@ const ModuleRouteGuard = ({ children }: { children: ReactNode }) => {
     return <>{children}</>;
   }
 
-  return <Navigate to={firstAllowedPath(modules)} replace />;
+  return redirectAway();
 };
 
 const MyMenu = () => {
@@ -268,12 +285,14 @@ const MyMenu = () => {
         title="SoonerWARN Manager"
         icon={<FavoriteIcon />}
       /> */}
-      <MultiLevelMenu.Item
-        name="settings"
-        to="/admin/settings"
-        label="Settings"
-        icon={<SettingsIcon />}
-      />
+      {has('settings') && (
+        <MultiLevelMenu.Item
+          name="settings"
+          to="/admin/settings"
+          label="Settings"
+          icon={<SettingsIcon />}
+        />
+      )}
     </MultiLevelMenu>
   );
 };
