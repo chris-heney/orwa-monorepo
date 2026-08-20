@@ -184,7 +184,7 @@ importers:
         version: 5.3.7(@mui/material@7.3.11(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(@types/react@19.0.0)(react@19.0.0)
       mj-react-form-builder:
         specifier: ^0.0.55
-        version: 0.0.55(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))(yaml@2.9.0)
+        version: 0.0.55(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(supports-color@8.1.1)(tsx@4.23.12)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))(yaml@2.9.0)
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
@@ -282,6 +282,9 @@ importers:
         specifier: ^11.1.0
         version: 11.1.1
     devDependencies:
+      '@faker-js/faker':
+        specifier: ^10.6.0
+        version: 10.6.0
       '@hookform/devtools':
         specifier: ^4.4.0
         version: 4.4.0(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(supports-color@8.1.1)
@@ -311,10 +314,10 @@ importers:
         version: 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(@types/node@20.19.9)(@zkochan/js-yaml@0.0.7)(babel-plugin-macros@3.1.0)(debug@4.4.3(supports-color@8.1.1))(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(ts-node@10.9.1(@swc/core@1.13.5(@swc/helpers@0.5.23))(@types/node@20.19.9)(typescript@5.8.3))(typescript@5.8.3)
       '@nx/react':
         specifier: 21.5.2
-        version: 21.5.2(257bbfd8c4daef67df87e9b6fb573eeb)
+        version: 21.5.2(eabfe2d9fedf6b15217dd94bbd7c2dba)
       '@nx/vite':
         specifier: 21.5.2
-        version: 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))(vitest@3.2.7)
+        version: 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@3.2.7)
       '@nx/web':
         specifier: 21.5.2
         version: 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
@@ -347,7 +350,7 @@ importers:
         version: 4.3.3
       '@tailwindcss/vite':
         specifier: ^4.1.13
-        version: 4.3.3(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))
+        version: 4.3.3(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
       '@tanstack/eslint-plugin-query':
         specifier: ^5.86.0
         version: 5.101.4(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)
@@ -416,7 +419,7 @@ importers:
         version: 0.4.14
       '@vitejs/plugin-react':
         specifier: ^4.2.0
-        version: 4.7.0(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))
+        version: 4.7.0(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
       '@vitest/ui':
         specifier: ^3.0.0
         version: 3.2.7(vitest@3.2.7)
@@ -426,6 +429,9 @@ importers:
       cypress:
         specifier: ^14.2.1
         version: 14.5.4
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       esbuild:
         specifier: ^0.19.2
         version: 0.19.12
@@ -486,6 +492,9 @@ importers:
       tslib:
         specifier: ^2.3.0
         version: 2.8.1
+      tsx:
+        specifier: ^4.23.12
+        version: 4.23.12
       typescript:
         specifier: ~5.8.2
         version: 5.8.3
@@ -494,10 +503,10 @@ importers:
         version: 8.65.0(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)
       vite:
         specifier: ^7.0.0
-        version: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
+        version: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
       vitest:
         specifier: ^3.0.0
-        version: 3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(yaml@2.9.0)
+        version: 3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
       webpack-cli:
         specifier: ^5.1.4
         version: 5.1.4(webpack-dev-server@5.2.6)(webpack@5.109.2)
@@ -1820,6 +1829,10 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@faker-js/faker@10.6.0':
+    resolution: {integrity: sha512-3RQHgEtvL1Frl/d1cSreo7qhJ3Gk1OdNUai/CtZ8G+wYeRQnJih3s9xJ9/kgYekPQRdwgh0HXRPqMlzWGwivIQ==}
+    engines: {node: ^20.19.0 || ^22.13.0 || ^23.5.0 || >=24.0.0, npm: '>=10'}
 
   '@fast-csv/format@4.3.5':
     resolution: {integrity: sha512-8iRn6QF3I8Ak78lNAa+Gdl5MJJBM5vRHivFtMRUWINdevNo00K7OXxS2PshawLKTejVwieIlPmK5YlLu6w4u8A==}
@@ -7051,6 +7064,10 @@ packages:
     resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
     engines: {node: '>=12'}
 
+  dotenv@17.4.2:
+    resolution: {integrity: sha512-nI4U3TottKAcAD9LLud4Cb7b2QztQMUEfHbvhTH09bqXTxnSie8WnjPALV/WMCrJZ6UV/qHJ6L03OqO3LcdYZw==}
+    engines: {node: '>=12'}
+
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
     engines: {node: '>= 0.4'}
@@ -12109,6 +12126,11 @@ packages:
     resolution: {integrity: sha512-LxhtAkPDTkVCMQjt2h6eBVY28KCjikZqZfMcC15YBeNjkgUpdCfBu5HoiOTDu86v6smE8yOjyEktJ8hlbANHQA==}
     engines: {node: '>=0.6.x'}
 
+  tsx@4.23.12:
+    resolution: {integrity: sha512-FDf4L4sYzKtzWYhU/Xm0AQFdTjdIxNo9ElTf2mxXM6k8YMHXzYUe4yODVaXP4V9uMFbVg8c0qyBccK2OOxb45Q==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   tsyringe@4.10.0:
     resolution: {integrity: sha512-axr3IdNuVIxnaK5XGEUFTu3YmAQ6lllgrvqfEoR16g/HGnYY/6We4oWENtAnzK6/LpJ2ur9PAb80RBt7/U4ugw==}
     engines: {node: '>= 6.0.0'}
@@ -14184,6 +14206,8 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
+  '@faker-js/faker@10.6.0': {}
+
   '@fast-csv/format@4.3.5':
     dependencies:
       '@types/node': 14.18.63
@@ -16162,14 +16186,14 @@ snapshots:
   '@nx/nx-win32-x64-msvc@21.6.11':
     optional: true
 
-  '@nx/react@21.5.2(257bbfd8c4daef67df87e9b6fb573eeb)':
+  '@nx/react@21.5.2(eabfe2d9fedf6b15217dd94bbd7c2dba)':
     dependencies:
       '@nx/devkit': 21.5.2(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))
       '@nx/eslint': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(@zkochan/js-yaml@0.0.7)(debug@4.4.3(supports-color@8.1.1))(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
       '@nx/js': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
       '@nx/module-federation': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/helpers@0.5.23)(cssnano@6.1.2(postcss@8.5.25))(csso@5.0.5)(debug@4.4.3(supports-color@8.1.1))(esbuild@0.19.12)(lightningcss@1.32.0)(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(postcss@8.5.25)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(supports-color@8.1.1)(typescript@5.8.3)(uglify-js@3.19.3)(webpack-cli@5.1.4)
       '@nx/rollup': 21.5.2(@babel/core@7.29.7(supports-color@8.1.1))(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(@types/babel__core@7.20.5)(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(ts-node@10.9.1(@swc/core@1.13.5(@swc/helpers@0.5.23))(@types/node@20.19.9)(typescript@5.8.3))(typescript@5.8.3)
-      '@nx/vite': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))(vitest@3.2.7)
+      '@nx/vite': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@3.2.7)
       '@nx/web': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
       '@phenomnomnominal/tsquery': 5.0.1(typescript@5.8.3)
       '@svgr/webpack': 8.1.0(supports-color@8.1.1)(typescript@5.8.3)
@@ -16248,7 +16272,7 @@ snapshots:
       - typescript
       - verdaccio
 
-  '@nx/vite@21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))(vitest@3.2.7)':
+  '@nx/vite@21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))(vitest@3.2.7)':
     dependencies:
       '@nx/devkit': 21.5.2(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))
       '@nx/js': 21.5.2(@babel/traverse@7.29.8(supports-color@8.1.1))(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(nx@21.4.0(@swc-node/register@1.9.2(@swc/core@1.13.5(@swc/helpers@0.5.23))(@swc/types@0.1.28)(supports-color@8.1.1)(typescript@5.8.3))(@swc/core@1.13.5(@swc/helpers@0.5.23))(debug@4.4.3(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
@@ -16259,8 +16283,8 @@ snapshots:
       semver: 7.8.5
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
-      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
-      vitest: 3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
+      vitest: 3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -17313,12 +17337,12 @@ snapshots:
       postcss: 8.5.25
       tailwindcss: 4.3.3
 
-  '@tailwindcss/vite@4.3.3(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))':
+  '@tailwindcss/vite@4.3.3(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
       '@tailwindcss/node': 4.3.3
       '@tailwindcss/oxide': 4.3.3
       tailwindcss: 4.3.3
-      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
 
   '@tanstack/eslint-plugin-query@5.101.4(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@5.8.3)':
     dependencies:
@@ -19348,7 +19372,7 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  '@vitejs/plugin-react@4.7.0(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))':
+  '@vitejs/plugin-react@4.7.0(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
       '@babel/core': 7.29.7(supports-color@8.1.1)
       '@babel/plugin-transform-react-jsx-self': 7.29.7(@babel/core@7.29.7(supports-color@8.1.1))
@@ -19356,7 +19380,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -19368,13 +19392,13 @@ snapshots:
       chai: 5.3.3
       tinyrainbow: 2.0.0
 
-  '@vitest/mocker@3.2.7(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))':
+  '@vitest/mocker@3.2.7(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))':
     dependencies:
       '@vitest/spy': 3.2.7
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
 
   '@vitest/pretty-format@3.2.7':
     dependencies:
@@ -19405,7 +19429,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.17
       tinyrainbow: 2.0.0
-      vitest: 3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(yaml@2.9.0)
+      vitest: 3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
 
   '@vitest/utils@3.2.7':
     dependencies:
@@ -21152,6 +21176,8 @@ snapshots:
       dotenv: 16.4.7
 
   dotenv@16.4.7: {}
+
+  dotenv@17.4.2: {}
 
   dunder-proto@1.0.1:
     dependencies:
@@ -24059,7 +24085,7 @@ snapshots:
 
   mitt@3.0.1: {}
 
-  mj-react-form-builder@0.0.55(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))(yaml@2.9.0):
+  mj-react-form-builder@0.0.55(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(supports-color@8.1.1)(tsx@4.23.12)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))(yaml@2.9.0):
     dependencies:
       '@emotion/react': 11.14.0(@types/react@18.3.31)(react@19.0.0)(supports-color@8.1.1)
       '@emotion/styled': 11.14.1(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@18.3.31)(react@19.0.0)(supports-color@8.1.1)
@@ -24067,7 +24093,7 @@ snapshots:
       '@mui/material': 6.5.0(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@18.3.31)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@types/react': 18.3.31
       '@types/react-dom': 18.3.7(@types/react@18.3.31)
-      '@vitejs/plugin-react': 4.7.0(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))
+      '@vitejs/plugin-react': 4.7.0(supports-color@8.1.1)(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
       eslint-plugin-react-hooks: 5.2.0(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))
       eslint-plugin-react-refresh: 0.4.26(eslint@9.39.5(jiti@2.4.2)(supports-color@8.1.1))
       getenv: 1.0.0
@@ -24075,7 +24101,7 @@ snapshots:
       react-dom: 19.0.0(react@19.0.0)
       react-hook-form: 7.83.0(react@19.0.0)
       react-number-format: 5.4.5(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      tailwindcss: 3.4.19(yaml@2.9.0)
+      tailwindcss: 3.4.19(tsx@4.23.12)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@mui/material-pigment-css'
       - eslint
@@ -24824,12 +24850,13 @@ snapshots:
       postcss: 8.5.25
       ts-node: 10.9.1(@swc/core@1.13.5(@swc/helpers@0.5.23))(@types/node@20.19.9)(typescript@5.8.3)
 
-  postcss-load-config@6.0.1(jiti@1.21.7)(postcss@8.5.25)(yaml@2.9.0):
+  postcss-load-config@6.0.1(jiti@1.21.7)(postcss@8.5.25)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       lilconfig: 3.1.3
     optionalDependencies:
       jiti: 1.21.7
       postcss: 8.5.25
+      tsx: 4.23.12
       yaml: 2.9.0
 
   postcss-loader@6.2.1(postcss@8.5.25)(webpack@5.109.2):
@@ -26802,7 +26829,7 @@ snapshots:
 
   tabbable@6.5.0: {}
 
-  tailwindcss@3.4.19(yaml@2.9.0):
+  tailwindcss@3.4.19(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -26821,7 +26848,7 @@ snapshots:
       postcss: 8.5.25
       postcss-import: 15.1.0(postcss@8.5.25)
       postcss-js: 4.1.0(postcss@8.5.25)
-      postcss-load-config: 6.0.1(jiti@1.21.7)(postcss@8.5.25)(yaml@2.9.0)
+      postcss-load-config: 6.0.1(jiti@1.21.7)(postcss@8.5.25)(tsx@4.23.12)(yaml@2.9.0)
       postcss-nested: 6.2.0(postcss@8.5.25)
       postcss-selector-parser: 6.1.4
       resolve: 1.22.12
@@ -27117,6 +27144,12 @@ snapshots:
 
   tsscmp@1.0.6: {}
 
+  tsx@4.23.12:
+    dependencies:
+      esbuild: 0.28.1
+    optionalDependencies:
+      fsevents: 2.3.3
+
   tsyringe@4.10.0:
     dependencies:
       tslib: 1.14.1
@@ -27405,13 +27438,13 @@ snapshots:
       string_decoder: 1.3.0
       util-deprecate: 1.0.2
 
-  vite-node@3.2.4(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(yaml@2.9.0):
+  vite-node@3.2.4(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3(supports-color@8.1.1)
       es-module-lexer: 1.7.0
       pathe: 2.0.3
-      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
     transitivePeerDependencies:
       - '@types/node'
       - jiti
@@ -27426,7 +27459,7 @@ snapshots:
       - tsx
       - yaml
 
-  vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0):
+  vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       esbuild: 0.28.1
       fdir: 6.5.0(picomatch@4.0.5)
@@ -27443,13 +27476,14 @@ snapshots:
       sass: 1.102.0
       sass-embedded: 1.100.0
       terser: 5.49.0
+      tsx: 4.23.12
       yaml: 2.9.0
 
-  vitest@3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(yaml@2.9.0):
+  vitest@3.2.7(@types/node@20.19.9)(@vitest/ui@3.2.7)(jiti@2.4.2)(jsdom@22.1.0(supports-color@8.1.1))(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0):
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.7
-      '@vitest/mocker': 3.2.7(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0))
+      '@vitest/mocker': 3.2.7(vite@7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0))
       '@vitest/pretty-format': 3.2.7
       '@vitest/runner': 3.2.7
       '@vitest/snapshot': 3.2.7
@@ -27467,8 +27501,8 @@ snapshots:
       tinyglobby: 0.2.17
       tinypool: 1.1.1
       tinyrainbow: 2.0.0
-      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(yaml@2.9.0)
-      vite-node: 3.2.4(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(yaml@2.9.0)
+      vite: 7.3.6(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
+      vite-node: 3.2.4(@types/node@20.19.9)(jiti@2.4.2)(less@4.8.1(supports-color@8.1.1))(lightningcss@1.32.0)(sass-embedded@1.100.0)(sass@1.102.0)(supports-color@8.1.1)(terser@5.49.0)(tsx@4.23.12)(yaml@2.9.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 20.19.9
