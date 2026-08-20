@@ -13,29 +13,20 @@ import {
 import { Bar } from "react-chartjs-2";
 import SectionLabel from "./SectionLabel";
 import { display, useSummaryTokens } from "./tokens";
-import {
-  MembershipMetrics,
-  useMembershipMetrics,
-} from "./useMembershipMetrics";
+import { useMembershipYearReport } from "./useMembershipYearReport";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Title, Tooltip, Legend);
 
-type Props = {
-  metrics?: MembershipMetrics;
-};
-
 /**
  * Year-over-year membership counts — theme-aware Chart.js bars.
- * Historical years are snapshots; the latest year uses expiration-based counts
- * (see glossary footnote).
+ * Every bar is a real count of memberships transacted that year, from the
+ * invoice ledger.
  */
-const YearReportPanel: React.FC<Props> = ({ metrics: metricsProp }) => {
+const YearReportPanel: React.FC = () => {
   const T = useSummaryTokens();
-  const hooked = useMembershipMetrics();
-  const metrics = metricsProp ?? hooked;
+  const { rows, isLoading, error } = useMembershipYearReport();
 
   const chartData = useMemo(() => {
-    const rows = metrics.yearReport;
     return {
       labels: rows.map((r) => String(r.year)),
       datasets: [
@@ -55,7 +46,7 @@ const YearReportPanel: React.FC<Props> = ({ metrics: metricsProp }) => {
         },
       ],
     };
-  }, [metrics.yearReport, T.water, T.committed]);
+  }, [rows, T.water, T.committed]);
 
   const chartOptions = useMemo((): ChartOptions<"bar"> => {
     return {
@@ -105,10 +96,18 @@ const YearReportPanel: React.FC<Props> = ({ metrics: metricsProp }) => {
     };
   }, [T]);
 
-  if (metrics.isLoading) {
+  if (isLoading) {
     return (
       <Box sx={{ py: 6, textAlign: "center", color: T.textLo }}>
         Loading report…
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ py: 6, textAlign: "center", color: T.textLo }}>
+        Could not load the membership year report.
       </Box>
     );
   }
@@ -117,9 +116,8 @@ const YearReportPanel: React.FC<Props> = ({ metrics: metricsProp }) => {
     <Box>
       <SectionLabel>Membership over years</SectionLabel>
       <Typography sx={{ fontSize: 12.5, color: T.textFaint, mb: 1.5, maxWidth: 720 }}>
-        Side-by-side water system and associate counts. Older years are
-        historical snapshots; the current year reflects members whose
-        membership has expired by payment rules.
+        Water systems and associates whose membership was paid in each year,
+        counted from recorded transactions.
       </Typography>
 
       <Box
@@ -131,15 +129,31 @@ const YearReportPanel: React.FC<Props> = ({ metrics: metricsProp }) => {
           height: 340,
         }}
       >
-        <Bar data={chartData} options={chartOptions} />
+        {rows.length === 0 ? (
+          <Box
+            sx={{
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              textAlign: "center",
+              color: T.textLo,
+              fontSize: 13,
+            }}
+          >
+            No membership transactions recorded yet.
+          </Box>
+        ) : (
+          <Bar data={chartData} options={chartOptions} />
+        )}
       </Box>
 
       <Typography
         sx={{ mt: 1.25, fontSize: 11, color: T.textFaint, fontStyle: "italic" }}
       >
-        Glossary · “Expired” for the current year uses payment last / previous
-        dates and overlap rules — not the same as the rolling 12-month “Active”
-        definition in The roster. A transactions-based year series is planned.
+        Glossary · A member counts once per year, in the year their payment was
+        recorded. Years before online payments were recorded will show fewer
+        transactions than the membership actually had.
       </Typography>
     </Box>
   );

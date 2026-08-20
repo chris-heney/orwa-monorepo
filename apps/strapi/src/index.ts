@@ -300,6 +300,27 @@ const seedDefaultRoleModules = async (strapi) => {
   }
 };
 
+const MEMBERSHIP_YEAR_REPORT_ACTIONS = [
+  'api::membership-year-report.membership-year-report.getYearReport',
+];
+
+/** The memberships summary chart reads this; every logged-in role needs it. */
+const configureMembershipYearReportPermissions = async (strapi) => {
+  try {
+    for (const type of ['admin', 'authenticated', STAFF_ROLE_TYPE]) {
+      await ensureRolePermissions(
+        strapi,
+        { type },
+        MEMBERSHIP_YEAR_REPORT_ACTIONS,
+      );
+    }
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure membership year report permissions: ${error.message}`,
+    );
+  }
+};
+
 const MEMBERSHIP_EXPIRATION_UIDS = [
   'api::watersystem.watersystem',
   'api::associate.associate',
@@ -428,6 +449,7 @@ export default {
     await configureAdminRbacPermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
     await seedOrwefFormEmails(strapi);
+    await configureMembershipYearReportPermissions(strapi);
     await seedDefaultRoleModules(strapi);
     await backfillMembershipExpirations(strapi);
   },
