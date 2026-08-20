@@ -4,9 +4,8 @@
  * `invoices` is the transaction record: membership-forms writes one per new
  * application and per renewal, and it is completed (payment_date set) when the
  * card settles or an admin confirms the invoice. Counting distinct members per
- * year of payment therefore answers "how many memberships were transacted in
- * year N" from data, rather than the hardcoded 2021–2023 figures the summary
- * chart used to carry.
+ * year of payment answers "how many memberships were transacted in year N"
+ * from data, so the series gains each new year on its own.
  *
  * Rows without a payment_date are invoices that were raised but never paid, so
  * they are not transactions and are excluded.
@@ -21,12 +20,24 @@ export interface MembershipYearRow {
 }
 
 /**
- * Reshapes the grouped SQL rows into one entry per year with both counts.
- * Years with no transactions simply do not appear — the chart shows what was
- * recorded rather than inventing a zero.
+ * The years that predate the invoice ledger. There are no transactions to
+ * derive these from, so they stay as the recorded figures the summary has
+ * always shown. Any year that has real transactions replaces its entry here
+ * outright — these are a floor for history, never a supplement to live data.
+ */
+export const HISTORICAL_YEARS: MembershipYearRow[] = [
+  { year: 2021, systems: 529, associates: 111 },
+  { year: 2022, systems: 380, associates: 96 },
+  { year: 2023, systems: 458, associates: 104 },
+];
+
+/**
+ * Reshapes the grouped SQL rows into one entry per year with both counts, then
+ * layers them over the pre-ledger history. A year appears if it has either.
  */
 export const buildYearRows = (
   rows: { year: unknown; resource: string; members: unknown }[],
+  historical: MembershipYearRow[] = HISTORICAL_YEARS,
 ): MembershipYearRow[] => {
   const byYear = new Map<number, MembershipYearRow>();
 
@@ -52,7 +63,15 @@ export const buildYearRows = (
     byYear.set(year, entry);
   }
 
-  return [...byYear.values()].sort((a, b) => a.year - b.year);
+  // Start from history, then let any year with real transactions replace its
+  // entry wholesale — never merge the two, or a year with only water system
+  // transactions would keep a historical associate count beside a live one.
+  const merged = new Map(historical.map((row) => [row.year, { ...row }]));
+  for (const [year, row] of byYear) {
+    merged.set(year, row);
+  }
+
+  return [...merged.values()].sort((a, b) => a.year - b.year);
 };
 
 export default ({ strapi }) => ({

@@ -116,8 +116,9 @@ const YearReportPanel: React.FC = () => {
     <Box>
       <SectionLabel>Membership over years</SectionLabel>
       <Typography sx={{ fontSize: 12.5, color: T.textFaint, mb: 1.5, maxWidth: 720 }}>
-        Water systems and associates whose membership was paid in each year,
-        counted from recorded transactions.
+        Water systems and associates by membership year. Years covered by the
+        transaction ledger are counted from recorded payments; earlier years
+        are the figures carried over from before it existed.
       </Typography>
 
       <Box
@@ -152,8 +153,9 @@ const YearReportPanel: React.FC = () => {
         sx={{ mt: 1.25, fontSize: 11, color: T.textFaint, fontStyle: "italic" }}
       >
         Glossary · A member counts once per year, in the year their payment was
-        recorded. Years before online payments were recorded will show fewer
-        transactions than the membership actually had.
+        recorded. Years predating the ledger (2021–2023) are carried figures,
+        not transaction counts, and are replaced automatically if transactions
+        are ever recorded against them.
       </Typography>
     </Box>
   );
