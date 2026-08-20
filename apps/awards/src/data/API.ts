@@ -98,6 +98,21 @@ export const useGetWatersystems = () => {
 }
 
 
+export const useGetAwardWinners = () => {
+  return useQuery({
+    queryKey: ['award-winners'],
+    queryFn: async () => {
+      const winners = await _get(
+        'award-winners',
+        '?filters[is_published][$eq]=true&pagination[limit]=500' +
+          '&sort[0]=award_year:desc&sort[1]=sort_order:asc' +
+          '&populate[photo][fields][0]=url&populate[photo][fields][1]=formats'
+      )
+      return Array.isArray(winners) ? winners : winners ? [winners] : []
+    },
+  })
+}
+
 export const useGetSubmissions = () => {
   return useQuery({
     queryKey: ['logs', 'award-nomination'],
