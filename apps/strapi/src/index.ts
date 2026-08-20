@@ -300,6 +300,66 @@ const seedDefaultRoleModules = async (strapi) => {
   }
 };
 
+const MEMBERSHIP_EXPIRATION_UIDS = [
+  'api::watersystem.watersystem',
+  'api::associate.associate',
+];
+
+/**
+ * Fills `expiration_date` for rows written before the column existed.
+ *
+ * Only touches rows where it is still null, so this is idempotent and cheap on
+ * every boot after the first. Ongoing writes are handled by the content-type
+ * lifecycles; this is purely the one-time catch-up for historical data.
+ */
+const backfillMembershipExpirations = async (strapi) => {
+  const {
+    getMembershipExpirationDate,
+  } = require('./utils/membership-expiration');
+
+  for (const uid of MEMBERSHIP_EXPIRATION_UIDS) {
+    try {
+      const query = strapi.db.query(uid);
+      const stale = await query.findMany({
+        where: {
+          expiration_date: { $null: true },
+          $or: [
+            { payment_last_date: { $notNull: true } },
+            { payment_previous_date: { $notNull: true } },
+          ],
+        },
+        select: ['id', 'payment_last_date', 'payment_previous_date'],
+      });
+
+      if (stale.length === 0) {
+        continue;
+      }
+
+      let filled = 0;
+      for (const row of stale) {
+        const expiration_date = getMembershipExpirationDate(
+          row.payment_previous_date,
+          row.payment_last_date,
+        );
+        if (!expiration_date) {
+          continue;
+        }
+        await query.update({
+          where: { id: row.id },
+          data: { expiration_date },
+        });
+        filled += 1;
+      }
+
+      strapi.log.info(`Backfilled ${filled} ${uid} expiration dates.`);
+    } catch (error) {
+      strapi.log.warn(
+        `Unable to backfill expiration dates for ${uid}: ${error.message}`,
+      );
+    }
+  }
+};
+
 export default {
   /**
    * An asynchronous register function that runs before
@@ -369,5 +429,6 @@ export default {
     await configureScholarshipAwardPermissions(strapi);
     await seedOrwefFormEmails(strapi);
     await seedDefaultRoleModules(strapi);
+    await backfillMembershipExpirations(strapi);
   },
 };

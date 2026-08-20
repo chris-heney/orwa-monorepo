@@ -18,12 +18,7 @@
     },
     "region": {
       "type": "enumeration",
-      "enum": [
-        "Region 1",
-        "Region 2",
-        "Region 3",
-        "Region 4"
-      ]
+      "enum": ["Region 1", "Region 2", "Region 3", "Region 4"]
     },
     "office_hours": {
       "type": "string"
@@ -140,11 +135,7 @@
     },
     "member_type": {
       "type": "enumeration",
-      "enum": [
-        "RWC",
-        "RWD",
-        "TN"
-      ]
+      "enum": ["RWC", "RWD", "TN"]
     },
     "system_type_dirty": {
       "type": "enumeration",
@@ -367,23 +358,14 @@
     },
     "membership_directory_type": {
       "type": "enumeration",
-      "enum": [
-        "Digital",
-        "Mail",
-        "Both",
-        "None"
-      ]
+      "enum": ["Digital", "Mail", "Both", "None"]
     },
     "payment_last_date": {
       "type": "date"
     },
     "payment_method": {
       "type": "enumeration",
-      "enum": [
-        "Card",
-        "eCheck",
-        "Invoice"
-      ]
+      "enum": ["Card", "eCheck", "Invoice"]
     },
     "payment_amount": {
       "type": "decimal"
@@ -425,6 +407,9 @@
       "type": "boolean"
     },
     "payment_previous_date": {
+      "type": "date"
+    },
+    "expiration_date": {
       "type": "date"
     },
     "expiration_notification_sent": {

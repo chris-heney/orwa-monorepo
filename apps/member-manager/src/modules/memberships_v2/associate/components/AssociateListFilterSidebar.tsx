@@ -11,10 +11,7 @@ import {
   useGetList,
 } from "react-admin";
 import { useMembershipContext } from "../../MembershipsContextProvider";
-import {
-  formatDate,
-  getRollingOneYearAgoForFilters,
-} from "../../helpers/activeOrInactiveMembership";
+import { MEMBER_STATUS_FILTERS } from "../../helpers/activeOrInactiveMembership";
 import { DateRangeIcon } from "@mui/x-date-pickers";
 import SavedFilters from "../../../_components/SavedFilters";
 import DateRangeFilter from "../../watersystem/components/DateRangeFilter";
@@ -61,11 +58,6 @@ const AssociateListFilterSidebar = () => {
     };
   };
 
-  const rollingOneYearAgo = new Date();
-  rollingOneYearAgo.setFullYear(rollingOneYearAgo.getFullYear() - 1);
-  const oneYearAgoPlusOneMonth = new Date(rollingOneYearAgo);
-  oneYearAgoPlusOneMonth.setMonth(oneYearAgoPlusOneMonth.getMonth() + 1);
-
   return !filterValues ? (
     <Loading />
   ) : (
@@ -97,44 +89,16 @@ const AssociateListFilterSidebar = () => {
           />
         </FilterList>
 
-        {/* Align with list: active ≈ last payment within the past year + not null. */}
+        {/* Selects on the same expiration rule the Member column shows. */}
         <FilterList label="Member Status" icon={<BadgeIcon />}>
-          <FilterListItem
-            label="Member"
-            value={{
-              $and: [
-                { payment_last_date: { $notNull: true } },
-                {
-                  payment_last_date: {
-                    $gte: getRollingOneYearAgoForFilters(),
-                  },
-                },
-              ],
-            }}
-          />
+          <FilterListItem label="Member" value={MEMBER_STATUS_FILTERS.member} />
           <FilterListItem
             label="Non Member"
-            value={{
-              $or: [
-                {
-                  payment_last_date: {
-                    $lt: getRollingOneYearAgoForFilters(),
-                  },
-                },
-                { payment_last_date: { $null: true } },
-              ],
-            }}
+            value={MEMBER_STATUS_FILTERS.nonMember}
           />
           <FilterListItem
-            label="Expires in 1 month"
-            value={{
-              payment_last_date: {
-                $between: [
-                  formatDate(rollingOneYearAgo),
-                  formatDate(oneYearAgoPlusOneMonth),
-                ],
-              },
-            }}
+            label="Expiring in 1 month"
+            value={MEMBER_STATUS_FILTERS.expiringWithinAMonth}
           />
         </FilterList>
         <FilterList label="Level" icon={<InsightsIcon />}>

@@ -67,11 +67,16 @@ const InvoicesList = ({ filters }: { filters: any }) => {
           { id: selectedInvoice.entity_id }
         );
 
+        // Confirming an invoice is when the membership period actually
+        // advances, so rotate the dates here: the period they were on becomes
+        // the previous one. Without this the early-renewal overlap credit that
+        // getExpirationDate grants is silently lost for invoice payers.
         await dataProvider.update(selectedInvoice.resource, {
           id: selectedInvoice.entity_id,
           data: {
+            payment_previous_date: member.payment_last_date ?? null,
             payment_last_date: data.payment_date,
-            total_years: member.total_years + 1,
+            total_years: (member.total_years ?? 0) + 1,
           },
           previousData: {},
         });

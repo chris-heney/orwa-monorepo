@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 import {
   AdminOptions,
@@ -7,10 +7,10 @@ import {
   IContact,
   WatersystemMembershipPayload,
   waterSystemRenewalPayload,
-} from "../types";
+} from '../types';
 
-import { findOneById, updateById } from "../../../utils/document-compat";
-import { coerceToSchema } from "../../../utils/coerce-to-schema";
+import { findOneById, updateById } from '../../../utils/document-compat';
+import { coerceToSchema } from '../../../utils/coerce-to-schema';
 
 /**
  * membership-forms service
@@ -20,8 +20,8 @@ export default ({ strapi }) => {
   // Utility function to get user by email
   const getUserIdByEmail = async (email: string) => {
     const users =
-      (await strapi.plugins["users-permissions"].services.user.fetchAll({
-        fields: ["id", "wp_uid"],
+      (await strapi.plugins['users-permissions'].services.user.fetchAll({
+        fields: ['id', 'wp_uid'],
         filters: { email },
         limit: 1,
       })) || [];
@@ -37,8 +37,8 @@ export default ({ strapi }) => {
   // Utility function to get or create contact
   const getContact = async (email: string, contactData: any, userData: any) => {
     const contactList =
-      (await strapi.documents("api::contact.contact").findMany({
-        fields: ["id", "first", "last", "phone", "contact_type"],
+      (await strapi.documents('api::contact.contact').findMany({
+        fields: ['id', 'first', 'last', 'phone', 'contact_type'],
         filters: { email },
         limit: 1,
         populate: { user: true },
@@ -46,9 +46,9 @@ export default ({ strapi }) => {
 
     if (contactList.length === 0) {
       contactList.push(
-        await strapi.documents("api::contact.contact").create({
+        await strapi.documents('api::contact.contact').create({
           data: contactData,
-        })
+        }),
       );
     }
 
@@ -85,9 +85,8 @@ export default ({ strapi }) => {
       };
     }
 
-    const user = await strapi.plugins["users-permissions"].services.user.add(
-      userData
-    );
+    const user =
+      await strapi.plugins['users-permissions'].services.user.add(userData);
 
     return {
       ...contactList[0],
@@ -98,7 +97,7 @@ export default ({ strapi }) => {
 
   // Utility function to update contact
   const updateContact = async (contactId: number, contact: Partial<any>) => {
-    const response = await updateById("api::contact.contact", contactId, {
+    const response = await updateById('api::contact.contact', contactId, {
       data: contact,
     });
     return response.data;
@@ -106,50 +105,50 @@ export default ({ strapi }) => {
 
   /** Only attributes that exist on `api::watersystem.watersystem` (excludes form-only / nested keys). */
   const WATERSYSTEM_ENTITY_KEYS = [
-    "name",
-    "region",
-    "office_hours",
-    "meters",
-    "url",
-    "board_meeting",
-    "funding",
-    "orwaag",
-    "workmans_comp",
-    "county",
-    "total_years",
-    "member_type",
-    "email",
-    "phone",
-    "fax",
-    "latitude",
-    "longitude",
-    "address_mailing_pobox",
-    "address_mailing_city",
-    "address_mailing_state",
-    "address_mailing_zip",
-    "address_physical_line1",
-    "address_physical_line2",
-    "address_physical_city",
-    "address_physical_state",
-    "address_physical_zip",
-    "membership_directory_type",
-    "payment_last_date",
-    "payment_method",
-    "payment_amount",
-    "fee_connections",
-    "fee_membership",
-    "fee_scholarship",
-    "fee_apprenticeship",
-    "application_date",
-    "wp_uid",
-    "wp_eid",
-    "payment_details",
-    "legal_entity_name",
-    "directory_sent_date",
-    "soonerwarn",
-    "directory_mailed",
-    "payment_previous_date",
-    "expiration_notification_sent",
+    'name',
+    'region',
+    'office_hours',
+    'meters',
+    'url',
+    'board_meeting',
+    'funding',
+    'orwaag',
+    'workmans_comp',
+    'county',
+    'total_years',
+    'member_type',
+    'email',
+    'phone',
+    'fax',
+    'latitude',
+    'longitude',
+    'address_mailing_pobox',
+    'address_mailing_city',
+    'address_mailing_state',
+    'address_mailing_zip',
+    'address_physical_line1',
+    'address_physical_line2',
+    'address_physical_city',
+    'address_physical_state',
+    'address_physical_zip',
+    'membership_directory_type',
+    'payment_last_date',
+    'payment_method',
+    'payment_amount',
+    'fee_connections',
+    'fee_membership',
+    'fee_scholarship',
+    'fee_apprenticeship',
+    'application_date',
+    'wp_uid',
+    'wp_eid',
+    'payment_details',
+    'legal_entity_name',
+    'directory_sent_date',
+    'soonerwarn',
+    'directory_mailed',
+    'payment_previous_date',
+    'expiration_notification_sent',
   ] as const;
 
   const pickWatersystemEntityData = (data: Record<string, any>) => {
@@ -162,18 +161,42 @@ export default ({ strapi }) => {
     return out;
   };
 
-  /** A directory row is included when a title is provided (form validates the rest). */
-  const isWatersystemDirectoryContactRow = (row: IContact | Record<string, any>) =>
-    !!(row && String(row.title ?? "").trim());
+  /**
+   * Membership period dates advance when payment lands, not when the renewal
+   * form is submitted. Card payments settle immediately; invoice and eCheck
+   * renewals stay pending until the invoice is confirmed, which is what
+   * rotates the dates then. Returning nothing for those leaves the member on
+   * the period they already paid for — clearing payment_last_date here used to
+   * drop a paid-up member to "Non Member" the moment they filed a renewal.
+   */
+  const renewalPaymentDates = (
+    data: Record<string, any>,
+  ): Record<string, any> =>
+    data.payment_method === 'Card'
+      ? {
+          payment_previous_date: data.payment_last_date,
+          payment_last_date: new Date().toISOString(),
+          total_years: data.total_years
+            ? data.total_years + 1
+            : data.total_years,
+        }
+      : {};
 
-  const buildWatersystemDirectoryContactData = (row: IContact | Record<string, any>) => {
-    const trim = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  /** A directory row is included when a title is provided (form validates the rest). */
+  const isWatersystemDirectoryContactRow = (
+    row: IContact | Record<string, any>,
+  ) => !!(row && String(row.title ?? '').trim());
+
+  const buildWatersystemDirectoryContactData = (
+    row: IContact | Record<string, any>,
+  ) => {
+    const trim = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
     const l1 = trim(row.address_mailing_line1);
     const l2 = trim(row.address_mailing_line2);
     const city = trim(row.address_mailing_city);
     const st = row.address_mailing_state
       ? String(row.address_mailing_state).trim()
-      : "";
+      : '';
     const zip = trim(row.address_mailing_zip);
     const hasAddress = !!(l1 || l2 || city || st || zip);
 
@@ -182,7 +205,7 @@ export default ({ strapi }) => {
       last: trim(row.last) || null,
       phone: trim(row.phone) || null,
       title: trim(row.title) || null,
-      contact_type: "watersystem",
+      contact_type: 'watersystem',
       directory_opt_out: !!row.directory_opt_out,
     };
 
@@ -215,8 +238,7 @@ export default ({ strapi }) => {
     for (const row of rows) {
       if (!isWatersystemDirectoryContactRow(row)) continue;
       const payload = buildWatersystemDirectoryContactData(row);
-      const emailRaw =
-        typeof row.email === "string" ? row.email.trim() : "";
+      const emailRaw = typeof row.email === 'string' ? row.email.trim() : '';
 
       if (emailRaw) {
         const userData = {
@@ -230,7 +252,7 @@ export default ({ strapi }) => {
         await updateContact(contactId, { ...payload, email: emailRaw });
         ids.push(contactId);
       } else {
-        const created = await strapi.documents("api::contact.contact").create({
+        const created = await strapi.documents('api::contact.contact').create({
           data: payload,
         });
         ids.push(created.id);
@@ -242,18 +264,18 @@ export default ({ strapi }) => {
 
   // Base user data object
   const user_base = {
-    provider: "local",
+    provider: 'local',
     confirmed: true,
     blocked: false,
     role: 9,
-    username: "",
-    email: "",
-    password: "password",
+    username: '',
+    email: '',
+    password: 'password',
   };
 
-  const PAYMENT_GATEWAY_API = "https://api.authorize.net/xml/v1/request.api";
-  const PAYMENT_GATEWAY_LOGIN = "7u228GQk2DK";
-  const PAYMENT_GATEWAY_KEY = "56nen4B5v4P35H3A";
+  const PAYMENT_GATEWAY_API = 'https://api.authorize.net/xml/v1/request.api';
+  const PAYMENT_GATEWAY_LOGIN = '7u228GQk2DK';
+  const PAYMENT_GATEWAY_KEY = '56nen4B5v4P35H3A';
   // const PAYMENT_GATEWAY_API_SANDBOX =
   // "https://apitest.authorize.net/xml/v1/request.api";
   // const PAYMENT_GATEWAY_LOGIN_SANDBOX = "3946T8QkQw2";
@@ -290,11 +312,11 @@ export default ({ strapi }) => {
           transactionKey: PAYMENT_GATEWAY_KEY,
         },
         transactionRequest: {
-          transactionType: "authCaptureTransaction",
+          transactionType: 'authCaptureTransaction',
           amount: data.amount,
           payment: {
             creditCard: {
-              cardNumber: data.payment_information.card.replace(/\s/g, ""),
+              cardNumber: data.payment_information.card.replace(/\s/g, ''),
               expirationDate: data.payment_information.exp,
               cardCode: data.payment_information.cvv,
             },
@@ -305,11 +327,11 @@ export default ({ strapi }) => {
             company: data.company,
             address:
               data.address_billing_line1 +
-              " " +
+              ' ' +
               data.address_billing_city +
-              " " +
+              ' ' +
               data.address_billing_state +
-              " " +
+              ' ' +
               data.address_billing_zip,
             // city: data.address_billing_city,
             // zip: data.address_billing_zip,
@@ -328,22 +350,22 @@ export default ({ strapi }) => {
 
     const authorizeNetResponse: IAuthNetResponse = (await (
       await fetch(PAYMENT_GATEWAY_API, {
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify(createTransactionRequest),
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       })
     ).json()) as IAuthNetResponse;
 
-    console.log("- Authorize.Net:", JSON.stringify(authorizeNetResponse));
+    console.log('- Authorize.Net:', JSON.stringify(authorizeNetResponse));
     console.log(
-      "-------------------------------------------------------------"
+      '-------------------------------------------------------------',
     );
 
-    if (authorizeNetResponse.messages.resultCode !== "Ok") {
+    if (authorizeNetResponse.messages.resultCode !== 'Ok') {
       return {
-        result: "error",
+        result: 'error',
         message: authorizeNetResponse.messages.message[0].text,
         data: authorizeNetResponse,
       };
@@ -358,7 +380,7 @@ export default ({ strapi }) => {
 
   const sendAssociateEmail = async (
     payload: AssociateMembershipPayload,
-    subject: string
+    subject: string,
   ) => {
     const html = `
       <html>
@@ -416,7 +438,7 @@ export default ({ strapi }) => {
               <td style="padding: 10px;"><strong>Primary Mailing Address:</strong></td>
               <td style="padding: 10px;">${payload.address_street}, ${payload.address_city}, ${payload.address_state}, ${payload.address_zip}</td>
             </tr>`
-                 : ""
+                 : ''
              }
 
             ${
@@ -425,7 +447,7 @@ export default ({ strapi }) => {
               <td style="padding: 10px;"><strong>Secondary Mailing Address:</strong></td>
               <td style="padding: 10px;">${payload.mailing_address_street}, ${payload.mailing_address_city}, ${payload.mailing_address_state}, ${payload.mailing_address_zip}</td>
             </tr>`
-                : ""
+                : ''
             }         
            
             <tr>
@@ -444,7 +466,7 @@ export default ({ strapi }) => {
             <tr style="background-color: #ffffff;">
               <td style="padding: 10px;"><strong>Billing Name:</strong></td>
               <td style="padding: 10px;">${
-                payload.billing_first_name + " " + payload.billing_last_name
+                payload.billing_first_name + ' ' + payload.billing_last_name
               }</td>
             </tr>
   
@@ -479,16 +501,16 @@ export default ({ strapi }) => {
       </html>`;
 
     const emailPayloadOffice = {
-      to: "office@orwa.org",
+      to: 'office@orwa.org',
       // to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
+      from: 'website@orwa.org',
       subject,
       html,
     };
 
     const myEmailPayload = {
-      to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
+      to: 'marcosje2005@gmail.com',
+      from: 'website@orwa.org',
       subject,
       html,
     };
@@ -496,52 +518,52 @@ export default ({ strapi }) => {
     const recipient = {
       to: payload.billing_email,
       // to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
+      from: 'website@orwa.org',
       subject,
       html,
     };
 
-    await strapi.plugins["email"].services.email.send(myEmailPayload);
+    await strapi.plugins['email'].services.email.send(myEmailPayload);
 
     if (payload.adminOptions) {
       const { registrantNotification, adminNotification, customEmail } =
         payload.adminOptions as AdminOptions;
 
       if (registrantNotification && !customEmail) {
-        await strapi.plugins["email"].services.email.send(recipient);
+        await strapi.plugins['email'].services.email.send(recipient);
       }
 
       if (adminNotification && !customEmail) {
-        await strapi.plugins["email"].services.email.send(emailPayloadOffice);
+        await strapi.plugins['email'].services.email.send(emailPayloadOffice);
       }
 
       if (customEmail) {
-        const emails = (customEmail as string).split(",");
+        const emails = (customEmail as string).split(',');
 
         emails.forEach(async (email) => {
-          await strapi.plugins["email"].services.email.send({
+          await strapi.plugins['email'].services.email.send({
             to: email.trim(),
-            from: "website@orwa.org",
+            from: 'website@orwa.org',
             subject,
             html,
           });
         });
       }
     } else {
-      await strapi.plugins["email"].services.email.send(emailPayloadOffice);
-      await strapi.plugins["email"].services.email.send(recipient);
+      await strapi.plugins['email'].services.email.send(emailPayloadOffice);
+      await strapi.plugins['email'].services.email.send(recipient);
     }
   };
 
   const escapeHtml = (value: unknown) =>
-    String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
+    String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
 
   const isDirectoryContactRowPresent = (row: IContact) => {
-    const t = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+    const t = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
     return !!(
       t(row.title) ||
       t(row.first) ||
@@ -557,64 +579,64 @@ export default ({ strapi }) => {
   };
 
   const buildWatersystemDirectoryContactsEmailSection = (
-    contacts?: IContact[]
+    contacts?: IContact[],
   ): string => {
-    if (!Array.isArray(contacts) || contacts.length === 0) return "";
+    if (!Array.isArray(contacts) || contacts.length === 0) return '';
     const rows = contacts.filter((c) => c && isDirectoryContactRowPresent(c));
-    if (rows.length === 0) return "";
+    if (rows.length === 0) return '';
 
     const contactBlocks = rows
       .map((c, index) => {
         const name = [c.first, c.last]
-          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .map((x) => (typeof x === 'string' ? x.trim() : ''))
           .filter(Boolean)
-          .join(" ");
+          .join(' ');
         const cityState = [c.address_mailing_city, c.address_mailing_state]
-          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .map((x) => (typeof x === 'string' ? x.trim() : ''))
           .filter(Boolean)
-          .join(", ");
-        const mailLine = [
-          c.address_mailing_line1,
-          c.address_mailing_line2,
-        ]
-          .map((x) => (typeof x === "string" ? x.trim() : ""))
+          .join(', ');
+        const mailLine = [c.address_mailing_line1, c.address_mailing_line2]
+          .map((x) => (typeof x === 'string' ? x.trim() : ''))
           .filter(Boolean)
-          .join(", ");
-        const zip = typeof c.address_mailing_zip === "string" ? c.address_mailing_zip.trim() : "";
-        const mailing = [mailLine, cityState, zip].filter(Boolean).join(", ");
+          .join(', ');
+        const zip =
+          typeof c.address_mailing_zip === 'string'
+            ? c.address_mailing_zip.trim()
+            : '';
+        const mailing = [mailLine, cityState, zip].filter(Boolean).join(', ');
 
         const titleRow = c.title
           ? `<tr><td style="padding:2px 8px 2px 0; width:120px; vertical-align:top;"><strong>Title</strong></td><td style="padding:2px 0;">${escapeHtml(
-              c.title
+              c.title,
             )}</td></tr>`
-          : "";
+          : '';
         const nameRow = name
           ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Name</strong></td><td style="padding:2px 0;">${escapeHtml(
-              name
+              name,
             )}</td></tr>`
-          : "";
+          : '';
         const emailRow = c.email
           ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Email</strong></td><td style="padding:2px 0;">${escapeHtml(
-              c.email
+              c.email,
             )}</td></tr>`
-          : "";
+          : '';
         const phoneRow = c.phone
           ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Phone</strong></td><td style="padding:2px 0;">${escapeHtml(
-              c.phone
+              c.phone,
             )}</td></tr>`
-          : "";
+          : '';
         const mailRow = mailing
           ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Mailing</strong></td><td style="padding:2px 0;">${escapeHtml(
-              mailing
+              mailing,
             )}</td></tr>`
-          : "";
+          : '';
         const optOutRow = c.directory_opt_out
           ? `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Directory</strong></td><td style="padding:2px 0;">Opted out (not published)</td></tr>`
           : `<tr><td style="padding:2px 8px 2px 0; vertical-align:top;"><strong>Directory</strong></td><td style="padding:2px 0;">Published</td></tr>`;
 
         return `
             <tr style="background-color: ${
-              index % 2 === 0 ? "#ffffff" : "#f9f9f9"
+              index % 2 === 0 ? '#ffffff' : '#f9f9f9'
             };">
               <td colspan="2" style="padding: 12px 10px; vertical-align: top;">
                 <strong style="display:block; margin-bottom:6px;">Directory contact ${
@@ -631,7 +653,7 @@ export default ({ strapi }) => {
               </td>
             </tr>`;
       })
-      .join("");
+      .join('');
 
     return `
             <tr>
@@ -644,10 +666,11 @@ export default ({ strapi }) => {
 
   const sendWatersystemEmail = async (
     payload: waterSystemRenewalPayload,
-    subject: string
+    subject: string,
   ) => {
-    const directoryContactsHtml =
-      buildWatersystemDirectoryContactsEmailSection(payload.contacts);
+    const directoryContactsHtml = buildWatersystemDirectoryContactsEmailSection(
+      payload.contacts,
+    );
 
     const html = `     
         <html>
@@ -692,8 +715,8 @@ export default ({ strapi }) => {
             <tr style="background-color: #f9f9f9;">
               <td style="padding: 10px;"><strong>Mailing Address:</strong></td>
               <td style="padding: 10px;">${payload.address_mailing_pobox}, ${
-      payload.address_mailing_city
-    }, ${payload.address_mailing_state}, ${payload.address_mailing_zip}</td>
+                payload.address_mailing_city
+              }, ${payload.address_mailing_state}, ${payload.address_mailing_zip}</td>
             </tr>
             ${
               payload.address_physical_line1
@@ -702,7 +725,7 @@ export default ({ strapi }) => {
               <td style="padding: 10px;"><strong>Physical Address:</strong></td>
               <td style="padding: 10px;">${payload.address_physical_line1}, ${payload.address_physical_city}, ${payload.address_physical_state}, ${payload.address_physical_zip}</td>
             </tr>`
-                : ""
+                : ''
             }
             ${directoryContactsHtml}
 
@@ -723,8 +746,8 @@ export default ({ strapi }) => {
             <tr style="background-color: #f9f9f9;">
               <td style="padding: 10px;"><strong>Billing Name:</strong></td>
               <td style="padding: 10px;">${payload.billing_first_name} ${
-      payload.billing_last_name
-    }</td>
+                payload.billing_last_name
+              }</td>
             </tr>
 
             <!-- Payment Information -->
@@ -759,16 +782,16 @@ export default ({ strapi }) => {
         </html>`;
 
     const emailPayloadOffice = {
-      to: "office@orwa.org",
+      to: 'office@orwa.org',
       // to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
+      from: 'website@orwa.org',
       subject,
       html,
     };
 
     const myEmailPayload = {
-      to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
+      to: 'marcosje2005@gmail.com',
+      from: 'website@orwa.org',
       subject,
       html,
     };
@@ -776,45 +799,45 @@ export default ({ strapi }) => {
     const recipient = {
       to: payload.billing_email,
       // to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
+      from: 'website@orwa.org',
       subject,
       html,
     };
 
-    await strapi.plugins["email"].services.email.send(myEmailPayload);
+    await strapi.plugins['email'].services.email.send(myEmailPayload);
 
     if (payload.adminOptions) {
       const { registrantNotification, adminNotification, customEmail } =
         payload.adminOptions as AdminOptions;
 
       if (registrantNotification && !customEmail) {
-        await strapi.plugins["email"].services.email.send(recipient);
+        await strapi.plugins['email'].services.email.send(recipient);
       }
 
       if (adminNotification && !customEmail) {
-        await strapi.plugins["email"].services.email.send(emailPayloadOffice);
+        await strapi.plugins['email'].services.email.send(emailPayloadOffice);
       }
 
       if (customEmail) {
-        const emails = (customEmail as string).split(",");
+        const emails = (customEmail as string).split(',');
 
         emails.forEach(async (email) => {
-          await strapi.plugins["email"].services.email.send({
+          await strapi.plugins['email'].services.email.send({
             to: email.trim(),
-            from: "website@orwa.org",
+            from: 'website@orwa.org',
             subject,
             html,
           });
         });
       }
     } else {
-      await strapi.plugins["email"].services.email.send(emailPayloadOffice);
-      await strapi.plugins["email"].services.email.send(recipient);
+      await strapi.plugins['email'].services.email.send(emailPayloadOffice);
+      await strapi.plugins['email'].services.email.send(recipient);
     }
   };
 
   const logFormData = async (data: any, resource: string) => {
-    await strapi.documents("api::log.log").create({
+    await strapi.documents('api::log.log').create({
       data: {
         data: {
           ...data,
@@ -828,7 +851,7 @@ export default ({ strapi }) => {
   // Exported service functions
   return {
     watersystemMembershipApplication: async (
-      data: WatersystemMembershipPayload
+      data: WatersystemMembershipPayload,
     ) => {
       let payment: any;
 
@@ -836,12 +859,12 @@ export default ({ strapi }) => {
         (data.adminOptions && data.adminOptions.resubmit) ||
         !data.adminOptions
       ) {
-        await logFormData(data, "watersystems");
+        await logFormData(data, 'watersystems');
 
         try {
-          const system_type_dirty = data.system_type_dirty.join(", ");
+          const system_type_dirty = data.system_type_dirty.join(', ');
 
-          if (data.payment_method === "Card") {
+          if (data.payment_method === 'Card') {
             payment = await submitPayment({
               address_billing_line1: data.address_billing_line1,
               address_billing_city: data.address_billing_city,
@@ -856,43 +879,45 @@ export default ({ strapi }) => {
               payment_information: data.payment_information as any,
             });
 
-            if (payment?.result === "error") {
+            if (payment?.result === 'error') {
               return {
-                message: "error",
+                message: 'error',
                 error: payment.message,
               };
             }
           }
 
-          const response = await strapi.documents("api::watersystem.watersystem").create({
-            data: coerceToSchema("api::watersystem.watersystem", {
-              ...pickWatersystemEntityData(data),
-              system_type_dirty: system_type_dirty,
-              total_years: data.payment_method === "Card" ? 1 : 0,
-              application_date: new Date().toISOString(),
-              payment_last_date:
-                data.payment_method === "Card"
-                  ? new Date().toISOString()
-                  : null,
-            }),
-          });
+          const response = await strapi
+            .documents('api::watersystem.watersystem')
+            .create({
+              data: coerceToSchema('api::watersystem.watersystem', {
+                ...pickWatersystemEntityData(data),
+                system_type_dirty: system_type_dirty,
+                total_years: data.payment_method === 'Card' ? 1 : 0,
+                application_date: new Date().toISOString(),
+                payment_last_date:
+                  data.payment_method === 'Card'
+                    ? new Date().toISOString()
+                    : null,
+              }),
+            });
 
           if (data.contacts !== undefined && Array.isArray(data.contacts)) {
             const contactIds = await syncWatersystemDirectoryContacts(data);
-            await strapi.documents("api::watersystem.watersystem").update({
+            await strapi.documents('api::watersystem.watersystem').update({
               documentId: response.documentId,
-              data: { contacts: contactIds }
+              data: { contacts: contactIds },
             });
           }
 
           // Submit transaction
           try {
-            await strapi.documents("api::invoice.invoice").create({
-              data: coerceToSchema("api::invoice.invoice", {
+            await strapi.documents('api::invoice.invoice').create({
+              data: coerceToSchema('api::invoice.invoice', {
                 ...payment,
                 amount: data.payment_amount,
-                context: "membership-form",
-                resource: "watersystems",
+                context: 'membership-form',
+                resource: 'watersystems',
                 entity_id: response.id,
                 email: data.billing_email,
                 company: data.name,
@@ -901,45 +926,45 @@ export default ({ strapi }) => {
                 data: { ...data, payment_information: null },
                 year: new Date().getFullYear(),
                 payment_date:
-                  data.payment_method === "Card"
+                  data.payment_method === 'Card'
                     ? new Date().toISOString()
                     : null,
               }),
             });
           } catch (error) {
             return {
-              message: "error",
+              message: 'error',
               error: error.message,
             };
           }
 
           sendWatersystemEmail(
             { ...data, watersystem: response.id },
-            `ORWA System Membership - ${data.legal_entity_name}`
+            `ORWA System Membership - ${data.legal_entity_name}`,
           );
 
           return {
-            message: "success",
+            message: 'success',
             response,
           };
         } catch (error) {
           return {
-            message: "error",
+            message: 'error',
             error: error.details.errors,
           };
         }
       } else {
         sendWatersystemEmail(
-          { ...data, watersystem: "0" },
-          `ORWA System Membership - ${data.legal_entity_name}`
+          { ...data, watersystem: '0' },
+          `ORWA System Membership - ${data.legal_entity_name}`,
         );
         return {
-          message: "success",
+          message: 'success',
         };
       }
     },
     associateMembershipApplication: async (
-      data: AssociateMembershipPayload
+      data: AssociateMembershipPayload,
     ) => {
       if (
         (data.adminOptions && data.adminOptions.resubmit) ||
@@ -950,7 +975,7 @@ export default ({ strapi }) => {
           let contact_secondary = null as number | null;
           let payment: any;
 
-          await logFormData(data, "associates");
+          await logFormData(data, 'associates');
 
           // Handle priamry contact
 
@@ -971,7 +996,7 @@ export default ({ strapi }) => {
           const fetchedPrimaryContact = await getContact(
             data.contact_primary.email,
             contactData,
-            userData
+            userData,
           );
 
           contact_primary = fetchedPrimaryContact.id;
@@ -996,13 +1021,13 @@ export default ({ strapi }) => {
             const fetchedSecondaryContact = await getContact(
               data.contact_secondary.email,
               contactData,
-              userData
+              userData,
             );
 
             contact_secondary = fetchedSecondaryContact.id;
           }
 
-          if (data.payment_method === "Card") {
+          if (data.payment_method === 'Card') {
             payment = await submitPayment({
               address_billing_line1: data.address_billing_line1,
               address_billing_city: data.address_billing_city,
@@ -1017,9 +1042,9 @@ export default ({ strapi }) => {
               payment_information: data.payment_information as any,
             });
 
-            if (payment?.result === "error") {
+            if (payment?.result === 'error') {
               return {
-                message: "error",
+                message: 'error',
                 error: payment.message,
               };
             }
@@ -1027,27 +1052,29 @@ export default ({ strapi }) => {
 
           // coerceToSchema strips form-only keys (adminOptions, payment_information,
           // billing_*, user_agent, ...) that Strapi 5 rejects as "Invalid key".
-          const response = await strapi.documents("api::associate.associate").create({
-            data: coerceToSchema("api::associate.associate", {
-              ...data,
-              total_years: data.payment_method === "Card" ? 1 : 0,
-              contact_primary: contact_primary,
-              contact_secondary: contact_secondary,
-              application_date: new Date().toISOString(),
-              payment_last_date:
-                data.payment_method === "Card"
-                  ? new Date().toISOString()
-                  : null,
-            }),
-          });
+          const response = await strapi
+            .documents('api::associate.associate')
+            .create({
+              data: coerceToSchema('api::associate.associate', {
+                ...data,
+                total_years: data.payment_method === 'Card' ? 1 : 0,
+                contact_primary: contact_primary,
+                contact_secondary: contact_secondary,
+                application_date: new Date().toISOString(),
+                payment_last_date:
+                  data.payment_method === 'Card'
+                    ? new Date().toISOString()
+                    : null,
+              }),
+            });
 
           try {
-            await strapi.documents("api::invoice.invoice").create({
-              data: coerceToSchema("api::invoice.invoice", {
+            await strapi.documents('api::invoice.invoice').create({
+              data: coerceToSchema('api::invoice.invoice', {
                 ...payment,
                 amount: data.payment_amount,
-                context: "membership-form",
-                resource: "associates",
+                context: 'membership-form',
+                resource: 'associates',
                 entity_id: response.id,
                 email: data.billing_email,
                 company: data.name,
@@ -1056,23 +1083,27 @@ export default ({ strapi }) => {
                 year: new Date().getFullYear(),
                 data: { ...data, payment_information: null },
                 payment_date:
-                  data.payment_method === "Card"
+                  data.payment_method === 'Card'
                     ? new Date().toISOString()
                     : null,
               }),
             });
           } catch (error) {
             return {
-              message: "error",
+              message: 'error',
               error: error.message,
             };
           }
 
           // Fetched membership with id
 
-          const membership = await findOneById("api::membership.membership", data.membership, {
-            populate: "*",
-          });
+          const membership = await findOneById(
+            'api::membership.membership',
+            data.membership,
+            {
+              populate: '*',
+            },
+          );
 
           await sendAssociateEmail(
             {
@@ -1081,30 +1112,34 @@ export default ({ strapi }) => {
               total_years: 1,
               membership: membership?.name,
             },
-            `ORWA Associate Membership - ${data.name}`
+            `ORWA Associate Membership - ${data.name}`,
           );
 
           return {
-            message: "success",
+            message: 'success',
             response,
           };
         } catch (error) {
           return {
-            message: "error",
+            message: 'error',
             error: error.details.errors,
           };
         }
       } else {
-        const membership = await findOneById("api::membership.membership", data.membership, {
-          populate: "*",
-        });
+        const membership = await findOneById(
+          'api::membership.membership',
+          data.membership,
+          {
+            populate: '*',
+          },
+        );
 
         sendAssociateEmail(
-          { ...data, associate: "0", membership: membership?.name },
-          `ORWA Associate Membership - ${data.name}`
+          { ...data, associate: '0', membership: membership?.name },
+          `ORWA Associate Membership - ${data.name}`,
         );
         return {
-          message: "success",
+          message: 'success',
         };
       }
     },
@@ -1115,11 +1150,11 @@ export default ({ strapi }) => {
       ) {
         try {
           let payment: any;
-          await logFormData(data, "watersystems");
+          await logFormData(data, 'watersystems');
 
-          const system_type_dirty = data.system_type_dirty.join(", ");
+          const system_type_dirty = data.system_type_dirty.join(', ');
 
-          if (data.payment_method === "Card") {
+          if (data.payment_method === 'Card') {
             const payment = await submitPayment({
               address_billing_line1: data.address_billing_line1,
               address_billing_city: data.address_billing_city,
@@ -1134,9 +1169,9 @@ export default ({ strapi }) => {
               payment_information: data.payment_information as any,
             });
 
-            if (payment?.result === "error") {
+            if (payment?.result === 'error') {
               return {
-                message: "error",
+                message: 'error',
                 error: payment.message,
               };
             }
@@ -1153,31 +1188,27 @@ export default ({ strapi }) => {
             ...pickWatersystemEntityData(data),
             system_type_dirty: system_type_dirty,
             application_date: new Date().toISOString(),
-            payment_previous_date: data.payment_last_date,
-            total_years:
-              data.payment_method === "Card" && data.total_years
-                ? data.total_years + 1
-                : data.total_years,
-            payment_last_date:
-              data.payment_method === "Card"
-                ? new Date().toISOString()
-                : null,
+            ...renewalPaymentDates(data),
           };
           if (contactIds !== null) {
             renewalData.contacts = contactIds;
           }
 
-          const response = await updateById("api::watersystem.watersystem", watersystemId, {
-            data: coerceToSchema("api::watersystem.watersystem", renewalData),
-          });
+          const response = await updateById(
+            'api::watersystem.watersystem',
+            watersystemId,
+            {
+              data: coerceToSchema('api::watersystem.watersystem', renewalData),
+            },
+          );
 
           try {
-            await strapi.documents("api::invoice.invoice").create({
-              data: coerceToSchema("api::invoice.invoice", {
+            await strapi.documents('api::invoice.invoice').create({
+              data: coerceToSchema('api::invoice.invoice', {
                 ...payment,
                 amount: data.payment_amount,
-                context: "membership-form",
-                resource: "watersystems",
+                context: 'membership-form',
+                resource: 'watersystems',
                 entity_id: watersystemId,
                 email: data.billing_email,
                 company: data.name,
@@ -1186,14 +1217,14 @@ export default ({ strapi }) => {
                 payment_method: data.payment_method,
                 year: new Date().getFullYear(),
                 payment_date:
-                  data.payment_method === "Card"
+                  data.payment_method === 'Card'
                     ? new Date().toISOString()
                     : null,
               }),
             });
           } catch (error) {
             return {
-              message: "error",
+              message: 'error',
               error: error.message,
             };
           }
@@ -1204,26 +1235,26 @@ export default ({ strapi }) => {
               watersystem: response.id,
               total_years: data.total_years ? data.total_years + 1 : 1,
             },
-            `ORWA System Membership Renewal - ${data.legal_entity_name}`
+            `ORWA System Membership Renewal - ${data.legal_entity_name}`,
           );
 
           return {
-            message: "success",
+            message: 'success',
             response,
           };
         } catch (error) {
           return {
-            message: "error",
+            message: 'error',
             error: error.message,
           };
         }
       } else {
         sendWatersystemEmail(
           { ...data, watersystem: data.watersystem },
-          `ORWA System Membership - ${data.legal_entity_name}`
+          `ORWA System Membership - ${data.legal_entity_name}`,
         );
         return {
-          message: "success",
+          message: 'success',
         };
       }
     },
@@ -1237,7 +1268,7 @@ export default ({ strapi }) => {
           let contact_secondary = null as number | null;
           let payment: any;
 
-          await logFormData(data, "associates");
+          await logFormData(data, 'associates');
 
           // Handle priamry contact
 
@@ -1258,7 +1289,7 @@ export default ({ strapi }) => {
           const fetchedPrimaryContact = await getContact(
             data.contact_primary.email,
             contactData,
-            userData
+            userData,
           );
 
           contact_primary = fetchedPrimaryContact.id;
@@ -1283,13 +1314,13 @@ export default ({ strapi }) => {
             const fetchedSecondaryContact = await getContact(
               data.contact_secondary.email,
               contactData,
-              userData
+              userData,
             );
 
             contact_secondary = fetchedSecondaryContact.id;
           }
 
-          if (data.payment_method === "Card") {
+          if (data.payment_method === 'Card') {
             payment = await submitPayment({
               address_billing_line1: data.address_billing_line1,
               address_billing_city: data.address_billing_city,
@@ -1304,9 +1335,9 @@ export default ({ strapi }) => {
               payment_information: data.payment_information as any,
             });
 
-            if (payment?.result === "error") {
+            if (payment?.result === 'error') {
               return {
-                message: "error",
+                message: 'error',
                 error: payment.message,
               };
             }
@@ -1314,31 +1345,27 @@ export default ({ strapi }) => {
 
           // coerceToSchema strips form-only keys (adminOptions, payment_information,
           // billing_*, associate, user_agent, ...) that Strapi 5 rejects as "Invalid key".
-          const response = await updateById("api::associate.associate", parseInt(data.associate), {
-            data: coerceToSchema("api::associate.associate", {
-              ...data,
-              contact_primary: contact_primary,
-              contact_secondary: contact_secondary,
-              application_date: new Date().toISOString(),
-              payment_previous_date: data.payment_last_date,
-              total_years:
-                data.payment_method === "Card" && data.total_years
-                  ? data.total_years + 1
-                  : data.total_years,
-              payment_last_date:
-                data.payment_method === "Card"
-                  ? new Date().toISOString()
-                  : null,
-            })
-          });
+          const response = await updateById(
+            'api::associate.associate',
+            parseInt(data.associate),
+            {
+              data: coerceToSchema('api::associate.associate', {
+                ...data,
+                contact_primary: contact_primary,
+                contact_secondary: contact_secondary,
+                application_date: new Date().toISOString(),
+                ...renewalPaymentDates(data),
+              }),
+            },
+          );
 
           try {
-            await strapi.documents("api::invoice.invoice").create({
-              data: coerceToSchema("api::invoice.invoice", {
+            await strapi.documents('api::invoice.invoice').create({
+              data: coerceToSchema('api::invoice.invoice', {
                 ...payment,
                 amount: data.payment_amount,
-                context: "membership-form",
-                resource: "associates",
+                context: 'membership-form',
+                resource: 'associates',
                 entity_id: parseInt(data.associate),
                 email: data.billing_email,
                 company: data.name,
@@ -1347,23 +1374,27 @@ export default ({ strapi }) => {
                 data: { ...data, payment_information: null },
                 year: new Date().getFullYear(),
                 payment_date:
-                  data.payment_method === "Card"
+                  data.payment_method === 'Card'
                     ? new Date().toISOString()
                     : null,
               }),
             });
           } catch (error) {
             return {
-              message: "error",
+              message: 'error',
               error: error.message,
             };
           }
 
           // Fetched membership with id
 
-          const membership = await findOneById("api::membership.membership", data.membership, {
-            populate: "*",
-          });
+          const membership = await findOneById(
+            'api::membership.membership',
+            data.membership,
+            {
+              populate: '*',
+            },
+          );
 
           await sendAssociateEmail(
             {
@@ -1372,31 +1403,35 @@ export default ({ strapi }) => {
               total_years: data.total_years ? data.total_years + 1 : 1,
               membership: membership.name,
             },
-            `ORWA Associate Membership Renewal - ${data.name}`
+            `ORWA Associate Membership Renewal - ${data.name}`,
           );
 
           return {
-            message: "success",
+            message: 'success',
             response,
             payment,
           };
         } catch (error) {
           return {
-            message: "error",
+            message: 'error',
             error: error.message,
           };
         }
       } else {
-        const membership = await findOneById("api::membership.membership", data.membership, {
-          populate: "*",
-        });
+        const membership = await findOneById(
+          'api::membership.membership',
+          data.membership,
+          {
+            populate: '*',
+          },
+        );
 
         sendAssociateEmail(
           { ...data, associate: data.associate, membership: membership.name },
-          `ORWA Associate Membership - ${data.name}`
+          `ORWA Associate Membership - ${data.name}`,
         );
         return {
-          message: "success",
+          message: 'success',
         };
       }
     },

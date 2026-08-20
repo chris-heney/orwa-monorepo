@@ -776,6 +776,7 @@ export interface ApiAssociateAssociate extends Struct.CollectionTypeSchema {
     directory_mailed: Schema.Attribute.Boolean;
     directory_sent_date: Schema.Attribute.Date;
     email: Schema.Attribute.Email;
+    expiration_date: Schema.Attribute.Date;
     fee_apprenticeship: Schema.Attribute.Decimal;
     fee_membership: Schema.Attribute.Decimal;
     fee_scholarship: Schema.Attribute.Decimal;
@@ -3185,6 +3186,10 @@ export interface ApiScheduledEmailTaskScheduledEmailTask
       Schema.Attribute.Private;
     name: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;
+    saved_query: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::saved-query.saved-query'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -4802,6 +4807,7 @@ export interface ApiWatersystemWatersystem extends Struct.CollectionTypeSchema {
     directory_mailed: Schema.Attribute.Boolean;
     directory_sent_date: Schema.Attribute.Date;
     email: Schema.Attribute.Email;
+    expiration_date: Schema.Attribute.Date;
     expiration_notification_sent: Schema.Attribute.DateTime;
     fax: Schema.Attribute.String;
     fee_apprenticeship: Schema.Attribute.Decimal;
