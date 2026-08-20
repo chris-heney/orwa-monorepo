@@ -1,0 +1,58 @@
+{
+  "kind": "collectionType",
+  "collectionName": "award_winners",
+  "info": {
+    "singularName": "award-winner",
+    "pluralName": "award-winners",
+    "displayName": "Award Winner",
+    "description": "Recipients honored at ORWA Annual Conference Awards Ceremonies"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "award_year": {
+      "type": "integer",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "recipient": {
+      "type": "string"
+    },
+    "photo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "photo_url": {
+      "type": "string"
+    },
+    "thumbnail_url": {
+      "type": "string"
+    },
+    "sort_order": {
+      "type": "integer",
+      "default": 0
+    },
+    "is_published": {
+      "type": "boolean",
+      "default": true
+    },
+    "watersystem": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::watersystem.watersystem"
+    },
+    "award_nomination": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::award-nomination.award-nomination"
+    }
+  }
+}
