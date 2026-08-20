@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext } from 'react';
 import {
   ChipField,
   Create,
@@ -9,30 +9,30 @@ import {
   TextField,
   useCreate,
   useNotify,
-} from "react-admin";
-import { CurrencyOptions } from "../../../config/Settings";
-import { Button } from "@mui/material";
-import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import { ConferenceContext } from "../ConferenceContext";
-import { createRecord } from "../../_helpers/createRecord";
-import { customDatagridStyle } from "../../../css";
-import CustomPagination from "../../_components/CustomPagination";
-import ConferenceExtraForm from "./ConferenceExtraForm";
-import SafeReferenceArrayField from "../components/SafeReferenceArrayField";
+} from 'react-admin';
+import { CurrencyOptions } from '../../../config/Settings';
+import { Button } from '@mui/material';
+import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
+import { ConferenceContext } from '../ConferenceContext';
+import { createRecord } from '../../_helpers/createRecord';
+import { customDatagridStyle } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
+import ConferenceExtraForm from './ConferenceExtraForm';
+import SafeReferenceArrayField from '../components/SafeReferenceArrayField';
+import { useCan } from '../../rbac-manager/useCan';
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 const ConferenceExtras = () => {
-  const {
-    isCreating,
-    setIsCreating,
-  } = useContext(ConferenceContext);
+  const { isCreating, setIsCreating } = useContext(ConferenceContext);
   const [create] = useCreate();
   const notify = useNotify();
+  const { can } = useCan();
+  const canUpdate = can('update', 'conference-extra');
 
   return isCreating ? (
     <Create
       sx={{ mt: -2 }}
-      title={" "}
+      title={' '}
       redirect={false}
       resource="conference-extras"
     >
@@ -42,7 +42,7 @@ const ConferenceExtras = () => {
           isCreating ? setIsCreating(false) : setIsCreating(true)
         }
       >
-        {" "}
+        {' '}
         Back
       </Button>
       <SimpleForm
@@ -52,7 +52,7 @@ const ConferenceExtras = () => {
             create,
             notify,
             setIsCreating,
-            "conference-extras"
+            'conference-extras'
           )
         }
       >
@@ -63,7 +63,7 @@ const ConferenceExtras = () => {
     <>
       <DatagridConfigurable
         bulkActionButtons={false}
-        rowClick="edit"
+        rowClick={canUpdate ? 'edit' : false}
         sx={customDatagridStyle}
       >
         <SafeReferenceArrayField
@@ -96,7 +96,7 @@ const ConferenceExtras = () => {
         >
           <SingleFieldList
             sx={{
-              flexWrap: "nowrap",
+              flexWrap: 'nowrap',
             }}
             linkType={false}
           >
@@ -111,7 +111,7 @@ const ConferenceExtras = () => {
         >
           <SingleFieldList
             sx={{
-              flexWrap: "nowrap",
+              flexWrap: 'nowrap',
             }}
             linkType={false}
           >

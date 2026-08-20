@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { ConferenceContext } from "../ConferenceContext";
+import React, { useContext } from 'react';
+import { ConferenceContext } from '../ConferenceContext';
 import {
   FunctionField,
   SimpleForm,
@@ -14,15 +14,16 @@ import {
   useListContext,
   useNotify,
   ChipField,
-} from "react-admin";
-import { Button } from "@mui/material";
-import { customDatagridStyle } from "../../../css";
-import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import CustomPagination from "../../_components/CustomPagination";
-import { createRecord } from "../../_helpers/createRecord";
-import { ISharedMeta } from "../types/IConference";
-import { ConferenceAttendeeFields } from "./AttendeeFormFields";
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+} from 'react-admin';
+import { Button } from '@mui/material';
+import { customDatagridStyle } from '../../../css';
+import { useCan } from '../../rbac-manager/useCan';
+import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
+import CustomPagination from '../../_components/CustomPagination';
+import { createRecord } from '../../_helpers/createRecord';
+import { ISharedMeta } from '../types/IConference';
+import { ConferenceAttendeeFields } from './AttendeeFormFields';
+import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
 
 const AttendeeList = () => {
   const { isCreating, setIsCreating } = useContext(ConferenceContext);
@@ -33,12 +34,14 @@ const AttendeeList = () => {
 
   const [create] = useCreate();
   const notify = useNotify();
+  const { canOnResource } = useCan();
+  const canUpdate = canOnResource('update', resource ?? '');
 
   return isCreating ? (
     <Create
-      title={" "}
+      title={' '}
       resource={resource}
-      component={"div"}
+      component={'div'}
       sx={{
         mt: -2,
       }}
@@ -49,7 +52,7 @@ const AttendeeList = () => {
           isCreating ? setIsCreating(false) : setIsCreating(true)
         }
       >
-        {" "}
+        {' '}
         Back
       </Button>
       <SimpleForm
@@ -65,7 +68,7 @@ const AttendeeList = () => {
       <DatagridConfigurable
         sx={customDatagridStyle}
         bulkActionButtons={false}
-        rowClick="edit"
+        rowClick={canUpdate ? 'edit' : false}
         expandSingle={true}
       >
         <TextField source="id" label="ID" />
@@ -97,18 +100,22 @@ const AttendeeList = () => {
         <TextField source="email" label="Email" noWrap />
         <TextField source="phone" label="Phone" noWrap />
         <TextField source="organization" label="Organization" noWrap />
-        {listConferenceId === 1 && <TextField
-          source="orwa_voting_status"
-          label="ORWA Voting Status"
-          noWrap
-        />}
-        {listConferenceId === 1 && <TextField
-          source="orwaag_voting_status"
-          label="ORWAAG Voting Status"
-          noWrap
-        />}
+        {listConferenceId === 1 && (
+          <TextField
+            source="orwa_voting_status"
+            label="ORWA Voting Status"
+            noWrap
+          />
+        )}
+        {listConferenceId === 1 && (
+          <TextField
+            source="orwaag_voting_status"
+            label="ORWAAG Voting Status"
+            noWrap
+          />
+        )}
         <FunctionField
-          sx={{ display: "flex", gap: "5px" }}
+          sx={{ display: 'flex', gap: '5px' }}
           label="Items"
           sortBy="items.label"
           render={(record: RaRecord) => {
@@ -119,7 +126,7 @@ const AttendeeList = () => {
                 : item.label;
               return (
                 <ChipField
-                  key={`item-${record.id}-${item.key + " " + index}`}
+                  key={`item-${record.id}-${item.key + ' ' + index}`}
                   record={{ ...item, label: chipLabel }}
                   source="label"
                   label={chipLabel}

@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   DatagridConfigurable,
   TextField,
@@ -21,19 +21,19 @@ import {
   DateField,
   ReferenceField,
   useListFilterContext,
-} from "react-admin";
-import { Button, Chip, Grid } from "@mui/material";
-import { useConferenceContext } from "../ConferenceContext";
-import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import { createRecord } from "../../_helpers/createRecord";
-import { updateRecord } from "../../_helpers/updateRecord";
-import { customDatagridStyle, positionStickyComponent } from "../../../css";
-import CustomPagination from "../../_components/CustomPagination";
+} from 'react-admin';
+import { Button, Chip, Grid } from '@mui/material';
+import { useConferenceContext } from '../ConferenceContext';
+import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
+import CustomToolBar from '../../_components/CustomToolbar';
+import { createRecord } from '../../_helpers/createRecord';
+import { updateRecord } from '../../_helpers/updateRecord';
+import { customDatagridStyle, positionStickyComponent } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
-import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
+import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
 
 const TeamFormFields = () => {
-
   const { filterValues } = useListFilterContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
@@ -56,7 +56,7 @@ const TeamFormFields = () => {
         >
           <AutocompleteArrayInput
             optionText={(record) => {
-              return record.first + " " + record.last;
+              return record.first + ' ' + record.last;
             }}
             fullWidth
           />
@@ -71,20 +71,25 @@ const TeamFormFields = () => {
         >
           <AutocompleteInput
             optionText={(record) => {
-              return record.organization + " | " + record.registration_date;
+              return record.organization + ' | ' + record.registration_date;
             }}
             fullWidth
           />
         </ReferenceInput>
       </Grid>
-      <Grid item xs={12} md={3} display={"hidden"}>
-        <NumberInput source="year" label="Year" fullWidth defaultValue={filterValues.year} />
+      <Grid item xs={12} md={3} display={'hidden'}>
+        <NumberInput
+          source="year"
+          label="Year"
+          fullWidth
+          defaultValue={filterValues.year}
+        />
       </Grid>
-      <Grid item xs={12} md={6} display={"hidden"}>
+      <Grid item xs={12} md={6} display={'hidden'}>
         <NumberInput
           source="conference"
           defaultValue={filterConferenceId}
-          sx={{ display: "none" }}
+          sx={{ display: 'none' }}
           fullWidth
         />
       </Grid>
@@ -93,10 +98,7 @@ const TeamFormFields = () => {
 };
 
 const ConferenceTeams = () => {
-  const {
-    isCreating,
-    setIsCreating,
-  } = useConferenceContext();
+  const { isCreating, setIsCreating } = useConferenceContext();
 
   const notify = useNotify();
   const [create] = useCreate();
@@ -108,9 +110,9 @@ const ConferenceTeams = () => {
       sx={{
         mt: -2,
       }}
-      title={" "}
+      title={' '}
       resource="conference-teams"
-      component={"div"}
+      component={'div'}
     >
       <CustomSecondaryHeader title="Add New Team" />
       <Button
@@ -118,7 +120,7 @@ const ConferenceTeams = () => {
           isCreating ? setIsCreating(false) : setIsCreating(true)
         }
       >
-        {" "}
+        {' '}
         Back
       </Button>
       <SimpleForm
@@ -128,7 +130,7 @@ const ConferenceTeams = () => {
             create,
             notify,
             setIsCreating,
-            "conference-teams"
+            'conference-teams'
           )
         }
       >
@@ -149,9 +151,9 @@ const ConferenceTeams = () => {
             <Edit
               sx={positionStickyComponent}
               redirect={false}
-              title={" "}
+              title={' '}
               resource="conference-teams"
-              component={"div"}
+              component={'div'}
               id={record.id}
             >
               <SimpleForm
@@ -162,9 +164,10 @@ const ConferenceTeams = () => {
                     update,
                     notify,
                     remove,
-                    "conference-teams"
+                    'conference-teams'
                   )
                 }
+                toolbar={<CustomToolBar />}
               >
                 <Grid container spacing={2}>
                   <TeamFormFields />
@@ -180,7 +183,7 @@ const ConferenceTeams = () => {
           source="contestants"
           reference="conference-contestants"
           label="Contestants"
-          sortBy={"contestants.first"}
+          sortBy={'contestants.first'}
         >
           <SingleFieldList linkType={false}>
             <Chip
@@ -198,7 +201,7 @@ const ConferenceTeams = () => {
           source="registration"
           reference="conference-registrations"
           label="Registration Date"
-          sortBy={"registration.registration_date"}
+          sortBy={'registration.registration_date'}
         >
           <DateField source="registration_date" label="Registration Date" />
         </ReferenceField>

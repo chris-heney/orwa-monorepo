@@ -1,4 +1,4 @@
-import { Box, Theme, useMediaQuery } from '@mui/material'
+import { Box, Theme, useMediaQuery } from '@mui/material';
 import {
   List,
   TextField,
@@ -11,21 +11,21 @@ import {
   RaRecord,
   DateField,
   FunctionField,
-  CreateButton,
   ExportButton,
   SelectColumnsButton,
   Title,
   useDataProvider,
-} from 'react-admin'
-import React from 'react'
-import CustomExportFunction from '../../../helpers/custom-export-function'
-import PageHeadingBar from '../../_components/PageHeadingBar'
-import { YearMonthDayMinute } from '../../../helpers/Data'
+} from 'react-admin';
+import CreateButton from '../../_components/CustomCreateButton';
+import React from 'react';
+import CustomExportFunction from '../../../helpers/custom-export-function';
+import PageHeadingBar from '../../_components/PageHeadingBar';
+import { YearMonthDayMinute } from '../../../helpers/Data';
 
 const barButtonSx = {
   color: 'white',
   '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-}
+};
 
 const datagridSx = (theme: Theme) => ({
   '& .RaDatagrid-thead': { whiteSpace: 'nowrap' },
@@ -39,20 +39,23 @@ const datagridSx = (theme: Theme) => ({
     border: `1px solid ${theme.palette.divider}`,
     color: 'text.primary',
   },
-})
+});
 
 /** Credit hours: stored value first, legacy type-based fallback second. */
 const creditHours = (record: RaRecord) =>
-  record.hours ?? (record.type === 'Block' ? 4 : 1)
+  record.hours ?? (record.type === 'Block' ? 4 : 1);
 
 const TrainingHistoryList = () => {
-  const preferenceKey = 'training-event-logs.datagrid'
+  const preferenceKey = 'training-event-logs.datagrid';
   const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
     `preferences.${preferenceKey}.availableColumns`,
     []
-  )
-  const [columnIds] = useStore<string[]>(`preferences.${preferenceKey}.columns`, [])
-  const dataProvider = useDataProvider()
+  );
+  const [columnIds] = useStore<string[]>(
+    `preferences.${preferenceKey}.columns`,
+    []
+  );
+  const dataProvider = useDataProvider();
   const exporter = (records: RaRecord[]) => {
     CustomExportFunction(
       records,
@@ -60,12 +63,19 @@ const TrainingHistoryList = () => {
       columnIds,
       'Training History',
       dataProvider
-    )
-  }
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+    );
+  };
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: { xs: 1, sm: 2 } }}>
+    <Box
+      sx={{
+        width: 1,
+        minWidth: 0,
+        boxSizing: 'border-box',
+        p: { xs: 1, sm: 2 },
+      }}
+    >
       <Title title="Training History" />
       <List
         exporter={exporter}
@@ -113,7 +123,9 @@ const TrainingHistoryList = () => {
                 <TextField source="first" /> <TextField source="last" />
               </ReferenceField>
             }
-            secondaryText={(record) => `${record.type} · ${creditHours(record)} hrs`}
+            secondaryText={(record) =>
+              `${record.type} · ${creditHours(record)} hrs`
+            }
             tertiaryText={(record) =>
               new Date(record.createdAt).toLocaleDateString(
                 'en-US',
@@ -122,8 +134,17 @@ const TrainingHistoryList = () => {
             }
           />
         ) : (
-          <DatagridConfigurable bulkActionButtons={false} rowClick="show" sx={datagridSx}>
-            <ReferenceField source="contact" label="Name" reference="contacts" link="show">
+          <DatagridConfigurable
+            bulkActionButtons={false}
+            rowClick="show"
+            sx={datagridSx}
+          >
+            <ReferenceField
+              source="contact"
+              label="Name"
+              reference="contacts"
+              link="show"
+            >
               <>
                 <TextField source="first" /> <TextField source="last" />
               </>
@@ -159,7 +180,7 @@ const TrainingHistoryList = () => {
         )}
       </List>
     </Box>
-  )
-}
+  );
+};
 
-export default TrainingHistoryList
+export default TrainingHistoryList;

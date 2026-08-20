@@ -7,21 +7,21 @@ import { Edit } from '@mui/icons-material';
 import { useResourceContext, useShowContext } from 'react-admin';
 import { formatTitle } from '../../../helpers/formatResourceTitle';
 import useCurrentUser from '../../_helpers/useCurrentUser';
-import { useCan, resourceToApiName } from '../../rbac-manager/useCan';
+import { useCan } from '../../rbac-manager/useCan';
 
 const ShowHeader = ({ first, last }: { first: string; last: string }) => {
   const navigate = useNavigate();
   const { record } = useShowContext();
   const resource = useResourceContext();
   const { user } = useCurrentUser();
-  const { can } = useCan();
+  const { canOnResource } = useCan();
 
   return (
     <CustomHeader
       title={first + ' ' + last}
       Component={() => (
         <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, gap: 1 }}>
-          {can('update', resourceToApiName(resource)) && (
+          {canOnResource('update', resource) && (
             <Tooltip title={`Edit ${formatTitle(resource)}`}>
               <IconButton
                 onClick={() => navigate(`/${resource}/${record.id}/edit`)}

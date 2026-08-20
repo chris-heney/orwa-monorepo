@@ -1,6 +1,5 @@
 import CookieStore from './CookieStore';
 import { AuthProvider, UserIdentity } from 'react-admin';
-import RoleController, { TRole } from '../../../config/Roles';
 import { userPreferencesStore } from '../../userPreferencesStore';
 export interface IUserIdentity extends UserIdentity {
   role: string;
@@ -130,10 +129,9 @@ const authProvider: AuthProvider = {
       : Promise.reject();
   },
 
-  getPermissions: () => {
-    const role = new RoleController(CookieStore.getCookie('role') as TRole);
-    return Promise.resolve(role.permissions);
-  },
+  // Required by react-admin's AuthProvider contract, but unused: capability
+  // checks read the role's real Strapi permissions via `useCan`.
+  getPermissions: () => Promise.resolve(null),
 
   sendResetPasswordEmail: (email: string) => {
     return fetch(

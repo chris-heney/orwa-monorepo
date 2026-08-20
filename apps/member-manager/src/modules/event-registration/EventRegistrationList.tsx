@@ -1,56 +1,62 @@
-import { Box, useMediaQuery } from '@mui/material'
-import { Theme } from '@mui/material/styles'
-import CustomExportFunction from '../../helpers/custom-export-function'
-import React from 'react'
+import { Box, useMediaQuery } from '@mui/material';
+import { Theme } from '@mui/material/styles';
+import CustomExportFunction from '../../helpers/custom-export-function';
+import React from 'react';
 import {
   List,
   TextField,
   TopToolbar,
   SelectColumnsButton,
-  CreateButton,
   ExportButton,
   ConfigurableDatagridColumn,
   useStore,
   DatagridConfigurable,
   SimpleList,
   useDataProvider,
-} from 'react-admin'
-import { useLocation } from 'react-router-dom'
+} from 'react-admin';
+import CreateButton from '../_components/CustomCreateButton';
+import { useEditRowClick } from '../rbac-manager/useCan';
+import { useLocation } from 'react-router-dom';
 
 const TrainingEventListActions = () => {
-  const location = useLocation()
-  const searchParams = new URLSearchParams(location.search)
-  const filterParam = searchParams.get('filter')
-  let eventId
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const filterParam = searchParams.get('filter');
+  let eventId;
   // Check if filterParam is not null
   if (filterParam) {
     // Parse the JSON object in the filter parameter
-    const filterObject = JSON.parse(decodeURIComponent(filterParam))
-    eventId = filterObject.event
+    const filterObject = JSON.parse(decodeURIComponent(filterParam));
+    eventId = filterObject.event;
   }
   return (
     <TopToolbar>
       <SelectColumnsButton />
       <ExportButton />
-      <CreateButton label='Register Attendee' to={{
-        pathname: `/training-event-registrationss/create/${eventId}`,
-      }} />
+      <CreateButton
+        label="Register Attendee"
+        to={{
+          pathname: `/training-event-registrationss/create/${eventId}`,
+        }}
+      />
     </TopToolbar>
-  )
-}
+  );
+};
 
 const EventRegistrationList = () => {
-  const preferenceKey = 'training-event-registrationss.datagrid'
-  const [availableColumns] = useStore<
-    ConfigurableDatagridColumn[]
-  >(`preferences.${preferenceKey}.availableColumns`, [])
+  const rowClick = useEditRowClick();
+  const preferenceKey = 'training-event-registrationss.datagrid';
+  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
+    `preferences.${preferenceKey}.availableColumns`,
+    []
+  );
 
   const [columnIds] = useStore<string[]>(
     `preferences.${preferenceKey}.columns`,
     []
-  )
+  );
 
-  const dataProvider = useDataProvider()
+  const dataProvider = useDataProvider();
   const exporter = (records: ConfigurableDatagridColumn[]) => {
     CustomExportFunction(
       records,
@@ -58,33 +64,39 @@ const EventRegistrationList = () => {
       columnIds,
       'Class Roster',
       dataProvider
-    )
-  }
+    );
+  };
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
   return (
-    <List hasCreate exporter={exporter} actions={<TrainingEventListActions />}
+    <List
+      hasCreate
+      exporter={exporter}
+      actions={<TrainingEventListActions />}
       title={'Class Rosters'}
-      resource="training-event-registrationss">
+      resource="training-event-registrationss"
+    >
       {isSmall ? (
-
         <Box style={{ whiteSpace: 'nowrap' }}>
-          <SimpleList primaryText={(record) => record.first + ' ' + record.last} secondaryText={(record) => ('Attendee ID: ' + record.attendee_id) + ' | ' + (record.email)}
-            tertiaryText={record => record.phone} />
+          <SimpleList
+            primaryText={(record) => record.first + ' ' + record.last}
+            secondaryText={(record) =>
+              'Attendee ID: ' + record.attendee_id + ' | ' + record.email
+            }
+            tertiaryText={(record) => record.phone}
+          />
         </Box>
       ) : (
-        <DatagridConfigurable
-          rowClick="edit"
-        >
-          <TextField source="event" label="Event" noWrap/>
-          <TextField source="first" label="First Name" noWrap/>
-          <TextField source="last" label="Last Name" noWrap/>
-          <TextField source="attendee_id" label="Attendee ID"noWrap />
-          <TextField source="email" label="Email" noWrap/>
-          <TextField source="phone" label="Phone" noWrap/>
+        <DatagridConfigurable rowClick={rowClick}>
+          <TextField source="event" label="Event" noWrap />
+          <TextField source="first" label="First Name" noWrap />
+          <TextField source="last" label="Last Name" noWrap />
+          <TextField source="attendee_id" label="Attendee ID" noWrap />
+          <TextField source="email" label="Email" noWrap />
+          <TextField source="phone" label="Phone" noWrap />
         </DatagridConfigurable>
       )}
     </List>
-  )
-}
-export default EventRegistrationList
+  );
+};
+export default EventRegistrationList;

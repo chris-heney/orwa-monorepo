@@ -1,13 +1,14 @@
-import * as React from 'react'
-import ContentAdd from '@mui/icons-material/Add'
-import { styled } from '@mui/material/styles'
-import clsx from 'clsx'
-import { isEqual, merge } from 'lodash'
-import PropTypes from 'prop-types'
-import { useResourceContext, useCreatePath } from 'ra-core'
-import { Link, To } from 'react-router-dom'
+import * as React from 'react';
+import ContentAdd from '@mui/icons-material/Add';
+import { styled } from '@mui/material/styles';
+import clsx from 'clsx';
+import { isEqual, merge } from 'lodash';
+import PropTypes from 'prop-types';
+import { useResourceContext, useCreatePath } from 'ra-core';
+import { Link, To } from 'react-router-dom';
 
-import { Button, ButtonProps, LocationDescriptor } from 'react-admin'
+import { Button, ButtonProps, LocationDescriptor } from 'react-admin';
+import { useCan } from '../rbac-manager/useCan';
 
 /**
  * Opens the Create view of a given resource
@@ -32,12 +33,19 @@ const CreateButton = (props: CreateButtonProps) => {
     to: locationDescriptor,
     state: initialState = {},
     ...rest
-  } = props
-  const resource = useResourceContext(props)
-  const createPath = useCreatePath()
-  const state = merge(scrollStates.get(String(scrollToTop)), initialState)
+  } = props;
+  const resource = useResourceContext(props);
+  const createPath = useCreatePath();
+  const { canOnResource } = useCan();
+  const state = merge(scrollStates.get(String(scrollToTop)), initialState);
   // Duplicated behaviour of Button component (legacy use) which will be removed in v5.
-  const linkParams = getLinkParams(locationDescriptor)
+  const linkParams = getLinkParams(locationDescriptor);
+
+  // Cosmetic UX gating — the server is the real enforcement layer.
+  if (!canOnResource('create', resource ?? '')) {
+    return null;
+  }
+
   return (
     <StyledButton
       component={Link}
@@ -46,77 +54,75 @@ const CreateButton = (props: CreateButtonProps) => {
       className={clsx(CreateButtonClasses.root, className)}
       label={label}
       variant={variant}
-      {...(rest)}
+      {...rest}
       {...linkParams}
     >
       {icon}
     </StyledButton>
-  )
-}
+  );
+};
 
 // avoids using useMemo to get a constant value for the link state
 const scrollStates = new Map([
   ['true', { _scrollToTop: true }],
   ['false', {}],
-])
+]);
 
-const defaultIcon = <ContentAdd />
+const defaultIcon = <ContentAdd />;
 
 interface Props {
-  resource?: string
-  icon?: React.ReactElement
-  scrollToTop?: boolean
-  to?: LocationDescriptor | To
+  resource?: string;
+  icon?: React.ReactElement;
+  scrollToTop?: boolean;
+  to?: LocationDescriptor | To;
 }
 
-export type CreateButtonProps = Props & Omit<ButtonProps<typeof Link>, 'to'>
+export type CreateButtonProps = Props & Omit<ButtonProps<typeof Link>, 'to'>;
 
 CreateButton.propTypes = {
   resource: PropTypes.string,
   className: PropTypes.string,
   icon: PropTypes.element,
   label: PropTypes.string,
-}
+};
 
-const PREFIX = 'RaCreateButton'
+const PREFIX = 'RaCreateButton';
 
 export const CreateButtonClasses = {
   root: `${PREFIX}-root`,
   floating: `${PREFIX}-floating`,
-}
+};
 
 const StyledButton = styled(Button, {
   name: PREFIX,
   overridesResolver: (_props, styles) => styles.root,
-})({})
+})({});
 
 export default React.memo(CreateButton, (prevProps, nextProps) => {
   return (
     prevProps.resource === nextProps.resource &&
-      prevProps.label === nextProps.label &&
-      prevProps.translate === nextProps.translate &&
-      prevProps.disabled === nextProps.disabled &&
-      isEqual(prevProps.to, nextProps.to)
-  )
-})
-    
+    prevProps.label === nextProps.label &&
+    prevProps.translate === nextProps.translate &&
+    prevProps.disabled === nextProps.disabled &&
+    isEqual(prevProps.to, nextProps.to)
+  );
+});
 
 const getLinkParams = (locationDescriptor?: LocationDescriptor | string) => {
-// eslint-disable-next-line eqeqeq
+  // eslint-disable-next-line eqeqeq
   if (locationDescriptor == undefined) {
-    return undefined
+    return undefined;
   }
 
   if (typeof locationDescriptor === 'string') {
-    return { to: locationDescriptor }
+    return { to: locationDescriptor };
   }
 
-  const { redirect, replace, state, ...to } = locationDescriptor
+  const { redirect, replace, state, ...to } = locationDescriptor;
   return {
     to,
     redirect,
     replace,
     state,
-  }
-}
-
+  };
+};

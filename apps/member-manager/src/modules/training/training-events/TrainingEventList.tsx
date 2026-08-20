@@ -13,12 +13,12 @@ import {
   ReferenceField,
   FunctionField,
   RaRecord,
-  CreateButton,
   ExportButton,
   SelectColumnsButton,
   Title,
   useDataProvider,
 } from 'react-admin';
+import CreateButton from '../../_components/CustomCreateButton';
 import TrainingClassActionsButton from './components/EventListActionsPopUp';
 import TrainingEventListFilter from './components/EventListFilter';
 import EventCardGird from './components/EventListCardGridMobile';

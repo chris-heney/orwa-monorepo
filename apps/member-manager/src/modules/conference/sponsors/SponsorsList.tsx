@@ -1,5 +1,5 @@
-import React, { JSX } from "react";
-import { Box } from "@mui/material";
+import React, { JSX } from 'react';
+import { Box } from '@mui/material';
 import {
   ChipField,
   DatagridConfigurable,
@@ -11,26 +11,27 @@ import {
   ReferenceField,
   SingleFieldList,
   TextField,
-} from "react-admin";
-import { customDatagridStyle } from "../../../css";
-import CustomPagination from "../../_components/CustomPagination";
+} from 'react-admin';
+import { customDatagridStyle } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
+import { useCan } from '../../rbac-manager/useCan';
 
 const SponsorsList = () => {
+  const { can } = useCan();
 
   return (
     <>
       <DatagridConfigurable
         sx={customDatagridStyle}
         bulkActionButtons={false}
-        rowClick="edit"
+        rowClick={can('update', 'conference-sponsor') ? 'edit' : false}
       >
         <FunctionField
           label="Organization"
           source="organization"
           sortBy="organization"
           render={(record) => {
-            return record.registration != null &&
-              record.registration !== "" ? (
+            return record.registration != null && record.registration !== '' ? (
               <ReferenceField
                 source="registration"
                 reference="conference-registrations"
@@ -62,13 +63,13 @@ const SponsorsList = () => {
         <TextField source="email" label="Email" noWrap />
         {/* sponsorships */}
         <FunctionField
-          sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}
+          sx={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}
           label="Items"
           sortBy="items.label"
           render={(record: RaRecord) => {
             if (!record)
               return (
-                <Box component="span" sx={{ color: "text.secondary" }}>
+                <Box component="span" sx={{ color: 'text.secondary' }}>
                   No record data
                 </Box>
               );
@@ -103,10 +104,7 @@ const SponsorsList = () => {
             }
 
             // Case 2: Render sponsorships if available
-            if (
-              record?.sponsorships &&
-              Array.isArray(record.sponsorships)
-            ) {
+            if (record?.sponsorships && Array.isArray(record.sponsorships)) {
               itemsToRender.push(
                 <ReferenceArrayField
                   key={`sponsorship-${record.id}`}
@@ -123,7 +121,10 @@ const SponsorsList = () => {
             // If no items to render, display fallback message
             if (itemsToRender.length === 0) {
               return (
-                <Box component="span" sx={{ color: "text.secondary", fontStyle: "italic" }}>
+                <Box
+                  component="span"
+                  sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+                >
                   No items or sponsorships available
                 </Box>
               );
@@ -131,9 +132,7 @@ const SponsorsList = () => {
 
             // Render collected items
             return (
-              <div style={{ display: "flex", gap: "5px" }}>
-                {itemsToRender}
-              </div>
+              <div style={{ display: 'flex', gap: '5px' }}>{itemsToRender}</div>
             );
           }}
         />
@@ -141,7 +140,7 @@ const SponsorsList = () => {
         <NumberField
           source="amount"
           label="Amount"
-          options={{ style: "currency", currency: "USD" }}
+          options={{ style: 'currency', currency: 'USD' }}
         />
       </DatagridConfigurable>
       <CustomPagination />
