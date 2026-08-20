@@ -5,6 +5,7 @@ import ContactValidate from './ContactValidate'
 import ContactEditFormFields from '../fields/ContactEditFormFields'
 import { TabContext, TabList, TabPanel } from '@mui/lab'
 import CustomAvatarHeader from '../../../_components/CustomAvatarHeader'
+import { contactAvatarSrc } from '../../../../helpers/contactAvatar'
 
 
 const ContactsEditForm = () => {
@@ -20,7 +21,7 @@ const ContactsEditForm = () => {
   return (
     <SimpleForm validate={ContactValidate}>
       <Box width={'100%'} textAlign={'center'} >
-        <CustomAvatarHeader url={record.avatar ? record.avatar[0].url : undefined} title={record.first ? `${record.first + ' ' + record.last}` : 'Contact Form'}/>      
+        <CustomAvatarHeader url={contactAvatarSrc(record.avatar)} title={record.first ? `${record.first + ' ' + record.last}` : 'Contact Form'}/>      
       </Box>
       <TabContext value={selectedTab}>
         <TabList sx={{width: '100%'}}  onChange={(e: React.SyntheticEvent, v: string) => setSelectedTab(v)} scrollButtons="auto" variant="scrollable">

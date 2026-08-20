@@ -4,6 +4,7 @@ import { Box, Theme, Typography, styled, useMediaQuery } from '@mui/material';
 import React from 'react';
 import logo from '../../assets/ORWA-white-300.webp';
 import RolePreviewChip from '../../modules/rbac-manager/RolePreviewChip';
+import ImpersonationChip from '../../components/ImpersonationChip';
 
 const DefaultAppBar = memo((props) => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
@@ -38,6 +39,7 @@ const DefaultAppBar = memo((props) => {
         mr="auto"
         id="react-admin-title"
       />
+      <ImpersonationChip />
       <RolePreviewChip />
       {/* <InspectorButton placeholder={<></>}/> */}
       {/* <Logo src={logo} alt="ORWA Logo" sx={{ mx: 'auto' }} /> */}

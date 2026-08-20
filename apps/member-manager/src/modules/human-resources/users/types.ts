@@ -7,7 +7,8 @@ export interface IUser {
   id: number;
   username: string;
   email: string;
-  role: IRole;
+  // Users can exist with no role assigned (legacy imports); guard every read.
+  role: IRole | null;
   confirmed: boolean;
   blocked: boolean;
   createdAt: string;

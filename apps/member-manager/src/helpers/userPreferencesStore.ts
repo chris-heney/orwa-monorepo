@@ -1,5 +1,6 @@
 import { localStorageStore, type Store } from "react-admin";
 import CookieStore from "./ra-strapi-data-provider/src/CookieStore";
+import { isImpersonating } from "./impersonation";
 
 const DEBOUNCE_MS = 1000;
 
@@ -75,6 +76,12 @@ export type UserPreferencesStore = StoreWithList & {
   fetchAndSync: () => Promise<void>;
   /** Pause remote pushes (e.g. during hydrate). */
   setSyncEnabled: (enabled: boolean) => void;
+  /**
+   * Recovery path: wipe saved view settings on the server AND locally.
+   * Leaves sync disabled — callers are expected to reload the page, which
+   * re-initializes the store from a clean slate.
+   */
+  resetAllPreferences: () => Promise<void>;
 };
 
 /**
@@ -92,6 +99,10 @@ export const createUserPreferencesStore = (): UserPreferencesStore => {
   const schedulePush = () => {
     if (!syncEnabled) return;
     if (!CookieStore.getCookie("token")) return;
+    // While an Admin is impersonating another user, never write back: browsing
+    // as them (columns, filters, tab changes) must not overwrite that user's
+    // real saved view settings on the server.
+    if (isImpersonating()) return;
     if (debounceTimer) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
@@ -104,6 +115,9 @@ export const createUserPreferencesStore = (): UserPreferencesStore => {
 
   const pushNow = async (): Promise<void> => {
     if (!CookieStore.getCookie("token")) return;
+    // Belt-and-suspenders with schedulePush: no implicit write while
+    // impersonating (fetchAndSync's seed path also routes through here).
+    if (isImpersonating()) return;
     const payload = collectPayload();
 
     const run = async () => {
@@ -178,10 +192,59 @@ export const createUserPreferencesStore = (): UserPreferencesStore => {
         for (const [key, value] of Object.entries(prefs)) {
           if (isEphemeralKey(key)) continue;
           if (value === undefined) continue;
-          inner.setItem(key, value);
+          try {
+            inner.setItem(key, value);
+          } catch (err) {
+            // One malformed stored value (stale schema, quota, bad JSON shape)
+            // must never take down boot — drop the key and keep hydrating.
+            console.warn(
+              `[userPreferencesStore] skipped bad preference "${key}"`,
+              err
+            );
+          }
         }
       } finally {
         syncEnabled = true;
+      }
+    },
+
+    resetAllPreferences: async () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
+      }
+      // Keep sync disabled: subscribers writing defaults after the local wipe
+      // must not re-upload them before the caller reloads.
+      syncEnabled = false;
+
+      if (CookieStore.getCookie("token")) {
+        try {
+          const res = await fetch(prefsUrl(), {
+            method: "PUT",
+            headers: authHeaders(),
+            body: JSON.stringify({ data: { user_preferences: {} } }),
+          });
+          if (!res.ok) {
+            console.warn(
+              "[userPreferencesStore] reset PUT failed",
+              res.status,
+              await res.text().catch(() => "")
+            );
+          }
+        } catch (err) {
+          console.warn("[userPreferencesStore] reset PUT error", err);
+        }
+      }
+
+      if (typeof localStorage !== "undefined") {
+        const toRemove: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const fullKey = localStorage.key(i);
+          if (fullKey?.startsWith(RA_STORE_PREFIX)) toRemove.push(fullKey);
+        }
+        toRemove.forEach((k) => localStorage.removeItem(k));
+      } else {
+        inner.reset();
       }
     },
 

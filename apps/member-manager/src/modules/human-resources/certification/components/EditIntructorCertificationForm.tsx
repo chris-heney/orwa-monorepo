@@ -4,6 +4,7 @@ import { Box, Tab } from '@mui/material'
 import { TabContext, TabList, TabPanel } from '@mui/lab'
 import CustomAvatarHeader from '../../../_components/CustomAvatarHeader'
 import InstructorCertficationFormFields from './InstructorCertficationFormFields'
+import { contactAvatarSrc } from '../../../../helpers/contactAvatar'
 
 const EditInstructorCertificationForm = () => {
   const redirect = useRedirect()
@@ -16,7 +17,7 @@ const EditInstructorCertificationForm = () => {
   return (
     <SimpleForm>
       <Box width={'100%'} textAlign={'center'} >
-        <CustomAvatarHeader url={contact ? contact.avatar[0].url : ''} title={contact ? `${contact.first} ${contact.last}` : ''} />
+        <CustomAvatarHeader url={contactAvatarSrc(contact?.avatar)} title={contact ? `${contact.first} ${contact.last}` : ''} />
       </Box>
       <TabContext value={selectedTab}>
         <TabList onChange={(e: React.SyntheticEvent, v: string) => setSelectedTab(v)} scrollButtons="auto" variant="scrollable">

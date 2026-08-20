@@ -9,6 +9,7 @@ import IContact from "../human-resources/contacts/types/IContact";
 import ContactCreateFormFields from "../human-resources/contacts/fields/ContactCreateFields";
 import CustomHeader from "../_components/CustomHeader";
 import CustomToolBar from "../_components/CustomToolbar";
+import { contactAvatarSrc } from "../../helpers/contactAvatar";
 
 const SettingsPage = () => {
   const { fetchContact } = useSettingsContext();
@@ -86,9 +87,7 @@ const SettingsPage = () => {
     >
       <CustomAvatarHeader
         title={`${contact.first} ${contact.last}`}
-        url={`${import.meta.env.VITE_API_ENDPOINT}${
-          contact.avatar ? contact.avatar[0].url : null
-        }`}
+        url={contactAvatarSrc(contact.avatar)}
         dashboardButton={false}
       />
       <SimpleForm

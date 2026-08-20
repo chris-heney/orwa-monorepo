@@ -20,11 +20,15 @@ import {
 import { Loading, useDataProvider, useNotify } from "react-admin";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import PersonSearchIcon from "@mui/icons-material/PersonSearch";
 import { customDatagridStyle } from "../../../css";
 import { IUser } from "./types";
 import SendResetPasswordButton from "../_components/SendResetPasswordButton";
 import EditUserModal from "./EditUserModal";
 import { useHumanResourcesContext } from "../HumanResourcesContext";
+import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
+import { userPreferencesStore } from "../../../helpers/userPreferencesStore";
+import { startImpersonation } from "../../../helpers/impersonation";
 
 const UserList: React.FC = () => {
   const dataProvider = useDataProvider();
@@ -43,6 +47,8 @@ const UserList: React.FC = () => {
   );
   const [editUser, setEditUser] = useState<IUser | null>(null);
   const [editModalOpen, setEditModalOpen] = useState<boolean>(false);
+  const [impersonateUser, setImpersonateUser] = useState<IUser | null>(null);
+  const [impersonating, setImpersonating] = useState<boolean>(false);
 
   // Fetch all users on initial load
   useEffect(() => {
@@ -133,6 +139,52 @@ const UserList: React.FC = () => {
     setFilteredUsers((prevUsers) =>
       prevUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
     );
+  };
+
+  const confirmImpersonate = async () => {
+    if (!impersonateUser) return;
+    setImpersonating(true);
+    try {
+      const token = CookieStore.getCookie("token");
+      if (!token) {
+        throw new Error("Your session has expired. Please log in again.");
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_API_ENDPOINT}/api/impersonation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ userId: impersonateUser.id }),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(
+          errorData?.error?.message || "Could not start impersonation"
+        );
+      }
+
+      const data = await res.json();
+
+      // Persist the Admin's own pending view settings to the Admin account
+      // BEFORE swapping the session (writes are suppressed once impersonating).
+      await userPreferencesStore.flush();
+
+      startImpersonation(data);
+
+      // Hard reload as the target so every provider re-reads the new token.
+      window.location.hash = "#/human-resources/dashboard";
+      window.location.reload();
+    } catch (error: any) {
+      notify(`Error: ${error.message}`, { type: "error" });
+      setImpersonating(false);
+      setImpersonateUser(null);
+    }
   };
 
   const rowSx = {
@@ -253,7 +305,7 @@ const UserList: React.FC = () => {
               <TableCell align="left">
                 {user.confirmed ? "Confirmed" : "Unconfirmed"}
               </TableCell>
-              <TableCell align="left">{user.role.name}</TableCell>
+              <TableCell align="left">{user.role?.name || "—"}</TableCell>
               <TableCell align="left">{user.email}</TableCell>
               <TableCell align="left">
                 <Box display="flex" gap={1}>
@@ -263,6 +315,14 @@ const UserList: React.FC = () => {
                     </IconButton>
                   </Tooltip>
                   <SendResetPasswordButton isSmall email={user.email} />
+                  <Tooltip title="Test as this user (impersonate)">
+                    <IconButton
+                      size="small"
+                      onClick={() => setImpersonateUser(user)}
+                    >
+                      <PersonSearchIcon color="warning" />
+                    </IconButton>
+                  </Tooltip>
                   <Tooltip title="Delete">
                     <IconButton  size="small" onClick={() => handleDeleteClick(user)}>
                       <DeleteIcon color="error" />
@@ -324,6 +384,52 @@ const UserList: React.FC = () => {
         onClose={closeEditModal}
         onUserUpdated={handleUserUpdated}
       />
+      <Dialog
+        open={Boolean(impersonateUser)}
+        onClose={() => !impersonating && setImpersonateUser(null)}
+      >
+        <DialogTitle>Test as this user?</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div">
+            You&apos;ll browse the app as{" "}
+            <strong>{impersonateUser?.email}</strong>
+            {impersonateUser?.role?.name
+              ? ` (${impersonateUser.role.name})`
+              : ""}
+            , seeing exactly what they see — their role, data, and saved view
+            settings.
+            <Box component="ul" sx={{ mt: 1, mb: 0, pl: 3 }}>
+              <li>Their saved view settings will not be overwritten.</li>
+              <li>
+                Any records you create or change are attributed to them, and
+                this action is logged.
+              </li>
+              <li>
+                Exit anytime from the orange banner to return to your Admin
+                session.
+              </li>
+            </Box>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            color="inherit"
+            disabled={impersonating}
+            onClick={() => setImpersonateUser(null)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="warning"
+            disabled={impersonating}
+            onClick={confirmImpersonate}
+          >
+            {impersonating ? "Starting…" : "Test as user"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

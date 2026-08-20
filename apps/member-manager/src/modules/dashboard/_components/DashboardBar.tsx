@@ -4,6 +4,7 @@ import { Theme, Typography, styled, useMediaQuery } from '@mui/material';
 import React from 'react';
 import logo from '../../../assets/ORWA-white-300.webp';
 import RolePreviewChip from '../../rbac-manager/RolePreviewChip';
+import ImpersonationChip from '../../../components/ImpersonationChip';
 
 export const AgentAppBar = memo((props) => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
@@ -22,6 +23,7 @@ export const AgentAppBar = memo((props) => {
       </Typography>
       {/* <InspectorButton placeholder={<></>} /> */}
       <Logo src={logo} alt="ORWA Logo" />
+      <ImpersonationChip />
       <RolePreviewChip />
     </AppBar>
   );

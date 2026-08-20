@@ -41,65 +41,68 @@ const authProvider: AuthProvider = {
       return await Promise.reject(error);
     }
   },
-  login: ({ username, password }) => {
+  login: async ({ username, password }) => {
     const identifier = username;
-    const request = new Request(
-      `${import.meta.env.VITE_API_ENDPOINT}/api/auth/local`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ identifier, password }),
-        headers: new Headers({ 'Content-Type': 'application/json' }),
-      }
-    );
+    const endpoint = import.meta.env.VITE_API_ENDPOINT;
 
-    return fetch(request)
-      .then((response) => {
-        if (response.status < 200 || response.status >= 300) {
-          throw new Error(response.statusText);
-        }
-        return response.json();
-      })
-      .then((userData) => {
-        const userDataRequest = new Request(
-          `${import.meta.env.VITE_API_ENDPOINT}/api/users/me?populate=role`,
-          {
-            method: 'GET',
-            headers: new Headers({
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer ' + userData.jwt,
-            }),
-          }
-        );
+    const authResponse = await fetch(`${endpoint}/api/auth/local`, {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password }),
+      headers: new Headers({ 'Content-Type': 'application/json' }),
+    });
 
-        return fetch(userDataRequest)
-          .then((response) => {
-            if (response.status < 200 || response.status >= 300) {
-              throw new Error(response.statusText);
-            }
-            return response.json();
-          })
-          .then(async (userMeta) => {
-            const userWithRole = getRoleName(userMeta)
-              ? userMeta
-              : await fetchUserWithRole(userData.user.id, userData.jwt);
-            const roleName = getRoleName(userWithRole);
+    if (authResponse.status < 200 || authResponse.status >= 300) {
+      // Real authentication failure — surface Strapi's message (e.g.
+      // "Invalid identifier or password") instead of the bare statusText.
+      const errorBody = await authResponse.json().catch(() => null);
+      throw new Error(
+        errorBody?.error?.message || authResponse.statusText || 'Login failed'
+      );
+    }
 
-            if (!roleName) {
-              throw new Error(
-                'This user does not have a role assigned. Please assign a role before logging in.'
-              );
-            }
+    const userData = await authResponse.json();
 
-            CookieStore.setCookie('token', userData.jwt, 1);
-            CookieStore.setCookie('role', roleName, 1);
-            CookieStore.setCookie('email', userData.user.email, 1);
-            const userId = userWithRole?.id ?? userData.user?.id;
-            if (userId != null) {
-              CookieStore.setCookie('id', String(userId), 1);
-            }
-            return { success: true, user: userWithRole };
-          });
+    // Credentials are verified past this point, so resolving the role must
+    // NEVER fail the login. Fall back through /users/me -> /users/:id ->
+    // the auth response body -> least-privilege Guest.
+    let userWithRole = userData.user;
+    try {
+      const meResponse = await fetch(`${endpoint}/api/users/me?populate=role`, {
+        method: 'GET',
+        headers: new Headers({
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + userData.jwt,
+        }),
       });
+
+      if (meResponse.ok) {
+        const userMeta = await meResponse.json();
+        if (getRoleName(userMeta)) {
+          userWithRole = userMeta;
+        }
+      }
+
+      if (!getRoleName(userWithRole)) {
+        userWithRole = await fetchUserWithRole(userData.user.id, userData.jwt);
+      }
+    } catch (metaError) {
+      console.error(
+        'Could not fetch user role; continuing login with fallback role.',
+        metaError
+      );
+      userWithRole = userData.user;
+    }
+
+    const roleName = getRoleName(userWithRole) ?? 'Guest';
+
+    CookieStore.setCookie('token', userData.jwt, 1);
+    CookieStore.setCookie('role', roleName, 1);
+    CookieStore.setCookie('email', userData.user.email, 1);
+    const userId = userWithRole?.id ?? userData.user?.id;
+    if (userId != null) {
+      CookieStore.setCookie('id', String(userId), 1);
+    }
+    return { success: true, user: userWithRole };
   },
 
   logout: async () => {

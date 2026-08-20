@@ -1,4 +1,5 @@
 import React from 'react';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -36,14 +37,22 @@ function Copyright(props: TypographyProps) {
 
 const LoginPage = () => {
   const notify = useNotify();
+  // Toasts are easy to miss (and were invisible here for a long time) — keep
+  // a persistent inline error so a failed login is unmistakable.
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    setErrorMessage(null);
+    setSubmitting(true);
     authProvider
       .login({ username: data.get('email'), password: data.get('password') })
       .then((res) => {
         if (res.error) {
+          setSubmitting(false);
+          setErrorMessage(res.error);
           notify(res.error, {
             type: 'error',
           });
@@ -115,13 +124,19 @@ const LoginPage = () => {
             control={<Checkbox value="remember" color="primary" />}
             label="Remember me"
           />
+          {errorMessage && (
+            <Alert severity="error" sx={{ mt: 1, width: '100%' }}>
+              {errorMessage}
+            </Alert>
+          )}
           <Button
             type="submit"
             fullWidth
             variant="contained"
+            disabled={submitting}
             sx={{ mt: 3, mb: 2 }}
           >
-            Sign In
+            {submitting ? 'Signing in…' : 'Sign In'}
           </Button>
           <Grid container>
             <Grid item xs>

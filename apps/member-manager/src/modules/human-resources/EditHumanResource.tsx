@@ -21,12 +21,7 @@ import UserContextProvider from "../../context/UserContextProvider";
 import RolesContextProvider from "../../context/RolesContextProvider";
 import CustomToolBar from "../_components/CustomToolbar";
 import { getRelationFilterId } from "../../helpers/strapiIds";
-
-/** Strapi 5 returns `avatar: []` when empty; `[]` is truthy so `[0].url` throws. */
-function contactAvatarSrc(avatar: IContact["avatar"] | undefined) {
-  const path = avatar?.[0]?.url;
-  return path ? `${import.meta.env.VITE_API_ENDPOINT}${path}` : undefined;
-}
+import { contactAvatarSrc } from "../../helpers/contactAvatar";
 
 interface EditHumanResourceProps {
   resource: string;

@@ -30,11 +30,11 @@ import {
   AppBarProps,
   Sidebar as DefaultSidebar,
   MenuProps,
-  Error,
   ErrorProps,
   SkipNavigationButton,
   Inspector,
 } from 'react-admin';
+import ErrorRecoveryFallback from './components/ErrorRecoveryFallback';
 import { Box } from '@mui/material';
 import DashboardAppBar from '../modules/dashboard/_components/DashboardBar';
 import { Email, EmojiEvents, Gavel, School } from '@mui/icons-material';
@@ -298,15 +298,17 @@ const MyMenu = () => {
 };
 
 const DashBoard = (props: LayoutProps) => {
+  // `error` and `title` are pulled out only to keep them off the DOM element
+  // that receives {...rest}; the error UI itself is ErrorRecoveryFallback.
   const {
     // appBar: AppBar = AdminAppBar,
     children,
     className,
     dashboard,
-    error: errorComponent,
+    error: _errorComponent,
     menu: Menu = MyMenu,
     sidebar: Sidebar = DefaultSidebar,
-    title,
+    title: _title,
     ...rest
   } = props;
   //const [open] = useSidebarState()
@@ -333,12 +335,10 @@ const DashBoard = (props: LayoutProps) => {
               <ErrorBoundary
                 onError={handleError}
                 fallbackRender={({ error, resetErrorBoundary }) => (
-                  <Error
+                  <ErrorRecoveryFallback
                     error={error}
-                    errorComponent={errorComponent}
                     errorInfo={errorInfo}
                     resetErrorBoundary={resetErrorBoundary}
-                    title={title}
                   />
                 )}
               >

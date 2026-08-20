@@ -61,8 +61,11 @@ const authProvider: AuthProvider = {
       });
 
       if (!authResponse.ok) {
-        const errorData = await authResponse.json();
-        throw new Error(errorData?.message || 'Login failed');
+        // Strapi nests the human-readable message under `error.message`.
+        const errorData = await authResponse.json().catch(() => null);
+        throw new Error(
+          errorData?.error?.message || errorData?.message || 'Login failed'
+        );
       }
 
       const userData = await authResponse.json();
