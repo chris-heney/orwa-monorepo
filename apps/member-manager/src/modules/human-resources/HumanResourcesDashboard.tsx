@@ -12,7 +12,7 @@ import HumanResourcesFilters from './_components/HumanResourceFilters';
  */
 const HumanResourcesDashboard = () => {
   return (
-    <Box sx={{ p: { xs: 1, sm: 2 } }}>
+    <Box sx={{ width: 1, minWidth: 0 }}>
       <Title title="Contacts" />
       <ContactsHeader />
       {/* Table scrolls horizontally on its own so wide columns never push the

@@ -419,11 +419,12 @@ const StyledLayout = styled('div', {
     flexDirection: 'column',
     flexGrow: 1,
     flexBasis: 0,
+    // Allow flex shrink so full-width module content scrolls inside the
+    // content area instead of widening the page.
+    minWidth: 0,
+    // Flush to the sidebar and window edge on every page. Modules must not
+    // re-add their own horizontal gutters — content spans the full width.
     padding: 0,
-    [theme.breakpoints.up('xs')]: {
-      paddingRight: theme.spacing(2),
-      paddingLeft: theme.spacing(1),
-    },
   },
 }));
 export default DashBoard;

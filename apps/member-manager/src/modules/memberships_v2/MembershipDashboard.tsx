@@ -82,7 +82,7 @@ const MembershipDashboard = () => {
   }, [isLoading, can, selectedTab, setSelectedTab]);
 
   return (
-    <Grid container spacing={0} maxWidth={'95vw'}>
+    <Grid container spacing={0} sx={{ width: 1, maxWidth: '100%', minWidth: 0 }}>
       <Grid item xs={12} md={12}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
           <Title title="Memberships" />

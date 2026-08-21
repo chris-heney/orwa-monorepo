@@ -210,7 +210,8 @@ const ConferenceDashboard = () => {
               overflow: "hidden",
               flexGrow: "1",
               backgroundColor: "transparent",
-              maxWidth: "95vw",
+              maxWidth: "100%",
+              minWidth: 0,
               width: "100%",
             }}
           >

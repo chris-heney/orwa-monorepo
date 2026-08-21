@@ -153,7 +153,7 @@ const RoleEditor = ({ roleId, onSaved, onCancel }: RoleEditorProps) => {
   const isFetching = isNew ? matrixQuery.isLoading : roleQuery.isLoading;
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: 2 }}>
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
       <Title title="RBAC Manager" />
       <PageHeadingBar
         title={

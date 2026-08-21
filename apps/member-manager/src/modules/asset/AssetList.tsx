@@ -89,7 +89,7 @@ const AssetList = () => {
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: 2 }}>
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
       <Title title="Asset Manager" />
       <List
         title=" "

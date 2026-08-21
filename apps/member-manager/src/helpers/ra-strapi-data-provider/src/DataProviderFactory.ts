@@ -332,7 +332,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
                 const nested = copy[nestedKey];
                 if (!nested || typeof nested !== "object") continue;
                 if (!Array.isArray(nested) && isRelationOrMedia(nested)) {
-                  copy[nestedKey] = this.relationRefId(nested);
+                  copy[nestedKey] = this.relationRefId(
+                    nested as { id: Identifier; documentId?: string }
+                  );
                 } else if (
                   Array.isArray(nested) &&
                   nested.length > 0 &&

@@ -62,7 +62,7 @@ const SettingsDashboardInner = () => {
   return (
     <Box>
       <Title title="Settings" />
-      <Box sx={{ p: { xs: 1, sm: 2 } }}>
+      <Box sx={{ width: 1, minWidth: 0 }}>
         <PageHeadingBar
           title="Settings"
           info="Manage user accounts, staff, and instructors. Edit your own profile and preferences from the avatar menu (top right)."
