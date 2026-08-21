@@ -900,13 +900,21 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         // the cached record and resets the form from it, so a bare response
         // makes relation inputs revert to their pre-save values (and a
         // follow-up save then wipes them). populate=* restores v4 behavior.
+        // Callers can pass meta.customFilter for nested component relations
+        // (populate=* is shallow and will not include e.g.
+        // sponsorship_items.sponsorship).
         //
         // When addressing by documentId, pin status=published so admin saves
         // update the live version (default Document Service write is draft).
+        const { populate = [], customFilter } = params?.meta || {};
+        const populateString = this.buildPopulationQueryString(
+          populate,
+          customFilter
+        );
         const statusQs = this.isDocumentId(params.id)
           ? "&status=published"
           : "";
-        const url = `${this.endpoint}/${resource}/${params.id}?populate=*${statusQs}`;
+        const url = `${this.endpoint}/${resource}/${params.id}?${populateString}${statusQs}`;
         const requestKey = `update:${resource}:${params.id}`;
 
         // Invalidate cache for this resource
@@ -974,7 +982,14 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
       create: async (resource, params) => {
         // populate=* for the same reason as update(): Strapi 5 write responses
         // omit relations unless populated, which breaks post-create hydration.
-        const url = `${this.endpoint}/${resource}?populate=*`;
+        // Honor meta.customFilter so nested component relations survive the
+        // write-response merge (same as getOne / update).
+        const { populate = [], customFilter } = params?.meta || {};
+        const populateString = this.buildPopulationQueryString(
+          populate,
+          customFilter
+        );
+        const url = `${this.endpoint}/${resource}?${populateString}`;
         const requestKey = `create:${resource}`;
         
         // Invalidate cache for this resource

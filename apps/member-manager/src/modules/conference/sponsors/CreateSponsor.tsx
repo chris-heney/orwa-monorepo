@@ -3,11 +3,15 @@ import { CreateBase, Title, useDataProvider } from "react-admin";
 import SponsorFormFields from "./SponsorFormFields";
 import CustomEditHeader from "../../_components/CustomFormHeader";
 import ConferenceContextProvider from "../ConferenceContext";
+import {
+  SPONSOR_WRITE_POPULATE,
+  toSponsorWritePayload,
+} from "./helpers/sponsorWritePayload";
 
 const CreateSponsor = () => {
   const dataProvider = useDataProvider();
 
-  const transform = async (data: any) => {
+  const transform = async (data: Record<string, unknown>) => {
     const { data: sponsorships } = await dataProvider.getList(
       "conference-sponsorships",
       {
@@ -17,28 +21,19 @@ const CreateSponsor = () => {
       }
     );
 
-    return {
-      ...data,
-      sponsorship_items: data.sponsorship_items.map(
-        (item: any, index: number) => {
-          const sponsorship = sponsorships.find(
-            (s: any) => s.id === item.sponsorship
-          );
-          return {
-            sponsorship: item.sponsorship,
-            label: sponsorship?.name,
-            value: sponsorship?.amount,
-            key: sponsorship?.name + "-" + index,
-          };
-        }
-      ),
-    };
+    return toSponsorWritePayload(data, sponsorships ?? []);
   };
 
   return (
     <CreateBase
       redirect={"/conference/dashboard"}
       transform={transform}
+      mutationOptions={{
+        meta: {
+          populate: true,
+          customFilter: SPONSOR_WRITE_POPULATE,
+        },
+      }}
       hasShow={false}
     >
       <ConferenceContextProvider>

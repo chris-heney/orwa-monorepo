@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { NumberInput, useDataProvider } from "react-admin";
 import { useFormContext } from "react-hook-form";
+import { findSponsorshipCatalogRow } from "./helpers/sponsorWritePayload";
 
 const CalculateSponsorCost = () => {
   const { watch, setValue } = useFormContext();
@@ -33,11 +34,13 @@ const CalculateSponsorCost = () => {
         }
       );
 
-      sponsorItems.forEach((item: any) => {
-        const sponsorship = sponsorships.find(
-          (s: any) => s.id === item.sponsorship
+      sponsorItems.forEach((item: { sponsorship?: unknown; value?: number | string }) => {
+        const sponsorship = findSponsorshipCatalogRow(
+          sponsorships,
+          item.sponsorship
         );
-        total += sponsorship?.amount || 0; // Add sponsorship amount if found
+        const amount = Number(sponsorship?.amount ?? item.value ?? 0);
+        total += Number.isFinite(amount) ? amount : 0;
       });
     } catch (error) {
       console.error("Error fetching sponsorships:", error);

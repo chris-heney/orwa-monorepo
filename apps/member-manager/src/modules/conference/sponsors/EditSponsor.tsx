@@ -3,11 +3,22 @@ import { EditBase, Title, useDataProvider } from "react-admin";
 import SponsorFormFields from "./SponsorFormFields";
 import CustomFormHeader from "../../_components/CustomFormHeader";
 import ConferenceContextProvider from "../ConferenceContext";
+import {
+  SPONSOR_WRITE_POPULATE,
+  toSponsorWritePayload,
+} from "./helpers/sponsorWritePayload";
+
+const sponsorMutationMeta = {
+  meta: {
+    populate: true,
+    customFilter: SPONSOR_WRITE_POPULATE,
+  },
+};
 
 const EditSponsor = () => {
   const dataProvider = useDataProvider();
 
-  const transform = async (data: any) => {
+  const transform = async (data: Record<string, unknown>) => {
     const { data: sponsorships } = await dataProvider.getList(
       "conference-sponsorships",
       {
@@ -17,34 +28,14 @@ const EditSponsor = () => {
       }
     );
 
-    return {
-      ...data,
-      sponsorship_items: (data.sponsorship_items ?? []).map(
-        (item: any, index: number) => {
-          const sponsorship = sponsorships.find(
-            (s: any) => s.id === item.sponsorship
-          );
-          return {
-            sponsorship: item.sponsorship,
-            label: sponsorship?.name,
-            value: sponsorship?.amount,
-            key: sponsorship?.name + "-" + index,
-          };
-        }
-      ),
-    };
+    return toSponsorWritePayload(data, sponsorships ?? []);
   };
 
   return (
     <ConferenceContextProvider>
       <EditBase 
-        queryOptions={{
-          meta: {
-            populate: true,
-            customFilter:
-              "populate=sponsorship_items.sponsorship&populate=logo&populate=registration&populate=sponsorships",
-          },
-        }}
+        queryOptions={sponsorMutationMeta}
+        mutationOptions={sponsorMutationMeta}
         transform={transform}
         hasShow={false}
         redirect={"/conference/dashboard"}

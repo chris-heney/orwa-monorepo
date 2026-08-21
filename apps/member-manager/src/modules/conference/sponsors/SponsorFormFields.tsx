@@ -16,6 +16,7 @@ import CalculateSponsorCost from "./CalculateSponsorCost";
 import FileUploadField from "../../_components/FileUploadField";
 import CustomToolBar from "../../_components/CustomToolbar";
 import { useConferenceContext } from "../ConferenceContext";
+import { toSponsorshipFormId } from "./helpers/sponsorWritePayload";
 
 const SponsorFormFields = () => {
   const { currentFilter } = useConferenceContext();
@@ -32,10 +33,8 @@ const SponsorFormFields = () => {
               // so `.map` doesn't crash the form for sponsors with no items.
               sponsorship_items: (record.sponsorship_items ?? []).map(
                 (item: any) => ({
-                  sponsorship:
-                    item.sponsorship?.id ??
-                    item.sponsorship?.data?.id ??
-                    item.sponsorship,
+                  id: item.id,
+                  sponsorship: toSponsorshipFormId(item.sponsorship),
                   label: item.label,
                   value: item.value,
                   key: item.key,
