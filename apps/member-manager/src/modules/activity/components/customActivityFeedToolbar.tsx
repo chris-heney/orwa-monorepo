@@ -27,7 +27,11 @@ const CustomActivityFeedToolbar = ({ setFilter } : ActivityFeedToolBarProps) => 
         setStaffChoices(
           data.map((staff) => ({
             value: staff.id,
-            label: `${staff.contact.first} ${staff.contact.last}`,
+            // Staff rows can have a null/unpopulated contact; guard so the
+            // activity feed toolbar never crashes the dashboard.
+            label: `${staff.contact?.first ?? ''} ${
+              staff.contact?.last ?? ''
+            }`.trim(),
           }))
         )
           

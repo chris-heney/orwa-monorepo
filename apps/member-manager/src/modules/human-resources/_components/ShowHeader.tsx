@@ -39,7 +39,7 @@ const ShowHeader = ({ first, last }: { first: string; last: string }) => {
               onClick={() =>
                 navigate(
                   record.email === user.email
-                    ? '/admin/settings'
+                    ? '/profile'
                     : '/human-resources/dashboard'
                 )
               }

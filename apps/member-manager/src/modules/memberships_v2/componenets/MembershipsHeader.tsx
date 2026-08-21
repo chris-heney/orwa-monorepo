@@ -5,7 +5,6 @@ import {
   Theme,
   Typography,
   useMediaQuery,
-  Select,
   MenuItem,
   IconButton,
   Tooltip,
@@ -13,6 +12,7 @@ import {
   Switch,
   Divider,
 } from '@mui/material';
+import { HeadingSelect } from '../../_components/heading/HeadingActions';
 import {
   Button,
   ConfigurableDatagridColumn,
@@ -502,13 +502,9 @@ const Membershipheader = () => {
                 }}
               />
 
-              <Select
+              <HeadingSelect
                 value={exportType}
                 displayEmpty
-                sx={{
-                  color: 'white',
-                }}
-                size="small"
                 onChange={(e) => {
                   setExportType(e.target.value as string);
                   handleExport(e.target.value as string);
@@ -519,7 +515,7 @@ const Membershipheader = () => {
                 </MenuItem>
                 <MenuItem value="default">Default Export</MenuItem>
                 <MenuItem value="naylor">Naylor Export</MenuItem>
-              </Select>
+              </HeadingSelect>
 
               {/* Grid View Toggle Button - Only show for associates */}
               {resource === 'associates' && (

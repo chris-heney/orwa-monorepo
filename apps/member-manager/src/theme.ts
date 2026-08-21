@@ -158,7 +158,9 @@ const darkExtras: RaThemeOptions = {
       main: '#90caf9',
     },
     background: {
-      default: '#313131',
+      // Solid black app background (was #313131, which read as an
+      // inconsistent dark gray next to the #262626 heading bars).
+      default: '#000000',
       paper: '#3a3a3a',
     },
     text: {

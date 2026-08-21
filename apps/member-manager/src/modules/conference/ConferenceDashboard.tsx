@@ -178,7 +178,7 @@ const ConferenceDashboard = () => {
   }, [selectedTab]);
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <Box sx={{ mt: 0 }}>
       <Title title="Conference Manager" />
 
       <Box

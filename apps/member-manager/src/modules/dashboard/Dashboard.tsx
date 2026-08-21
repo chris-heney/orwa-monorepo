@@ -1,5 +1,6 @@
 import React from "react";
 import { Box } from "@mui/material";
+import { Title } from "react-admin";
 import NextConferencsCard from "./_components/ConferencesCard";
 import PeopleCard from "./_components/PeopleCard";
 import AssetsCard from "./_components/AssetsCard";
@@ -19,9 +20,12 @@ const COL_H = { xs: "auto", md: 820 };
  */
 const Dashboard = () => {
   return (
-    <Box
+    <Box>
+      <Title title="Dashboard" />
+      <Box
       sx={{
-        mt: 2,
+        mt: 0,
+        pt: 2,
         display: "flex",
         flexDirection: { xs: "column", md: "row" },
         alignItems: "stretch",
@@ -81,6 +85,7 @@ const Dashboard = () => {
         <Box sx={{ flex: "1 1 48%", minHeight: 0, overflow: "hidden" }}>
           <DashboardActivityCard />
         </Box>
+      </Box>
       </Box>
     </Box>
   );

@@ -17,7 +17,7 @@ const AwardDashboard = () => {
   return (
     <Box sx={{ display: "flex", flexDirection: "row", maxWidth: "96vw" }}>
       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
           <AwardDashboardHeader />
           <Title title="ORWA Awards" />
           <TabContext value={selectedTab}>

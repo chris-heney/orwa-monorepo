@@ -82,7 +82,7 @@ const PageHeadingBar = ({ title, info, actions, sx }: PageHeadingBarProps) => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            gap: 1.5,
+            gap: 0.75,
             flexWrap: 'wrap',
             justifyContent: 'flex-end',
           }}

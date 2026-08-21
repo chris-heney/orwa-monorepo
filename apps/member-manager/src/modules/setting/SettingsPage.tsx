@@ -28,8 +28,8 @@ const SettingsPage = () => {
     return (
       <Create
         resource="contacts"
-        title={"Settings"}
-        redirect={() => "/admin/settings"}
+        title="My Profile"
+        redirect={() => "/profile"}
         sx={{
           "& .RaCreate-main": { bgcolor: "transparent" },
           "& .RaCreate-card": {
@@ -70,7 +70,7 @@ const SettingsPage = () => {
 
   return (
     <Edit
-      title={"Settings"}
+      title="My Profile"
       redirect={false}
       id={contact.id}
       resource={"contacts"}

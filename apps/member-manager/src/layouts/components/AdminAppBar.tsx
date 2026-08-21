@@ -5,6 +5,7 @@ import React from 'react';
 import logo from '../../assets/ORWA-white-300.webp';
 import RolePreviewChip from '../../modules/rbac-manager/RolePreviewChip';
 import ImpersonationChip from '../../components/ImpersonationChip';
+import ProfileMenu from './ProfileMenu';
 
 const DefaultAppBar = memo((props) => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
@@ -26,6 +27,7 @@ const DefaultAppBar = memo((props) => {
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'contain',
       }}
+      userMenu={<ProfileMenu />}
       {...props}
     >
       <Typography

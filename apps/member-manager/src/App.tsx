@@ -67,6 +67,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import ResetPasswordPage from './pages/ResetPassword';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ProfilePage from './modules/profile/ProfilePage';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -212,7 +213,8 @@ export const App = () => {
 
           {/* --- MUI Pages--- */}
           <CustomRoutes>
-            {/* --- Settings Pages --- */}
+            {/* --- Profile + Settings Pages --- */}
+            <Route path="profile" element={<ProfilePage />} />
             <Route path="admin/settings" element={<SettingsDashboard />} />
             <Route path="event/settings" element={<EventSettings />} />
             {/* @TODO: */}

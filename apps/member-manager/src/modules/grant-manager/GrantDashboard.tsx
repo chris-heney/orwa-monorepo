@@ -122,7 +122,7 @@ const GrantDashboard = () => {
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
-        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
           {isSmall && <GrantsAccordionFilter />}
           <GrantDashboardHeader />
           <Title title={"Grant Manager"} />

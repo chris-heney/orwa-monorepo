@@ -36,7 +36,6 @@ import {
 } from 'react-admin';
 import ErrorRecoveryFallback from './components/ErrorRecoveryFallback';
 import { Box } from '@mui/material';
-import DashboardAppBar from '../modules/dashboard/_components/DashboardBar';
 import { Email, EmojiEvents, Gavel, School } from '@mui/icons-material';
 import useCurrentUser from '../modules/_helpers/useCurrentUser';
 import { useModuleAccess } from '../modules/rbac-manager/useModuleAccess';
@@ -47,8 +46,14 @@ import {
   firstAllowedPath,
 } from '../config/modules';
 
-// Auth pages are reachable regardless of module access.
-const ALWAYS_ALLOWED_PATHS = ['/login', '/reset-password', '/forgot-password'];
+// Auth pages + the user's own profile are reachable regardless of module
+// access — every signed-in user must be able to land somewhere safe.
+const ALWAYS_ALLOWED_PATHS = [
+  '/login',
+  '/reset-password',
+  '/forgot-password',
+  '/profile',
+];
 
 /**
  * A path belongs to a prefix when it equals it, or continues past it with a
@@ -318,15 +323,14 @@ const DashBoard = (props: LayoutProps) => {
     setErrorInfo(info);
   };
 
-  const location = useLocation();
-  const isDashboard = location.pathname === '/admin/dashboard';
-
   return (
     <AppLocationContext>
       <StyledLayout className={clsx('layout', className)} {...rest}>
         <SkipNavigationButton />
         <Box className={LayoutClasses.appFrame}>
-          {isDashboard ? <DashboardAppBar /> : <AdminAppBar />}
+          {/* One app bar everywhere — the dashboard used to render its own
+              copy with larger hardcoded text (WET). */}
+          <AdminAppBar />
           <main className={LayoutClasses.contentWithSidebar}>
             <Sidebar>
               <Menu hasDashboard={!!dashboard} />

@@ -84,7 +84,7 @@ const MembershipDashboard = () => {
   return (
     <Grid container spacing={0} maxWidth={'95vw'}>
       <Grid item xs={12} md={12}>
-        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
           <Title title="Memberships" />
           <MembershiphHeader />
           {isSettingsOpen ? (

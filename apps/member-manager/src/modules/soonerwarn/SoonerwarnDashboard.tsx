@@ -77,7 +77,7 @@ const SoonerwarnDashboard = () => {
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
-        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 3 }}>
+        <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
           {/* {isSmall && <GrantsAccordionFilter />} */}
           <SoonerwarnDashboardHeader />
           <Title title="SoonerWARN Manager" />
