@@ -315,6 +315,38 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
             );
             continue;
           }
+          // Repeatable components: keep the objects, collapse nested
+          // relations (e.g. sponsorship_items.sponsorship) so Autocomplete
+          // values stay documentIds instead of numeric nested ids.
+          if (
+            Array.isArray(value) &&
+            value.length > 0 &&
+            value.every(
+              (item: any) =>
+                item && typeof item === "object" && !isRelationOrMedia(item)
+            )
+          ) {
+            raRecord[key] = value.map((item: Record<string, unknown>) => {
+              const copy: Record<string, unknown> = { ...item };
+              for (const nestedKey of Object.keys(copy)) {
+                const nested = copy[nestedKey];
+                if (!nested || typeof nested !== "object") continue;
+                if (!Array.isArray(nested) && isRelationOrMedia(nested)) {
+                  copy[nestedKey] = this.relationRefId(nested);
+                } else if (
+                  Array.isArray(nested) &&
+                  nested.length > 0 &&
+                  nested.every(isRelationOrMedia)
+                ) {
+                  copy[nestedKey] = nested.map((rel: { id: Identifier; documentId?: string }) =>
+                    this.relationRefId(rel)
+                  );
+                }
+              }
+              return copy;
+            });
+            continue;
+          }
         }
       }
 

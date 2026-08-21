@@ -2,7 +2,6 @@ import React from "react";
 import {
   ArrayInput,
   AutocompleteInput,
-  NumberInput,
   ReferenceInput,
   SimpleForm,
   SimpleFormIterator,
@@ -136,13 +135,15 @@ const SponsorFormFields = () => {
           </Grid>
         </Grid>
 
-        {/* Hidden Inputs */}
-        <NumberInput
+        {/* Hidden: TextInput (not NumberInput) so a Strapi documentId is not
+            coerced to NaN/null and written back, which unlinks the sponsor
+            from the conference and drops it off the dashboard list. */}
+        <TextInput
           source="year"
           defaultValue={currentFilter.year}
           sx={{ display: "none" }}
         />
-        <NumberInput
+        <TextInput
           source="conference"
           defaultValue={currentFilter.conference}
           sx={{ display: "none" }}

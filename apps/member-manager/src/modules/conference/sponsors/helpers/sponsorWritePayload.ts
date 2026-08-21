@@ -4,7 +4,7 @@ import {
 } from "../../../../helpers/strapiIds";
 
 export const SPONSOR_WRITE_POPULATE =
-  "populate=sponsorship_items.sponsorship&populate=logo&populate=registration&populate=sponsorships";
+  "populate=sponsorship_items.sponsorship&populate=logo&populate=registration&populate=sponsorships&populate=conference";
 
 export type SponsorshipCatalogRow = {
   id?: string | number;
@@ -101,27 +101,67 @@ const toComponentInstanceId = (value: unknown): number | undefined => {
   return undefined;
 };
 
-/**
- * PUT/POST body for conference-sponsors.
- *
- * The form's `sponsorship` value may be a documentId, a numeric entityId
- * (nested populate before withStableId), or a fat row. Resolve each line
- * against the catalog so we write documentIds, keep component instance ids
- * (Strapi updates vs recreates), and set the oneToMany `sponsorships`
- * relation — omitting that field is what unlinked "what they sponsored".
- */
-export const toSponsorWritePayload = (
-  data: Record<string, unknown>,
-  catalog: SponsorshipCatalogRow[]
-): Record<string, unknown> => {
-  const incoming = Array.isArray(data.sponsorship_items)
-    ? (data.sponsorship_items as SponsorItemInput[])
-    : [];
+export type SponsorWriteOptions = {
+  previousData?: Record<string, unknown> | null;
+  fallbackConference?: unknown;
+  fallbackYear?: unknown;
+};
 
+const isUsableRelationId = (value: unknown): boolean => {
+  if (value == null || value === "") return false;
+  if (typeof value === "number") return Number.isFinite(value) && value > 0;
+  if (typeof value === "string") {
+    if (isDocumentId(value)) return true;
+    if (/^\d+$/.test(value)) return Number(value) > 0;
+    return false;
+  }
+  return toRelationWriteId(value as never) != null;
+};
+
+const pickRelationId = (...candidates: unknown[]): string | number | undefined => {
+  for (const candidate of candidates) {
+    if (!isUsableRelationId(candidate)) continue;
+    const id = toRelationWriteId(candidate as never);
+    if (id != null && id !== "" && !(typeof id === "number" && Number.isNaN(id))) {
+      return id;
+    }
+  }
+  return undefined;
+};
+
+const pickYear = (...candidates: unknown[]): number | undefined => {
+  for (const candidate of candidates) {
+    const n = typeof candidate === "number" ? candidate : Number(candidate);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return undefined;
+};
+
+const findByLabel = (
+  catalog: SponsorshipCatalogRow[],
+  label: unknown
+): SponsorshipCatalogRow | undefined => {
+  if (typeof label !== "string") return undefined;
+  const needle = label.trim().toLowerCase();
+  if (!needle) return undefined;
+  return catalog.find(
+    (row) => typeof row.name === "string" && row.name.trim().toLowerCase() === needle
+  );
+};
+
+const itemsFromUnknown = (value: unknown): SponsorItemInput[] =>
+  Array.isArray(value) ? (value as SponsorItemInput[]) : [];
+
+const buildItems = (
+  incoming: SponsorItemInput[],
+  catalog: SponsorshipCatalogRow[]
+): Array<Record<string, unknown>> => {
   const sponsorship_items: Array<Record<string, unknown>> = [];
 
   incoming.forEach((item) => {
-    const match = findSponsorshipCatalogRow(catalog, item?.sponsorship);
+    const match =
+      findSponsorshipCatalogRow(catalog, item?.sponsorship) ??
+      findByLabel(catalog, item?.label);
     const sponsorship =
       toRelationWriteId(match) ?? toRelationWriteId(item?.sponsorship as never);
     if (sponsorship == null) return;
@@ -139,9 +179,57 @@ export const toSponsorWritePayload = (
     });
   });
 
-  return {
+  return sponsorship_items;
+};
+
+/**
+ * PUT/POST body for conference-sponsors.
+ *
+ * The form's `sponsorship` value may be a documentId, a numeric entityId
+ * (nested populate before withStableId), or a fat row. Resolve each line
+ * against the catalog so we write documentIds, keep component instance ids
+ * (Strapi updates vs recreates), and set the oneToMany `sponsorships`
+ * relation.
+ *
+ * Never write null `conference`/`year` — the hidden NumberInput + a shallow
+ * getOne (conference omitted) would otherwise unlink the sponsor from the
+ * conference filter and make the row vanish from the dashboard.
+ */
+export const toSponsorWritePayload = (
+  data: Record<string, unknown>,
+  catalog: SponsorshipCatalogRow[],
+  options: SponsorWriteOptions = {}
+): Record<string, unknown> => {
+  const previous = options.previousData ?? {};
+  const incoming = itemsFromUnknown(data.sponsorship_items);
+  let sponsorship_items = buildItems(incoming, catalog);
+
+  if (sponsorship_items.length === 0 && incoming.length > 0) {
+    sponsorship_items = buildItems(itemsFromUnknown(previous.sponsorship_items), catalog);
+  }
+
+  const conference = pickRelationId(
+    data.conference,
+    previous.conference,
+    options.fallbackConference
+  );
+  const year = pickYear(data.year, previous.year, options.fallbackYear);
+  const registration = pickRelationId(data.registration, previous.registration);
+
+  const out: Record<string, unknown> = {
     ...data,
     sponsorship_items,
     sponsorships: sponsorship_items.map((item) => item.sponsorship),
   };
+
+  if (conference != null) out.conference = conference;
+  else delete out.conference;
+
+  if (year != null) out.year = year;
+  else delete out.year;
+
+  if (registration != null) out.registration = registration;
+  else delete out.registration;
+
+  return out;
 };

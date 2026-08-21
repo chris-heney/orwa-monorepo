@@ -2,7 +2,9 @@ import React from "react";
 import { EditBase, Title, useDataProvider } from "react-admin";
 import SponsorFormFields from "./SponsorFormFields";
 import CustomFormHeader from "../../_components/CustomFormHeader";
-import ConferenceContextProvider from "../ConferenceContext";
+import ConferenceContextProvider, {
+  useConferenceContext,
+} from "../ConferenceContext";
 import {
   SPONSOR_WRITE_POPULATE,
   toSponsorWritePayload,
@@ -15,10 +17,14 @@ const sponsorMutationMeta = {
   },
 };
 
-const EditSponsor = () => {
+const EditSponsorForm = () => {
   const dataProvider = useDataProvider();
+  const { currentFilter } = useConferenceContext();
 
-  const transform = async (data: Record<string, unknown>) => {
+  const transform = async (
+    data: Record<string, unknown>,
+    options?: { previousData?: Record<string, unknown> }
+  ) => {
     const { data: sponsorships } = await dataProvider.getList(
       "conference-sponsorships",
       {
@@ -28,32 +34,40 @@ const EditSponsor = () => {
       }
     );
 
-    return toSponsorWritePayload(data, sponsorships ?? []);
+    return toSponsorWritePayload(data, sponsorships ?? [], {
+      previousData: options?.previousData,
+      fallbackConference: currentFilter.conference,
+      fallbackYear: currentFilter.year,
+    });
   };
 
   return (
-    <ConferenceContextProvider>
-      <EditBase 
-        queryOptions={sponsorMutationMeta}
-        mutationOptions={sponsorMutationMeta}
-        transform={transform}
+    <EditBase
+      queryOptions={sponsorMutationMeta}
+      mutationOptions={sponsorMutationMeta}
+      transform={transform}
+      hasShow={false}
+      redirect={"/conference/dashboard"}
+    >
+      <CustomFormHeader
         hasShow={false}
-        redirect={"/conference/dashboard"}
-      >
-        <CustomFormHeader
-          hasShow={false}
-          displayField="email"
-          redirectTo="/conference/dashboard"
-          sx={{
-            mt: 2,
-          }}
-        />
+        displayField="email"
+        redirectTo="/conference/dashboard"
+        sx={{
+          mt: 2,
+        }}
+      />
 
-        <Title title="Edit Sponsor" />
-        <SponsorFormFields />
-      </EditBase>
-    </ConferenceContextProvider>
+      <Title title="Edit Sponsor" />
+      <SponsorFormFields />
+    </EditBase>
   );
 };
+
+const EditSponsor = () => (
+  <ConferenceContextProvider>
+    <EditSponsorForm />
+  </ConferenceContextProvider>
+);
 
 export default EditSponsor;

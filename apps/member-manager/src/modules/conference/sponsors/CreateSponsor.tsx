@@ -2,14 +2,17 @@ import React from "react";
 import { CreateBase, Title, useDataProvider } from "react-admin";
 import SponsorFormFields from "./SponsorFormFields";
 import CustomEditHeader from "../../_components/CustomFormHeader";
-import ConferenceContextProvider from "../ConferenceContext";
+import ConferenceContextProvider, {
+  useConferenceContext,
+} from "../ConferenceContext";
 import {
   SPONSOR_WRITE_POPULATE,
   toSponsorWritePayload,
 } from "./helpers/sponsorWritePayload";
 
-const CreateSponsor = () => {
+const CreateSponsorForm = () => {
   const dataProvider = useDataProvider();
+  const { currentFilter } = useConferenceContext();
 
   const transform = async (data: Record<string, unknown>) => {
     const { data: sponsorships } = await dataProvider.getList(
@@ -21,7 +24,10 @@ const CreateSponsor = () => {
       }
     );
 
-    return toSponsorWritePayload(data, sponsorships ?? []);
+    return toSponsorWritePayload(data, sponsorships ?? [], {
+      fallbackConference: currentFilter.conference,
+      fallbackYear: currentFilter.year,
+    });
   };
 
   return (
@@ -36,20 +42,24 @@ const CreateSponsor = () => {
       }}
       hasShow={false}
     >
-      <ConferenceContextProvider>
-        <CustomEditHeader
-          displayField="email"
-          redirectTo="/conference/dashboard"
-          sx={{
-            mt: 2,
-          }}
-        />
+      <CustomEditHeader
+        displayField="email"
+        redirectTo="/conference/dashboard"
+        sx={{
+          mt: 2,
+        }}
+      />
 
-        <Title title="Create Sponsor" />
-        <SponsorFormFields />
-      </ConferenceContextProvider>
+      <Title title="Create Sponsor" />
+      <SponsorFormFields />
     </CreateBase>
   );
 };
+
+const CreateSponsor = () => (
+  <ConferenceContextProvider>
+    <CreateSponsorForm />
+  </ConferenceContextProvider>
+);
 
 export default CreateSponsor;

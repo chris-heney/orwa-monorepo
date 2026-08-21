@@ -164,6 +164,99 @@ describe("toSponsorWritePayload", () => {
     });
   });
 
+  it("resolves a row by package label when Autocomplete submitted an empty sponsorship", () => {
+    expect(
+      toSponsorWritePayload(
+        {
+          sponsorship_items: [
+            { id: 11, sponsorship: "", label: "Gold", value: 1 },
+          ],
+        },
+        catalog
+      )
+    ).toEqual({
+      sponsorship_items: [
+        {
+          id: 11,
+          sponsorship: DOC,
+          label: "Gold",
+          value: 2500,
+          key: "Gold-0",
+        },
+      ],
+      sponsorships: [DOC],
+    });
+  });
+
+  it("does not wipe existing packages when the form rows lost their ids", () => {
+    expect(
+      toSponsorWritePayload(
+        {
+          organization: "Edward Jones",
+          conference: null,
+          year: "",
+          sponsorship_items: [{ id: 102, sponsorship: "", label: "" }],
+        },
+        catalog,
+        {
+          previousData: {
+            conference: 3,
+            year: 2026,
+            sponsorship_items: [
+              { id: 102, sponsorship: DOC, label: "Gold", value: 2500 },
+            ],
+            sponsorships: [DOC],
+          },
+          fallbackConference: 3,
+          fallbackYear: 2026,
+        }
+      )
+    ).toEqual({
+      organization: "Edward Jones",
+      conference: 3,
+      year: 2026,
+      sponsorship_items: [
+        {
+          id: 102,
+          sponsorship: DOC,
+          label: "Gold",
+          value: 2500,
+          key: "Gold-0",
+        },
+      ],
+      sponsorships: [DOC],
+    });
+  });
+
+  it("omits invalid conference/registration instead of sending null", () => {
+    expect(
+      toSponsorWritePayload(
+        {
+          organization: "Acme",
+          conference: null,
+          registration: "",
+          year: Number.NaN,
+          sponsorship_items: [{ sponsorship: DOC }],
+        },
+        catalog,
+        { fallbackConference: 3, fallbackYear: 2026 }
+      )
+    ).toEqual({
+      organization: "Acme",
+      conference: 3,
+      year: 2026,
+      sponsorship_items: [
+        {
+          sponsorship: DOC,
+          label: "Gold",
+          value: 2500,
+          key: "Gold-0",
+        },
+      ],
+      sponsorships: [DOC],
+    });
+  });
+
   it("sanitizes to a Strapi 5 write body that keeps both item and relation links", () => {
     expect(
       sanitizeStrapiWritePayload(
