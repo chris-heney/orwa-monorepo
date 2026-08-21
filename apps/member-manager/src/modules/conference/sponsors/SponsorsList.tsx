@@ -103,8 +103,14 @@ const SponsorsList = () => {
               );
             }
 
-            // Case 2: Render sponsorships if available
-            if (record?.sponsorships && Array.isArray(record.sponsorships)) {
+            // Fallback: the `sponsorships` relation mirrors sponsorship_items
+            // (backfilled 2026-08-21), so rendering both duplicates every
+            // chip. Only use the relation when there are no item rows.
+            if (
+              itemsToRender.length === 0 &&
+              record?.sponsorships &&
+              Array.isArray(record.sponsorships)
+            ) {
               itemsToRender.push(
                 <ReferenceArrayField
                   key={`sponsorship-${record.id}`}
