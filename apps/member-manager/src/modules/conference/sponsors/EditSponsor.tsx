@@ -48,10 +48,14 @@ const EditSponsorForm = () => {
       transform={transform}
       hasShow={false}
       redirect={"/conference/dashboard"}
+      // Default undoable mode delays the PUT behind the UNDO toast, and MUI
+      // pauses that timer while the window is unfocused — saves were being
+      // silently dropped. Pessimistic = the PUT happens on click.
+      mutationMode="pessimistic"
     >
       <CustomFormHeader
         hasShow={false}
-        displayField="email"
+        displayField="organization"
         redirectTo="/conference/dashboard"
         sx={{
           mt: 2,

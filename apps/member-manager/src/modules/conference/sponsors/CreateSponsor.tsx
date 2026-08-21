@@ -43,7 +43,7 @@ const CreateSponsorForm = () => {
       hasShow={false}
     >
       <CustomEditHeader
-        displayField="email"
+        displayField="organization"
         redirectTo="/conference/dashboard"
         sx={{
           mt: 2,
