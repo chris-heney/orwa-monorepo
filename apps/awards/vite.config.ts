@@ -7,6 +7,7 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
+  // Relative base: hosted under a subdirectory on WP Engine (orwa.org/awards-nomination-form/)
   base: './',
   cacheDir: '../../node_modules/.vite/apps/awards',
   resolve: {

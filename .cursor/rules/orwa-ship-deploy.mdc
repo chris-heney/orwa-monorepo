@@ -12,7 +12,7 @@ ORWA does **not** use Cloudflare or a separate CDN product. Frontends live on **
 ## Git
 
 - Small scoped commits only (`strapi: …`, `member-manager: …`).
-- Leave unrelated work, screenshots, `.playwright-mcp/`, and secret `.env` files unstaged.
+- Leave unrelated work, screenshots (`tmp/`), `.playwright-mcp/`, and secret `.env` files unstaged. Write verification screenshots to `tmp/` (gitignored).
 - `git fetch` → merge `origin/main` if needed → `git push origin <branch>` → merge/push to `main` as requested.
 
 ## Strapi (backend)
@@ -37,6 +37,8 @@ Apps under `sites/orwa/` on `orwa@orwa.ssh.wpengine.net`:
 | grant-map | `gapp-map/` | https://orwa.org/gapp-map/ |
 | grant-application | `gapp-form/` | https://orwa.org/gapp-form/ |
 | associate-directory | `associate-directory/` | https://orwa.org/associate-directory/ |
+| awards | `awards-nomination-form/` | https://orwa.org/awards-nomination-form/ |
+| scholarship-application | `scholarship-application/` | https://orwa.org/scholarship-application/ |
 
 ### Build (never `nx build` for production)
 

@@ -23,6 +23,7 @@
     "start:scoring-directory": "nx serve grant-scoring-directory",
     "deploy:scoring": "nx run grant-scoring:deploy",
     "deploy:scoring-directory": "nx run grant-scoring-directory:deploy",
+    "deploy:awards": "nx run awards:deploy",
     "start:directory": "nx serve associate-directory",
     "start:member-manager": "nx serve member-manager",
     "start:scholarship": "nx serve scholarship-application",
