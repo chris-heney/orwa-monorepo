@@ -24,9 +24,13 @@ const SponsorFormFields = () => {
   return (
     <SimpleForm
       record={
-        record
+            record
           ? {
               ...record,
+              conference:
+                toSponsorshipFormId(record.conference) ||
+                currentFilter.conference,
+              registration: toSponsorshipFormId(record.registration),
               // Strapi 5 returns `null` for a repeatable component with no
               // items instead of `[]` (see AGENTS.md Strapi 5 notes) — guard
               // so `.map` doesn't crash the form for sponsors with no items.
@@ -70,7 +74,7 @@ const SponsorFormFields = () => {
                 <ReferenceInput
                   source="registration"
                   reference="conference-registrations"
-                  label="Organization"
+                  label="Linked registration"
                   fullWidth
                   filter={{
                     conference: currentFilter.conference,
@@ -78,8 +82,18 @@ const SponsorFormFields = () => {
                   }}
                 >
                   <AutocompleteInput
-                    optionText="organization"
-                    helperText="Select the registration relted for this sponsor. not required if the isn't a registration created."
+                    optionText={(choice) =>
+                      choice?.organization
+                        ? `${choice.organization}${
+                            choice.type ? ` (${choice.type})` : ""
+                          }${
+                            choice.registration_date
+                              ? ` — ${choice.registration_date}`
+                              : ""
+                          }`
+                        : ""
+                    }
+                    helperText="Optional. Same-conference registration for this sponsor — leave blank if none."
                   />
                 </ReferenceInput>
               </Grid>

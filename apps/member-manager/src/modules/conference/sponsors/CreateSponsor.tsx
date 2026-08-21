@@ -20,7 +20,7 @@ const CreateSponsorForm = () => {
       {
         pagination: { page: 1, perPage: 100 },
         sort: { field: "name", order: "ASC" },
-        filter: {},
+        filter: { conference: currentFilter.conference },
       }
     );
 

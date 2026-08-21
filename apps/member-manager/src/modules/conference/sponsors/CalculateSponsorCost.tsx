@@ -2,11 +2,13 @@ import React, { useEffect } from "react";
 import { NumberInput, useDataProvider } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { findSponsorshipCatalogRow } from "./helpers/sponsorWritePayload";
+import { useConferenceContext } from "../ConferenceContext";
 
 const CalculateSponsorCost = () => {
   const { watch, setValue } = useFormContext();
   const sponsorItems = watch("sponsorship_items") || [];
   const dataProvider = useDataProvider();
+  const { currentFilter } = useConferenceContext();
 
   useEffect(() => {
     const fetchAndCalculateAmount = async () => {
@@ -30,7 +32,7 @@ const CalculateSponsorCost = () => {
         {
           pagination: { page: 1, perPage: 100 },
           sort: { field: "name", order: "ASC" },
-          filter: {},
+          filter: { conference: currentFilter.conference },
         }
       );
 
