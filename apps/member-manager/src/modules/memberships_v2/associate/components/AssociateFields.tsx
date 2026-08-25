@@ -23,6 +23,7 @@ import {
 import CustomPhoneInput from "../../../_components/MaskedPhoneInput";
 import MembershipExpiration from "../../../_components/MembershipExpiration";
 import { useMembershipContext } from "../../MembershipsContextProvider";
+import { formSectionCardSx } from "../../../../css/formLayout";
 import { useFormContext } from "react-hook-form";
 import FileUploadField from "../../../_components/FileUploadField";
 
@@ -53,7 +54,7 @@ const AssociateFields = () => {
         alignSelf={"stretch"}
       >
         {/* Status */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Status</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -71,7 +72,7 @@ const AssociateFields = () => {
         </Card>
 
         {/* General Information */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">General Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -133,7 +134,7 @@ const AssociateFields = () => {
           </Grid>
         </Card>
         {/* Cntact Information */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Box
             sx={{
               paddingBottom: 2,
@@ -221,7 +222,7 @@ const AssociateFields = () => {
 
         {/* Media */}
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Media</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -240,7 +241,7 @@ const AssociateFields = () => {
         alignSelf={"stretch"}
       >
         {/* Billing Information */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Payment Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2}>
@@ -318,7 +319,7 @@ const AssociateFields = () => {
         </Card>
 
         {/* Physical Address */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Primary Mailing Address</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -352,7 +353,7 @@ const AssociateFields = () => {
           </Grid>
         </Card>
         {/* Passport Details */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Secondary Mailing Address</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -386,7 +387,7 @@ const AssociateFields = () => {
           </Grid>
         </Card>
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Passport</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>

@@ -45,9 +45,7 @@ const CreateSponsorForm = () => {
       <CustomEditHeader
         displayField="organization"
         redirectTo="/conference/dashboard"
-        sx={{
-          mt: 2,
-        }}
+        sx={{ mt: 0 }}
       />
 
       <Title title="Create Sponsor" />

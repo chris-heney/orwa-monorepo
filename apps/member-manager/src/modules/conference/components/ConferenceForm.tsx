@@ -4,6 +4,7 @@ import { Button, useRecordContext } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import ConferenceWebsiteAccordionBuilder from "./ConferenceWebsiteAccordionBuilder";
 import ConferenceFormFields from "./ConferenceFormFields";
+import { formSectionCardSx } from "../../../css/formLayout";
 
 const ConferenceForm = () => {
   const record = useRecordContext();
@@ -30,12 +31,8 @@ const ConferenceForm = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Conference Hub Settings Header */}
-      {/* Main Form Fields */}
-      <Card sx={{ p: 3, mb: 4 }}>
-        <ConferenceFormFields />
-      </Card>
+    <Box sx={{ p: 0, m: 0 }}>
+      <ConferenceFormFields />
 
       <Box
         sx={{
@@ -96,7 +93,7 @@ const ConferenceForm = () => {
             "The details will populate the vendor information section of the conference hub.",
         },
       ].map((accordion, index) => (
-        <Card key={index} sx={{ p: 3, mb: 3 }}>
+        <Card key={index} sx={formSectionCardSx}>
           <ConferenceWebsiteAccordionBuilder
             title={accordion.title}
             caption={accordion.caption}

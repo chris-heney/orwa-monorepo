@@ -10,6 +10,7 @@ import AwardNominationList from "./components/AwardNominationList";
 import AwardDashboardHeader from "./components/AwardDashboardHeader";
 import AwardFilterSidebar from "./components/AwardFilterSidebar";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
+import { dashboardTabListSx } from "../../css/formLayout";
 
 const AwardDashboard = () => {
   const { selectedTab, setSelectedTab } = useAwardContext();
@@ -23,13 +24,7 @@ const AwardDashboard = () => {
           <TabContext value={selectedTab}>
             <TabList
               variant="scrollable"
-              sx={{
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.grey[900]
-                    : theme.palette.grey[100],
-                overflow: "clip",
-              }}
+              sx={dashboardTabListSx}
               onChange={(_event, value) => setSelectedTab(value)}
             >
               <Tab

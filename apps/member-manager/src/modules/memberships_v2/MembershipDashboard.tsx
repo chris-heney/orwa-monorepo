@@ -22,6 +22,7 @@ import InvoicesList from '../invoices/InvoicesList';
 import MembershiphHeader from './componenets/MembershipsHeader';
 import { TabValue } from './types/IMembershipContextProvider';
 import { a11yTabPanelProps, a11yTabProps } from '../../helpers/TabFormatters';
+import { dashboardTabListSx } from '../../css/formLayout';
 import MembershipSettings from './componenets/MembershipSettings';
 import { useCan } from '../rbac-manager/useCan';
 
@@ -95,12 +96,8 @@ const MembershipDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === 'dark'
-                        ? theme.palette.grey[900]
-                        : theme.palette.grey[100],
+                    ...dashboardTabListSx,
                     maxWidth: isSmall ? 320 : undefined,
-                    overflow: 'clip',
                     '& .MuiTab-root': {
                       color: (theme) =>
                         theme.palette.mode === 'dark'

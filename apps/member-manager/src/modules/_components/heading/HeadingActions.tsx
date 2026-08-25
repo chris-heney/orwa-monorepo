@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Select, SelectProps } from '@mui/material';
+import { Box, Select, SelectProps, Tooltip } from '@mui/material';
 import {
   ExportButton,
   ExportButtonProps,
@@ -11,6 +11,7 @@ import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import HeadingAction, { HeadingActionProps } from './HeadingAction';
 import { useActionLabels } from '../../../helpers/useActionLabels';
 
@@ -114,27 +115,47 @@ export const ExportAction = (props: ExportButtonProps) => {
 };
 
 /**
- * Borderless dropdown for heading bars (e.g. Watersystems "Select Export") —
- * matches the size/typography of the surrounding actions instead of an
- * outlined form field.
+ * Borderless dropdown for heading bars (Watersystems export).
+ * Icon-only when "Show button labels" is off; otherwise shows `emptyLabel`.
  */
-export const HeadingSelect = ({ sx, ...rest }: SelectProps<string>) => (
-  <Select<string>
-    variant="standard"
-    disableUnderline
-    size="small"
-    sx={[
-      {
-        color: 'white',
-        fontSize: '0.8125rem',
-        fontWeight: 500,
-        '& .MuiSelect-select': { py: 0.5, pl: 1 },
-        '& .MuiSelect-icon': { color: 'white' },
-        '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' },
-        borderRadius: 1,
-      },
-      ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
-    ]}
-    {...rest}
-  />
-);
+export const HeadingSelect = ({
+  sx,
+  emptyLabel = 'EXPORT',
+  renderValue,
+  ...rest
+}: SelectProps<string> & { emptyLabel?: string }) => {
+  const [showLabels] = useActionLabels();
+  return (
+    <Tooltip title={emptyLabel} disableHoverListener={showLabels}>
+      <Select<string>
+        variant="standard"
+        disableUnderline
+        size="small"
+        displayEmpty
+        renderValue={
+          showLabels
+            ? renderValue
+            : () => <FileDownloadIcon fontSize="small" />
+        }
+        sx={[
+          {
+            color: 'white',
+            fontSize: '0.8125rem',
+            fontWeight: 500,
+            '& .MuiSelect-select': {
+              py: 0.5,
+              pl: showLabels ? 1 : 0.75,
+              display: 'flex',
+              alignItems: 'center',
+            },
+            '& .MuiSelect-icon': { color: 'white' },
+            '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' },
+            borderRadius: 1,
+          },
+          ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+        ]}
+        {...rest}
+      />
+    </Tooltip>
+  );
+};

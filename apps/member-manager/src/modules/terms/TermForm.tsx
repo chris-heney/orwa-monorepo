@@ -10,7 +10,8 @@ import {
 } from 'react-admin'
 import { RichTextInput } from 'ra-input-rich-text'
 import { useFormContext, useWatch } from 'react-hook-form'
-import { Box, Card } from '@mui/material'
+import { Box } from '@mui/material'
+import { formSectionCardSx } from '../../css/formLayout'
 import IdentifiersInput from './IdentifiersInput'
 import CustomFormHeader from '../_components/CustomFormHeader'
 
@@ -84,26 +85,14 @@ const richTextSx = {
 
 const TermForm = () => {
   return (
-    <Card
-      sx={{
-        m: 2,
-        bgcolor: 'background.paper',
-        color: 'text.primary',
-        boxShadow: (theme) =>
-          theme.palette.mode === 'dark' ? 'none' : undefined,
-        border: (theme) =>
-          theme.palette.mode === 'dark'
-            ? `1px solid ${theme.palette.divider}`
-            : undefined,
-      }}
-    >
-      <SimpleForm sx={{ p: 0 }} toolbar={<TermToolbar />}>
+    <>
+      <SimpleForm sx={{ p: 0, m: 0 }} toolbar={<TermToolbar />}>
         <CustomFormHeader
           redirectTo="/terms"
           displayField="title"
           hasShow={false}
         />
-        <Box sx={{ px: 2, py: 1, width: '100%' }}>
+        <Box sx={{ ...formSectionCardSx, width: '100%' }}>
           <TextInput
             source="title"
             label="Title"
@@ -122,7 +111,7 @@ const TermForm = () => {
           />
         </Box>
       </SimpleForm>
-    </Card>
+    </>
   )
 }
 

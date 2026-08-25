@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  Box,
-  IconButton,
-  Tooltip,
-  Theme,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
+import { IconButton, Tooltip } from "@mui/material";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import SettingsIcon from "@mui/icons-material/Settings";
@@ -18,13 +11,13 @@ import {
   ListBase,
   RaRecord,
   SelectColumnsButton,
-  TopToolbar,
   useStore,
   useDataProvider,
 } from "react-admin";
 import { useSoonerwarnContext } from "../SoonerwarnContextProvider";
 import CustomExportFunction from "../../../helpers/custom-export-function";
 import RecordCount from "../../_components/RecordCount";
+import PageHeadingBar from "../../_components/PageHeadingBar";
 
 const SoonerwarnDashboardHeader = () => {
   const {
@@ -41,8 +34,6 @@ const SoonerwarnDashboardHeader = () => {
     setIsCreating,
     isCreating,
   } = useSoonerwarnContext();
-
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
 
   const preferenceKey = `${resource}.datagrid`;
   const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
@@ -68,37 +59,12 @@ const SoonerwarnDashboardHeader = () => {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#262626",
-        px: 2,
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          fontSize: isSmall ? "10px" : null,
-          alignItems: "center",
-          color: "white",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          textAlign: "left",
-        }}
-      >
-        {isSettingsOpen ? "SoonerWARN Management Settings" : `${selectedTab}`}
-      </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 1,
-            p: 1,
-          }}
-        >
+    <PageHeadingBar
+      title={
+        isSettingsOpen ? "SoonerWARN Management Settings" : `${selectedTab}`
+      }
+      actions={
+        <>
           {resource !== "summary" && resource !== null && (
             <ListBase
               disableSyncWithLocation
@@ -110,11 +76,7 @@ const SoonerwarnDashboardHeader = () => {
             >
               <RecordCount />
               <ExportButton sx={{ color: "white" }} />
-              <SelectColumnsButton
-                style={{
-                  color: "white",
-                }}
-              />
+              <SelectColumnsButton style={{ color: "white" }} />
             </ListBase>
           )}
 
@@ -126,35 +88,29 @@ const SoonerwarnDashboardHeader = () => {
             >
               <AddIcon
                 fontSize="small"
-                sx={{
-                  "&:hover": {
-                    color: "white",
-                  },
-                }}
+                sx={{ "&:hover": { color: "white" } }}
                 style={!isCreating ? { stroke: "white" } : { fill: "white" }}
               />
             </IconButton>
           </Tooltip>
 
-          {selectedTab !== "summary" && <Tooltip title="Filter">
-            <IconButton
-              onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
-              size="small"
-              color="primary"
-            >
-              <FilterAltIcon
-                fontSize="small"
-                sx={{
-                  "&:hover": {
-                    color: "white",
-                  },
-                }}
-                style={
-                  !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                }
-              />
-            </IconButton>
-          </Tooltip>}
+          {selectedTab !== "summary" && (
+            <Tooltip title="Filter">
+              <IconButton
+                onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+                size="small"
+                color="primary"
+              >
+                <FilterAltIcon
+                  fontSize="small"
+                  sx={{ "&:hover": { color: "white" } }}
+                  style={
+                    !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
+                  }
+                />
+              </IconButton>
+            </Tooltip>
+          )}
 
           {selectedTab === "summary" && (
             <Tooltip title="Activity">
@@ -170,11 +126,7 @@ const SoonerwarnDashboardHeader = () => {
                       ? { stroke: "white" }
                       : { fill: "white" }
                   }
-                  sx={{
-                    "&:hover": {
-                      color: "white",
-                    },
-                  }}
+                  sx={{ "&:hover": { color: "white" } }}
                 />
               </IconButton>
             </Tooltip>
@@ -189,15 +141,9 @@ const SoonerwarnDashboardHeader = () => {
               >
                 <EmailIcon
                   fontSize="small"
-                  sx={{
-                    "&:hover": {
-                      color: "white",
-                    },
-                  }}
+                  sx={{ "&:hover": { color: "white" } }}
                   style={
-                    !isEmailSidebarOpen
-                      ? { stroke: "white" }
-                      : { fill: "white" }
+                    !isEmailSidebarOpen ? { stroke: "white" } : { fill: "white" }
                   }
                 />
               </IconButton>
@@ -213,19 +159,14 @@ const SoonerwarnDashboardHeader = () => {
             >
               <SettingsIcon
                 fontSize="small"
-                sx={{
-                  "&:hover": {
-                    color: "white",
-                  },
-                }}
-                style={
-                  !isSettingsOpen ? { stroke: "white" } : { fill: "white" }
-                }
+                sx={{ "&:hover": { color: "white" } }}
+                style={!isSettingsOpen ? { stroke: "white" } : { fill: "white" }}
               />
             </IconButton>
           </Tooltip>
-        </Box>
-    </Box>
+        </>
+      }
+    />
   );
 };
 

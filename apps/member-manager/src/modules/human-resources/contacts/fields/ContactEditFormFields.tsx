@@ -26,6 +26,7 @@ import FileUploadField from '../../../_components/FileUploadField';
 import { useCan } from '../../../rbac-manager/useCan';
 import { StateChoices } from '../../../../helpers/Data';
 import { WATERSYSTEM_DIRECTORY_TITLE_CHOICES } from '../constants/watersystemDirectoryTitles';
+import { formSectionCardSx } from '../../../../css/formLayout';
 
 interface ContactFormProps {
   gridItemProps?: {
@@ -63,7 +64,7 @@ const ContactFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
     <Box>
       <Grid container spacing={2}>
         <Grid item {...mergedGridItemProps}>
-          <Card sx={{ p: 3, my: 2, boxShadow: 'none' }}>
+          <Card sx={formSectionCardSx}>
             {user && user.email && (
               <Box
                 sx={{
@@ -144,7 +145,7 @@ const ContactFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
               )}
             </Grid>
           </Card>
-          <Card sx={{ p: 3, my: 2, boxShadow: 'none' }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Mailing address (directory)
             </Typography>
@@ -187,7 +188,7 @@ const ContactFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
         </Grid>
 
         <Grid item {...mergedGridItemProps}>
-          <Card sx={{ p: 3, my: 2, boxShadow: 'none' }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Avatar
             </Typography>
@@ -199,7 +200,7 @@ const ContactFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, my: 2, boxShadow: 'none' }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Assigned Badges
             </Typography>
@@ -209,7 +210,7 @@ const ContactFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
         </Grid>
 
         <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, my: 2, boxShadow: 'none' }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Badges
             </Typography>

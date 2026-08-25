@@ -7,11 +7,7 @@ import CustomToolBar from "../../_components/CustomToolbar";
 
 const GrantApplicationEditForm = () => {
   return (
-    <Box
-      sx={{
-        py: 2,
-      }}
-    >
+    <Box sx={{ m: 0, p: 0 }}>
       <EditBase title="Edit Grant Application" redirect="show">  
         <Card
           sx={{

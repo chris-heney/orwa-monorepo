@@ -18,6 +18,7 @@ import { useGrantContext } from "../../GrantContextProvider";
 import ContactsCreateModal from "./ContactsCreateModal";
 import FileUploadField from "../../../_components/FileUploadField";
 import { formatNumber } from "../../../../helpers/Formators";
+import { formSectionCardSx } from "../../../../css/formLayout";
 
 const PROJECT_COST_SOURCE_CHOICES = [
   { id: "applicant", name: "Applicant" },
@@ -78,7 +79,7 @@ const GrantApplicationFormFields = () => {
         alignSelf={"stretch"}
       >
         {/* system information and contacts */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">System Information</Typography>
           <Divider />
           <Grid container spacing={1}>
@@ -136,7 +137,7 @@ const GrantApplicationFormFields = () => {
 
         {record && (
           // proposals, uploaded_engineering_report, uploaded_notice_of_violation, consent_order, applicant_pdf, award_letter, uploaded_additional_files
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5">Media</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container columnSpacing={2} rowSpacing={1}>
@@ -166,7 +167,7 @@ const GrantApplicationFormFields = () => {
         )}
 
         {/* Mailing */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant='h5'>Mailing Address</Typography>
           <Divider />
           <Grid container spacing={1}>
@@ -192,7 +193,7 @@ const GrantApplicationFormFields = () => {
         {/* Financials */}
 
       
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Grid container spacing={1}>
             <Grid item xs={12} md={6} sm={12}>
               <DateInput
@@ -224,7 +225,7 @@ const GrantApplicationFormFields = () => {
         alignSelf={"stretch"}
       >
         {/* Physical Address */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Physical Address</Typography>
           <Divider />
           <Grid container spacing={1}>
@@ -273,7 +274,7 @@ const GrantApplicationFormFields = () => {
 
         {/* Point of Contact */}
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Box
             sx={{
               display: "flex",
@@ -365,7 +366,7 @@ const GrantApplicationFormFields = () => {
         </Card>
         {/* Proposals and Information */}
         <Grid item xs={12} md={12} sm={12}>
-          <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5">
               Project Description - Justification - Estimated Cost
             </Typography>
@@ -442,7 +443,7 @@ const GrantApplicationFormFields = () => {
           </Card>
           {/* Engineer Information */}
 
-          {/* <Card sx={{ p: 2, my: 2, mx: 1 }}>
+          {/* <Card sx={formSectionCardSx}>
           <Typography variant='h5'>Engineer Information</Typography>
           <Divider />
           <ReferenceInput source="engineer" label="Engineer" reference="contacts" fullWidth helperText={false}>
@@ -456,7 +457,7 @@ const GrantApplicationFormFields = () => {
         </Card> */}
         </Grid>
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Financials</Typography>
           <Divider />
           {hasProjectCosts && (

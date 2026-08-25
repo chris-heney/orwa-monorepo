@@ -10,6 +10,7 @@ import {
   TextInput,
 } from "react-admin";
 import CustomPhoneInput from "../../_components/MaskedPhoneInput";
+import { formSectionCardSx } from "../../../css/formLayout";
 import { StateChoices, countyOptions } from "../../../helpers/Data";
 
 const SoonerwarnFormFields = () => {
@@ -18,7 +19,7 @@ const SoonerwarnFormFields = () => {
       <Grid container spacing={2}>
         {/* Basic Information Section */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Basic Information
             </Typography>
@@ -46,7 +47,7 @@ const SoonerwarnFormFields = () => {
 
         {/* Address Section */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Address Information
             </Typography>
@@ -87,7 +88,7 @@ const SoonerwarnFormFields = () => {
 
         {/* County and Status Section */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, my: 2, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5" sx={{ mb: 2 }}>
               Additional Information
             </Typography>

@@ -45,6 +45,7 @@ import {
   ModuleKey,
   firstAllowedPath,
 } from '../config/modules';
+import { useActionLabels } from '../helpers/useActionLabels';
 
 // Auth pages + the user's own profile are reachable regardless of module
 // access — every signed-in user must be able to land somewhere safe.
@@ -318,6 +319,7 @@ const DashBoard = (props: LayoutProps) => {
   } = props;
   //const [open] = useSidebarState()
   const [errorInfo, setErrorInfo] = useState<ErrorInfo>();
+  const [showActionLabels] = useActionLabels();
 
   const handleError = (error: Error, info: ErrorInfo) => {
     setErrorInfo(info);
@@ -325,7 +327,11 @@ const DashBoard = (props: LayoutProps) => {
 
   return (
     <AppLocationContext>
-      <StyledLayout className={clsx('layout', className)} {...rest}>
+      <StyledLayout
+        className={clsx('layout', className)}
+        data-action-labels={showActionLabels ? 'on' : 'off'}
+        {...rest}
+      >
         <SkipNavigationButton />
         <Box className={LayoutClasses.appFrame}>
           {/* One app bar everywhere — the dashboard used to render its own
@@ -426,5 +432,55 @@ const StyledLayout = styled('div', {
     // re-add their own horizontal gutters — content spans the full width.
     padding: 0,
   },
+  // react-admin TopToolbar: MUI often emits only the generated
+  // `css-*-MuiToolbar-root-RaTopToolbar-root` class, not a standalone
+  // `RaTopToolbar-root`. Flush + pin to the viewport's right edge so
+  // Add / Columns / Export stay visible when a wide list scrolls.
+  '& [class*="RaTopToolbar-root"], & .heading-actions': {
+    padding: '0 !important',
+    margin: 0,
+    position: 'sticky',
+    right: 0,
+    top: 0,
+    zIndex: 11,
+    minHeight: 'unset',
+    backgroundColor: 'inherit',
+  },
+  // "Show button labels" off → icon-only RA buttons in heading toolbars.
+  // Record counts are Typography, not Button, so they stay visible.
+  '&[data-action-labels="off"] [class*="RaTopToolbar-root"] .MuiButton-root, &[data-action-labels="off"] .heading-actions .MuiButton-root':
+    {
+      fontSize: 0,
+      minWidth: 0,
+      lineHeight: 1,
+      paddingLeft: 8,
+      paddingRight: 8,
+      '& .MuiButton-startIcon, & .MuiButton-endIcon': {
+        margin: 0,
+      },
+      '& .MuiSvgIcon-root': {
+        fontSize: '1.25rem',
+      },
+    },
+  // Create / edit / show pages: no RA 1em gutter, no rounded paper card.
+  '& [class*="RaCreate-noActions"], & [class*="RaEdit-noActions"], & [class*="RaShow-noActions"]':
+    {
+      marginTop: '0 !important',
+    },
+  '& [class*="RaCreate-card"], & [class*="RaEdit-card"], & [class*="RaShow-card"]':
+    {
+      borderRadius: 0,
+      boxShadow: 'none',
+      margin: 0,
+    },
+  '& [class*="RaSimpleForm-root"]': {
+    padding: '0 !important',
+  },
+  '& [class*="RaCreate-root"] .MuiCard-root, & [class*="RaEdit-root"] .MuiCard-root, & [class*="RaShow-root"] .MuiCard-root, & [class*="RaSimpleForm-root"] .MuiCard-root':
+    {
+      borderRadius: 0,
+      boxShadow: 'none',
+      margin: 0,
+    },
 }));
 export default DashBoard;

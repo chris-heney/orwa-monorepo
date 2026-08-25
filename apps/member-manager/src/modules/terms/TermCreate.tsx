@@ -1,6 +1,7 @@
 import React from 'react'
 import { Create, useNotify, useRedirect } from 'react-admin'
 import TermForm from './TermForm'
+import { formResourceShellSx } from '../../css/formLayout'
 
 const slugify = (title: string) =>
   title
@@ -17,6 +18,7 @@ const TermCreate = () => {
     <Create
       title="Create Term"
       component="div"
+      sx={formResourceShellSx}
       transform={(data) => ({
         ...data,
         slug: data.slug || slugify(String(data.title || '')),

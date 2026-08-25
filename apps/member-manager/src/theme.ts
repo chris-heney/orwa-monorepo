@@ -1,6 +1,7 @@
 import { alpha, createTheme, ThemeOptions } from '@mui/material'
 import { deepmerge } from '@mui/utils'
 import { defaultDarkTheme, defaultLightTheme, RaThemeOptions } from 'react-admin'
+import { formLayoutThemeOverrides } from './css/formLayout'
 
 /**
  * Shared dark/light theme overrides for member-manager.
@@ -133,6 +134,22 @@ const sharedComponentOverrides: ThemeOptions['components'] = {
       }),
     },
   },
+  RaTopToolbar: {
+    styleOverrides: {
+      root: {
+        padding: 0,
+        margin: 0,
+        position: 'sticky',
+        right: 0,
+        top: 0,
+        zIndex: 11,
+        minHeight: 'unset',
+        backgroundColor: 'inherit',
+      },
+    },
+  },
+  // Create / edit / show: flush under the heading bar, square, no gutter.
+  ...formLayoutThemeOverrides,
 }
 
 const lightExtras: RaThemeOptions = {

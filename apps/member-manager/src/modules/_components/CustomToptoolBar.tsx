@@ -30,20 +30,25 @@ const StyledToolbar = styled(Toolbar, {
   overridesResolver: (props, styles) => styles.root
 })(({ theme }) => ({
   position: 'sticky',
+  right: 0,
+  top: 0,
+  zIndex: 11,
   display: 'flex',
-  justifyContent: 'flex-start',
+  justifyContent: 'flex-end',
   gap: theme.spacing(1),
   whiteSpace: 'nowrap',
   flex: '0 1 auto',
-  padding: theme.spacing(0.5),
-  paddingBottom: theme.spacing(1),
+  padding: 0,
+  margin: 0,
+  backgroundColor: 'inherit',
+  minHeight: 'unset',
   [theme.breakpoints.down('md')]: {
     flex: '0 1 100%'
   },
   [theme.breakpoints.down('sm')]: {
     backgroundColor: theme.palette.background.paper,
     padding: 0,
-    paddingBottom: 0
+    margin: 0,
   }
 }))
 

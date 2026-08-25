@@ -49,9 +49,7 @@ const TermList = () => {
   const rowClick = useEditRowClick();
 
   return (
-    <Box
-      sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', px: 2, pb: 2 }}
-    >
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
       <Title title="Terms Manager" />
       <List
         title=" "

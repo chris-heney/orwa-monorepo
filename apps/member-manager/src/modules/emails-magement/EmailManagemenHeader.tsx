@@ -1,18 +1,11 @@
 import React from 'react';
-import {
-  Box,
-  Theme,
-  Typography,
-  useMediaQuery,
-  // Tooltip,
-  // IconButton,
-} from '@mui/material';
-import { Button, ListBase, SelectColumnsButton, TopToolbar } from 'react-admin';
+import { Box } from '@mui/material';
+import { Button, ListBase, SelectColumnsButton } from 'react-admin';
 import CreateButton from '../_components/CustomCreateButton';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
-// import SettingsIcon from "@mui/icons-material/Settings";
 import { useEmailManagementContext } from './EmailManagementContextProvider';
 import RecordCount from '../_components/RecordCount';
+import PageHeadingBar from '../_components/PageHeadingBar';
 
 const EmailManagemenHeader = () => {
   const { selectedTab, setIsFilterSidebarOpen, isSettingsOpen } =
@@ -22,34 +15,12 @@ const EmailManagemenHeader = () => {
   const title = (
     selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1)
   ).replace(/-/g, ' ');
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#262626',
-        px: 1,
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          fontSize: isSmall ? '10px' : null,
-          alignItems: 'center',
-          color: 'white',
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-          textAlign: 'left',
-          ml: 1,
-        }}
-      >
-        {isSettingsOpen ? 'Settings' : title}
-      </Typography>
-      <TopToolbar>
-        {resource !== null && !isSettingsOpen && (
+    <PageHeadingBar
+      title={isSettingsOpen ? 'Settings' : title}
+      actions={
+        resource !== null && !isSettingsOpen ? (
           <ListBase
             disableSyncWithLocation
             exporter={undefined}
@@ -69,18 +40,11 @@ const EmailManagemenHeader = () => {
                 <CreateButton size="small" sx={{ color: 'white' }} />
               )}
 
-              <SelectColumnsButton
-                style={{
-                  color: 'white',
-                }}
-              />
+              <SelectColumnsButton style={{ color: 'white' }} />
 
               <Button
                 label="Filter"
-                sx={{
-                  color: 'white',
-                  mr: 2,
-                }}
+                sx={{ color: 'white', mr: 2 }}
                 onClick={() => {
                   setIsFilterSidebarOpen((prev) => !prev);
                   setTimeout(() => {
@@ -92,26 +56,9 @@ const EmailManagemenHeader = () => {
               </Button>
             </Box>
           </ListBase>
-        )}
-        {/* <Tooltip title="Settings">
-          <IconButton
-            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-            size="small"
-            color="primary"
-          >
-            <SettingsIcon
-              fontSize="small"
-              sx={{
-                "&:hover": {
-                  color: "white",
-                },
-              }}
-              style={!isSettingsOpen ? { stroke: "white" } : { fill: "white" }}
-            />
-          </IconButton>
-        </Tooltip> */}
-      </TopToolbar>
-    </Box>
+        ) : undefined
+      }
+    />
   );
 };
 

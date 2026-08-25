@@ -8,9 +8,10 @@ import {
 } from '@mui/material';
 import { SxProps, Theme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import TopToolbar from './CustomToptoolBar';
 
 type PageHeadingBarProps = {
-  title: string;
+  title: ReactNode;
   /** Shown on the info (i) tooltip next to the title */
   info?: string;
   /** Optional right-side actions (filters, buttons, etc.) */
@@ -19,7 +20,7 @@ type PageHeadingBarProps = {
   sx?: SxProps<Theme>;
 };
 
-/** Sticky dark heading bar matching Media Library. */
+/** Sticky dark heading bar — flush on the content, square corners. */
 const PageHeadingBar = ({ title, info, actions, sx }: PageHeadingBarProps) => {
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
@@ -39,10 +40,13 @@ const PageHeadingBar = ({ title, info, actions, sx }: PageHeadingBarProps) => {
           px: 1.5,
           py: 0.75,
           minHeight: 48,
-          mb: 1.5,
-          mx: { xs: -1, sm: 0 },
+          m: 0,
+          borderRadius: 0,
+          width: '100%',
         },
         ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+        // Callers must not re-introduce a gutter under the bar.
+        { mt: 0, mb: 0, mx: 0, borderRadius: 0 },
       ]}
     >
       <Box
@@ -78,17 +82,20 @@ const PageHeadingBar = ({ title, info, actions, sx }: PageHeadingBarProps) => {
         ) : null}
       </Box>
       {actions ? (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.75,
-            flexWrap: 'wrap',
-            justifyContent: 'flex-end',
-          }}
-        >
-          {actions}
-        </Box>
+        <TopToolbar>
+          <Box
+            className="heading-actions"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              flexWrap: 'wrap',
+              justifyContent: 'flex-end',
+            }}
+          >
+            {actions}
+          </Box>
+        </TopToolbar>
       ) : null}
     </Box>
   );

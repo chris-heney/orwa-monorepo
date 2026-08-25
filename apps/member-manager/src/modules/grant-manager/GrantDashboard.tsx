@@ -26,6 +26,7 @@ import GrantDashboardHeader from "./_components/GrantDashboardHeader";
 import GrantManagementSidebars from "./GrantManagementSidebars";
 import GrantScoringPublicKeyTokens from "./grants/components/GrantScoringTokens";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
+import { dashboardTabListSx } from "../../css/formLayout";
 import { Map } from "@mui/icons-material";
 import ReimbursementPayoutsList from "./payouts/PayoutsList";
 import AdministrativePayoutsList from "./payouts/AdministrativePayoutList";
@@ -130,13 +131,7 @@ const GrantDashboard = () => {
             <TabContext value={selectedTab.toString()}>
               <TabList
                 variant="scrollable"
-                sx={{
-                  backgroundColor: (theme) =>
-                    theme.palette.mode === "dark"
-                      ? theme.palette.grey[900]
-                      : theme.palette.grey[100],
-                  overflow: "clip",
-                }}
+                sx={dashboardTabListSx}
                 onChange={(event: React.SyntheticEvent, tv) => {
                   setSelectedTab(tv as TabValue);
                   setResource(

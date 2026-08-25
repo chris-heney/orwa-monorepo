@@ -6,6 +6,7 @@ import CustomPhoneInput from "../../../_components/MaskedPhoneInput";
 import FileUploadField from "../../../_components/FileUploadField";
 import { StateChoices } from "../../../../helpers/Data";
 import { WATERSYSTEM_DIRECTORY_TITLE_CHOICES } from "../constants/watersystemDirectoryTitles";
+import { formSectionCardSx } from "../../../../css/formLayout";
 
 interface ContactFormProps {
   gridItemProps?: {
@@ -45,7 +46,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
           alignSelf={"stretch"}
         >
           {/* Information */}
-          <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5">Information</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container columnSpacing={2} rowSpacing={1}>
@@ -124,7 +125,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
               </Grid>
             </Grid>
           </Card>
-          <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5">Mailing address (directory)</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container columnSpacing={2} rowSpacing={1}>
@@ -180,7 +181,7 @@ const ContactCreateFormFields = ({ gridItemProps = {} }: ContactFormProps) => {
           alignSelf={"stretch"}
         >
           {/* Avatar */}
-          <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant="h5">Avatar</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container columnSpacing={2} rowSpacing={1}>

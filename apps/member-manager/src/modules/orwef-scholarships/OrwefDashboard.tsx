@@ -10,6 +10,7 @@ import ScholarshipApplicationList from "./components/ScholarshipApplicationList"
 import OrwefDashboardHeader from "./components/OrwefDashboardHeader";
 import OrwefFilterSidebar from "./components/OrwefFilterSidebar";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
+import { dashboardTabListSx } from "../../css/formLayout";
 
 const OrwefDashboard = () => {
   const { selectedTab, setSelectedTab } = useOrwefContext();
@@ -23,13 +24,7 @@ const OrwefDashboard = () => {
           <TabContext value={selectedTab}>
             <TabList
               variant="scrollable"
-              sx={{
-                backgroundColor: (theme) =>
-                  theme.palette.mode === "dark"
-                    ? theme.palette.grey[900]
-                    : theme.palette.grey[100],
-                overflow: "clip",
-              }}
+              sx={dashboardTabListSx}
               onChange={(_event, value) => setSelectedTab(value)}
             >
               <Tab

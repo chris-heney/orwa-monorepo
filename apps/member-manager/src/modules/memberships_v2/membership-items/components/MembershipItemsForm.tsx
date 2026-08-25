@@ -2,13 +2,14 @@ import React from 'react'
 import { Box, Divider, Grid, Typography } from '@mui/material'
 import { NumberInput, ReferenceArrayInput, AutocompleteArrayInput, SimpleForm, TextInput } from 'react-admin'
 import CustomEditHeader from '../../../_components/CustomFormHeader'
+import { formSectionCardSx } from '../../../../css/formLayout'
 
 const MembershipItemsForm = () => {
   return (
     <SimpleForm sx={{ p: 0 }}>
       <CustomEditHeader hasShow={false}/>
       <Box alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
-        <Box sx={{ p: 2, my: 2, mx: 1 }}>
+        <Box sx={formSectionCardSx}>
           <Typography variant='h5'>Membership Item Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container spacing={1}>

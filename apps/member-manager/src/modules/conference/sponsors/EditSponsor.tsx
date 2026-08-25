@@ -57,9 +57,7 @@ const EditSponsorForm = () => {
         hasShow={false}
         displayField="organization"
         redirectTo="/conference/dashboard"
-        sx={{
-          mt: 2,
-        }}
+        sx={{ mt: 0 }}
       />
 
       <Title title="Edit Sponsor" />

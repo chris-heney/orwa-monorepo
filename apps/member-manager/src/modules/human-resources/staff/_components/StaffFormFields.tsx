@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Card, Divider, Grid, Typography } from '@mui/material'
 import { AutocompleteArrayInput, AutocompleteInput, ReferenceArrayInput, ReferenceInput } from 'react-admin'
+import { formSectionCardSx } from '../../../../css/formLayout'
 
 const StaffFormFields = () => {
   return (
@@ -8,7 +9,7 @@ const StaffFormFields = () => {
       <Grid container spacing={0} gap={0} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
         <Grid width={'100%'}  item lg={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
           {/* Instructor Details */}
-          <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant='h5'>Staff Details</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid item xs={12} sm={12} md={12} lg={12}>

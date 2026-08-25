@@ -3,6 +3,7 @@ import React from 'react'
 import { DateInput, Identifier, ReferenceInput, SelectInput } from 'react-admin'
 import { InstructorCertificationWaste, InstructorCertificationWasteLab, InstructorCertificationWater, InstructorCertificationWaterLab } from '../../../../helpers/Data'
 import { TrainingInstructorAutocompleteInput } from '../../../_components/autocompletes/TrainingInstructorAutocomplete'
+import { formSectionCardSx } from '../../../../css/formLayout'
 
 interface InstructorCertficationFormFieldsProps {
   title?: string
@@ -14,7 +15,7 @@ const InstructorCertficationFormFields = ({title = 'Certification Details', id} 
       <Grid container spacing={0} gap={0} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
         <Grid width={'100%'} item lg={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
           {/* Certification Details */}
-          <Card sx={{ p: 2, my: 2, mx: 1, boxShadow: "none" }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant='h5'>{title}</Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container columnSpacing={2}>

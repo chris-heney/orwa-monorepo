@@ -23,7 +23,7 @@ const CreateEmail = ({isCreating, setIsCreating, module}: CreateEmailProps) => {
   return (
       <CreateBase redirect={false} resource='email-templates'>
         <Title title="Email Management" />  
-        <Card sx={{ p: 0, my: 2, mx: 1 }}>
+        <Card sx={{ p: 0, m: 0, borderRadius: 0, boxShadow: 'none' }}>
         <CustomFormHeader displayField="email_name" redirectTo="/email-management" hasShow={false} />
 
         <SimpleForm onSubmit={createEmail}>

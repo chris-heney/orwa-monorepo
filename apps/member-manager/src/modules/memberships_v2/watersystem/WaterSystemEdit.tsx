@@ -10,7 +10,7 @@ import {
 } from "react-admin";
 import { RecordContextProvider } from "ra-core";
 import MembershipsContextProvider from "../../memberships_v2/MembershipsContextProvider";
-import { Card, Grid, Button, Tooltip } from "@mui/material";
+import { Grid, Button, Tooltip } from "@mui/material";
 import WaterSystemFields from "./components/WaterSystemFields";
 import CustomFormHeader from "../../_components/CustomFormHeader";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
@@ -94,14 +94,10 @@ const WaterSystemEdit = () => {
         }}
       >
         <Title title="Memberships" />
-        <Grid container spacing={2} py={2}>
+        <Grid container spacing={0}>
           <Grid item xs={12} md={showSidebar ? 9 : 12}>
             <WatersystemEditRecordContext>
-              <SimpleForm
-                sx={{
-                  p: 0,
-                }}
-              >
+              <SimpleForm sx={{ p: 0, m: 0 }}>
                 <CustomFormHeader
                   customActions={
                     <Tooltip title="Open Notifications" placement="top">
@@ -113,13 +109,7 @@ const WaterSystemEdit = () => {
                     </Tooltip>
                   }
                 />
-                <Card
-                  sx={{
-                    borderRadius: 0,
-                  }}
-                >
-                  <WaterSystemFields />
-                </Card>
+                <WaterSystemFields />
               </SimpleForm>
             </WatersystemEditRecordContext>
           </Grid>

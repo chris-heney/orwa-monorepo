@@ -3,7 +3,7 @@ import { Create, SimpleForm } from "react-admin";
 import MembershipsContextProvider from "../../memberships_v2/MembershipsContextProvider";
 import CustomFormHeader from "../../_components/CustomFormHeader";
 import WaterSystemFields from "./components/WaterSystemFields";
-import { Card } from "@mui/material";
+import { formResourceShellSx } from "../../../css/formLayout";
 
 const WatersystemCreate = () => {
   return (
@@ -12,20 +12,11 @@ const WatersystemCreate = () => {
         title="Water Systems"
         redirect={() => "membership-management"}
         component="div"
+        sx={formResourceShellSx}
       >
-        <SimpleForm
-          sx={{
-            p: 0,
-          }}
-        >
+        <SimpleForm sx={{ p: 0, m: 0 }}>
           <CustomFormHeader />
-          <Card
-            sx={{
-              borderRadius: 0,
-            }}
-          >
-            <WaterSystemFields />
-          </Card>
+          <WaterSystemFields />
         </SimpleForm>
       </Create>
     </MembershipsContextProvider>

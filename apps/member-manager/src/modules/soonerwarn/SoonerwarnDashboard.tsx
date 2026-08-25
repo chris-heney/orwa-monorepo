@@ -11,6 +11,7 @@ import { useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
+import { dashboardTabListSx } from "../../css/formLayout";
 import {
   SoonerwarnTabValue,
   useSoonerwarnContext,
@@ -83,9 +84,9 @@ const SoonerwarnDashboard = () => {
           <Title title="SoonerWARN Manager" />
           <Box sx={{ justifyContent: "center" }}>
             <TabContext value={selectedTab.toString()}>
-              <TabList
-                variant="scrollable"
-                sx={{ backgroundColor: "#eee", overflow: "clip" }}
+                <TabList
+                  variant="scrollable"
+                  sx={dashboardTabListSx}
                 onChange={(event: React.SyntheticEvent, tv) => {
                   setSelectedTab(tv as SoonerwarnTabValue);
                   setResource(
@@ -137,7 +138,7 @@ const SoonerwarnDashboard = () => {
                   }}
                 >
                   <TabContext value={selectedTab.toString()}>
-                    <Box sx={{ backgroundColor: "#fff" }}>
+                    <Box sx={{ backgroundColor: "background.paper" }}>
                       <TabPanel
                         value="soonerwarn map"
                         {...a11yTabPanelProps(2)}

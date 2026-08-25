@@ -10,6 +10,7 @@ import {
 } from "react-admin";
 import { StateChoices, conferenceStatus } from "../../../helpers/Data";
 import FileUploadField from "../../_components/FileUploadField";
+import { formSectionCardSx } from "../../../css/formLayout";
 
 const ConferenceFormFields = () => {
 
@@ -32,7 +33,7 @@ const ConferenceFormFields = () => {
         alignSelf={"stretch"}
       >
         {/* DETAILS */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Details</Typography>
           <Typography variant="body1">
             Please enter the details of the event below.
@@ -86,7 +87,7 @@ const ConferenceFormFields = () => {
 
         {/* Registration Details */}
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Registration Details</Typography>
           <Divider />
           <Grid container spacing={2}>
@@ -148,7 +149,7 @@ const ConferenceFormFields = () => {
         </Card>
 
         {/* LOCATION */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Venue</Typography>
           <Typography variant="body1">
             Please enter the Venue of the event below.
@@ -211,7 +212,7 @@ const ConferenceFormFields = () => {
         alignSelf={"stretch"}
       >
         {/* EVENT DATES */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Dates</Typography>
           <Typography variant="body1">Enter conference dates below.</Typography>
           <Divider />
@@ -260,7 +261,7 @@ const ConferenceFormFields = () => {
         </Card>
 
         {/* Conference Extras */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Conference Extras</Typography>
           <Typography variant="body1">
             Please Select the Conference Extras Below.
@@ -277,7 +278,7 @@ const ConferenceFormFields = () => {
         </Card>
 
         {/* Conference Tickets */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Conference Tickets</Typography>
           <Typography variant="body1">
             Please Select the Conference Tickets Below.
@@ -293,7 +294,7 @@ const ConferenceFormFields = () => {
           </ReferenceInput>
         </Card>
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Settings</Typography>
           <Divider />
           <Grid item xs={12} sm={12} md={12} lg={12}>
@@ -309,7 +310,7 @@ const ConferenceFormFields = () => {
         </Card>
         {/* Media */}
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Media</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>

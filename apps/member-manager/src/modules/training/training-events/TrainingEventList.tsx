@@ -99,7 +99,6 @@ const TrainingEventList = () => {
         width: 1,
         minWidth: 0,
         boxSizing: 'border-box',
-        p: { xs: 1, sm: 2 },
       }}
     >
       <Title title="Training Events" />

@@ -84,7 +84,7 @@ const ShowEmailTask = () => {
     <ShowBase resource="scheduled-email-tasks">
       <>
         <Title title="Email Campaign Details" />
-        <Card sx={{ p: 0, my: 2, mx: 1 }}>
+        <Card sx={{ p: 0, m: 0, borderRadius: 0, boxShadow: 'none' }}>
           <CustomShowHeader 
             displayField="name"
             redirectTo="/email-management"

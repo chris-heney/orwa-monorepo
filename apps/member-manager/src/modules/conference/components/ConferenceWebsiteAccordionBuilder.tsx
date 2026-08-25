@@ -109,7 +109,7 @@ const ConferenceWebsiteAccordionBuilder = ({
         </Box>
         {sortedEntries.map(({ item: _item, originalIndex }) => (
           <Box key={originalIndex}>
-            <Card sx={{ p: 2, mx: 1, my: 2 }}>
+            <Card sx={{ p: 2, m: 0, borderRadius: 0, boxShadow: 'none' }}>
               <Box
                 sx={{
                   display: "flex",

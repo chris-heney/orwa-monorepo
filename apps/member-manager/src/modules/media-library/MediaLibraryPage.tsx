@@ -31,6 +31,7 @@ import {
 } from "@mui/material";
 import type { Theme } from "@mui/material/styles";
 import { Title, useNotify } from "react-admin";
+import PageHeadingBar from "../_components/PageHeadingBar";
 import SearchIcon from "@mui/icons-material/Search";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -43,7 +44,6 @@ import ImageIcon from "@mui/icons-material/Image";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { format } from "date-fns";
 import uploadService from "../../services/uploadService/uploadService";
 import { fetchAllMediaFiles, type MediaLibraryFileRow } from "./mediaLibraryApi";
@@ -404,112 +404,70 @@ const MediaLibraryPage: React.FC = () => {
   return (
     <Box sx={{ width: 1, minWidth: 0, boxSizing: "border-box" }}>
       <Title title="Media Library" />
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 1,
-          backgroundColor: "#262626",
-          px: 1.5,
-          py: 0.75,
-          minHeight: 48,
-          mb: 1.5,
-        }}
-      >
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.25, minWidth: 0 }}>
-          <Typography
-            variant="h6"
-            component="h1"
-            sx={{
-              fontSize: isSmall ? "0.75rem" : undefined,
-              color: "white",
-              fontWeight: "bold",
-              textTransform: "uppercase",
-              letterSpacing: "0.02em",
-            }}
-          >
-            Media Library
-          </Typography>
-          <Tooltip
-            title="Upload, search, and filter files in your browser. Copy or download public URLs for emails and the site. In list view, use column headers to sort."
-            placement="bottom-start"
-            arrow
-          >
-            <IconButton
-              size="small"
-              aria-label="About this page"
-              sx={{ color: "grey.400", p: 0.5, "&:hover": { color: "common.white" } }}
-            >
-              <InfoOutlinedIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            flexWrap: "wrap",
-            justifyContent: "flex-end",
-          }}
-        >
-          <Box sx={{ textAlign: "right" }}>
-            <Typography
-              variant="body2"
-              sx={{
-                color: "white",
-                fontWeight: 700,
-                fontSize: isSmall ? "0.7rem" : "0.8125rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                opacity: loading ? 0.75 : 1,
-              }}
-            >
-              {loading ? "…" : `${total.toLocaleString()} ${total === 1 ? "file" : "files"}`}
-            </Typography>
-            {!loading &&
-            allFiles.length > 0 &&
-            (debouncedQuery || typeFilter !== "all") &&
-            total !== allFiles.length ? (
+      <PageHeadingBar
+        title="Media Library"
+        info="Upload, search, and filter files in your browser. Copy or download public URLs for emails and the site. In list view, use column headers to sort."
+        actions={
+          <>
+            <Box sx={{ textAlign: "right" }}>
               <Typography
-                variant="caption"
-                sx={{ color: "grey.400", display: "block", lineHeight: 1.2 }}
+                variant="body2"
+                sx={{
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: isSmall ? "0.7rem" : "0.8125rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  opacity: loading ? 0.75 : 1,
+                }}
               >
-                {allFiles.length.toLocaleString()} in library
+                {loading
+                  ? "…"
+                  : `${total.toLocaleString()} ${total === 1 ? "file" : "files"}`}
               </Typography>
-            ) : null}
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={
-                uploading ? <CircularProgress size={16} color="inherit" /> : <CloudUploadIcon />
-              }
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Upload
-            </Button>
-            <Tooltip title="Refresh library">
-              <IconButton
-                onClick={() => setRefreshNonce((n) => n + 1)}
-                disabled={loading}
-                aria-label="Refresh library"
-                size="medium"
-                sx={{ color: "white" }}
+              {!loading &&
+              allFiles.length > 0 &&
+              (debouncedQuery || typeFilter !== "all") &&
+              total !== allFiles.length ? (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "grey.400", display: "block", lineHeight: 1.2 }}
+                >
+                  {allFiles.length.toLocaleString()} in library
+                </Typography>
+              ) : null}
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Button
+                variant="contained"
+                size="small"
+                startIcon={
+                  uploading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <CloudUploadIcon />
+                  )
+                }
+                disabled={uploading}
+                onClick={() => fileInputRef.current?.click()}
               >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Box>
-      </Box>
+                Upload
+              </Button>
+              <Tooltip title="Refresh library">
+                <IconButton
+                  onClick={() => setRefreshNonce((n) => n + 1)}
+                  disabled={loading}
+                  aria-label="Refresh library"
+                  size="medium"
+                  sx={{ color: "white" }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </>
+        }
+      />
 
       <input
         ref={fileInputRef}

@@ -464,7 +464,15 @@ const Membershipheader = () => {
       >
         {isSettingsOpen ? 'Settings' : title}
       </Typography>
-      <TopToolbar>
+      <TopToolbar
+        sx={{
+          p: 0,
+          m: 0,
+          position: 'sticky',
+          right: 0,
+          minHeight: 'unset',
+        }}
+      >
         {resource !== null && !isSettingsOpen && (
           <ListBase
             disableSyncWithLocation
@@ -479,10 +487,11 @@ const Membershipheader = () => {
             resource={resource}
           >
             <Box
+              className="heading-actions"
               sx={{
                 display: 'flex',
                 flexDirection: 'row',
-                gap: 2,
+                gap: 1,
                 alignItems: 'center',
               }}
             >
@@ -503,15 +512,15 @@ const Membershipheader = () => {
               />
 
               <HeadingSelect
+                emptyLabel="EXPORT"
                 value={exportType}
-                displayEmpty
                 onChange={(e) => {
                   setExportType(e.target.value as string);
                   handleExport(e.target.value as string);
                 }}
               >
                 <MenuItem value="" disabled>
-                  Select Export
+                  EXPORT
                 </MenuItem>
                 <MenuItem value="default">Default Export</MenuItem>
                 <MenuItem value="naylor">Naylor Export</MenuItem>

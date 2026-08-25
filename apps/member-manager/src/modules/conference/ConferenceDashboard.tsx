@@ -13,7 +13,7 @@ import {
 import { useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import ConferenceAccordionFilter from "./components/ConferenceAccordionFilter";
-import { ConferenceContext, useConferenceContext } from "./ConferenceContext";
+import { useConferenceContext } from "./ConferenceContext";
 import ConferenceHeader from "./ConferenceHeader";
 import ConferenceFilters from "./ConferenceFilters";
 import CustomExportFunction from "../../helpers/custom-export-function";
@@ -21,7 +21,11 @@ import exportContestants from "./helpers/exportContestants";
 import exportSchedule from "./helpers/exportSchedule";
 import exportRegistrations from "./helpers/exportRegistrations";
 import exportBooths from "./helpers/exportBooths";
-import ConferenceTabs from "./components/ConferenceTabs";
+import { TabContext } from "@mui/lab";
+import {
+  ConferenceTabList,
+  ConferenceTabPanels,
+} from "./components/ConferenceTabs";
 import exportSponsors from "./helpers/exportSponsors";
 import exportAttendees from "./helpers/exportAttendes";
 import {
@@ -181,58 +185,42 @@ const ConferenceDashboard = () => {
     <Box sx={{ mt: 0 }}>
       <Title title="Conference Manager" />
 
-      <Box
-        sx={{
-          display: isSmall ? "flex-column" : "flex",
-          flexGrow: 1,
-          justifyContent: "start",
-          alignItems: "",
-          gap: 2,
-          overflow: "scroll",
-        }}
+      <ListBase
+        // Remount on tab/resource change so tickets' `conferences` filter
+        // cannot briefly fire against singular-`conference` resources.
+        key={`${selectedTab}:${listResource}`}
+        storeKey={`${selectedTab}-${JSON.stringify(tabFilters[selectedTab])}`}
+        perPage={100}
+        filterDefaultValues={listFilterDefaults}
+        resource={listResource}
+        disableSyncWithLocation
+        exporter={getCurrentExporter()}
       >
-        <ListBase
-          // Remount on tab/resource change so tickets' `conferences` filter
-          // cannot briefly fire against singular-`conference` resources.
-          key={`${selectedTab}:${listResource}`}
-          storeKey={`${selectedTab}-${JSON.stringify(tabFilters[selectedTab])}`}
-          perPage={100}
-          filterDefaultValues={listFilterDefaults}
-          resource={listResource}
-          disableSyncWithLocation
-          exporter={getCurrentExporter()}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: isSmall ? "column" : "row",
+            flexGrow: 1,
+            alignItems: "flex-start",
+            gap: 2,
+          }}
         >
-          {/* MAIN */}
-
-          <Box
-            sx={{
-              pb: 2,
-              overflow: "hidden",
-              flexGrow: "1",
-              backgroundColor: "transparent",
-              maxWidth: "100%",
-              minWidth: 0,
-              width: "100%",
-            }}
-          >
-            {/* Header */}
-
-            {isSmall && (
-              <ConferenceAccordionFilter conferenceYears={conferenceYears} />
-            )}
-
-            <ConferenceHeader />
-
-            <ConferenceTabs />
+          <Box sx={{ flexGrow: 1, minWidth: 0, width: "100%" }}>
+            <TabContext value={selectedTab.toString()}>
+              <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
+                {isSmall && (
+                  <ConferenceAccordionFilter conferenceYears={conferenceYears} />
+                )}
+                <ConferenceHeader />
+                <ConferenceTabList />
+              </Box>
+              <ConferenceTabPanels />
+            </TabContext>
           </Box>
 
-
-          {/* ASIDE MOBILE Flex-Column DESKTOP FLEX-ROW make select buttons a dropdown */}
-          {!isSmall && (
-            <ConferenceFilters />
-          )}
-        </ListBase>
-      </Box>
+          {!isSmall && <ConferenceFilters />}
+        </Box>
+      </ListBase>
     </Box>
   );
 };

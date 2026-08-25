@@ -2,14 +2,13 @@ import React, { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CustomHeader from '../../_components/CustomHeader';
 import {
-  Button,
   EditButton,
   useRecordContext,
   useRedirect,
   useResourceContext,
 } from 'react-admin';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useCan } from '../../rbac-manager/useCan';
+import { BackAction } from '../../_components/heading/HeadingActions';
 
 interface CustomShowHeaderProps {
   redirectTo?: string;
@@ -47,16 +46,7 @@ const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
       title={title}
       Component={() => (
         <div>
-          <Button
-            onClick={handleBack}
-            sx={{
-              color: 'white',
-              mr: 2,
-            }}
-            label="Back"
-          >
-            <ArrowBackIcon />
-          </Button>
+          <BackAction onClick={handleBack} />
           {hasEdit && canOnResource('update', resource) && (
             <EditButton
               sx={{
@@ -66,7 +56,7 @@ const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
               resource={resource}
             />
           )}
-          {customActions} {/* Inject custom action buttons */}
+          {customActions}
         </div>
       )}
     />

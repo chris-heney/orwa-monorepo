@@ -22,7 +22,7 @@ const TrainingDashboard = () => {
   }))
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: { xs: 1, sm: 2 } }}>
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
       <Title title="Training Dashboard" />
       <PageHeadingBar
         title="Training Dashboard"

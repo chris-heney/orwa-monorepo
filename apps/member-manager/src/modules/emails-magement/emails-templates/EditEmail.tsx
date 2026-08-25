@@ -15,7 +15,7 @@ const EditEmail = ({ id, module}: EmailInterfaceProps) => {
   return (
     <EditBase redirect={false} title={' '} id={id}>
       <Title title="Email Management" />  
-      <Card sx={{ p: 0, my: 2, mx: 1 }}>
+      <Card sx={{ p: 0, m: 0, borderRadius: 0, boxShadow: 'none' }}>
         <CustomFormHeader displayField="email_name" redirectTo="/email-management" hasShow={false} />
         <SimpleForm toolbar={<CustomToolBar/>}>
           <EmailFormFields module={module}/>

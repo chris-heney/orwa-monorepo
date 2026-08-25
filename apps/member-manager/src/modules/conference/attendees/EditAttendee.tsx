@@ -18,9 +18,7 @@ const EditAttendee = () => {
         hasShow={false}
         displayField="email"
         redirectTo="/conference/dashboard"
-        sx={{
-          mt: 2,
-        }}
+        sx={{ mt: 0 }}
       />
       <Title title="Edit Attendee" />
         <SimpleForm 

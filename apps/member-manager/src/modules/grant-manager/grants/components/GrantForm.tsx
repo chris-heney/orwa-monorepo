@@ -18,6 +18,7 @@ import {
 import React, { useState } from "react";
 import TypeModal from "./TypeModal";
 import RequestPageIcon from "@mui/icons-material/RequestPage";
+import { formSectionCardSx } from "../../../../css/formLayout";
 
 const options = [
   { id: "Lump Sum", name: "Lump Sum" },
@@ -55,7 +56,7 @@ const GrantForm = () => {
             alignSelf={"stretch"}
           >
             {/* Information */}
-            <Card sx={{ p: 2, my: 2, mx: 1 }}>
+            <Card sx={formSectionCardSx}>
               <Typography variant="h5">Grant Information</Typography>
               <Divider sx={{ mb: 2 }} />
               <Grid container columnSpacing={2} rowSpacing={1}>
@@ -95,7 +96,7 @@ const GrantForm = () => {
             alignSelf={"stretch"}
           >
             {/* Avatar */}
-            <Card sx={{ p: 2, my: 2, mx: 1 }}>
+            <Card sx={formSectionCardSx}>
               <Typography variant="h5">Financial</Typography>
               <Divider sx={{ mb: 2 }} />
               <Grid container columnSpacing={2} rowSpacing={1}>

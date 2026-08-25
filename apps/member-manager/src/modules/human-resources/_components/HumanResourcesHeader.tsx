@@ -126,6 +126,7 @@ const HumanResourcesHeader = () => {
       </Typography>
       <TopToolbar>
         <Box
+          className="heading-actions"
           sx={{
             display: 'flex',
             flexDirection: 'row',

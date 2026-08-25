@@ -1,22 +1,28 @@
 import React, { ReactNode } from "react";
-import CustomHeader from "./CustomHeader";
+import PageHeadingBar from "./PageHeadingBar";
 import {
-  Button,
-  ShowButton,
   useRecordContext,
   useRedirect,
   useResourceContext,
 } from "react-admin";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { SxProps } from "@mui/material";
+import { BackAction, ShowAction } from "./heading/HeadingActions";
 
 interface CustomFormHeaderProps {
   redirectTo?: string;
   displayField?: string;
   hasShow?: boolean;
-  customActions?: ReactNode; // Allow custom buttons to be injected
+  customActions?: ReactNode;
   sx?: SxProps;
 }
+
+const resourceLabel = (resource: string) => {
+  if (resource === "invoices") return "Transaction";
+  return (resource.charAt(0).toUpperCase() + resource.slice(1, resource.length - 1)).replace(
+    "-",
+    " "
+  );
+};
 
 const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
   redirectTo = "/membership-management",
@@ -30,43 +36,23 @@ const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
   const record = useRecordContext();
   const title = record
     ? `${record[displayField]}`
-    : `New ${resource === "invoices"
-        ? "Transaction"
-        : (resource.charAt(0).toUpperCase() +
-            resource.slice(1, resource.length - 1)
-          ).replace("-", " ")
-      }`;
+    : `New ${resourceLabel(resource)}`;
 
   return (
-    <CustomHeader
+    <PageHeadingBar
       title={title}
       sx={sx}
-      Component={() => {
-        return (
-          <>
-            <Button
-              onClick={() => redirect(redirectTo)}
-              sx={{
-                color: "white",
-                mr: 2,
-              }}
-              label="Back"
-            >
-              <ArrowBackIcon />
-            </Button>
-            {(hasShow) && (
-              <ShowButton
-                sx={{
-                  color: "white",
-                  mr: 2,
-                }}
-                resource={resource}
-              />
-            )}
-            {customActions}
-          </>
-        );
-      }}
+      actions={
+        <>
+          <BackAction onClick={() => redirect(redirectTo)} />
+          {hasShow && record?.id != null && (
+            <ShowAction
+              onClick={() => redirect("show", resource, record.id)}
+            />
+          )}
+          {customActions}
+        </>
+      }
     />
   );
 };

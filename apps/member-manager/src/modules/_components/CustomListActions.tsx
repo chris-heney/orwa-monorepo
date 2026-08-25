@@ -28,7 +28,7 @@ const CustomListActions = ({
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
   return (
 
-    <TopToolbar sx={{
+    <TopToolbar className="heading-actions" sx={{
       right: 0,
       WebkitJustifyContent: 'flex-start',
     }}>

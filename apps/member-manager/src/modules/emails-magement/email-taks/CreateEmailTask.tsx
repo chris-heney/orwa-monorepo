@@ -23,7 +23,7 @@ const CreateEmailTask = ({isCreating, setIsCreating}: CreateEmailProps) => {
   return (
     <CreateBase redirect={false} resource='scheduled-email-tasks'>
       <Title title="Email Management" />
-      <Card sx={{ p: 0, my: 2, mx: 1 }}>
+      <Card sx={{ p: 0, m: 0, borderRadius: 0, boxShadow: 'none' }}>
         <CustomFormHeader displayField="name" redirectTo="/email-management" hasShow={false} />
         <SimpleForm onSubmit={createEmail}>
           <Grid container spacing={2}>

@@ -17,6 +17,7 @@ import {
   MULTI_CONFERENCE_TABS,
   ensureConferenceInFilters,
 } from "./helpers/mergeConferenceAcrossTabFilters";
+import { resourceForConferenceTab } from "./helpers/conferenceTabResources";
 
 /** Re-export for existing imports. */
 export { DEFAULT_CONFERENCE_ID };
@@ -67,7 +68,7 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [resource, setResource] = useStore(
     "selected-conference-resource",
-    "conference-attendees"
+    ""
   );
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useStore(
     "conference-filter-sidebar",
@@ -131,7 +132,8 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
   useEffect(() => {
     setIsCreating(false);
     setSearchFilter([]);
-  }, [selectedTab]);
+    setResource(resourceForConferenceTab(selectedTab));
+  }, [selectedTab, setResource]);
 
   // Persisted tab filters can lose `conference` (toggle/X clear). Re-hydrate.
   useEffect(() => {

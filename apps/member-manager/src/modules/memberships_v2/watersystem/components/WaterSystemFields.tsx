@@ -22,6 +22,7 @@ import {
 import CustomPhoneInput from "../../../_components/MaskedPhoneInput";
 import MembershipExpiration from "../../../_components/MembershipExpiration";
 import { useMembershipContext } from "../../../memberships_v2/MembershipsContextProvider";
+import { formSectionCardSx } from "../../../../css/formLayout";
 
 const WaterSystemFields = () => {
   const record = useRecordContext();
@@ -59,7 +60,7 @@ const WaterSystemFields = () => {
         alignSelf={"stretch"}
       >
         {/* Status */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Status</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -101,7 +102,7 @@ const WaterSystemFields = () => {
           </Grid>
         </Card>
         {/* General Information */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">General Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -200,7 +201,7 @@ const WaterSystemFields = () => {
           </Grid>
         </Card>
         {/* Cntact Information */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Box
             sx={{
               paddingBottom: 2,
@@ -295,7 +296,7 @@ const WaterSystemFields = () => {
         alignSelf={"stretch"}
       >
         {/* Billing Information */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Billing Information</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -374,7 +375,7 @@ const WaterSystemFields = () => {
         </Card>
 
         {/* Physical Address */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Physical Address</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -438,7 +439,7 @@ const WaterSystemFields = () => {
           </Grid>
         </Card>
         {/* Mailing Address */}
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Mailing Address</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>
@@ -480,7 +481,7 @@ const WaterSystemFields = () => {
 
         {/* Passport Details */}
 
-        <Card sx={{ p: 2, my: 2, mx: 1 }}>
+        <Card sx={formSectionCardSx}>
           <Typography variant="h5">Passport</Typography>
           <Divider sx={{ mb: 2 }} />
           <Grid container columnSpacing={2} rowSpacing={1}>

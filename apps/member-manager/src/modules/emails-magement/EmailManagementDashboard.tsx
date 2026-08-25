@@ -4,6 +4,7 @@ import { TabContext, TabPanel, TabList } from "@mui/lab";
 import { Title } from "react-admin";
 import { Theme } from "@mui/material/styles";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
+import { dashboardTabListSx } from "../../css/formLayout";
 import { useEmailManagementContext } from "./EmailManagementContextProvider";
 import EmailInterface from "./emails-templates/EmailInterface";
 import ScheduledEmailTaskInterface from "./email-taks/ScheduledTaskList";
@@ -52,12 +53,8 @@ const EmailManagementDashboard = () => {
                 <TabList
                   variant="scrollable"
                   sx={{
-                    backgroundColor: (theme) =>
-                      theme.palette.mode === "dark"
-                        ? theme.palette.grey[900]
-                        : theme.palette.grey[100],
+                    ...dashboardTabListSx,
                     maxWidth: isSmall ? 320 : undefined,
-                    overflow: "clip",
                   }}
                   onChange={(event: React.SyntheticEvent, tv) => {
                     setSelectedTab(tv as TabValue);

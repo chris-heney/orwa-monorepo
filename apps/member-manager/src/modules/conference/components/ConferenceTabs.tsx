@@ -1,4 +1,4 @@
-import { Paper, Tab } from '@mui/material';
+import { Tab } from '@mui/material';
 import { TabPanel } from '@mui/lab';
 import { TabList } from "@mui/lab";
 import { TabContext } from "@mui/lab";
@@ -37,6 +37,7 @@ import Diversity3Icon from "@mui/icons-material/Diversity3";
 import TextsmsIcon from "@mui/icons-material/Textsms";
 import BuildCircleIcon from "@mui/icons-material/BuildCircle";  
 import { a11yTabPanelProps, a11yTabProps } from "../../../helpers/TabFormatters";
+import { dashboardTabListSx } from "../../../css/formLayout";
 import { WaterDrop } from "@mui/icons-material";
 import AttendeeList from '../attendees/AttendeeList';
 
@@ -80,8 +81,8 @@ const getTabComponent = (tabValue: string) => {
     }
   };
 
-const ConferenceTabs = () => {
-  const { selectedTab, setSelectedTab, setResource } = useConferenceContext();
+export const ConferenceTabList = () => {
+  const { setSelectedTab, setResource } = useConferenceContext();
   const { filterValues } = useListFilterContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
@@ -185,83 +186,107 @@ const ConferenceTabs = () => {
   ];
 
   return (
+    <Box sx={{ justifyContent: "center" }}>
+      <TabList
+        variant="scrollable"
+        sx={dashboardTabListSx}
+        onChange={(_event: React.SyntheticEvent, tv) => {
+          setSelectedTab(tv);
+          setResource(tabs.find((tab) => tab.value === tv)?.resource || "");
+        }}
+      >
+        {tabs
+          .filter((tab) => {
+            if (!filterValues) return true;
+
+            if (filterConferenceId == null) {
+              return tab.label !== "Edit";
+            }
+            if (filterConferenceId === 1) {
+              return tab.label !== "Contestants" && tab.label !== "Teams";
+            } else if (filterConferenceId === 2) {
+              return (
+                tab.label !== "Contestants" &&
+                tab.label !== "Taste Test" &&
+                tab.label !== "Teams"
+              );
+            } else if (filterConferenceId === 3) {
+              return tab.label !== "Taste Test";
+            }
+            return true;
+          })
+          .map((tab, i) => (
+            <Tab
+              sx={{
+                borderRight: tab.divider
+                  ? (theme) => `2px solid ${theme.palette.divider}`
+                  : undefined,
+              }}
+              key={`tab-${i}`}
+              label={tab.label}
+              {...a11yTabProps(i)}
+              value={tab.value}
+              icon={tab.icon}
+            />
+          ))}
+      </TabList>
+    </Box>
+  );
+};
+
+export const ConferenceTabPanels = () => {
+  const { selectedTab } = useConferenceContext();
+  const tabs = [
+    "tools",
+    "summary",
+    "registrations",
+    "attendees",
+    "booths",
+    "contestants",
+    "teams",
+    "taste test",
+    "sponsors",
+    "edit",
+    "schedule",
+    "tickets",
+    "extras",
+    "addons",
+    "sponsorships",
+    "feedback",
+  ];
+
+  return (
+    <Box
+      sx={{
+        mb: 2,
+        backgroundColor:
+          selectedTab === "summary" ? "transparent" : "background.paper",
+        width: "100%",
+        maxWidth: "100%",
+        overflowX: "auto",
+      }}
+    >
+      {tabs.map((value, index) => (
+        <TabPanel
+          key={`panel-${index}`}
+          value={value}
+          {...a11yTabPanelProps(index)}
+          sx={value === "summary" ? { p: 0 } : undefined}
+        >
+          {getTabComponent(value)}
+        </TabPanel>
+      ))}
+    </Box>
+  );
+};
+
+const ConferenceTabs = () => {
+  const { selectedTab } = useConferenceContext();
+  return (
     <Box sx={{ p: 0 }}>
       <TabContext value={selectedTab.toString()}>
-        <Box sx={{ justifyContent: "center" }}>
-          {/* need to fix max width for mobile and smallwer screen tab list isnt responsive  */}
-          <TabList
-            variant="scrollable"
-            sx={{
-              backgroundColor: (theme) =>
-                theme.palette.mode === "dark"
-                  ? theme.palette.grey[900]
-                  : theme.palette.grey[100],
-            }}
-            onChange={(event: React.SyntheticEvent, tv) => {
-              setSelectedTab(tv);
-              setResource(tabs.find((tab) => tab.value === tv)?.resource || "");
-            }}
-          >
-            {tabs
-              .filter((tab) => {
-                if (!filterValues) return true;
-
-                if (filterConferenceId == null) {
-                    return tab.label !== "Edit"
-                }
-                if (filterConferenceId === 1) {
-                  return tab.label !== "Contestants" && tab.label !== "Teams";
-                } else if (filterConferenceId === 2) {
-                  // Expo: Hide Contestants, Taste Test, and Teams
-                  return (
-                    tab.label !== "Contestants" &&
-                    tab.label !== "Taste Test" &&
-                    tab.label !== "Teams"
-                  );
-                } else if (filterConferenceId === 3) {
-                  // Fall: Hide Water Taste Test
-                  return tab.label !== "Taste Test";
-                }
-                return true;
-              })
-              .map((tab, i) => (
-                <Tab
-                  sx={{
-                    borderRight: tab.divider
-                      ? (theme) => `2px solid ${theme.palette.divider}`
-                      : undefined,
-                  }}
-                  key={`tab-${i}`}
-                  label={tab.label}
-                  {...a11yTabProps(i)}
-                  value={tab.value}
-                  icon={tab.icon}
-                />
-              ))}
-          </TabList>
-        </Box>
-
-        <Paper
-          sx={{
-            mb: 2,
-            backgroundColor: "background.paper",
-            maxWidth: "95vw",
-            width: "100%",
-            overflow: "scroll",
-          }}
-        >
-          {tabs.map((tab, index) => (
-            <TabPanel
-              key={`panel-${index}`}
-              value={tab.value}
-              {...a11yTabPanelProps(index)}
-              // Summary's ink canvas sits flush under the tab bar — no gutter.
-              sx={tab.value === "summary" ? { p: 0 } : undefined}
-            >
-              {getTabComponent(tab.value)}
-            </TabPanel>
-          ))}
-        </Paper>
+        <ConferenceTabList />
+        <ConferenceTabPanels />
       </TabContext>
     </Box>
   );

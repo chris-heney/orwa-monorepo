@@ -41,6 +41,7 @@ import AssetValidate from '../AssetValidate'
 import { AssetCategoryOptions, AssetLocationOptions, OrganizationType } from '../../../helpers/Data'
 import CustomFormHeader from '../../_components/CustomFormHeader'
 import { StaffAutocompleteInput } from '../../_components/autocompletes/StaffAutocomplete'
+import { formSectionCardSx } from '../../../css/formLayout'
 
 
 const AssetListForm = () => {
@@ -53,7 +54,7 @@ const AssetListForm = () => {
       />
       <Grid container alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}> 
         <Grid item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
-          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant='h5' color="text.primary">Asset Details</Typography>
             <Grid container columnSpacing={2} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
               <Grid item xs={12} lg={6}>
@@ -78,7 +79,7 @@ const AssetListForm = () => {
           </Card>
         </Grid>
         <Grid item xs={12} md={6} lg={6} sm={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
-          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
+          <Card sx={formSectionCardSx}>
             <Typography variant='h5' color="text.primary">Assignment Details</Typography>
             <Grid container columnSpacing={2} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
               <Grid item xs={12} lg={6}>
@@ -109,7 +110,7 @@ const AssetListForm = () => {
           <Divider sx={{mt:2}} />
         </Grid>
         <Grid item xs={12} alignItems={'stretch'} justifyItems={'stretch'} alignSelf={'stretch'}>
-          <Card sx={{ p: 2, my: 2, mx: 1, bgcolor: 'background.paper', color: 'text.primary' }}>
+          <Card sx={formSectionCardSx}>
             <TextInput source="description" fullWidth label="Description" helperText={false} />
             <ImageInput
               source="images"

@@ -47,10 +47,12 @@ export const emailFieldSx: SxProps<Theme> = {
 
 export const sectionCardSx: SxProps<Theme> = {
   p: 2,
+  m: 0,
   height: "100%",
+  borderRadius: 0,
   bgcolor: "background.paper",
   color: "text.primary",
-  boxShadow: (theme) => (theme.palette.mode === "dark" ? "none" : undefined),
+  boxShadow: "none",
   border: 1,
   borderColor: "divider",
 };
