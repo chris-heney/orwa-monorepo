@@ -104,6 +104,14 @@ const AWARD_CRUD = [
   'api::award-nomination.award-nomination.delete',
 ];
 
+const AWARD_WINNER_CRUD = [
+  'api::award-winner.award-winner.find',
+  'api::award-winner.award-winner.findOne',
+  'api::award-winner.award-winner.create',
+  'api::award-winner.award-winner.update',
+  'api::award-winner.award-winner.delete',
+];
+
 const SUBMISSION_PUBLIC_ACTIONS = [
   'api::submissions.submissions.createScholarshipApplication',
   'api::submissions.submissions.createAwardNomination',
@@ -119,11 +127,13 @@ const configureScholarshipAwardPermissions = async (strapi) => {
     await ensureRolePermissions(strapi, { type: 'authenticated' }, [
       ...SCHOLARSHIP_CRUD,
       ...AWARD_CRUD,
+      ...AWARD_WINNER_CRUD,
       ...SUBMISSION_PUBLIC_ACTIONS,
     ]);
     await ensureRolePermissions(strapi, { type: 'admin' }, [
       ...SCHOLARSHIP_CRUD,
       ...AWARD_CRUD,
+      ...AWARD_WINNER_CRUD,
       ...SUBMISSION_PUBLIC_ACTIONS,
     ]);
   } catch (error) {

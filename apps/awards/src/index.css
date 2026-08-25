@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* ORWA brand blue, sampled from the public awards page headings. */
+@theme {
+  --color-orwa: #1b7fc3;
+  --color-orwa-dark: #15669f;
+}
+
 /* Scan form-builder class names (FileInput uses col-span-5/7, etc.) */
 @source "../../../node_modules/mj-react-form-builder/dist/esm";
 

@@ -53,8 +53,7 @@
       "inversedBy": "award_nominations"
     },
     "county": {
-      "type": "string",
-      "required": true
+      "type": "string"
     },
     "address": {
       "type": "string",

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, PropsWithChildren } from "react";
 import { useStore } from "react-admin";
 
-export type AwardTab = "summary" | "nominations";
+export type AwardTab = "summary" | "nominations" | "winners";
 
 type AwardContextValue = {
   selectedTab: AwardTab;

@@ -40,8 +40,28 @@ describe("mapAwardNominationPayload", () => {
     expect(mapped.current_members).toBeUndefined();
     expect(mapped.award_year).toBe(2026);
     expect(mapped.watersystem_id).toBeUndefined();
-    expect(mapped).not.toHaveProperty("county");
+    expect(mapped.county).toBeUndefined();
     expect(mapped.award_name_printed).toBe("Ada RWD");
+  });
+
+  // …but importers that do know the county must not have it stripped: the
+  // intake controller stores body.county when the watersystem lookup misses.
+  it("forwards county when the caller supplies one", () => {
+    const mapped = mapAwardNominationPayload({
+      nominee_name: "Jane Doe",
+      email: "jane@example.com",
+      daytime_phone: "4055551212",
+      address: "1 Main",
+      city: "Ada",
+      state: "OK",
+      zip: "74820",
+      county: "Pontotoc",
+      system_name: "Ada RWD",
+      justification: "Great system",
+      award_type: "Excellence in Operations",
+    } as any);
+
+    expect(mapped.county).toBe("Pontotoc");
   });
 
   it("does not invent a Date instance for empty dates", () => {
