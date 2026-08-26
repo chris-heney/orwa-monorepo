@@ -506,6 +506,7 @@ export default ({ strapi }) => {
             award_name_printed:
               body.award_name_printed || body.system_name,
             watersystem: watersystem?.documentId ?? null,
+            county: emptyToNull(body.county),
             address: body.address,
             city: body.city,
             state: body.state || "OK",

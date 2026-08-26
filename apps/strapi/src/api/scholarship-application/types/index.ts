@@ -102,7 +102,7 @@ export interface IAwardNominationPayload {
   award_name_printed?: string;
   watersystem?: number | string | null;
   watersystem_id?: number | string | null;
-  county: string;
+  county?: string;
   address: string;
   city: string;
   state?: string;

@@ -917,7 +917,7 @@ export interface ApiAwardNominationAwardNomination
     city: Schema.Attribute.String & Schema.Attribute.Required;
     clerical_employees: Schema.Attribute.Integer;
     contact: Schema.Attribute.Relation<'manyToOne', 'api::contact.contact'>;
-    county: Schema.Attribute.String & Schema.Attribute.Required;
+    county: Schema.Attribute.String;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
