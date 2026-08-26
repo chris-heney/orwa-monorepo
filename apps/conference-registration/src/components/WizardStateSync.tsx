@@ -6,7 +6,13 @@ import {
   useFormSubmitted,
   useRegistrationSource,
   useStepContext,
+  useUserContext,
 } from "../AppContextProvider";
+import {
+  canJumpWizardSteps,
+  canJumpWizardStepsFromSession,
+  resolvePreferredWizardStepKey,
+} from "../helpers/canJumpWizardSteps";
 import {
   clearWizardDraft,
   getStepKeyFromUrl,
@@ -29,18 +35,28 @@ const WizardStateSync = () => {
   const { watch, getValues } = useFormContext();
   const { submitted } = useFormSubmitted();
   const { entryPayload } = useEntryPayload();
+  const { isLoggedIn, isAdminView } = useUserContext();
+  const canJumpSteps = canJumpWizardSteps(isLoggedIn, isAdminView);
 
   // Capture preferred step once on mount — before URL sync can overwrite it.
+  // Guests ignore `?step=` (deep-link jump); draft restore still works on refresh.
   const preferredStepKeyRef = useRef<string | null>(
     entryPayload
       ? null
-      : getStepKeyFromUrl() ||
-          loadWizardDraft(conferenceId, source)?.stepKey ||
-          null
+      : resolvePreferredWizardStepKey(
+          getStepKeyFromUrl(),
+          loadWizardDraft(conferenceId, source)?.stepKey,
+          canJumpWizardStepsFromSession()
+        )
   );
   const [hasRestoredStep, setHasRestoredStep] = useState(
     () => !preferredStepKeyRef.current || !!entryPayload
   );
+  // Remember the load-time URL step so a later admin login can still honor it.
+  const urlStepOnLoadRef = useRef<string | null>(
+    entryPayload ? null : getStepKeyFromUrl()
+  );
+  const appliedAdminUrlStepRef = useRef(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formValues = watch();
 
@@ -75,6 +91,53 @@ const WizardStateSync = () => {
     setHasRestoredStep(true);
   }, [
     activeSteps,
+    entryPayload,
+    getValues,
+    hasRestoredStep,
+    setStepIndex,
+    stepIndex,
+  ]);
+
+  // After JWT + Admin View are on, honor the original `?step=` once — unless
+  // the visitor already moved via Next/Back (don't yank a mid-flow admin).
+  useEffect(() => {
+    if (entryPayload || !canJumpSteps || appliedAdminUrlStepRef.current) return;
+    if (!hasRestoredStep) return;
+
+    const urlStep = urlStepOnLoadRef.current;
+    if (!urlStep) {
+      appliedAdminUrlStepRef.current = true;
+      return;
+    }
+
+    const activeKeys = activeSteps.map((step) => step.key);
+    const restoredIndex = resolveActiveStepIndex(
+      activeKeys,
+      preferredStepKeyRef.current
+    );
+    if (stepIndex !== restoredIndex) {
+      appliedAdminUrlStepRef.current = true;
+      return;
+    }
+
+    const registrationType = getValues("registration_type");
+    const pathReady =
+      !registrationType ||
+      activeKeys.includes("attendee_registration") ||
+      activeKeys.includes("vendor_registration") ||
+      activeKeys.includes("booth_registration") ||
+      activeKeys.includes(urlStep);
+    if (!pathReady) return;
+
+    const nextIndex = resolveActiveStepIndex(activeKeys, urlStep);
+    appliedAdminUrlStepRef.current = true;
+    if (nextIndex !== stepIndex) {
+      preferredStepKeyRef.current = urlStep;
+      setStepIndex(nextIndex);
+    }
+  }, [
+    activeSteps,
+    canJumpSteps,
     entryPayload,
     getValues,
     hasRestoredStep,
