@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   applyExtraQuantity,
   countForExtra,
+  extraIsIncludedForTicket,
   extraMatchesContestantContext,
+  extraMatchesContext,
   extraIsExcludedForTicket,
   groupItemsByExtra,
   itemMatchesExtra,
@@ -10,6 +12,8 @@ import {
   minQtyFor,
   missingSelectionExtras,
   quantitySelectionEnabled,
+  seedIncludedExtras,
+  shouldShowConferenceExtra,
   shouldShowContestantExtra,
   type ContestantExtraOption,
   type ContestantItemRow,
@@ -138,6 +142,25 @@ describe("applyExtraQuantity", () => {
     const next = applyExtraQuantity([], { ...pin, max_qty_each: 5 }, 5);
     expect(next).toHaveLength(1);
   });
+
+  it("writes selection and keeps the existing component id", () => {
+    const sized = applyExtraQuantity(
+      [{ id: 88, label: "Contestant Shirt", item: "shirtdocid0000001" }],
+      shirt,
+      1,
+      "L"
+    );
+    expect(sized).toEqual([
+      {
+        id: 88,
+        key: "Contestant Shirt shirtdocid0000001",
+        label: "Contestant Shirt",
+        value: "0",
+        selection: "L",
+        item: "shirtdocid0000001",
+      },
+    ]);
+  });
 });
 
 describe("shouldShowContestantExtra", () => {
@@ -161,6 +184,61 @@ describe("shouldShowContestantExtra", () => {
   it("matches excluded ticket by numeric entityId", () => {
     expect(extraIsExcludedForTicket(mulliganExcludedOnFisher, 23)).toBe(true);
     expect(extraIsExcludedForTicket(mulliganExcludedOnFisher, 21)).toBe(false);
+  });
+});
+
+describe("extraMatchesContext / shouldShowConferenceExtra", () => {
+  const attendeeShirt: ContestantExtraOption = {
+    ...shirt,
+    name: "T-Shirt",
+    context: "Attendee",
+    included: [golferTicket],
+  };
+
+  it("maps Vendor to Attendee and aliases Contestants", () => {
+    expect(extraMatchesContext(lunch, "Attendee")).toBe(true);
+    expect(extraMatchesContext(lunch, "Vendor")).toBe(true);
+    expect(extraMatchesContext(mulligan, "Contestant")).toBe(true);
+    expect(extraMatchesContext(lunch, "Contestant")).toBe(false);
+  });
+
+  it("hides extras until a ticket is chosen unless already owned", () => {
+    expect(shouldShowConferenceExtra(lunch, [], undefined, "Attendee")).toBe(
+      false
+    );
+    expect(
+      shouldShowConferenceExtra(
+        lunch,
+        [{ label: "Lunch", item: "lunchdocid0000001" }],
+        undefined,
+        "Attendee"
+      )
+    ).toBe(true);
+  });
+
+  it("shows attendee extras for the matching ticket and keeps owned excluded ones", () => {
+    expect(
+      shouldShowConferenceExtra(lunch, [], golferTicket, "Attendee")
+    ).toBe(true);
+    expect(
+      shouldShowConferenceExtra(lunch, [], golferTicket, "Vendor")
+    ).toBe(true);
+    expect(
+      shouldShowConferenceExtra(mulligan, [], golferTicket, "Attendee")
+    ).toBe(false);
+  });
+
+  it("detects included extras and seeds them once", () => {
+    expect(extraIsIncludedForTicket(attendeeShirt, golferTicket)).toBe(true);
+    expect(extraIsIncludedForTicket(attendeeShirt, fishingTicket)).toBe(false);
+    const seeded = seedIncludedExtras(
+      [attendeeShirt, lunch],
+      [],
+      golferTicket,
+      "Attendee"
+    );
+    expect(countForExtra(seeded, attendeeShirt)).toBe(1);
+    expect(countForExtra(seeded, lunch)).toBe(0);
   });
 });
 

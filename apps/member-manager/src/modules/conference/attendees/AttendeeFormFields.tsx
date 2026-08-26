@@ -8,7 +8,6 @@ import {
   BooleanInput,
   useGetOne,
   useRecordContext,
-  useRefresh,
 } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { Divider } from "@mui/material";
@@ -24,7 +23,7 @@ import {
   trainingTypeOptions,
   VotingStatusOptions,
 } from "../../../helpers/Data";
-import MetaComponent from "../components/ConferenceMetaRepeatableComponent";
+import ConferenceExtrasEditor from "../components/ConferenceExtrasEditor";
 import { useConferenceContext } from "../ConferenceContext";
 
 interface ConferenceAttendeeFieldsProps {
@@ -52,17 +51,6 @@ export const ConferenceAttendeeFields = ({
     "Vendor" | "Attendee" | null
   >(null);
   const record = useRecordContext();
-  const refresh = useRefresh();
-  const [updated, setUpdated] = useState(false);
-
-  useEffect(() => {
-    if (updated) {
-      setTimeout(() => {
-        refresh();
-      }, 100);
-    }
-    setUpdated(false);
-  }, [updated]);
 
   // vendor then training nor licenses apply
   const form = useFormContext();
@@ -325,23 +313,16 @@ export const ConferenceAttendeeFields = ({
                 defaultValue={conferenceId}
                 sx={{ display: "none" }}
               />
-              
-              {/* Only show MetaComponent here if Voting Delegates card is NOT displayed */}
-              {context === "edit" && 
-               !(ticketType !== "Vendor" &&
-                (conferenceId === 1 || conferenceId === 3)) && (
-                <Grid item xs={12}>
-                  <Box mt={2}>
-                    <MetaComponent
-                      ticketType={ticketType}
-                      context="Attendee"
-                      resource="conference-attendees"
-                      setUpdated={setUpdated}
-                      conferenceId={conferenceId}
-                    />
-                  </Box>
-                </Grid>
-              )}
+
+              <Grid item xs={12}>
+                <ConferenceExtrasEditor
+                  conferenceId={conferenceId}
+                  context={
+                    ticketType === "Vendor" ? "Vendor" : "Attendee"
+                  }
+                  seedIncluded={context === "create"}
+                />
+              </Grid>
             </Grid>
           </Card>
         </Grid>
@@ -393,22 +374,6 @@ export const ConferenceAttendeeFields = ({
                         fullWidth
                       />
                     </Grid>
-                    
-                    {/* Add MetaComponent here when in edit mode */}
-                    {context === "edit" && (
-                      <Grid item xs={12}>
-                        <Box mt={2}>
-                          <Divider sx={{ mb: 2 }} />
-                          <MetaComponent
-                            ticketType={ticketType}
-                            context="Attendee"
-                            resource="conference-attendees"
-                            setUpdated={setUpdated}
-                            conferenceId={conferenceId}
-                          />
-                        </Box>
-                      </Grid>
-                    )}
                   </Grid>
                 </Box>
               </Card>

@@ -1,8 +1,16 @@
 /**
- * Contestant extras: quantity extras (Mulligans) are stored as one
- * shared.field-meta row per unit. These helpers group, match, and rewrite
- * those rows for Conference Manager edit/create.
+ * Conference extras (attendees, contestants, booths): quantity extras
+ * (Mulligans) are stored as one shared.field-meta row per unit. Option
+ * extras (T-Shirt size) store the choice on `selection`. These helpers
+ * group, match, and rewrite those rows for Conference Manager edit/create.
  */
+
+export type ExtraVisibilityContext =
+  | "Attendee"
+  | "Vendor"
+  | "Contestant"
+  | "Booth"
+  | "Registration";
 
 export type ExtraRef = {
   id?: unknown;
@@ -36,6 +44,9 @@ export type ContestantExtraOption = {
   selection_name?: string | null;
   selection_options?: unknown;
   excluded?: Array<ExtraRef | string | number> | null;
+  included?: Array<ExtraRef | string | number> | null;
+  order?: number | null;
+  description?: string | null;
 };
 
 export const extraIds = (
@@ -60,12 +71,27 @@ export const extraRefId = (
   return ids[0];
 };
 
+/** Vendor extras live on Attendee-context catalog rows (public checkout too). */
+export const normalizeExtraContext = (
+  context: ExtraVisibilityContext
+): ExtraVisibilityContext => (context === "Vendor" ? "Attendee" : context);
+
+export const extraMatchesContext = (
+  extra: { context?: unknown },
+  context: ExtraVisibilityContext
+): boolean => {
+  const extraCtx = String(extra.context ?? "").trim();
+  const wanted = normalizeExtraContext(context);
+  if (extraCtx.toLowerCase() === wanted.toLowerCase()) return true;
+  if (wanted === "Contestant" && extraCtx.toLowerCase() === "contestants") {
+    return true;
+  }
+  return false;
+};
+
 export const extraMatchesContestantContext = (extra: {
   context?: unknown;
-}): boolean => {
-  const ctx = String(extra.context ?? "");
-  return ctx === "Contestant" || ctx === "Contestants";
-};
+}): boolean => extraMatchesContext(extra, "Contestant");
 
 export const quantitySelectionEnabled = (
   extra: ContestantExtraOption
@@ -126,38 +152,60 @@ export const countForExtra = (
     0
   );
 
-export const extraIsExcludedForTicket = (
-  extra: ContestantExtraOption,
+const ticketRelatesTo = (
+  list: Array<ExtraRef | string | number> | null | undefined,
   ticketId: unknown
 ): boolean => {
   if (ticketId == null || ticketId === "") return false;
-  const excluded = extra.excluded;
-  if (!Array.isArray(excluded) || excluded.length === 0) return false;
+  if (!Array.isArray(list) || list.length === 0) return false;
   const ticketIds = extraIds(
     typeof ticketId === "object" && ticketId != null
       ? (ticketId as ExtraRef)
       : { id: ticketId }
   );
-  return excluded.some((entry) => {
-    const excludedIds = extraIds(
+  return list.some((entry) => {
+    const relatedIds = extraIds(
       typeof entry === "object" && entry != null ? entry : { id: entry }
     );
-    for (const id of excludedIds) {
+    for (const id of relatedIds) {
       if (ticketIds.has(id)) return true;
     }
     return false;
   });
 };
 
+export const extraIsExcludedForTicket = (
+  extra: ContestantExtraOption,
+  ticketId: unknown
+): boolean => ticketRelatesTo(extra.excluded, ticketId);
+
+export const extraIsIncludedForTicket = (
+  extra: ContestantExtraOption,
+  ticketId: unknown
+): boolean => ticketRelatesTo(extra.included, ticketId);
+
+/**
+ * Same visibility as public `filterVisibleExtras`, plus already-owned rows
+ * so an edit form never hides an extra the person already has.
+ * Until a ticket is chosen, only already-owned extras show (create waits).
+ */
+export const shouldShowConferenceExtra = (
+  extra: ContestantExtraOption,
+  items: ContestantItemRow[] | null | undefined,
+  ticketId: unknown,
+  context: ExtraVisibilityContext
+): boolean => {
+  if (!extraMatchesContext(extra, context)) return false;
+  if (countForExtra(items, extra) > 0) return true;
+  if (ticketId == null || ticketId === "") return false;
+  return !extraIsExcludedForTicket(extra, ticketId);
+};
+
 export const shouldShowContestantExtra = (
   extra: ContestantExtraOption,
   items: ContestantItemRow[] | null | undefined,
   ticketId: unknown
-): boolean => {
-  if (!extraMatchesContestantContext(extra)) return false;
-  if (countForExtra(items, extra) > 0) return true;
-  return !extraIsExcludedForTicket(extra, ticketId);
-};
+): boolean => shouldShowConferenceExtra(extra, items, ticketId, "Contestant");
 
 export const selectionOptionsFor = (
   extra: ContestantExtraOption
@@ -189,6 +237,7 @@ export const applyExtraQuantity = (
   const rows: ContestantItemRow[] = [];
   for (let i = 0; i < clamped; i += 1) {
     rows.push({
+      ...(i === 0 && existing?.id != null ? { id: existing.id } : {}),
       key: `${extra.name} ${writeId}`,
       label: extra.name,
       value,
@@ -197,6 +246,22 @@ export const applyExtraQuantity = (
     });
   }
   return [...kept, ...rows];
+};
+
+export const seedIncludedExtras = (
+  extras: ContestantExtraOption[],
+  items: ContestantItemRow[] | null | undefined,
+  ticketId: unknown,
+  context: ExtraVisibilityContext
+): ContestantItemRow[] => {
+  let next = items ?? [];
+  for (const extra of extras) {
+    if (!shouldShowConferenceExtra(extra, next, ticketId, context)) continue;
+    if (!extraIsIncludedForTicket(extra, ticketId)) continue;
+    if (countForExtra(next, extra) > 0) continue;
+    next = applyExtraQuantity(next, extra, 1);
+  }
+  return next;
 };
 
 export const missingSelectionExtras = (
