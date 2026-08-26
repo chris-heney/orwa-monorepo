@@ -35,6 +35,12 @@ export function getRelationFilterId(record: {
 }
 
 /**
+ * Integer PK for visible ID columns. Same rules as getRelationFilterId —
+ * never parseInt(documentId). Routing/CRUD keep using record.id (documentId).
+ */
+export const getDisplayEntityId = getRelationFilterId;
+
+/**
  * Safe filter value for a relation: numeric entityId, else documentId string.
  * Never returns NaN (the classic parseInt(documentId) footgun).
  */

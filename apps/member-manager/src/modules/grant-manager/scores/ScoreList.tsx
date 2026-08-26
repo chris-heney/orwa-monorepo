@@ -2,7 +2,6 @@ import React, { useCallback, useEffect } from "react";
 import {
   List,
   TextField,
-  DatagridConfigurable,
   NumberField,
   DateField,
   ReferenceField,
@@ -12,6 +11,7 @@ import {
   useGetOne,
   useListFilterContext,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import CustomPagination from "../../_components/CustomPagination";
 import { Box, Typography, useTheme } from "@mui/material";

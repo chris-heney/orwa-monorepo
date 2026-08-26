@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import {
-  Datagrid,
   FunctionField,
   Identifier,
   List,
@@ -11,6 +10,7 @@ import {
   useDataProvider,
   useShowController,
 } from 'react-admin'
+import { Datagrid } from '@orwa/entity-id'
 import {
   Box,
   Button,

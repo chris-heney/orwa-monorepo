@@ -1,7 +1,6 @@
 import React from 'react'
 import {
   ConfigurableDatagridColumn,
-  DatagridConfigurable,
   List,
   RaRecord,
   SimpleList,
@@ -10,6 +9,7 @@ import {
   useStore,
   useDataProvider,
 } from 'react-admin'
+import { DatagridConfigurable } from '@orwa/entity-id'
 import { Alert, Box, Button, Chip, Theme, Typography, useMediaQuery } from '@mui/material'
 import HowToRegIcon from '@mui/icons-material/HowToReg'
 import { Link } from 'react-router-dom'

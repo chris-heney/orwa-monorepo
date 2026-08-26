@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  DatagridConfigurable,
   TextField,
   ReferenceField,
   DateField,
@@ -24,6 +23,7 @@ import {
   useListContext,
   FunctionField,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Box, Button, Chip, Divider, Grid, Typography } from '@mui/material';
 import { CurrencyOptions } from '../../../config/Settings';
 import {

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   TextField,
-  DatagridConfigurable,
   NumberField,
   Pagination,
   List,
@@ -13,6 +12,7 @@ import {
   DateField,
   useRedirect,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 
 import {
   Box,

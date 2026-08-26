@@ -29,6 +29,7 @@ import { useHumanResourcesContext } from "../HumanResourcesContext";
 import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
 import { userPreferencesStore } from "../../../helpers/userPreferencesStore";
 import { startImpersonation } from "../../../helpers/impersonation";
+import { getDisplayEntityId } from "../../../helpers/strapiIds";
 
 const UserList: React.FC = () => {
   const dataProvider = useDataProvider();
@@ -300,7 +301,9 @@ const UserList: React.FC = () => {
                 bgcolor: i % 2 === 0 ? "action.hover" : "transparent",
               }}
             >
-              <TableCell align="left">{user.id}</TableCell>
+              <TableCell align="left">
+                {getDisplayEntityId(user) ?? user.id}
+              </TableCell>
               <TableCell align="left">{user.username || "N/A"}</TableCell>
               <TableCell align="left">
                 {user.confirmed ? "Confirmed" : "Unconfirmed"}

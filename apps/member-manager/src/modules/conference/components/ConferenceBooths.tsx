@@ -5,7 +5,6 @@ import {
   TextField,
   NumberField,
   RaRecord,
-  DatagridConfigurable,
   Create,
   SimpleForm,
   useNotify,
@@ -19,6 +18,7 @@ import {
   useRemoveFromStore,
   useListContext,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Box, Button, Grid, Chip } from "@mui/material";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import CustomToolBar from "../../_components/CustomToolbar";

@@ -8,7 +8,6 @@ import {
 import { Theme } from "@mui/material/styles";
 import {
   List,
-  DatagridConfigurable,
   NumberField,
   RaRecord,
   DateField,
@@ -22,6 +21,7 @@ import {
   useUpdate,
   useRemoveFromStore,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Visibility, Edit as EditIcon } from "@mui/icons-material";
 import CustomPagination from "../_components/CustomPagination";
 import { customDatagridStyle } from "../../css";

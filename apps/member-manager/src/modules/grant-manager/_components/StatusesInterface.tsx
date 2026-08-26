@@ -13,7 +13,6 @@ import {
   AutocompleteInput,
   BooleanInput,
   Create,
-  DatagridConfigurable,
   List,
   NumberInput,
   RaRecord,
@@ -28,6 +27,7 @@ import {
   useRemoveFromStore,
   useUpdate,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import AddIcon from "@mui/icons-material/Add";
 import ColorWheel from "../../_components/ColorWheel";
 import { updateRecord } from "../../_helpers/updateRecord";

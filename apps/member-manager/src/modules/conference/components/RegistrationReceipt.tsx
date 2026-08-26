@@ -2,7 +2,6 @@ import React from "react";
 import {
   useShowContext,
   TextField,
-  Datagrid,
   ReferenceField,
   ReferenceArrayField,
   NumberField,
@@ -16,6 +15,8 @@ import { ISharedMeta } from "../types/IConference";
 import { formatNumber } from "../../../helpers/Formators";
 import { freeVendorAllowance } from "../helpers/freeVendorAllowance";
 import AttendeeTicketPriceField from "./AttendeeTicketPriceField";
+import { Datagrid } from "@orwa/entity-id";
+import { getDisplayEntityId } from "../../../helpers/strapiIds";
 
 // interface IRegistrant {
 //   id: number;
@@ -74,10 +75,10 @@ const RegistrationReceipt = () => {
       {/* Registration Details */}
       <Box mb={4}>
         <Grid container spacing={2} alignItems="center">
-          {record.id && (
+          {(getDisplayEntityId(record) ?? record.id) != null && (
             <Grid item xs={12} sm={6} md={4}>
               <Typography>
-                <strong>ID:</strong> {record.id}
+                <strong>ID:</strong> {getDisplayEntityId(record) ?? record.id}
               </Typography>
             </Grid>
           )}

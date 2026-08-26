@@ -10,11 +10,11 @@ import {
   BooleanField,
   useCreate,
   RaRecord,
-  DatagridConfigurable,
   useListContext,
   useNotify,
   ChipField,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Button } from '@mui/material';
 import { customDatagridStyle } from '../../../css';
 import { useCan } from '../../rbac-manager/useCan';

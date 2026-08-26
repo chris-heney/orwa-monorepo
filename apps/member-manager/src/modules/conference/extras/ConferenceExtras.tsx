@@ -2,7 +2,6 @@ import React, { useContext } from 'react';
 import {
   ChipField,
   Create,
-  DatagridConfigurable,
   NumberField,
   SimpleForm,
   SingleFieldList,
@@ -10,6 +9,7 @@ import {
   useCreate,
   useNotify,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { CurrencyOptions } from '../../../config/Settings';
 import { Button } from '@mui/material';
 import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';

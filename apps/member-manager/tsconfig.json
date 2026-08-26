@@ -22,7 +22,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@orwa/terms-gate": ["../../libs/terms-gate/src/index.ts"]
+      "@orwa/terms-gate": ["../../libs/terms-gate/src/index.ts"],
+      "@orwa/entity-id": ["src/fields/index.ts"]
     }
   },
   "include": ["src", "../../libs/terms-gate/src"]

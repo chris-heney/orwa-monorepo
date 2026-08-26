@@ -3,7 +3,6 @@ import {
   List,
   TextField,
   SimpleList,
-  DatagridConfigurable,
   ConfigurableDatagridColumn,
   useStore,
   ReferenceField,
@@ -16,6 +15,7 @@ import {
   Title,
   useDataProvider,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import CreateButton from '../../_components/CustomCreateButton';
 import React from 'react';
 import CustomExportFunction from '../../../helpers/custom-export-function';

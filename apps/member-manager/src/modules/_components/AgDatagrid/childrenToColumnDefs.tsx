@@ -2,6 +2,7 @@ import React from "react";
 import get from "lodash/get";
 import type { ColDef, ICellRendererParams, ValueGetterParams } from "ag-grid-community";
 import { RecordContextProvider } from "react-admin";
+import { getDisplayEntityId } from "../../../helpers/strapiIds";
 
 type FieldProps = {
   source?: string;
@@ -85,6 +86,9 @@ export const childrenToColumnDefs = (children: React.ReactNode): ColDef[] => {
         cellStyle,
         valueGetter: (params: ValueGetterParams) => {
           if (!params.data) return null;
+          if (source === "id" || source === "entityId") {
+            return getDisplayEntityId(params.data) ?? null;
+          }
           if (source) return get(params.data, source);
           return null;
         },

@@ -2,7 +2,6 @@ import React, { JSX } from 'react';
 import { Box } from '@mui/material';
 import {
   ChipField,
-  DatagridConfigurable,
   DateField,
   FunctionField,
   NumberField,
@@ -12,6 +11,7 @@ import {
   SingleFieldList,
   TextField,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { customDatagridStyle } from '../../../css';
 import CustomPagination from '../../_components/CustomPagination';
 import { useCan } from '../../rbac-manager/useCan';

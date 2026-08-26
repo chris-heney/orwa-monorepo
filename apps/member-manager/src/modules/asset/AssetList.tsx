@@ -6,7 +6,6 @@ import {
   TextField,
   SimpleList,
   BooleanField,
-  DatagridConfigurable,
   NumberField,
   ConfigurableDatagridColumn,
   useStore,
@@ -20,6 +19,7 @@ import {
   useListContext,
   useDataProvider,
 } from 'react-admin'
+import { DatagridConfigurable } from '@orwa/entity-id'
 import CustomExportFunction from '../../helpers/custom-export-function'
 import { CurrencyOptions } from '../../config/Settings'
 import CreateButton from '../_components/CustomCreateButton'

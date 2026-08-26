@@ -1,6 +1,7 @@
 import { Box, Button, Card, Divider, Grid, Theme, Typography, useMediaQuery } from '@mui/material'
 import React from 'react'
-import { AutocompleteInput, BooleanInput, Create, DatagridConfigurable, Edit, List, RaRecord, ReferenceInput, SimpleForm, TextField, TextInput, useCreate, useNotify } from 'react-admin'
+import { AutocompleteInput, BooleanInput, Create, Edit, List, RaRecord, ReferenceInput, SimpleForm, TextField, TextInput, useCreate, useNotify } from 'react-admin'
+import { DatagridConfigurable } from '@orwa/entity-id'
 import AddIcon from '@mui/icons-material/Add'
 import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { FieldValues } from 'react-hook-form'

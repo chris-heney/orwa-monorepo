@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  Datagrid,
   DateField,
   FunctionField,
   List,
   TextField,
   Title,
 } from 'react-admin';
+import { Datagrid } from "@orwa/entity-id";
 import CreateButton from '../_components/CustomCreateButton';
 import { useEditRowClick } from '../rbac-manager/useCan';
 import { Box, Theme } from '@mui/material';

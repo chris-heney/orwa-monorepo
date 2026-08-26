@@ -9,11 +9,11 @@ import {
   ExportButton,
   ConfigurableDatagridColumn,
   useStore,
-  DatagridConfigurable,
   SimpleList,
   useDataProvider,
   Title,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import CreateButton from '../_components/CustomCreateButton';
 import PageHeadingBar from '../_components/PageHeadingBar';
 import { useEditRowClick } from '../rbac-manager/useCan';

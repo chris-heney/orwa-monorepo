@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   TextField,
-  DatagridConfigurable,
   BooleanField,
   useStore,
   SimpleList,
@@ -12,6 +11,7 @@ import {
   FunctionField,
   Loading,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Box, Button, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import { CurrencyOptions } from '../../../config/Settings';

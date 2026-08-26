@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  DatagridConfigurable,
   FunctionField,
   List,
   RaRecord,
   TextField,
   CloneButton,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { useTheme } from '@mui/material/styles';
 import { useEmailManagementContext } from '../EmailManagementContextProvider';
 import { emailDatagridStyle } from '../emailDatagridStyle';

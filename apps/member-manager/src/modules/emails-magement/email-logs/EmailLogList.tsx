@@ -7,13 +7,13 @@ import {
   import { useTheme } from "@mui/material/styles";
   import React, { useState } from "react";
   import {
-    List,
-    RaRecord,
-    TextField,
-    FunctionField,
-    DatagridConfigurable,
-    ReferenceField,
-  } from "react-admin";
+  List,
+  RaRecord,
+  TextField,
+  FunctionField,
+  ReferenceField,
+} from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { useEmailManagementContext } from "../EmailManagementContextProvider";
 import { emailDatagridStyle } from "../emailDatagridStyle";
   

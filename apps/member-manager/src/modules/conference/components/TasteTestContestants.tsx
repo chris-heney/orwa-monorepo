@@ -1,7 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { Box, Button, Divider, Grid, Typography } from "@mui/material";
 import {
-  DatagridConfigurable,
   TextField,
   RaRecord,
   Edit,
@@ -21,6 +20,7 @@ import {
   required,
   useListContext,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
 import { ConferenceContext } from "../ConferenceContext";

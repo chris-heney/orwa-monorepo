@@ -1,5 +1,6 @@
 import React, { ComponentType } from 'react';
 import { RequireCan } from './RequireCan';
+import { getDisplayEntityId } from '../../helpers/strapiIds';
 
 /**
  * react-admin resource definition (the `{ list, edit, create, ... }` objects
@@ -49,6 +50,10 @@ export const guardResource = (
   resource: ResourceDefinition
 ): ResourceDefinition => ({
   ...resource,
+  recordRepresentation:
+    resource.recordRepresentation ??
+    ((record: { entityId?: unknown; id?: unknown }) =>
+      getDisplayEntityId(record) ?? record?.id),
   ...(resource.create ? { create: guardView('create', resource.create) } : {}),
   ...(resource.edit ? { edit: guardView('update', resource.edit) } : {}),
 });

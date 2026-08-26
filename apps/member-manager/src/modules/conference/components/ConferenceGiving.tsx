@@ -3,7 +3,6 @@ import {
   AutocompleteInput,
   BooleanInput,
   Create,
-  DatagridConfigurable,
   Edit,
   FormDataConsumer,
   NumberField,
@@ -18,6 +17,7 @@ import {
   useRemoveFromStore,
   useUpdate
 } from 'react-admin'
+import { DatagridConfigurable } from '@orwa/entity-id'
 import {
   Button,
   Card,

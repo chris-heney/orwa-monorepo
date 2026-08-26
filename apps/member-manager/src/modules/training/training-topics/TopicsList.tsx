@@ -7,7 +7,6 @@ import {
   SimpleList,
   ConfigurableDatagridColumn,
   useStore,
-  DatagridConfigurable,
   NumberField,
   RaRecord,
   useDataProvider,
@@ -15,6 +14,7 @@ import {
   ExportButton,
   SelectColumnsButton,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import CustomExportFunction from '../../../helpers/custom-export-function';
 import CreateButton from '../../_components/CustomCreateButton';
 import PageHeadingBar from '../../_components/PageHeadingBar';

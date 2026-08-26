@@ -3,7 +3,6 @@ import {
   AutocompleteArrayInput,
   ChipField,
   Create,
-  DatagridConfigurable,
   Edit,
   NumberField,
   NumberInput,
@@ -20,6 +19,7 @@ import {
   useRemoveFromStore,
   useUpdate,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import {
   Alert,
   Box,

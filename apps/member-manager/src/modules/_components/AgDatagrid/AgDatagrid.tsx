@@ -26,6 +26,7 @@ import {
 } from "react-admin";
 import { childrenToColumnDefs } from "./childrenToColumnDefs";
 import type { AgDatagridPrefs, AgDatagridProps } from "./types";
+import { ensureEntityIdColumn } from "../../../fields/ensureEntityIdColumn";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -98,8 +99,8 @@ const AgDatagrid = ({
 
   const fieldChildren = useMemo(
     () =>
-      React.Children.toArray(children).filter((child): child is FieldChild =>
-        React.isValidElement(child)
+      React.Children.toArray(ensureEntityIdColumn(children)).filter(
+        (child): child is FieldChild => React.isValidElement(child)
       ),
     [children]
   );

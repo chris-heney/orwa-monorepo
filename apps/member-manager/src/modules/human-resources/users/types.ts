@@ -4,7 +4,8 @@ export interface IRole {
   description: string;
 }
 export interface IUser {
-  id: number;
+  id: number | string;
+  entityId?: number;
   username: string;
   email: string;
   // Users can exist with no role assigned (legacy imports); guard every read.

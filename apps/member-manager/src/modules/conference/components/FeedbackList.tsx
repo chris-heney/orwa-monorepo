@@ -1,8 +1,8 @@
 import React from 'react'
 import {
   TextField,
-  DatagridConfigurable,
 } from 'react-admin'
+import { DatagridConfigurable } from '@orwa/entity-id'
 import { customDatagridStyle } from '../../../css'
 import CustomPagination from '../../_components/CustomPagination'
 

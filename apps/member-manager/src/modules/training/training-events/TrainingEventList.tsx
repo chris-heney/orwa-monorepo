@@ -6,7 +6,6 @@ import {
   TextField,
   BooleanField,
   DateField,
-  DatagridConfigurable,
   ConfigurableDatagridColumn,
   useStore,
   Pagination,
@@ -18,6 +17,7 @@ import {
   Title,
   useDataProvider,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import CreateButton from '../../_components/CustomCreateButton';
 import TrainingClassActionsButton from './components/EventListActionsPopUp';
 import TrainingEventListFilter from './components/EventListFilter';

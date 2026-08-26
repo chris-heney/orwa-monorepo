@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import {
-  DatagridConfigurable,
   TextField,
   ReferenceField,
   DateField,
@@ -21,6 +20,7 @@ import {
   required,
   useListContext,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Button, Chip, Divider, Grid, Typography } from '@mui/material';
 import { CurrencyOptions } from '../../../config/Settings';
 import { ConferenceContext } from '../ConferenceContext';

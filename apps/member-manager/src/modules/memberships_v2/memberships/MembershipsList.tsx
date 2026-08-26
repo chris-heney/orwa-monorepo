@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   TextField,
-  DatagridConfigurable,
   useStore,
   SimpleList,
   NumberField,
@@ -12,6 +11,7 @@ import {
   Loading,
   ChipField,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 // import { BulkUpdateFormButton } from '@react-admin/ra-form-layout'
 import { Box, Button, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';

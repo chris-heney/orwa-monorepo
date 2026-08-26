@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  DatagridConfigurable,
   TextField,
   RaRecord,
   Edit,
@@ -22,6 +21,7 @@ import {
   ReferenceField,
   useListFilterContext,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Button, Chip, Grid } from '@mui/material';
 import { useConferenceContext } from '../ConferenceContext';
 import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';

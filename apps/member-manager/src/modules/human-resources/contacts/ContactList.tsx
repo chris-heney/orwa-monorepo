@@ -2,12 +2,12 @@ import React from 'react';
 import {
   List,
   TextField,
-  DatagridConfigurable,
   SimpleList,
   FunctionField,
   EditButton,
   DateField,
 } from 'react-admin';
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { Box, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import CreateUserModal from '../users/CreateUserModal';

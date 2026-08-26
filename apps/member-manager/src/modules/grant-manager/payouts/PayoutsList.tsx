@@ -11,7 +11,7 @@ import {
   RaRecord,
   useListFilterContext,
 } from "react-admin";
-import { EditableDatagridConfigurable } from "@react-admin/ra-editable-datagrid";
+import { EditableDatagridConfigurable } from "@orwa/entity-id";
 import EditPayout from "./EditPayoutRowForm";
 import EditPayoutMobile from "./EditPayoutMobile";
 import PayoutShow from "./PayoutShow";

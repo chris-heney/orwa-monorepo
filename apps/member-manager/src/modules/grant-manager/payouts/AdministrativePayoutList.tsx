@@ -10,7 +10,7 @@ import {
 } from "react-admin";
 import { useGrantContext } from "../GrantContextProvider";
 import CustomPagination from "../../_components/CustomPagination";
-import { EditableDatagridConfigurable } from "@react-admin/ra-editable-datagrid";
+import { EditableDatagridConfigurable } from "@orwa/entity-id";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import SelectPayoutStatus from "./components/SelectPayoutStatus";
 import EditPayoutMobile from "./EditPayoutMobile";

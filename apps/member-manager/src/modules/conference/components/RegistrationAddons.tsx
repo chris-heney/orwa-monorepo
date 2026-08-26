@@ -4,7 +4,6 @@ import {
   BooleanInput,
   ChipField,
   Create,
-  DatagridConfigurable,
   Edit,
   NumberField,
   NumberInput,
@@ -21,6 +20,7 @@ import {
   useRemoveFromStore,
   useUpdate,
 } from "react-admin";
+import { DatagridConfigurable } from "@orwa/entity-id";
 import { CurrencyOptions } from "../../../config/Settings";
 import {
   Box,

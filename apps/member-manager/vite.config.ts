@@ -11,6 +11,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@orwa/terms-gate': path.resolve(__dirname, '../../libs/terms-gate/src/index.ts'),
+      '@orwa/entity-id': path.resolve(__dirname, 'src/fields/index.ts'),
     },
   },
   define: {
