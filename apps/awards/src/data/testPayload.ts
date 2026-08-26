@@ -25,7 +25,6 @@ export const testPayload: IAwardNominationPayload = {
     city: 'Norman',
     state: 'Oklahoma',
     zip: '73069',
-    county: 'Cleveland',
 
     // Nominator Information
     nominator_first_name: 'Maria',

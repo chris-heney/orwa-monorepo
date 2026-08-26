@@ -44,6 +44,52 @@ describe("mapAwardNominationPayload", () => {
     expect(mapped.award_name_printed).toBe("Ada RWD");
   });
 
+  it("omits empty or missing county and does not treat it as required", () => {
+    const withoutCounty = mapAwardNominationPayload({
+      nominee_name: "Pat",
+      email: "pat@example.com",
+      daytime_phone: "4055550000",
+      address: "2 Oak",
+      city: "Norman",
+      state: "OK",
+      zip: "73069",
+      system_name: "Norman",
+      justification: "Notes",
+      award_type: "Excellence in Operations",
+    } as any);
+    expect(withoutCounty).not.toHaveProperty("county");
+
+    const emptyCounty = mapAwardNominationPayload({
+      nominee_name: "Pat",
+      email: "pat@example.com",
+      daytime_phone: "4055550000",
+      address: "2 Oak",
+      city: "Norman",
+      state: "OK",
+      zip: "73069",
+      system_name: "Norman",
+      county: "",
+      justification: "Notes",
+      award_type: "Excellence in Operations",
+    } as any);
+    expect(emptyCounty).not.toHaveProperty("county");
+
+    const withCounty = mapAwardNominationPayload({
+      nominee_name: "Pat",
+      email: "pat@example.com",
+      daytime_phone: "4055550000",
+      address: "2 Oak",
+      city: "Norman",
+      state: "OK",
+      zip: "73069",
+      system_name: "Norman",
+      county: "Cleveland",
+      justification: "Notes",
+      award_type: "Excellence in Operations",
+    } as any);
+    expect(withCounty.county).toBe("Cleveland");
+  });
+
   it("does not invent a Date instance for empty dates", () => {
     const mapped = mapAwardNominationPayload({
       nominee_name: "Pat",

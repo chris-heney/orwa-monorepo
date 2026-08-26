@@ -36,6 +36,9 @@ export const mapAwardNominationPayload = (
   zip: payload.zip,
   system_name: payload.system_name,
   award_name_printed: resolveAwardNamePrinted(payload),
+  ...(typeof payload.county === "string" && payload.county.trim()
+    ? { county: payload.county.trim() }
+    : {}),
   nominator_first_name: payload.nominator_first_name,
   nominator_last_name: payload.nominator_last_name,
   nominator_address: payload.nominator_address,

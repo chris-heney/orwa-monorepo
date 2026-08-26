@@ -198,8 +198,6 @@ export interface IAwardNominationPayload {
   city: string;
   state: string;
   zip: string;
-  /** Legacy form field; not collected on the public nomination wizard. */
-  county?: string;
   
   // Nominator Information
   nominator_first_name?: string;
@@ -217,6 +215,8 @@ export interface IAwardNominationPayload {
   system_name: string;
   /** Printed line on the physical award (system or nominee, by award type). */
   award_name_printed?: string;
+  /** Optional; not collected on the public form and never required. */
+  county?: string;
   watersystem?: number | string;
   operation_start_date?: string | null;
   employment_date?: string | null;
