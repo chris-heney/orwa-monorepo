@@ -8,11 +8,18 @@ const path = require('path');
 const ROOT = process.cwd();
 const PID_FILE = path.join(ROOT, 'node_modules', '.cache', 'interactive-dev.pid');
 const SELF_PID = process.pid;
+const ARGV = process.argv.slice(2);
+const FLAG_CHECK_PORTS = ARGV.includes('--check-ports');
+const FLAG_FREE_PORTS = ARGV.includes('--free-ports');
+const CLI_APPS = ARGV.filter((arg) => !arg.startsWith('--'));
+const INTERACTIVE = !FLAG_CHECK_PORTS && !FLAG_FREE_PORTS;
 
-// Enable raw mode for keyboard input
-readline.emitKeypressEvents(process.stdin);
-if (process.stdin.isTTY) {
-  process.stdin.setRawMode(true);
+// Enable raw mode for keyboard input (interactive menu only)
+if (INTERACTIVE) {
+  readline.emitKeypressEvents(process.stdin);
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
 }
 
 // ANSI color codes
@@ -21,6 +28,7 @@ const colors = {
   lightBlueBg: '\x1b[104m',
   white: '\x1b[97m',
   yellow: '\x1b[33m',
+  red: '\x1b[31m',
   dim: '\x1b[2m',
 };
 
@@ -145,6 +153,27 @@ function getProtectedPids(processes) {
   return protectedPids;
 }
 
+function getProcessCwd(pid) {
+  try {
+    return fs.readlinkSync(`/proc/${pid}/cwd`);
+  } catch {
+    return '';
+  }
+}
+
+function getProcessCmdline(pid) {
+  try {
+    return fs.readFileSync(`/proc/${pid}/cmdline`, 'utf8').replace(/\0/g, ' ').trim();
+  } catch {
+    return '';
+  }
+}
+
+function isRepoProcess(pid) {
+  const cwd = getProcessCwd(pid);
+  return cwd === ROOT || cwd.startsWith(`${ROOT}${path.sep}`);
+}
+
 function killPids(pids, signal = 'SIGTERM') {
   const unique = [...new Set(pids)].filter(
     (pid) => pid && pid !== SELF_PID && isProcessAlive(pid)
@@ -157,8 +186,12 @@ function killPids(pids, signal = 'SIGTERM') {
     } catch {
       try {
         process.kill(pid, signal);
-      } catch {
-        // already gone
+      } catch (error) {
+        if (error && error.code === 'EPERM') {
+          console.log(
+            `${colors.yellow}   PID ${pid} is not killable from WSL (${error.code})${colors.reset}`
+          );
+        }
       }
     }
   }
@@ -206,18 +239,45 @@ function getPidsListeningOnPort(port) {
   return [...pids];
 }
 
-function isPortBindable(port) {
-  const parsed = Number(port);
-  if (!Number.isInteger(parsed) || parsed <= 0) return true;
+function pythonBindCheck(code) {
   try {
-    execSync(
-      `python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1', ${parsed})); s.close()"`,
-      { stdio: 'ignore', timeout: 3000 }
-    );
+    execSync(`python3 -c ${JSON.stringify(code)}`, { stdio: 'ignore', timeout: 3000 });
     return true;
   } catch {
     return false;
   }
+}
+
+function isPortBindable(port) {
+  const parsed = Number(port);
+  if (!Number.isInteger(parsed) || parsed <= 0) return true;
+  // Vite may bind 127.0.0.1, 0.0.0.0, or ::1 (host: 'localhost').
+  if (
+    !pythonBindCheck(
+      `import socket; s=socket.socket(); s.bind(('127.0.0.1', ${parsed})); s.close()`
+    )
+  ) {
+    return false;
+  }
+  if (
+    !pythonBindCheck(
+      `import socket; s=socket.socket(); s.bind(('0.0.0.0', ${parsed})); s.close()`
+    )
+  ) {
+    return false;
+  }
+  const ipv6Available = pythonBindCheck(
+    'import socket; socket.socket(socket.AF_INET6, socket.SOCK_STREAM).close()'
+  );
+  if (
+    ipv6Available &&
+    !pythonBindCheck(
+      `import socket; s=socket.socket(socket.AF_INET6, socket.SOCK_STREAM); s.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1); s.bind(('::1', ${parsed})); s.close()`
+    )
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function extractBalancedObjectBody(content, key) {
@@ -236,19 +296,71 @@ function extractBalancedObjectBody(content, key) {
   return null;
 }
 
-function runPowershell(script) {
+function decodePsOutput(buf) {
+  if (!buf) return '';
+  if (!Buffer.isBuffer(buf)) return String(buf);
+  if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) {
+    return buf.toString('utf16le');
+  }
+  if (buf.length >= 2 && buf[1] === 0x00 && buf[3] === 0x00) {
+    return buf.toString('utf16le');
+  }
+  return buf.toString('utf8');
+}
+
+function canRunPowershell() {
+  try {
+    execSync('command -v powershell.exe', { stdio: 'ignore' });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function runPowershell(script, { timeout = 45000, label = 'powershell' } = {}) {
+  if (!canRunPowershell()) return '';
   try {
     const encoded = Buffer.from(script, 'utf16le').toString('base64');
-    return execSync(
+    const out = execSync(
       `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${encoded}`,
       {
-        encoding: 'utf8',
-        timeout: 20000,
+        encoding: 'buffer',
+        timeout,
         stdio: ['ignore', 'pipe', 'pipe'],
       }
-    ).trim();
+    );
+    return decodePsOutput(out).trim();
+  } catch (error) {
+    const stdout = decodePsOutput(error.stdout).trim();
+    const stderr = decodePsOutput(error.stderr).trim();
+    if (error.killed) {
+      console.log(
+        `${colors.yellow}   ${label} timed out after ${timeout}ms${colors.reset}`
+      );
+    } else if (stderr) {
+      const first = stderr.split(/\r?\n/).find(Boolean);
+      if (first) {
+        console.log(`${colors.dim}   ${label}: ${first}${colors.reset}`);
+      }
+    }
+    return stdout;
+  }
+}
+
+function parseWindowsListenerRows(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw.replace(/^\uFEFF/, ''));
+    return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+      port: Number(row.port),
+      pid: Number(row.pid),
+      state: String(row.state || ''),
+      name: String(row.name || ''),
+      commandLine: String(row.commandLine || ''),
+      hasWindow: Boolean(row.hasWindow),
+    }));
   } catch {
-    return '';
+    return [];
   }
 }
 
@@ -258,39 +370,76 @@ function getWindowsPortListeners(ports) {
 
   const script = `
 $ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
 $ports = @(${uniquePorts.join(',')})
-$rows = @()
-$conns = Get-NetTCPConnection -LocalPort $ports
+$rows = New-Object System.Collections.Generic.List[object]
+function Add-Row($port, $pid, $state, $name, $cmd, $hasWindow) {
+  $rows.Add([PSCustomObject]@{
+    port = [int]$port
+    pid = [int]$pid
+    state = [string]$state
+    name = [string]$name
+    commandLine = [string]$cmd
+    hasWindow = [bool]$hasWindow
+  })
+}
+function Enrich($pid) {
+  $gp = Get-Process -Id $pid -ErrorAction SilentlyContinue
+  $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$pid"
+  $hasWindow = $false
+  if ($gp) { $hasWindow = ($gp.MainWindowHandle -ne [IntPtr]::Zero) }
+  @{ name = $cim.Name; cmd = $cim.CommandLine; hasWindow = $hasWindow }
+}
+$conns = Get-NetTCPConnection -LocalPort $ports -State Listen,TimeWait
 foreach ($conn in $conns) {
-  $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$($conn.OwningProcess)"
-  $rows += [PSCustomObject]@{
-    port = $conn.LocalPort
-    pid = $conn.OwningProcess
-    state = [string]$conn.State
-    name = $proc.Name
-    commandLine = $proc.CommandLine
+  $info = Enrich $conn.OwningProcess
+  Add-Row $conn.LocalPort $conn.OwningProcess $conn.State $info.name $info.cmd $info.hasWindow
+}
+foreach ($line in (netstat -ano -p tcp)) {
+  if ($line -notmatch '^\\s*TCP\\s+(\\S+):(\\d+)\\s+\\S+\\s+(LISTENING|TIME_WAIT)\\s+(\\d+)') { continue }
+  $port = [int]$Matches[2]
+  if ($ports -notcontains $port) { continue }
+  $pid = [int]$Matches[4]
+  $dup = $false
+  foreach ($row in $rows) {
+    if ($row.port -eq $port -and $row.pid -eq $pid) { $dup = $true; break }
   }
+  if ($dup) { continue }
+  $info = Enrich $pid
+  Add-Row $port $pid $Matches[3] $info.name $info.cmd $info.hasWindow
 }
 if ($rows.Count -eq 0) { '' } else { $rows | ConvertTo-Json -Compress }
 `.trim();
 
-  const raw = runPowershell(script);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
-      port: Number(row.port),
-      pid: Number(row.pid),
-      state: String(row.state || ''),
-      name: String(row.name || ''),
-      commandLine: String(row.commandLine || ''),
-    }));
-  } catch {
-    return [];
+  return parseWindowsListenerRows(
+    runPowershell(script, { label: 'Windows port query' })
+  );
+}
+
+let excludedRangesCache = null;
+function getHyperVExcludedRanges() {
+  if (excludedRangesCache) return excludedRangesCache;
+  const raw = runPowershell(
+    '[Console]::OutputEncoding = [Text.UTF8Encoding]::new(); netsh interface ipv4 show excludedportrange protocol=tcp',
+    { label: 'netsh excludedportrange' }
+  );
+  const ranges = [];
+  for (const line of String(raw || '').split(/\r?\n/)) {
+    const match = line.trim().match(/^(\d+)\s+(\d+)/);
+    if (match) ranges.push({ start: Number(match[1]), end: Number(match[2]) });
   }
+  excludedRangesCache = ranges;
+  return ranges;
+}
+
+function excludedRangeFor(port) {
+  return getHyperVExcludedRanges().find((range) => port >= range.start && port <= range.end) || null;
 }
 
 function isSafeWindowsPortOwner(listener) {
+  const pid = Number(listener.pid);
+  if (!Number.isInteger(pid) || pid <= 4) return false;
+
   const name = String(listener.name || '')
     .replace(/\.exe$/i, '')
     .toLowerCase();
@@ -362,16 +511,25 @@ function freeWindowsHeldPorts(portEntries) {
   const stillBusy = portEntries.filter(({ port }) => !isPortBindable(port));
   if (stillBusy.length === 0) return [];
 
+  const waitable = stillBusy.filter(({ port }) => {
+    if (excludedRangeFor(port)) return false;
+    const holders = listening.filter((row) => row.port === port);
+    if (holders.some((row) => !isSafeWindowsPortOwner(row))) return false;
+    return timeWait.some((row) => row.port === port) || holders.length === 0;
+  });
+
+  if (waitable.length === 0) return stillBusy;
+
   // Mirrored WSL treats Windows TIME_WAIT as EADDRINUSE even with no listener.
   console.log(
-    `   Waiting for ${stillBusy
+    `   Waiting for ${waitable
       .map((entry) => `${entry.app}:${entry.port}`)
       .join(', ')} to become bindable (Windows TIME_WAIT)...`
   );
   const deadline = Date.now() + 90000;
   while (Date.now() < deadline) {
     sleepSync(1000);
-    if (stillBusy.every(({ port }) => isPortBindable(port))) return [];
+    if (waitable.every(({ port }) => isPortBindable(port))) break;
   }
 
   return portEntries.filter(({ port }) => !isPortBindable(port));
@@ -437,6 +595,22 @@ function findExistingServePids(selectedApps) {
       continue;
     }
 
+    // Orphans often have a bare `vite` / `run-executor.js` cmdline with no app
+    // path — identify them by cwd under this repo instead.
+    if (
+      isRepoProcess(proc.pid) &&
+      (/\bvite\b/.test(args) ||
+        args.includes('run-executor.js') ||
+        args.includes('fork.js') ||
+        args.includes('strapi develop'))
+    ) {
+      for (const pid of collectDescendantPids(proc.pid, processes)) {
+        if (!protectedPids.has(pid)) matched.add(pid);
+      }
+      matched.add(proc.pid);
+      continue;
+    }
+
     for (const app of selectedSet) {
       const appPath = `apps/${app}`;
       const isAppServe =
@@ -457,8 +631,80 @@ function findExistingServePids(selectedApps) {
   return [...matched].filter((pid) => !protectedPids.has(pid));
 }
 
-function stopExistingDevProcesses(selectedApps) {
-  console.log('\n🔍 Checking for existing/orphaned dev processes...');
+function collectPortEntries(selectedApps) {
+  return selectedApps
+    .map((app) => ({ app, port: discoverAppPort(app) }))
+    .filter((entry) => entry.port);
+}
+
+function warnDuplicatePorts(portEntries) {
+  const byPort = new Map();
+  for (const entry of portEntries) {
+    if (!byPort.has(entry.port)) byPort.set(entry.port, []);
+    byPort.get(entry.port).push(entry.app);
+  }
+  const duplicates = [...byPort.entries()].filter(([, names]) => names.length > 1);
+  if (duplicates.length === 0) return;
+  console.log(
+    `${colors.yellow}   Warning: multiple selected apps share a port (second will fail or hop onto another app):${colors.reset}`
+  );
+  for (const [port, names] of duplicates) {
+    console.log(`     ${port}: ${names.join(', ')}`);
+  }
+}
+
+function printPortDiagnosis(busyEntries) {
+  console.error(
+    `\n${colors.red}❌ Cannot bind configured port(s). Not starting Nx.${colors.reset}`
+  );
+  for (const { app, port } of busyEntries) {
+    const wsl = getPidsListeningOnPort(port);
+    const range = excludedRangeFor(port);
+    const win = getWindowsPortListeners([port]);
+    console.error(`\n   ${app}:${port}`);
+    if (wsl.length > 0) {
+      for (const pid of wsl) {
+        console.error(`     WSL PID ${pid}: ${getProcessCmdline(pid) || '(no cmdline)'}`);
+      }
+    } else {
+      console.error('     No WSL listener (ss/lsof empty)');
+    }
+    if (range) {
+      console.error(
+        `     Windows Hyper-V/WinNAT excluded range ${range.start}-${range.end}. ` +
+          'No process owns this port; it cannot be killed from WSL.'
+      );
+      console.error(
+        '     Admin workaround (disrupts WSL networking): net stop winnat && net start winnat'
+      );
+    }
+    const listens = win.filter((row) => /^listen/i.test(row.state));
+    if (listens.length > 0) {
+      for (const listener of listens) {
+        const safe = isSafeWindowsPortOwner(listener)
+          ? 'would auto-kill'
+          : 'NOT auto-killed';
+        console.error(
+          `     Windows ${listener.name || 'unknown'} PID ${listener.pid} (${listener.state}, ${safe})`
+        );
+        if (!isSafeWindowsPortOwner(listener) && /cursor|code/i.test(listener.name || '')) {
+          console.error(
+            "     Unforward this port in Cursor's Ports tab, or stop only the " +
+              'Cursor NodeService utility — never the main Cursor window.'
+          );
+        }
+      }
+    } else if (!range) {
+      console.error(
+        '     No Windows socket either (Get-NetTCPConnection/netstat empty). ' +
+          'Mirrored WSL often hides the real holder on the Windows side.'
+      );
+    }
+  }
+}
+
+function stopExistingDevProcesses(selectedApps, { quiet = false } = {}) {
+  if (!quiet) console.log('\n🔍 Checking for existing/orphaned dev processes...');
 
   const processes = listProcesses();
   const protectedPids = getProtectedPids(processes);
@@ -480,9 +726,7 @@ function stopExistingDevProcesses(selectedApps) {
   }
 
   // Free configured ports for selected apps (covers orphans that lost their cmdline)
-  const ports = selectedApps
-    .map((app) => ({ app, port: discoverAppPort(app) }))
-    .filter((entry) => entry.port);
+  const ports = collectPortEntries(selectedApps);
 
   for (const { app, port } of ports) {
     const listeners = getPidsListeningOnPort(port);
@@ -543,9 +787,10 @@ function stopExistingDevProcesses(selectedApps) {
         .map((entry) => `${entry.app}:${entry.port}`)
         .join(', ')}${colors.reset}`
     );
-  } else {
+  } else if (!quiet) {
     console.log('   ✅ Previous processes cleared');
   }
+  return stillBusy;
 }
 
 function shutdown(exitCode = 0) {
@@ -660,6 +905,8 @@ function startApps() {
   console.log('🚀 ORWA Interactive Development Environment');
   console.log('==========================================');
 
+  const portEntries = collectPortEntries(selectedApps);
+  warnDuplicatePorts(portEntries);
   stopExistingDevProcesses(selectedApps);
 
   console.log(`\n✅ Starting Docker services...`);
@@ -670,6 +917,15 @@ function startApps() {
     console.error('❌ Failed to start Docker services:', error.message);
     process.exit(1);
   }
+
+  // Cursor/Windows can re-grab auto-forwards while compose is coming up.
+  console.log('\n🔍 Re-checking ports after Docker...');
+  const stillBusy = stopExistingDevProcesses(selectedApps, { quiet: true });
+  if (stillBusy.length > 0) {
+    printPortDiagnosis(stillBusy);
+    process.exit(1);
+  }
+  console.log('   ✅ Configured ports are bindable');
 
   const projectsParam = selectedApps.join(',');
   console.log(`\n🚀 Starting selected applications: ${projectsParam}`);
@@ -726,6 +982,47 @@ function startApps() {
     }
     process.exit(0);
   });
+}
+
+function selectedAppsFromCli() {
+  if (CLI_APPS.length === 0) return apps.map((app) => app.name);
+  const known = new Set(apps.map((app) => app.name));
+  const unknown = CLI_APPS.filter((name) => !known.has(name));
+  if (unknown.length > 0) {
+    console.error(`Unknown app(s): ${unknown.join(', ')}`);
+    process.exit(1);
+  }
+  return CLI_APPS;
+}
+
+if (FLAG_CHECK_PORTS) {
+  const selected = selectedAppsFromCli();
+  const ports = collectPortEntries(selected);
+  warnDuplicatePorts(ports);
+  console.log('Port check:');
+  for (const { app, port } of ports) {
+    const bindable = isPortBindable(port);
+    const wsl = getPidsListeningOnPort(port);
+    const range = excludedRangeFor(port);
+    const bits = [
+      bindable ? 'FREE' : 'BUSY',
+      wsl.length ? `wsl-pid=${wsl.join(',')}` : '',
+      range ? `hyperv=${range.start}-${range.end}` : '',
+    ].filter(Boolean);
+    console.log(`  ${app}:${port} ${bits.join(' ')}`);
+  }
+  process.exit(ports.every(({ port }) => isPortBindable(port)) ? 0 : 1);
+}
+
+if (FLAG_FREE_PORTS) {
+  const selected = selectedAppsFromCli();
+  warnDuplicatePorts(collectPortEntries(selected));
+  const stillBusy = stopExistingDevProcesses(selected);
+  if (stillBusy.length > 0) {
+    printPortDiagnosis(stillBusy);
+    process.exit(1);
+  }
+  process.exit(0);
 }
 
 process.on('SIGINT', () => shutdown(130));

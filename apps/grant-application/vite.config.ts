@@ -12,6 +12,8 @@ export default defineConfig(() => ({
   server: {
     port: 4200,
     host: 'localhost',
+    // Hopping steals member-manager :4205 (and other strict ports) when 4200 is busy.
+    strictPort: true,
     fs: {
       allow: ['..', '../../node_modules']
     }
