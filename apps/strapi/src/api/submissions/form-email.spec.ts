@@ -84,6 +84,25 @@ describe("all_fields HTML", () => {
     expect(html).not.toContain('"applicant_first_name"');
   });
 
+  it("puts the section rule between groups, not under the heading", () => {
+    const html = buildAllFieldsHtml([
+      { section: "Nominee", label: "Name", value: "Alex" },
+      { section: "Nominee", label: "Address", value: "1 Main St" },
+      { section: "Nominator", label: "Name", value: "Sam" },
+    ]);
+    const nomineeIdx = html.indexOf("Nominee");
+    const nominatorIdx = html.indexOf("Nominator");
+    const ruleIdx = html.indexOf("border-top:2px solid #1a4a7a");
+    expect(nomineeIdx).toBeGreaterThan(-1);
+    expect(nominatorIdx).toBeGreaterThan(nomineeIdx);
+    expect(ruleIdx).toBeGreaterThan(nomineeIdx);
+    expect(ruleIdx).toBeLessThan(nominatorIdx);
+    expect(html).not.toMatch(/border-bottom:2px solid #1a4a7a/);
+    expect(html).toContain("mso-line-height-rule:exactly");
+    expect(html.indexOf("border-top:2px solid #1a4a7a")).toBe(ruleIdx);
+    expect(html.indexOf("border-top:2px solid #1a4a7a", ruleIdx + 1)).toBe(-1);
+  });
+
   it("escapes HTML and marks media as Attached", () => {
     const html = buildScholarshipVariables({
       applicant_first_name: "<b>Jane</b>",

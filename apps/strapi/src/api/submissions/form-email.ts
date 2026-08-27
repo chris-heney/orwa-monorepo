@@ -130,6 +130,23 @@ export const formatAllFieldsValue = (
   return escapeHtml(String(value)).replace(/\r?\n/g, "<br />");
 };
 
+/** Mid-gap space on each side of the section rule. Outlook honors td height + &nbsp;. */
+const SECTION_GAP_PX = 28;
+const SECTION_RULE = "2px solid #1a4a7a";
+
+/** Outlook-safe vertical spacer. Margin/padding on <tr> is ignored by Word/Outlook. */
+const spacerRow = (heightPx: number) =>
+  `<tr><td colspan="2" height="${heightPx}" style="height:${heightPx}px;margin:0;padding:0;border:0;font-size:1px;line-height:${heightPx}px;mso-line-height-rule:exactly;">&nbsp;</td></tr>`;
+
+/** Horizontal rule sitting between sections — not under the heading. */
+const sectionSeparatorRow = () =>
+  `<tr><td colspan="2" height="2" style="height:2px;margin:0;padding:0;border:0;border-top:${SECTION_RULE};font-size:1px;line-height:2px;mso-line-height-rule:exactly;">&nbsp;</td></tr>`;
+
+const sectionHeadingRow = (title: string) =>
+  `<tr><td colspan="2" style="padding:0 8px 14px;border:0;font-weight:bold;font-size:15px;line-height:20px;">${escapeHtml(
+    title
+  )}</td></tr>`;
+
 export const buildAllFieldsHtml = (rows: AllFieldsRow[]) => {
   const parts = [
     '<table width="99%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#222222;">',
@@ -137,12 +154,14 @@ export const buildAllFieldsHtml = (rows: AllFieldsRow[]) => {
   let currentSection: string | undefined;
   for (const row of rows) {
     if (row.section && row.section !== currentSection) {
+      const isFirstSection = currentSection === undefined;
       currentSection = row.section;
-      parts.push(
-        `<tr><td colspan="2" style="padding:14px 8px 6px;border-bottom:2px solid #1a4a7a;font-weight:bold;font-size:15px;">${escapeHtml(
-          currentSection
-        )}</td></tr>`
-      );
+      if (!isFirstSection) {
+        parts.push(spacerRow(SECTION_GAP_PX));
+        parts.push(sectionSeparatorRow());
+        parts.push(spacerRow(SECTION_GAP_PX));
+      }
+      parts.push(sectionHeadingRow(currentSection));
     }
     parts.push(
       `<tr><td style="padding:8px;border-bottom:1px solid #eeeeee;width:38%;font-weight:bold;vertical-align:top;">${escapeHtml(
