@@ -7,9 +7,17 @@ export const AWARD_STATUSES = [
   { id: "Not Selected", name: "Not Selected" },
 ];
 
-export const calendarYearChoices = () => {
-  const current = new Date().getFullYear();
-  return ["all" as const, ...Array.from({ length: 8 }, (_, i) => current - i)];
+/** Award cycle year = next annual conference (calendar year + 1). */
+export const nominationCycleYear = (now: Date = new Date()): number =>
+  now.getFullYear() + 1;
+
+/** All years, then cycle (current+1), current calendar year, and 7 prior years. */
+export const calendarYearChoices = (now: Date = new Date()) => {
+  const current = now.getFullYear();
+  const cycle = nominationCycleYear(now);
+  const lookback = Array.from({ length: 8 }, (_, i) => current - i);
+  const years = [cycle, ...lookback.filter((year) => year !== cycle)];
+  return ["all" as const, ...years];
 };
 
 export const buildAwardListFilter = (

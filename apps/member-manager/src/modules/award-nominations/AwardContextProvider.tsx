@@ -1,5 +1,6 @@
 import React, { createContext, useContext, PropsWithChildren } from "react";
 import { useStore } from "react-admin";
+import { nominationCycleYear } from "./helpers/listFilters";
 
 export type AwardTab = "summary" | "nominations";
 
@@ -22,7 +23,7 @@ export const useAwardContext = () =>
   useContext(AwardContext) ?? {
     selectedTab: "summary" as AwardTab,
     setSelectedTab: () => {},
-    year: "all" as const,
+    year: nominationCycleYear(),
     setYear: () => {},
     status: "all",
     setStatus: () => {},
@@ -38,8 +39,8 @@ const AwardContextProvider = ({ children }: PropsWithChildren) => {
     "summary"
   );
   const [year, setYear] = useStore<number | "all">(
-    "orwa-awards-year-filter",
-    new Date().getFullYear()
+    "orwa-awards-cycle-year",
+    nominationCycleYear()
   );
   const [status, setStatus] = useStore("orwa-awards-nomination-status", "all");
   const [search, setSearch] = useStore("orwa-awards-nomination-search", "");
