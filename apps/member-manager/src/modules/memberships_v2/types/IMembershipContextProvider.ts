@@ -33,6 +33,9 @@ export interface IMembershipContextProvider {
     >
     invoicesFilters: MembershipFilterValues
     setInvoicesFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
+    /** Hide invoices that already have a payment_date. Persisted via RaStore / user prefs. */
+    hideMarkedPayments: boolean
+    setHideMarkedPayments: React.Dispatch<React.SetStateAction<boolean>>
     membershipExtraFilters: MembershipFilterValues
     setMembershipExtraFilters: React.Dispatch<React.SetStateAction<MembershipFilterValues>>
     membershipFilters: MembershipFilterValues

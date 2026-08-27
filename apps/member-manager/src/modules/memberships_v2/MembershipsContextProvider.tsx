@@ -41,6 +41,8 @@ export const MembershipContext = createContext<IMembershipContextProvider>({
   setLinkNewContactToWatersystemId: () => {},
   invoicesFilters: {},
   setInvoicesFilters: () => {},
+  hideMarkedPayments: true,
+  setHideMarkedPayments: () => {},
   membershipExtraFilters: {},
   setMembershipExtraFilters: () => {},
   membershipFilters: {},
@@ -71,6 +73,15 @@ const MembershipsContextProvider = ({ children }: PropsWithChildren) => {
     useStore<MembershipFilterValues>("associates-filter", {});
   const [invoicesFiltersRaw, setInvoicesFilters] =
     useStore<MembershipFilterValues>("invoices-filter", {});
+  const [hideMarkedPayments, setHideMarkedPayments] = useStore<boolean>(
+    "invoices-hide-marked-payments",
+    true
+  );
+  // Persist the default so user-preferences sync remembers the checked state
+  // even before the user toggles the checkbox.
+  useEffect(() => {
+    setHideMarkedPayments((prev) => (typeof prev === "boolean" ? prev : true));
+  }, [setHideMarkedPayments]);
   const [membershipExtraFiltersRaw, setMembershipExtraFilters] =
     useStore<MembershipFilterValues>("membership-extra-filter", {});
   const [membershipFiltersRaw, setMembershipFilters] =
@@ -140,6 +151,8 @@ const MembershipsContextProvider = ({ children }: PropsWithChildren) => {
         setLinkNewContactToWatersystemId,
         invoicesFilters,
         setInvoicesFilters,
+        hideMarkedPayments,
+        setHideMarkedPayments,
         membershipExtraFilters,
         setMembershipExtraFilters,
         membershipFilters,
