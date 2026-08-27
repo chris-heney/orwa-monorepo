@@ -106,7 +106,7 @@ const ReviewStep: React.FC = () => {
                 )}
                 {renderField("Email", awardNominationFormPayload.nominator_email)}
                 {renderField("Phone", awardNominationFormPayload.nominator_phone)}
-                {renderField("Street Address", awardNominationFormPayload.nominator_address)}
+                {renderField("Mailing Address", awardNominationFormPayload.nominator_address)}
                 {renderField("Address Line 2", awardNominationFormPayload.nominator_address_2)}
                 {renderField("City", awardNominationFormPayload.nominator_city)}
                 {renderField("State", awardNominationFormPayload.nominator_state)}
@@ -169,7 +169,7 @@ const ReviewStep: React.FC = () => {
           </Grid>
 
           <Grid item xs={12}>
-            {renderSection("Justification", (
+            {renderSection("What made the nominee deserving of this award", (
               <Paper sx={{ p: 2, backgroundColor: '#f5f5f5' }}>
                 <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                   {awardNominationFormPayload.justification ||
@@ -227,18 +227,6 @@ const ReviewStep: React.FC = () => {
             ))}
           </Grid>
 
-          <Grid item xs={12}>
-            {renderSection("Supporting Documents", (
-              <Box>
-                <Typography variant="body1" sx={{ mb: 1 }}>
-                  Supporting Documents: {awardNominationFormPayload.supporting_documents?.length || 0} file(s)
-                </Typography>
-                {awardNominationFormPayload.supporting_documents?.map((file, index) => (
-                  <Chip key={index} label={file.title} size="small" sx={{ mr: 1, mb: 1 }} />
-                ))}
-              </Box>
-            ))}
-          </Grid>
         </Grid>
 
         <Paper sx={{ p: 2, mt: 3, backgroundColor: '#fff3e0' }}>

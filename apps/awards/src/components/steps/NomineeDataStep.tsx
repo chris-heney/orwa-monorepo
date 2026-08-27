@@ -174,7 +174,7 @@ const NomineeDataStep: React.FC = () => {
 
           <Grid item xs={12}>
             <TextInput
-              label="Street Address"
+              label="Mailing Address"
               name="address"
               required
               placeholder="123 Main Street"

@@ -52,7 +52,7 @@ const NominatorDataStep: React.FC = () => {
           </Grid>
           <Grid item xs={12}>
             <TextInput
-              label="Street Address"
+              label="Mailing Address"
               name="nominator_address"
               required
               placeholder="123 Main Street"
