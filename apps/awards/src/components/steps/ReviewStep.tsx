@@ -229,16 +229,33 @@ const ReviewStep: React.FC = () => {
 
         </Grid>
 
-        <Paper sx={{ p: 2, mt: 3, backgroundColor: '#fff3e0' }}>
+        <Paper sx={{ p: 2, mt: 3, backgroundColor: '#fff3e0', textAlign: 'left', overflow: 'visible' }}>
           <Typography variant="subtitle1" gutterBottom>
             Important Notes:
           </Typography>
-          <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+          <Box
+            component="ol"
+            sx={{
+              m: 0,
+              pl: 3.25,
+              listStyleType: 'decimal',
+              listStylePosition: 'outside',
+              '& > li': {
+                display: 'list-item',
+                listStyleType: 'decimal',
+                listStylePosition: 'outside',
+                mb: 0.75,
+                pl: 0.25,
+                '&:last-child': { mb: 0 },
+              },
+            }}
+          >
             <li>Please ensure all information is accurate before submitting</li>
             <li>Once submitted, you will receive a confirmation email</li>
-            <li>The review committee will evaluate all nominations</li>
-            <li>Winners will be announced at the annual conference</li>
-          </Typography>
+            <li>The awards committee will evaluate all nominations and select the award recipients</li>
+            <li>Winners will be announced at the annual conference in November</li>
+            <li>Nominator will be the only person notified for any winner or non-winner</li>
+          </Box>
         </Paper>
       </CardContent>
     </Card>

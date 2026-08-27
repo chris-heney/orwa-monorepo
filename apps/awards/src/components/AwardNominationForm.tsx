@@ -86,18 +86,21 @@ const ScholarshipApplicationForm = () => {
               {/* Additional Information */}
               <div className="bg-blue-50 rounded-lg p-6 mb-8">
                 <h2 className="text-lg font-semibold text-blue-900 mb-3">What happens next?</h2>
-                <ul className="text-left text-blue-800 space-y-2">
-                  <li>• Your nomination will be reviewed by the awards committee</li>
-                  <li>• You will receive an email confirmation shortly</li>
-                  <li>• We will contact you if we need any additional information</li>
-                  <li>• Award decisions will be announced by the specified deadline</li>
-                </ul>
+                <ol
+                  className="text-left text-blue-800 space-y-2"
+                  style={{ listStyleType: 'decimal', listStylePosition: 'outside', paddingLeft: '1.625rem', margin: 0 }}
+                >
+                  <li style={{ display: 'list-item' }}>You will receive an email confirmation shortly</li>
+                  <li style={{ display: 'list-item' }}>We will contact you if we need any additional information</li>
+                  <li style={{ display: 'list-item' }}>Your nomination will be reviewed by the awards committee</li>
+                  <li style={{ display: 'list-item' }}>Awards will be presented at the ORWA Annual Conference in April</li>
+                </ol>
               </div>
               
               {/* Contact Information */}
               <div className="text-sm text-gray-500">
                 <p>If you have any questions, please contact us at:</p>
-                <p className="font-semibold">awards@orwa.org</p>
+                <p className="font-semibold">office@orwa.org</p>
               </div>
             </div>
           </div>
