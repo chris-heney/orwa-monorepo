@@ -24,6 +24,10 @@ import {
   watersystemCounty,
   watersystemName,
 } from "../helpers/recordDisplay";
+import {
+  AWARD_SELECTED_IDS_KEY,
+  AwardRowPrintButton,
+} from "./AwardPrintButton";
 
 const AG_PREFS_KEY = "agGrid.award-nominations";
 
@@ -61,7 +65,13 @@ const AwardNominationList = () => {
           ".RaList-actions": { p: 0, minHeight: 0 },
         }}
       >
-        <AgDatagrid preferenceKey={AG_PREFS_KEY} rowClick="show">
+        <AgDatagrid
+          preferenceKey={AG_PREFS_KEY}
+          rowClick="show"
+          rowSelection
+          selectionStoreKey={AWARD_SELECTED_IDS_KEY}
+          rowActions={(record) => <AwardRowPrintButton record={record} />}
+        >
           <TextField source="nominee_name" label="Nominee" />
           <TextField source="email" label="Email" />
           <TextField source="system_name" label="System" />

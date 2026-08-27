@@ -31,9 +31,8 @@ export default defineConfig({
     port: 4205,
     strictPort: true,
     hmr: {
-      // No explicit host: the client falls back to window.location.hostname,
-      // so HMR works whether the app is opened via localhost or a LAN/WSL IP.
-      clientPort: 4205,
+      // No explicit host/clientPort: the client uses window.location so HMR
+      // follows the actual listen port (4205, or whatever Vite was started on).
       overlay: true,
     },
     watch: {

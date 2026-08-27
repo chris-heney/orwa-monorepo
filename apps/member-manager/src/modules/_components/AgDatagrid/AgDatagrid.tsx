@@ -14,6 +14,7 @@ import {
   themeQuartz,
   type ColDef,
   type GridReadyEvent,
+  type ICellRendererParams,
   type SortChangedEvent,
 } from "ag-grid-community";
 import { AgGridReact } from "ag-grid-react";
@@ -50,6 +51,7 @@ const AgDatagrid = ({
   rowSelection = false,
   selectionStoreKey,
   omit: omitProp,
+  rowActions,
 }: AgDatagridProps) => {
   const theme = useTheme();
   const translate = useTranslate();
@@ -136,8 +138,6 @@ const AgDatagrid = ({
   ]);
 
   const columnDefs = useMemo<ColDef[]>(() => {
-    if (columnDefsProp?.length) return columnDefsProp;
-
     const ordered =
       columnIds === undefined
         ? fieldChildren.filter((child) => {
@@ -149,8 +149,34 @@ const AgDatagrid = ({
             .map((index) => fieldChildren[Number(index)])
             .filter(Boolean);
 
-    return childrenToColumnDefs(ordered);
-  }, [children, columnDefsProp, columnIds, fieldChildren, omitProp]);
+    const base = columnDefsProp?.length
+      ? columnDefsProp
+      : childrenToColumnDefs(ordered);
+    if (!rowActions) return base;
+    return [
+      ...base,
+      {
+        colId: "__rowActions",
+        headerName: "Actions",
+        sortable: false,
+        resizable: false,
+        pinned: "right",
+        lockPinned: true,
+        lockVisible: true,
+        suppressHeaderMenuButton: true,
+        width: 88,
+        minWidth: 72,
+        maxWidth: 110,
+        cellStyle: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        cellRenderer: (params: ICellRendererParams) =>
+          params.data ? rowActions(params.data) : null,
+      } satisfies ColDef,
+    ];
+  }, [children, columnDefsProp, columnIds, fieldChildren, omitProp, rowActions]);
 
   // Hydrate page size once, then persist later changes only.
   useEffect(() => {

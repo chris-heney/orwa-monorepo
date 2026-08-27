@@ -40,4 +40,6 @@ export type AgDatagridProps = {
    */
   rowSelection?: boolean;
   selectionStoreKey?: string;
+  /** Pinned-right Actions column; not registered with SelectColumnsButton. */
+  rowActions?: (record: Record<string, unknown>) => React.ReactNode;
 };

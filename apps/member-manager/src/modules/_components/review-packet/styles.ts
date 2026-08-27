@@ -48,7 +48,10 @@ export const emailFieldSx: SxProps<Theme> = {
 export const sectionCardSx: SxProps<Theme> = {
   p: 2,
   m: 0,
-  height: "100%",
+  height: "auto",
+  flexShrink: 0,
+  overflow: "visible",
+  // Square cards: do not use overflow hidden to clip a header strip.
   borderRadius: 0,
   bgcolor: "background.paper",
   color: "text.primary",
