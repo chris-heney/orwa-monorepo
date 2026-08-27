@@ -68,7 +68,7 @@ const PersonalDataStep = () => {
         <Grid size={{ xs: 12 }}>
           <TextInput
             name="applicant_street"
-            label="Street Address"
+            label="Mailing Address"
             required
           />
         </Grid>

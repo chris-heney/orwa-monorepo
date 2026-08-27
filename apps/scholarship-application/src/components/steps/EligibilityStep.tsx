@@ -86,7 +86,7 @@ const EligibilityStep = () => {
             <Grid size={{ xs: 12 }}>
               <TextInput
                 name="eligible_participant_address.street"
-                label="Street Address"
+                label="Mailing Address"
                 required
               />
             </Grid>
