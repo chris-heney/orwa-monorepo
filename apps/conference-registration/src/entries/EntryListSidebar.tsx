@@ -2,7 +2,10 @@
 import { useNotify } from "mj-react-form-builder";
 import { useSubmitRegistration2 } from "../data/API";
 import { IRegistrationPayload } from "../types/types";
-import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
+import {
+  isUnresolvedUpload,
+  processAndUploadFiles,
+} from "../helpers/processAndUploadFiles";
 import {
   useRegistrationOptions,
   useRegistrationSource,
@@ -46,6 +49,17 @@ const EntryListSidebar = () => {
 
     try {
       const processedPayload = await processAndUploadFiles(payload, notify);
+
+      if (
+        (processedPayload.sponsors ?? []).length > 0 &&
+        isUnresolvedUpload(processedPayload.logo)
+      ) {
+        notify(
+          "Logo upload failed. Please re-attach the sponsor logo and try again.",
+          "error"
+        );
+        return;
+      }
 
       // Format card expiration from MM/YY to YYYY-MM
       const cardExpiration = (() => {

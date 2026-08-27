@@ -217,11 +217,20 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
       });
     }
   }, [
-    conferenceStatus,
-    ticketsStatus,
-    extrasStatus,
-    sponsorshipStatus,
+    associatesData,
     associatesStatus,
+    conferenceData,
+    conferenceId,
+    conferenceStatus,
+    extrasData,
+    extrasStatus,
+    registrationAddonsData,
+    registrationAddonsStatus,
+    sponsorshipData,
+    sponsorshipStatus,
+    ticketsData,
+    ticketsStatus,
+    watersystemsData,
     watersystemsStatus,
   ]);
 

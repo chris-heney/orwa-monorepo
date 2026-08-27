@@ -14,7 +14,10 @@ import { useNotify } from "mj-react-form-builder";
 import { IRegistrationPayload, ITicketPayload } from "../types/types";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { applyFreeVendorPricing } from "../helpers/applyFreeVendorPricing";
-import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
+import {
+  isUnresolvedUpload,
+  processAndUploadFiles,
+} from "../helpers/processAndUploadFiles";
 import {
   clearWizardDraft,
   setStepKeyInUrl,
@@ -426,7 +429,25 @@ const StepNavigation = () => {
 
     setIsSubmitting(true);
 
-    const processedPayload = await processAndUploadFiles(payload, notify);
+    let processedPayload: typeof payload;
+    try {
+      processedPayload = await processAndUploadFiles(payload, notify);
+    } catch {
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (
+      (processedPayload.sponsors ?? []).length > 0 &&
+      isUnresolvedUpload(processedPayload.logo)
+    ) {
+      notify(
+        "Logo upload failed. Please re-attach the sponsor logo and try again.",
+        "error"
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     // Apply the checkout-level Promotional Emails Consent to Attendee
     // tickets only. Vendor/Contestant tickets never require (or send) this
