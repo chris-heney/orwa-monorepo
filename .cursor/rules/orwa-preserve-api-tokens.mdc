@@ -1,0 +1,33 @@
+---
+description: Never delete or rotate API tokens, Strapi tokens, or .env keys unless the user explicitly asks
+alwaysApply: true
+---
+
+# Preserve API tokens and .env keys
+
+Never delete, revoke, rotate, or overwrite local API tokens, Strapi API tokens, or app `.env` keys unless the user **explicitly** asks.
+
+## Allowed cleanup
+
+- E2E / temporary users created for headless login or verification **may** be deleted after verify.
+- Test artifacts (screenshots in `tmp/`, `.playwright-mcp/`) are not tokens — leave them unstaged as usual. Write verification screenshots to `tmp/` (gitignored).
+
+## Never do as cleanup
+
+- Do **not** delete or rotate Strapi API tokens (admin UI, DB `strapi_api_tokens`, or hashed access keys).
+- Do **not** clear or rewrite app `.env` / `.env.development` / `.env.production` `VITE_API_KEY` (or similar) values.
+- Do **not** wipe production or local token tables, even to “fix 401s” or tidy unused keys.
+
+## If a token is missing
+
+- Create a **new** token or reuse an existing unused one.
+- Leave every existing token in place. Do not destroy, rotate, or truncate the table to make room.
+
+```text
+# ❌ BAD — cleanup / “reset tokens”
+DELETE FROM strapi_api_tokens;
+# or rotating VITE_API_KEY in apps/*/.env* without an explicit ask
+
+# ✅ GOOD — missing key only
+# create or reuse one token; write it into the app .env; leave all other tokens untouched
+```

@@ -2,8 +2,10 @@
 
 # compiled output
 dist
-tmp
 out-tsc
+
+# Nx compile output + local testing artifacts (screenshots, dumps)
+tmp
 
 # dependencies
 node_modules
@@ -61,3 +63,6 @@ apps/*/.env.production
 
 # Local DB dumps (never commit)
 .local-dumps/
+
+# Local machine-only secrets (never commit): WP application passwords, etc.
+.local-secrets/

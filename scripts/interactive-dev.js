@@ -206,6 +206,177 @@ function getPidsListeningOnPort(port) {
   return [...pids];
 }
 
+function isPortBindable(port) {
+  const parsed = Number(port);
+  if (!Number.isInteger(parsed) || parsed <= 0) return true;
+  try {
+    execSync(
+      `python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1', ${parsed})); s.close()"`,
+      { stdio: 'ignore', timeout: 3000 }
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function extractBalancedObjectBody(content, key) {
+  const match = content.match(new RegExp(`${key}\\s*:\\s*\\{`));
+  if (!match || match.index == null) return null;
+  const openAt = match.index + match[0].length - 1;
+  let depth = 0;
+  for (let i = openAt; i < content.length; i++) {
+    const ch = content[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return content.slice(openAt + 1, i);
+    }
+  }
+  return null;
+}
+
+function runPowershell(script) {
+  try {
+    const encoded = Buffer.from(script, 'utf16le').toString('base64');
+    return execSync(
+      `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${encoded}`,
+      {
+        encoding: 'utf8',
+        timeout: 20000,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }
+    ).trim();
+  } catch {
+    return '';
+  }
+}
+
+function getWindowsPortListeners(ports) {
+  const uniquePorts = [...new Set(ports)].filter((port) => Number.isInteger(port) && port > 0);
+  if (uniquePorts.length === 0) return [];
+
+  const script = `
+$ErrorActionPreference = 'SilentlyContinue'
+$ports = @(${uniquePorts.join(',')})
+$rows = @()
+$conns = Get-NetTCPConnection -LocalPort $ports
+foreach ($conn in $conns) {
+  $proc = Get-CimInstance Win32_Process -Filter "ProcessId=$($conn.OwningProcess)"
+  $rows += [PSCustomObject]@{
+    port = $conn.LocalPort
+    pid = $conn.OwningProcess
+    state = [string]$conn.State
+    name = $proc.Name
+    commandLine = $proc.CommandLine
+  }
+}
+if ($rows.Count -eq 0) { '' } else { $rows | ConvertTo-Json -Compress }
+`.trim();
+
+  const raw = runPowershell(script);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+      port: Number(row.port),
+      pid: Number(row.pid),
+      state: String(row.state || ''),
+      name: String(row.name || ''),
+      commandLine: String(row.commandLine || ''),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+function isSafeWindowsPortOwner(listener) {
+  const name = String(listener.name || '')
+    .replace(/\.exe$/i, '')
+    .toLowerCase();
+  if (['node', 'wslrelay', 'vite'].includes(name)) return true;
+
+  // WSL mirrored mode: Cursor/VS Code auto-forward leftover sockets are owned
+  // by the shared-process utility (NodeService), not the main window.
+  // Killing the main Cursor/Code window would close the editor — never do that.
+  if (name === 'cursor' || name === 'code' || name === 'code - insiders') {
+    const cmd = String(listener.commandLine || '');
+    return cmd.includes('--type=utility') && cmd.includes('node.mojom.NodeService');
+  }
+  return false;
+}
+
+function killWindowsPids(pids) {
+  const unique = [...new Set(pids)].filter((pid) => Number.isInteger(pid) && pid > 0);
+  if (unique.length === 0) return;
+  runPowershell(
+    `$ErrorActionPreference = 'SilentlyContinue'; ${unique
+      .map((pid) => `Stop-Process -Id ${pid} -Force`)
+      .join('; ')}`
+  );
+}
+
+function freeWindowsHeldPorts(portEntries) {
+  const busy = portEntries.filter(({ port }) => !isPortBindable(port));
+  if (busy.length === 0) return [];
+
+  const listeners = getWindowsPortListeners(busy.map((entry) => entry.port));
+  const listening = listeners.filter((row) => /^listen$/i.test(row.state));
+  const timeWait = listeners.filter((row) => /timewait/i.test(row.state));
+
+  if (listeners.length === 0) {
+    for (const { app, port } of busy) {
+      console.log(
+        `${colors.yellow}   Port ${port} (${app}) is not bindable, but no WSL or Windows socket was found${colors.reset}`
+      );
+    }
+  }
+
+  const safePids = new Set();
+  for (const listener of listening) {
+    const app =
+      portEntries.find((entry) => entry.port === listener.port)?.app || 'unknown';
+    const label = `${listener.name || 'unknown'} PID ${listener.pid}`;
+    if (isSafeWindowsPortOwner(listener)) {
+      console.log(
+        `   Port ${listener.port} (${app}) held by Windows ${label} — stopping it`
+      );
+      safePids.add(listener.pid);
+    } else {
+      console.log(
+        `${colors.yellow}   Port ${listener.port} (${app}) held by Windows ${label} (not auto-killed)${colors.reset}`
+      );
+    }
+  }
+
+  if (timeWait.length > 0) {
+    const ports = [...new Set(timeWait.map((row) => row.port))].join(', ');
+    console.log(`   Windows TIME_WAIT still occupying port(s) ${ports}`);
+  }
+
+  if (safePids.size > 0) {
+    killWindowsPids([...safePids]);
+    sleepSync(600);
+  }
+
+  const stillBusy = portEntries.filter(({ port }) => !isPortBindable(port));
+  if (stillBusy.length === 0) return [];
+
+  // Mirrored WSL treats Windows TIME_WAIT as EADDRINUSE even with no listener.
+  console.log(
+    `   Waiting for ${stillBusy
+      .map((entry) => `${entry.app}:${entry.port}`)
+      .join(', ')} to become bindable (Windows TIME_WAIT)...`
+  );
+  const deadline = Date.now() + 90000;
+  while (Date.now() < deadline) {
+    sleepSync(1000);
+    if (stillBusy.every(({ port }) => isPortBindable(port))) return [];
+  }
+
+  return portEntries.filter(({ port }) => !isPortBindable(port));
+}
+
 function discoverAppPort(appName) {
   if (appName === 'strapi') {
     for (const envFile of ['.env', '.env.development', '.env.local']) {
@@ -221,9 +392,8 @@ function discoverAppPort(appName) {
     const configPath = path.join(ROOT, 'apps', appName, fileName);
     if (!fs.existsSync(configPath)) continue;
     const content = fs.readFileSync(configPath, 'utf8');
-    const serverBlock = content.match(/server\s*:\s*\{([\s\S]*?)\}/);
-    const scope = serverBlock ? serverBlock[1] : content;
-    const match = scope.match(/port\s*:\s*(\d+)/);
+    const serverBlock = extractBalancedObjectBody(content, 'server') || content;
+    const match = serverBlock.match(/port\s*:\s*(\d+)/);
     if (match) return Number(match[1]);
   }
 
@@ -331,37 +501,48 @@ function stopExistingDevProcesses(selectedApps) {
   }
 
   if (pidsToKill.size === 0) {
-    console.log('   No conflicting processes found');
-    return;
+    console.log('   No conflicting WSL processes found');
+  } else {
+    const pidList = [...pidsToKill];
+    console.log(
+      `   Stopping ${pidList.length} process(es): ${pidList.slice(0, 12).join(', ')}${
+        pidList.length > 12 ? ', …' : ''
+      }`
+    );
+
+    killPids(pidList, 'SIGTERM');
+    forceKillPids(pidList);
+    clearPidFile();
+
+    // Brief wait so TIME_WAIT / TIME_WAIT-like binds can clear
+    sleepSync(500);
+
+    const stillBusyWsl = ports.filter(
+      ({ port }) => getPidsListeningOnPort(port).length > 0
+    );
+    if (stillBusyWsl.length > 0) {
+      console.log(
+        `${colors.yellow}   Warning: WSL ports still busy after cleanup: ${stillBusyWsl
+          .map((entry) => `${entry.app}:${entry.port}`)
+          .join(', ')}${colors.reset}`
+      );
+      for (const { port } of stillBusyWsl) {
+        killPids(getPidsListeningOnPort(port), 'SIGKILL');
+      }
+      sleepSync(300);
+    }
   }
 
-  const pidList = [...pidsToKill];
-  console.log(
-    `   Stopping ${pidList.length} process(es): ${pidList.slice(0, 12).join(', ')}${
-      pidList.length > 12 ? ', …' : ''
-    }`
-  );
-
-  killPids(pidList, 'SIGTERM');
-  forceKillPids(pidList);
-  clearPidFile();
-
-  // Brief wait so TIME_WAIT / TIME_WAIT-like binds can clear
-  sleepSync(500);
-
-  const stillBusy = ports.filter(
-    ({ port }) => getPidsListeningOnPort(port).length > 0
-  );
+  // ss/lsof miss Windows-owned sockets under WSL mirrored networking.
+  // Cursor auto-forwards stay bound on 127.0.0.1 after the WSL vite dies,
+  // so a bind() test is required — not just a WSL listener list.
+  const stillBusy = freeWindowsHeldPorts(ports);
   if (stillBusy.length > 0) {
     console.log(
-      `${colors.yellow}   Warning: ports still busy after cleanup: ${stillBusy
+      `${colors.yellow}   Warning: ports still not bindable: ${stillBusy
         .map((entry) => `${entry.app}:${entry.port}`)
         .join(', ')}${colors.reset}`
     );
-    for (const { port } of stillBusy) {
-      killPids(getPidsListeningOnPort(port), 'SIGKILL');
-    }
-    sleepSync(300);
   } else {
     console.log('   ✅ Previous processes cleared');
   }
