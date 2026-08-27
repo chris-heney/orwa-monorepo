@@ -64,12 +64,14 @@ describe("conference registration matrix", () => {
   let updated: Record<string, any[]>;
   let nextId: number;
   let service: Record<string, any>;
+  let emailSend: ReturnType<typeof vi.fn>;
   let controller: ReturnType<typeof createController>;
 
   beforeEach(() => {
     created = {};
     updated = {};
     nextId = 1000;
+    emailSend = vi.fn(async () => undefined);
     findOneById.mockReset();
     findOneById.mockImplementation(async (uid: string, id: number | string) => {
       if (uid === "api::conference.conference") return conference;
@@ -121,6 +123,19 @@ describe("conference registration matrix", () => {
           ],
         };
       }
+      if (
+        uid === "api::conference-sponsorship.conference-sponsorship" &&
+        (Number(id) === 19 || String(id) === "19")
+      ) {
+        return {
+          id: 19,
+          documentId: "golf-hole",
+          name: "Golf Hole",
+          amount: 150,
+          available: 16,
+          allow_custom_amount: false,
+        };
+      }
       return null;
     });
 
@@ -168,7 +183,7 @@ describe("conference registration matrix", () => {
         findMany: vi.fn(async () => []),
       }),
       plugins: {
-        email: { services: { email: { send: vi.fn(async () => undefined) } } },
+        email: { services: { email: { send: emailSend } } },
       },
     };
 
@@ -180,6 +195,51 @@ describe("conference registration matrix", () => {
     await controller.registration(ctx, vi.fn());
     expect(ctx.body).toMatchObject({ result: "success" });
   };
+
+  it("creates a Sponsor-only invoice even when the logo is an un-uploaded blob", async () => {
+    await submit({
+      ...basePayload("Sponsor"),
+      registration_type: "Sponsor",
+      paymentType: "Invoice",
+      organization: "BancFirst",
+      sponsors: [{ id: 19, name: "Golf Hole", amount: 150 }],
+      logo: [
+        {
+          src: "blob:https://orwa.org/35a2b7cc-2a8e-4f75-af63-7d6733400da6",
+          title: "BF TrustInvesment logo Blue.jpg",
+          rawFile: {},
+        },
+      ],
+      paymentData: {
+        ...basePayload("Sponsor").paymentData,
+        amount: 150,
+        billingAddress: {
+          ...basePayload("Sponsor").paymentData.billingAddress,
+          email: "randy.mcdaniel@bancfirst.bank",
+        },
+      },
+    });
+
+    const sponsor = created["api::conference-sponsor.conference-sponsor"][0];
+    expect(sponsor).toMatchObject({
+      organization: "BancFirst",
+      email: "matrix-sponsor@example.invalid",
+      amount: 150,
+    });
+    expect(sponsor.logo).toBeUndefined();
+    expect(created["api::invoice.invoice"][0]).toMatchObject({
+      context: "conference-registration",
+      resource: "conference-registrations",
+      company: "BancFirst",
+      payment_method: "Invoice",
+      amount: 150,
+    });
+    expect(emailSend).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: "ORWA Fall Conference Sponsorship Invoice — BancFirst",
+      })
+    );
+  });
 
   it("creates one Vendor registration with its booth relation", async () => {
     await submit({

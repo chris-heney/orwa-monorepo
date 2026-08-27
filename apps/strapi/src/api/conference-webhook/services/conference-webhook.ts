@@ -443,12 +443,45 @@ export default ({ strapi }) => {
         registrationExtrasIds || []
       );
 
+      const invoiceBanner =
+        paymentType === "Invoice"
+          ? `
+            <div style="border:2px solid #000;padding:12px;margin:0 0 16px;">
+              <div style="font-weight:800;font-size:16px;">INVOICE</div>
+              <p style="margin:8px 0;">
+                This ${
+                  sponsors && sponsors.length > 0
+                    ? "sponsorship"
+                    : "registration"
+                } was submitted as <strong>Pay by Invoice</strong>.
+                Please remit payment to ORWA for the amount due.
+                The ORWA office has been copied on this email.
+              </p>
+              <div><strong>Amount due:</strong> ${currencyFormatter.format(
+                Number(paymentData?.amount) || 0
+              )}</div>
+              ${
+                sponsors && sponsors.length > 0
+                  ? `<div><strong>Sponsorship:</strong> ${sponsors
+                      .map((sponsor) => sponsor.name)
+                      .join(", ")}</div>`
+                  : ""
+              }
+            </div>
+          `
+          : "";
+
       // Generate the HTML
       return `
         <div>
+            ${invoiceBanner}
             <h3>
                 <span class="il">ORWA ${conferenceData.name}</span>
-                <span class="il">Registration</span> Details
+                <span class="il">${
+                  sponsors && sponsors.length > 0
+                    ? "Sponsorship"
+                    : "Registration"
+                }</span> Details
             </h3>
             <div>
             <label style="font-weight:800">

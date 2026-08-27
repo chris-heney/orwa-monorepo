@@ -23,6 +23,11 @@ import {
   SponsorAmountError,
   type SponsorshipCatalogRow,
 } from "../helpers/normalizeSponsors";
+import { toMediaId } from "../helpers/mediaId";
+import {
+  conferenceNotificationRecipients,
+  conferenceNotificationSubject,
+} from "../helpers/conferenceEmail";
 
 /**
  * Conference webhook controller
@@ -213,6 +218,8 @@ export default ({ strapi }) => {
           }
         }
 
+        let registrationId: number | string | undefined;
+
         // Only proceed with new registration if not a resubmission or no admin options
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
           // Log form data
@@ -316,7 +323,6 @@ export default ({ strapi }) => {
 
           const items = extras.concat(registrationAddons);
 
-          let registrationId: number | string | undefined;
           let contestantIds: number[] = [];
 
           if (isContestantOnlyCheckout) {
@@ -381,7 +387,7 @@ export default ({ strapi }) => {
                         paymentType === "Card" ? "Card" : paymentType,
                       type: registration_type,
                       organization,
-                      sponsorships: sponsors.map(
+                      sponsorships: (sponsors ?? []).map(
                         (sponsor: ISponsorEntity) => sponsor.id
                       ),
                       address: {
@@ -446,7 +452,7 @@ export default ({ strapi }) => {
                         paymentType === "Card" ? "Card" : paymentType,
                       type: registration_type,
                       organization,
-                      sponsorships: sponsors.map(
+                      sponsorships: (sponsors ?? []).map(
                         (sponsor: ISponsorEntity) => sponsor.id
                       ),
                       address: {
@@ -472,72 +478,93 @@ export default ({ strapi }) => {
 
           registrationId = newRegistration.id;
 
-          // Handle Water Taste Test Contestants
-          await handleWaterTasteTestContestants(
-            registrationAddons, 
-            registrant, 
-            conference, 
-            organization,
-            watersystem, 
-            registrationId
+          // Downstream writes must not abort the confirmation email / invoice.
+          // BancFirst's Sponsor-only invoice (Aug 19) created four registrations
+          // then died in handleSponsors on an un-uploaded logo blob — no email.
+          await runSafely("water-taste-test", () =>
+            handleWaterTasteTestContestants(
+              registrationAddons,
+              registrant,
+              conference,
+              organization,
+              watersystem,
+              registrationId
+            )
           );
 
-          // Handle Sponsors
-          if (sponsors.length > 0) {
-            await handleSponsors(
-              sponsors, 
-              conference, 
-              registrationId, 
-              registrant, 
-              organization,
-              logo
+          if ((sponsors ?? []).length > 0) {
+            await runSafely("sponsors", () =>
+              handleSponsors(
+                sponsors,
+                conference,
+                registrationId,
+                registrant,
+                organization,
+                logo
+              )
             );
           }
 
-          // Handle Attendees
-          await handleAttendees(
-            tickets, 
-            conference, 
-            registrationId, 
-            registrationSource, 
-            organization
+          await runSafely("attendees", () =>
+            handleAttendees(
+              tickets,
+              conference,
+              registrationId,
+              registrationSource,
+              organization
+            )
           );
 
-          // Handle Booths
-          await handleBooths(
-            booths, 
-            conference, 
-            registrationId, 
-            organization,
-            conferenceData
+          await runSafely("booths", () =>
+            handleBooths(
+              booths,
+              conference,
+              registrationId,
+              organization,
+              conferenceData
+            )
           );
 
-          // Handle Contestants
-          contestantIds = await handleContestants(
-            tickets, 
-            conference, 
-            registrationId, 
-            registrationSource, 
-            organization,
-            conferenceData
-          );
+          await runSafely("contestants", async () => {
+            contestantIds = await handleContestants(
+              tickets,
+              conference,
+              registrationId,
+              registrationSource,
+              organization,
+              conferenceData
+            );
+          });
 
-          // Handle Team Creation
           if (team && contestantIds.length > 0) {
-            await handleTeamCreation(
-              team, 
-              conference, 
-              registrationId, 
-              contestantIds
+            await runSafely("team", () =>
+              handleTeamCreation(
+                team,
+                conference,
+                registrationId,
+                contestantIds
+              )
             );
           }
           }
         }
 
-        // Send emails
+        if (paymentType === "Invoice" && registrationId != null) {
+          await runSafely("invoice", () =>
+            createConferenceInvoice({
+              registrationId,
+              paymentData,
+              registrant,
+              organization,
+              paymentType,
+              body: ctx.request.body,
+            })
+          );
+        }
+
         await handleEmailNotifications(
-          ctx, 
-          conferenceData, 
+          ctx,
+          conferenceData,
           adminOptions
         );
 
@@ -584,6 +611,59 @@ export default ({ strapi }) => {
     }
   }
 
+  async function runSafely(label: string, fn: () => Promise<unknown>) {
+    try {
+      await fn();
+    } catch (err) {
+      console.error(`Registration step failed (${label}):`, err);
+    }
+  }
+
+  async function createConferenceInvoice({
+    registrationId,
+    paymentData,
+    registrant,
+    organization,
+    paymentType,
+    body,
+  }: {
+    registrationId: number | string;
+    paymentData: any;
+    registrant: any;
+    organization: string;
+    paymentType: string;
+    body: any;
+  }) {
+    const { test: _testToken, ...safeData } = body ?? {};
+    await strapi.documents("api::invoice.invoice").create({
+      data: coerceToSchema("api::invoice.invoice", {
+        amount: paymentData?.amount ?? 0,
+        context: "conference-registration",
+        resource: "conference-registrations",
+        entity_id: registrationId,
+        email:
+          paymentData?.billingAddress?.email?.trim() ||
+          registrant?.email ||
+          "",
+        company: organization,
+        payment_method: paymentType === "Card" ? "Card" : "Invoice",
+        data: {
+          ...safeData,
+          paymentData: safeData.paymentData
+            ? {
+                ...safeData.paymentData,
+                cardNumber: null,
+                expirationDate: null,
+                cardCode: null,
+              }
+            : null,
+        },
+        year: currentYear,
+        payment_date: paymentType === "Card" ? new Date().toISOString() : null,
+      }),
+    });
+  }
+
   /**
    * Handles sponsor registrations
    */
@@ -596,6 +676,7 @@ export default ({ strapi }) => {
     logo
   ) {
     const total = sponsors.reduce((acc, sponsor) => acc + sponsor.amount, 0);
+    const logoId = toMediaId(logo);
 
     await strapi.documents("api::conference-sponsor.conference-sponsor").create({
       data: coerceToSchema("api::conference-sponsor.conference-sponsor", {
@@ -605,6 +686,7 @@ export default ({ strapi }) => {
         phone: registrant.phone,
         email: registrant.email,
         organization: organization,
+        sponsorships: sponsors.map((sponsor: ISponsorEntity) => sponsor.id),
         sponsorship_items: sponsors.map(
           (sponsor: ISponsorEntity, index: number) => ({
             key: sponsor.name + " " + index,
@@ -614,14 +696,18 @@ export default ({ strapi }) => {
           })
         ),
         amount: total ?? 0,
-        logo,
+        ...(logoId != null ? { logo: logoId } : {}),
       }),
     });
 
     // Update available sponsorships
     for (const sponsor of sponsors) {
       const sponsorData = await findOneById("api::conference-sponsorship.conference-sponsorship", sponsor.id);
-      
+      if (!sponsorData?.documentId) {
+        console.error("Sponsorship catalog row missing after purchase", sponsor.id);
+        continue;
+      }
+
       await strapi.documents("api::conference-sponsorship.conference-sponsorship").update({
         documentId: sponsorData.documentId,
 
@@ -914,58 +1000,73 @@ export default ({ strapi }) => {
   ) {
     const html = await service.generateEmailHTML(ctx); // Full HTML generation in the service
 
-    const { registrant } = ctx.request.body;
+    const { registrant, paymentType, paymentData, sponsors, organization } =
+      ctx.request.body;
+    const subject = conferenceNotificationSubject({
+      conferenceName: conferenceData.name,
+      organization,
+      paymentType,
+      hasSponsors: Array.isArray(sponsors) && sponsors.length > 0,
+    });
 
-    const emailPayloadRegistrant = {
-      to: registrant.email,
-      from: "office@orwa.org",
-      subject: `ORWA ${conferenceData.name} Registration`,
-      html,
+    const sendOne = async (
+      to: string,
+      from: string
+    ) => {
+      try {
+        await strapi.plugins["email"].services.email.send({
+          to,
+          from,
+          subject,
+          html,
+        });
+        try {
+          await strapi.documents("api::email-log.email-log").create({
+            data: { html, to, from },
+          });
+        } catch (logErr) {
+          console.error("email-log write failed:", logErr);
+        }
+      } catch (err) {
+        console.error(`Conference email failed (${to}):`, err);
+      }
     };
 
-    const emailPayloadOffice = {
-      to: "office@orwa.org",
-      from: "website@orwa.org",
-      subject: `ORWA ${conferenceData.name} Registration`,
-      html,
-    };
-
-    const myEmailPayload = {
-      to: "marcosje2005@gmail.com",
-      from: "website@orwa.org",
-      subject: `ORWA ${conferenceData.name} Registration`,
-      html,
-    };
-
-    // Always send email to developer
-    await strapi.plugins["email"].services.email.send(myEmailPayload);
+    // Developer copy is best-effort and must not block office/registrant mail.
+    await sendOne("marcosje2005@gmail.com", "website@orwa.org");
 
     if (adminOptions) {
       const { registrantNotification, adminNotification, customEmail } = adminOptions as AdminOptions;
 
-      if (registrantNotification && !customEmail) {
-        await strapi.plugins["email"].services.email.send(emailPayloadRegistrant);
-      }
-
-      if (adminNotification && !customEmail) {
-        await strapi.plugins["email"].services.email.send(emailPayloadOffice);
-      }
-
       if (customEmail) {
-        const emails = (customEmail as string).split(",");
-
-        for (const email of emails) {
-          await strapi.plugins["email"].services.email.send({
-            to: email.trim(),
-            from: "website@orwa.org",
-            subject: `ORWA ${conferenceData.name} Registration`,
-            html,
-          });
+        for (const email of (customEmail as string).split(",")) {
+          const trimmed = email.trim();
+          if (trimmed) await sendOne(trimmed, "website@orwa.org");
         }
+        return;
       }
-    } else {
-      await strapi.plugins["email"].services.email.send(emailPayloadRegistrant);
-      await strapi.plugins["email"].services.email.send(emailPayloadOffice);    
+
+      if (registrantNotification && registrant?.email) {
+        await sendOne(registrant.email, "office@orwa.org");
+      }
+
+      if (adminNotification) {
+        await sendOne("office@orwa.org", "website@orwa.org");
+      }
+      return;
+    }
+
+    const recipients = conferenceNotificationRecipients({
+      registrantEmail: registrant?.email,
+      billingEmail: paymentData?.billingAddress?.email,
+      conferenceRecipient: conferenceData?.recipient_email,
+    });
+
+    for (const to of recipients) {
+      await sendOne(
+        to,
+        to === "office@orwa.org" ? "website@orwa.org" : "office@orwa.org"
+      );
     }
   }
 };
