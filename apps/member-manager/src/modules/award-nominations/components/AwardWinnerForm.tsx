@@ -17,6 +17,7 @@ import {
   ReviewToolbar,
   reviewFormSx,
 } from "../../_components/review-packet";
+import { nominationCycleYear } from "../helpers/listFilters";
 import { winnerImageUrl, type AwardWinnerRecord } from "../helpers/winnerImage";
 
 const AWARD_BACK = "/orwa-awards/dashboard";
@@ -42,23 +43,17 @@ const CurrentPhoto = () => {
   );
 };
 
-const WinnerTitle = () => {
-  const record = useRecordContext<AwardWinnerRecord>();
-  if (!record?.title) return <>Add Award Winner</>;
-  return (
-    <>
-      {record.award_year} {record.title}
-    </>
-  );
-};
-
 const AwardWinnerForm = () => {
   const record = useRecordContext<AwardWinnerRecord>();
 
   return (
     <SimpleForm
       sx={reviewFormSx}
-      defaultValues={{ is_published: true, sort_order: 0 }}
+      defaultValues={{
+        is_published: true,
+        sort_order: 0,
+        award_year: nominationCycleYear(),
+      }}
       toolbar={<ReviewToolbar redirect={AWARD_BACK} />}
     >
       <ReviewPageBar
@@ -120,9 +115,23 @@ const AwardWinnerForm = () => {
               <ImageInput
                 source="photo"
                 label=""
-                accept={["image/png", "image/jpeg", "image/webp"]}
+                accept="image/png,image/jpeg,image/webp"
                 helperText="Upload to replace the current photo."
                 fullWidth
+                sx={{
+                  "& .RaFileInput-dropZone": {
+                    bgcolor: "action.hover",
+                    color: "text.primary",
+                    border: "2px dashed",
+                    borderColor: "divider",
+                    borderRadius: 1,
+                    py: 3,
+                    "&:hover": {
+                      borderColor: "primary.main",
+                      bgcolor: "action.selected",
+                    },
+                  },
+                }}
               >
                 <ImageField source="src" title="title" />
               </ImageInput>

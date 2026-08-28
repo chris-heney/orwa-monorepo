@@ -1,6 +1,5 @@
 import React from "react";
 import {
-  CreateButton,
   Datagrid,
   DeleteButton,
   EditButton,
@@ -8,18 +7,12 @@ import {
   List,
   NumberField,
   TextField,
-  TopToolbar,
 } from "react-admin";
 import { Box } from "@mui/material";
 import CustomPagination from "../../_components/CustomPagination";
+import { customDatagridStyle } from "../../../css";
 import { useAwardContext } from "../AwardContextProvider";
 import { winnerImageUrl, type AwardWinnerRecord } from "../helpers/winnerImage";
-
-const ListActions = () => (
-  <TopToolbar>
-    <CreateButton resource="award-winners" label="Add Winner" />
-  </TopToolbar>
-);
 
 const AwardWinnerList = () => {
   const { year } = useAwardContext();
@@ -29,7 +22,7 @@ const AwardWinnerList = () => {
       <List
         resource="award-winners"
         title=" "
-        actions={<ListActions />}
+        actions={false}
         disableSyncWithLocation
         filter={year === "all" ? {} : { award_year: year }}
         sort={{ field: "award_year", order: "DESC" }}
@@ -40,9 +33,14 @@ const AwardWinnerList = () => {
         sx={{
           "& .RaList-main": { marginTop: 0 },
           "& .RaList-content": { boxShadow: "none" },
+          ".RaList-actions": { p: 0, minHeight: 0 },
         }}
       >
-        <Datagrid rowClick="edit" bulkActionButtons={false}>
+        <Datagrid
+          rowClick="edit"
+          bulkActionButtons={false}
+          sx={customDatagridStyle}
+        >
           <FunctionField
             label="Photo"
             render={(record: AwardWinnerRecord) => {

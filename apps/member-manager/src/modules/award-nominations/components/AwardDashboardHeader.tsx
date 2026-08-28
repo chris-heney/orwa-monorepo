@@ -2,6 +2,7 @@ import React from "react";
 import { Box, IconButton, MenuItem, TextField, Tooltip } from "@mui/material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import {
+  CreateButton,
   ExportButton,
   ListBase,
   SelectColumnsButton,
@@ -24,6 +25,7 @@ const RESOURCE = "award-nominations";
 const TAB_TITLES: Record<string, string> = {
   summary: "Summary",
   nominations: "Nominations",
+  winners: "Winners",
 };
 
 const YEAR_SELECT_SX = {
@@ -71,6 +73,21 @@ const AwardDashboardHeader = () => {
               <RecordCount />
               <ExportButton sx={{ color: "white" }} />
               <SelectColumnsButton style={{ color: "white" }} />
+            </ListBase>
+          ) : null}
+          {selectedTab === "winners" ? (
+            <ListBase
+              disableSyncWithLocation
+              resource="award-winners"
+              filter={year === "all" ? {} : { award_year: year }}
+              perPage={50}
+            >
+              <RecordCount />
+              <CreateButton
+                resource="award-winners"
+                label="Add Winner"
+                sx={{ color: "white" }}
+              />
             </ListBase>
           ) : null}
           <TextField

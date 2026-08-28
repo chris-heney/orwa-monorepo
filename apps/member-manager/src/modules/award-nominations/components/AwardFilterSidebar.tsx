@@ -23,6 +23,7 @@ const AwardFilterSidebar = () => {
     setStatus,
     year,
     setYear,
+    selectedTab,
   } = useAwardContext();
 
   return (
@@ -31,33 +32,37 @@ const AwardFilterSidebar = () => {
       onClose={() => setIsFilterSidebarOpen(false)}
     >
       <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
-        <FormControl fullWidth>
-          <FormLabel>Search</FormLabel>
-          <TextField
-            size="small"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Nominee, email, system…"
-            fullWidth
-          />
-        </FormControl>
-        <FormControl>
-          <FormLabel>Status</FormLabel>
-          <RadioGroup
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-          >
-            <FormControlLabel value="all" control={<Radio />} label="All" />
-            {AWARD_STATUSES.map((choice) => (
-              <FormControlLabel
-                key={choice.id}
-                value={choice.id}
-                control={<Radio />}
-                label={choice.name}
+        {selectedTab !== "winners" ? (
+          <>
+            <FormControl fullWidth>
+              <FormLabel>Search</FormLabel>
+              <TextField
+                size="small"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Nominee, email, system…"
+                fullWidth
               />
-            ))}
-          </RadioGroup>
-        </FormControl>
+            </FormControl>
+            <FormControl>
+              <FormLabel>Status</FormLabel>
+              <RadioGroup
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+              >
+                <FormControlLabel value="all" control={<Radio />} label="All" />
+                {AWARD_STATUSES.map((choice) => (
+                  <FormControlLabel
+                    key={choice.id}
+                    value={choice.id}
+                    control={<Radio />}
+                    label={choice.name}
+                  />
+                ))}
+              </RadioGroup>
+            </FormControl>
+          </>
+        ) : null}
         <FormControl fullWidth>
           <FormLabel>Year</FormLabel>
           <TextField

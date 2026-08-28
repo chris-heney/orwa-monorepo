@@ -8,7 +8,7 @@ const AwardWinnerCreate = () => (
     title="ORWA Award Winner"
     component="div"
     actions={false}
-    redirect="list"
+    redirect="/orwa-awards/dashboard"
     sx={reviewResourceSx}
   >
     <AwardWinnerForm />

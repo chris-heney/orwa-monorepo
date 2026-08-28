@@ -198,6 +198,12 @@ const LandingView = ({ onStartNomination }: LandingViewProps) => {
             </p>
           )}
 
+          {!winnersLoading && years.length === 0 && (
+            <p className="py-10 text-center text-sm text-slate-500">
+              Award winners will appear here once they are published.
+            </p>
+          )}
+
           {current && (
             <section id={current.id} className="scroll-mt-8">
               <DualHeader
