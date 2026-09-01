@@ -14,7 +14,21 @@ const hasDraftAndPublish = (uid: string): boolean =>
   Boolean((strapi as any).contentTypes?.[uid]?.options?.draftAndPublish);
 
 /**
+ * A v5 documentId: 16-64 lowercase alphanumerics and NOT purely numeric
+ * (purely numeric strings are legacy entity ids). Mirrors the shape check the
+ * member-manager data provider uses.
+ */
+const isDocumentId = (id: number | string): boolean =>
+  typeof id === 'string' && /^[a-z0-9]{16,64}$/.test(id) && !/^\d+$/.test(id);
+
+/**
  * v4 entityService.findOne(uid, id, opts) equivalent.
+ *
+ * Accepts BOTH id shapes: legacy numeric entity ids (v4 callers) and v5
+ * documentIds (new frontends pass `record.id`, which the member-manager data
+ * provider remaps to documentId). Filtering a documentId against the numeric
+ * `id` column matches nothing and silently returns null — the cause of the
+ * remove-registration 500s.
  *
  * For draft-and-publish content types the migration keeps TWO rows per
  * document (draft + published) with different numeric ids, and the Document
@@ -24,6 +38,17 @@ const hasDraftAndPublish = (uid: string): boolean =>
  */
 export const findOneById = async (uid: string, id: number | string, opts: AnyParams = {}) => {
   if (id === null || id === undefined) return null;
+
+  if (isDocumentId(id)) {
+    if (!hasDraftAndPublish(uid)) {
+      return docs(uid).findOne({ ...opts, documentId: id });
+    }
+    return (
+      (await docs(uid).findOne({ ...opts, documentId: id, status: 'published' })) ??
+      (await docs(uid).findOne({ ...opts, documentId: id, status: 'draft' }))
+    );
+  }
+
   const params = {
     ...opts,
     filters: { ...(opts.filters ?? {}), id },

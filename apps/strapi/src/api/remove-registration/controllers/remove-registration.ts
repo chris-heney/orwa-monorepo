@@ -1,84 +1,99 @@
 /**
  * A set of functions called "actions" for `remove-registration`
+ *
+ * Hard-deletes a conference registration and every registration-owned child
+ * record (attendees, booths, contestants, taste-test contestants,
+ * sponsorships, and the sponsor record). Extras ride along automatically:
+ * they live as `items` components on the attendee/contestant rows, and
+ * Strapi deletes components with their parent entry. The conference itself
+ * and shared records (contacts, teams) are never touched.
  */
 
 import { findOneById } from '../../../utils/document-compat';
 
 export default ({ strapi }) => {
-
   return {
     removeRegistration: async (ctx) => {
-      const { registrationId } = ctx.request.body
+      const { registrationId } = ctx.request.body ?? {};
 
-      const registration = await findOneById('api::conference-registration.conference-registration', registrationId, {
-        populate: '*'
-      })
+      if (!registrationId) {
+        return ctx.badRequest('registrationId is required');
+      }
 
-      const sponsor = await strapi.documents('api::conference-sponsor.conference-sponsor').findMany({
-        populate: '*',
-        filters: { registration: registrationId }
-      })
+      // Accepts a v5 documentId (what member-manager sends) or a legacy
+      // numeric entity id.
+      const registration = await findOneById(
+        'api::conference-registration.conference-registration',
+        registrationId,
+        { populate: '*' }
+      );
 
-      const attendeeIds = registration.attendees.map(attendee => attendee.id)
-      const boothIds = registration.booths.map(booth => booth.id)
-      const contestantIds = registration.contestants.map(contestant => contestant.id)
-      
-      const attendees = await strapi.documents('api::conference-attendee.conference-attendee').findMany({
-        populate: '*',
-        filters: { id: attendeeIds }
-      })
+      if (!registration) {
+        return ctx.notFound(
+          `Registration ${registrationId} was not found — it may already have been removed.`
+        );
+      }
 
-      const booths = await strapi.documents('api::conference-booth.conference-booth').findMany({
-        populate: '*',
-        filters: { id: boothIds }
-      })
+      // The sponsor record points at the registration (not the reverse), so
+      // look it up by relation. Filter on documentId — a bare string here
+      // would silently match nothing.
+      const sponsors = await strapi
+        .documents('api::conference-sponsor.conference-sponsor')
+        .findMany({
+          filters: { registration: { documentId: registration.documentId } },
+        });
 
-      const contestants = await strapi.documents('api::conference-contestant.conference-contestant').findMany({
-        populate: '*',
-        filters: { id: contestantIds }
-      })
-
-      // delete all the attendees and booths and finally the registration
+      // Populated v5 relations always carry documentId; empty relations can
+      // come back null, so guard every list.
+      const children: Array<{ uid: string; rows: Array<{ documentId: string }> }> = [
+        {
+          uid: 'api::conference-attendee.conference-attendee',
+          rows: registration.attendees ?? [],
+        },
+        {
+          uid: 'api::conference-booth.conference-booth',
+          rows: registration.booths ?? [],
+        },
+        {
+          uid: 'api::conference-contestant.conference-contestant',
+          rows: registration.contestants ?? [],
+        },
+        {
+          uid: 'api::taste-test-contestant.taste-test-contestant',
+          rows: registration.taste_test_contestants ?? [],
+        },
+        {
+          uid: 'api::conference-sponsorship.conference-sponsorship',
+          rows: registration.sponsorships ?? [],
+        },
+        {
+          uid: 'api::conference-sponsor.conference-sponsor',
+          rows: sponsors ?? [],
+        },
+      ];
 
       try {
-        for (const attendee of attendees) {
-          await strapi.documents('api::conference-attendee.conference-attendee').delete({
-            documentId: attendee.documentId
-          })
+        for (const { uid, rows } of children) {
+          for (const row of rows) {
+            if (row?.documentId) {
+              await strapi.documents(uid).delete({ documentId: row.documentId });
+            }
+          }
         }
 
-        for (const booth of booths) {
-          await strapi.documents('api::conference-booth.conference-booth').delete({
-            documentId: booth.documentId
-          })
-        }
+        await strapi
+          .documents('api::conference-registration.conference-registration')
+          .delete({ documentId: registration.documentId });
 
-        for (const contestantId of contestants) {
-          await strapi.documents('api::conference-contestant.conference-contestant').delete({
-            documentId: contestantId.documentId
-          })
-        }
-
-       if (sponsor.length > 0) {
-          await strapi.documents('api::conference-sponsor.conference-sponsor').delete({
-            documentId: sponsor[0].documentId
-          })
-       }
-
-
-        await strapi.documents('api::conference-registration.conference-registration').delete({
-          documentId: registration.documentId
-        })
-
-        return ctx.body = {
-          result: 'success'
-        }
+        ctx.body = { result: 'success' };
       } catch (err) {
+        strapi.log.error('remove-registration failed', err);
+        ctx.status = 500;
         ctx.body = {
           result: 'Error',
-          error: err.message
-        }
+          error: err.message,
+        };
       }
-    }
+    },
   };
 };
