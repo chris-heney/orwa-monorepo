@@ -28,7 +28,10 @@ import EditUserModal from "./EditUserModal";
 import { useHumanResourcesContext } from "../HumanResourcesContext";
 import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
 import { userPreferencesStore } from "../../../helpers/userPreferencesStore";
-import { startImpersonation } from "../../../helpers/impersonation";
+import {
+  startImpersonation,
+  isImpersonating,
+} from "../../../helpers/impersonation";
 import { getDisplayEntityId } from "../../../helpers/strapiIds";
 
 const UserList: React.FC = () => {
@@ -318,13 +321,22 @@ const UserList: React.FC = () => {
                     </IconButton>
                   </Tooltip>
                   <SendResetPasswordButton isSmall email={user.email} />
-                  <Tooltip title="Test as this user (impersonate)">
-                    <IconButton
-                      size="small"
-                      onClick={() => setImpersonateUser(user)}
-                    >
-                      <PersonSearchIcon color="warning" />
-                    </IconButton>
+                  <Tooltip
+                    title={
+                      isImpersonating()
+                        ? "Exit your current impersonation session before starting another — jumping straight to a new user loses your way back to your real Admin session."
+                        : "Test as this user (impersonate)"
+                    }
+                  >
+                    <span>
+                      <IconButton
+                        size="small"
+                        disabled={isImpersonating()}
+                        onClick={() => setImpersonateUser(user)}
+                      >
+                        <PersonSearchIcon color="warning" />
+                      </IconButton>
+                    </span>
                   </Tooltip>
                   <Tooltip title="Delete">
                     <IconButton  size="small" onClick={() => handleDeleteClick(user)}>

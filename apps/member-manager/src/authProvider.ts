@@ -137,6 +137,17 @@ const authProvider: AuthProvider = {
     } catch {
       // ignore
     }
+    try {
+      // Drop any leftover "return to Admin" backup so a stale/partial
+      // impersonation session can't bleed into the next login on this
+      // browser (e.g. a shared machine).
+      const { IMPERSONATION_STORAGE_KEY } = await import(
+        './helpers/impersonation'
+      );
+      sessionStorage.removeItem(IMPERSONATION_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
     Cookies.deleteCookie('token');
     Cookies.deleteCookie('role');
     Cookies.deleteCookie('email');
