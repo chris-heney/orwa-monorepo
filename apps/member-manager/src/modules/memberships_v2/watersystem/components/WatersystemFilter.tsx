@@ -1,57 +1,47 @@
-import React from "react";
-import { Card, CardContent } from "@mui/material";
+import React from 'react';
+import { Card, CardContent } from '@mui/material';
 import {
   FilterList,
   FilterListItem,
   FilterLiveSearch,
   Loading,
   useListFilterContext,
-} from "react-admin";
+} from 'react-admin';
 // import { SavedQueriesList } from '../../../_components/CustomSavedQueryList'
-import BadgeIcon from "@mui/icons-material/Badge";
-import MoneyIcon from "@mui/icons-material/AttachMoney";
-import ShieldIcon from "@mui/icons-material/GppGood";
-import RegionIcon from "@mui/icons-material/SouthAmerica";
-import WorkmansCompIcon from "@mui/icons-material/MedicalInformation";
-import { useMembershipContext } from "../../../memberships_v2/MembershipsContextProvider";
+import BadgeIcon from '@mui/icons-material/Badge';
+import MoneyIcon from '@mui/icons-material/AttachMoney';
+import ShieldIcon from '@mui/icons-material/GppGood';
+import RegionIcon from '@mui/icons-material/SouthAmerica';
+import WorkmansCompIcon from '@mui/icons-material/MedicalInformation';
+import { useMembershipContext } from '../../../memberships_v2/MembershipsContextProvider';
+import { MEMBER_STATUS_FILTERS } from '../../../memberships_v2/helpers/activeOrInactiveMembership';
+import DateRangeFilter from './DateRangeFilter';
+import { DateRangeIcon } from '@mui/x-date-pickers';
+import SavedFilters from '../../../_components/SavedFilters';
 import {
-  formatDate,
-  getRollingOneYearAgoForFilters,
-} from "../../../memberships_v2/helpers/activeOrInactiveMembership";
-import DateRangeFilter from "./DateRangeFilter";
-import { DateRangeIcon } from "@mui/x-date-pickers";
-import SavedFilters from "../../../_components/SavedFilters";
-import { isSelected, toggleFilter } from "../../../conference/helpers/selectFilters";
+  isSelected,
+  toggleFilter,
+} from '../../../conference/helpers/selectFilters';
 
 const WaterSystemFilter = () => {
-  const {
-    setWatersystemFilters,
-    selectedTab,
-    savingQuery,
-    setSavingQuery,
-  } = useMembershipContext();
+  const { setWatersystemFilters, selectedTab, savingQuery, setSavingQuery } =
+    useMembershipContext();
   const { filterValues } = useListFilterContext();
 
   React.useEffect(() => {
-    if (filterValues)
-      setWatersystemFilters({  ...filterValues });
+    if (filterValues) setWatersystemFilters({ ...filterValues });
   }, [filterValues]);
-
-  const rollingOneYearAgo = new Date();
-  rollingOneYearAgo.setFullYear(rollingOneYearAgo.getFullYear() - 1);
-  const oneYearAgoPlusOneMonth = new Date(rollingOneYearAgo);
-  oneYearAgoPlusOneMonth.setMonth(oneYearAgoPlusOneMonth.getMonth() + 1);
 
   return !filterValues ? (
     <Loading />
   ) : (
     <Card
-      component={"div"}
+      component={'div'}
       sx={{
         minWidth: 200,
-        maxHeight: "70vh",
-        overflow: "auto",
-        position: "sticky",
+        maxHeight: '70vh',
+        overflow: 'auto',
+        position: 'sticky',
       }}
     >
       <CardContent>
@@ -64,51 +54,23 @@ const WaterSystemFilter = () => {
         <FilterList label="Date" icon={<DateRangeIcon />}>
           <DateRangeFilter
             fields={[
-              "payment_last_date",
-              "application_date",
-              "directory_sent_date",
-              "payment_previous_date",
+              'payment_last_date',
+              'application_date',
+              'directory_sent_date',
+              'payment_previous_date',
             ]}
           />
         </FilterList>
-        {/* Align with list: active ≈ last payment within the past year + not null (simple model; overlap edge cases may still differ). */}
+        {/* Selects on the same expiration rule the Member column shows. */}
         <FilterList label="Member Status" icon={<BadgeIcon />}>
-          <FilterListItem
-            label="Member"
-            value={{
-              $and: [
-                { payment_last_date: { $notNull: true } },
-                {
-                  payment_last_date: {
-                    $gte: getRollingOneYearAgoForFilters(),
-                  },
-                },
-              ],
-            }}
-          />
+          <FilterListItem label="Member" value={MEMBER_STATUS_FILTERS.member} />
           <FilterListItem
             label="Non Member"
-            value={{
-              $or: [
-                {
-                  payment_last_date: {
-                    $lt: getRollingOneYearAgoForFilters(),
-                  },
-                },
-                { payment_last_date: { $null: true } },
-              ],
-            }}
+            value={MEMBER_STATUS_FILTERS.nonMember}
           />
           <FilterListItem
             label="Expiring in 1 month"
-            value={{
-              payment_last_date: {
-                $between: [
-                  formatDate(rollingOneYearAgo),
-                  formatDate(oneYearAgoPlusOneMonth),
-                ],
-              },
-            }}
+            value={MEMBER_STATUS_FILTERS.expiringWithinAMonth}
           />
         </FilterList>
         <FilterList label="RD Funded" icon={<MoneyIcon />}>
@@ -126,25 +88,25 @@ const WaterSystemFilter = () => {
         <FilterList label="Region" icon={<RegionIcon />}>
           <FilterListItem
             label="Region 1"
-            value={{ region: "Region 1" }}
+            value={{ region: 'Region 1' }}
             isSelected={isSelected}
             toggleFilter={toggleFilter}
           />
           <FilterListItem
             label="Region 2"
-            value={{ region: "Region 2" }}
+            value={{ region: 'Region 2' }}
             isSelected={isSelected}
             toggleFilter={toggleFilter}
           />
           <FilterListItem
             label="Region 3"
-            value={{ region: "Region 3" }}
+            value={{ region: 'Region 3' }}
             isSelected={isSelected}
             toggleFilter={toggleFilter}
           />
           <FilterListItem
             label="Region 4"
-            value={{ region: "Region 4" }}
+            value={{ region: 'Region 4' }}
             isSelected={isSelected}
             toggleFilter={toggleFilter}
           />

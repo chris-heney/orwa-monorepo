@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useGetList } from "react-admin";
-import { getRollingOneYearAgoForFilters } from "../helpers/activeOrInactiveMembership";
 import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { useSummaryTokens, SummaryTokens } from "./tokens";
 
@@ -42,34 +41,24 @@ const buildMetrics = (
   watersystemsLoading: boolean,
   T: SummaryTokens
 ): MembershipMetrics => {
-  const paymentActiveAfter = getRollingOneYearAgoForFilters();
   const assoc = associates ?? [];
   const systems = watersystems ?? [];
 
-  const activeAssociatesList = assoc.filter(
-    (a) => a.payment_last_date && a.payment_last_date >= paymentActiveAfter
-  );
-  const activeWaterSystemsList = systems.filter(
-    (s) => s.payment_last_date && s.payment_last_date >= paymentActiveAfter
-  );
+  // One rule for the whole panel: the same expiration test the lists and the
+  // Member Status filters use. These counts previously came from a
+  // "paid within 12 months" approximation while the year report below used
+  // the expiration rule, so the two halves of this screen disagreed.
+  const isActive = (r: MembershipRecord) =>
+    isMembershipActiveByExpiration(r.payment_previous_date, r.payment_last_date);
+
+  const activeAssociatesList = assoc.filter(isActive);
+  const activeWaterSystemsList = systems.filter(isActive);
 
   const inactiveAssociates = assoc.length - activeAssociatesList.length;
   const inactiveWaterSystems = systems.length - activeWaterSystemsList.length;
 
-  const expiredAssociates = assoc.filter(
-    (r) =>
-      !isMembershipActiveByExpiration(
-        r.payment_previous_date,
-        r.payment_last_date
-      )
-  ).length;
-  const expiredWaterSystems = systems.filter(
-    (r) =>
-      !isMembershipActiveByExpiration(
-        r.payment_previous_date,
-        r.payment_last_date
-      )
-  ).length;
+  const expiredAssociates = inactiveAssociates;
+  const expiredWaterSystems = inactiveWaterSystems;
 
   const total = assoc.length + systems.length;
   const activeTotal =
@@ -83,7 +72,7 @@ const buildMetrics = (
       count: activeWaterSystemsList.length,
       caption: "Water systems in good standing",
       color: T.water,
-      hint: "Last payment within the past 12 months",
+      hint: "Membership has not reached its expiration date",
     },
     {
       key: "ws-inactive",
@@ -91,7 +80,7 @@ const buildMetrics = (
       count: inactiveWaterSystems,
       caption: "Water systems past due / lapsed",
       color: T.deepWater,
-      hint: "No qualifying payment in the past 12 months",
+      hint: "Membership expiration date has passed",
     },
     {
       key: "assoc-active",
@@ -99,7 +88,7 @@ const buildMetrics = (
       count: activeAssociatesList.length,
       caption: "Associate members current",
       color: T.inflow,
-      hint: "Last payment within the past 12 months",
+      hint: "Membership has not reached its expiration date",
     },
     {
       key: "assoc-inactive",
@@ -107,7 +96,7 @@ const buildMetrics = (
       count: inactiveAssociates,
       caption: "Associates past due / lapsed",
       color: T.exit,
-      hint: "No qualifying payment in the past 12 months",
+      hint: "Membership expiration date has passed",
     },
   ];
 

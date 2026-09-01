@@ -99,14 +99,7 @@
     },
     "member_level": {
       "type": "enumeration",
-      "enum": [
-        "None",
-        "Basic",
-        "Bronze",
-        "Silver",
-        "Gold",
-        "Platinum"
-      ]
+      "enum": ["None", "Basic", "Bronze", "Silver", "Gold", "Platinum"]
     },
     "website": {
       "type": "string"
@@ -115,12 +108,7 @@
       "type": "media",
       "multiple": true,
       "required": false,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
+      "allowedTypes": ["images", "files", "videos", "audios"]
     },
     "contacts": {
       "type": "relation",
@@ -213,23 +201,14 @@
     },
     "membership_directory_type": {
       "type": "enumeration",
-      "enum": [
-        "Digital",
-        "Mail",
-        "Both",
-        "None"
-      ]
+      "enum": ["Digital", "Mail", "Both", "None"]
     },
     "payment_last_date": {
       "type": "date"
     },
     "payment_method": {
       "type": "enumeration",
-      "enum": [
-        "Card",
-        "eCheck",
-        "Invoice"
-      ]
+      "enum": ["Card", "eCheck", "Invoice"]
     },
     "payment_amount": {
       "type": "decimal"
@@ -262,14 +241,12 @@
       "type": "media",
       "multiple": false,
       "required": false,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
+      "allowedTypes": ["images", "files", "videos", "audios"]
     },
     "payment_previous_date": {
+      "type": "date"
+    },
+    "expiration_date": {
       "type": "date"
     },
     "directory_sent_date": {

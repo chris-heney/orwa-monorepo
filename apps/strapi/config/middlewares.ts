@@ -40,6 +40,9 @@ export default [
   },
   'strapi::poweredBy',
   'strapi::query',
+  // Must come after strapi::query: it expands relative date tokens in the
+  // parsed query filters.
+  'global::relative-date-filters',
   //  'strapi::body',
   {
     name: 'strapi::body',

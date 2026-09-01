@@ -29,6 +29,11 @@
     "condition": {
       "type": "json"
     },
+    "saved_query": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::saved-query.saved-query"
+    },
     "active": {
       "type": "boolean"
     },

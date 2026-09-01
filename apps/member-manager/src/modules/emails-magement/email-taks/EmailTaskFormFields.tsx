@@ -1,4 +1,5 @@
-import { Box, Grid, Typography } from "@mui/material";
+import { Box, Button, Grid, Typography } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
 import React, { useEffect, useState, useMemo } from "react";
 import {
   TextInput,
@@ -14,6 +15,7 @@ import {
 } from "react-admin";
 import { useFormContext } from "react-hook-form";
 import { useGetIdentity } from "../../../helpers/useGetIdentity";
+import CreateSavedQueryDialog from "./components/CreateSavedQueryDialog";
 
 const cronOptions = [
   { label: "Every Minute", value: "* * * * *" },
@@ -94,6 +96,7 @@ const ScheduledEmailTaskFormFields = () => {
   const notify = useNotify();
   const record = useRecordContext();
   const [selectedQueryId, setSelectedQueryId] = useState<number | null>(null);
+  const [isCreatingQuery, setIsCreatingQuery] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [userHasCleared, setUserHasCleared] = useState(false);
 
@@ -119,7 +122,11 @@ const ScheduledEmailTaskFormFields = () => {
   }, [selectedEntity]);
 
   // Fetch user's saved queries
-  const { data: savedQueries = [], isLoading } = useGetList("saved-queries", {
+  const {
+    data: savedQueries = [],
+    isLoading,
+    refetch: refetchSavedQueries,
+  } = useGetList("saved-queries", {
     pagination: { page: 1, perPage: 50 },
     sort: { field: "createdAt", order: "DESC" },
     filter: stableEntityFilter
@@ -141,48 +148,42 @@ const ScheduledEmailTaskFormFields = () => {
     });
   }, [savedQueries, identity, selectedEntity]);
 
-  // Initialize from record on load (only once)
+  // Initialize from record on load (only once).
+  //
+  // `saved_query` is a real relation now, so the link survives a save. Tasks
+  // created before it existed only have a stored `condition`; those keep
+  // working (the scheduler falls back to it) and are matched back to a query
+  // by value so the dropdown still shows where the condition came from.
   useEffect(() => {
-    if (record && !hasInitialized && !userHasCleared) {
-      // Check if record has a saved_query field and set it
-      if (record.saved_query) {
-        // Wait for savedQueries to load if they haven't yet
-        if (savedQueries.length === 0 && isLoading) {
-          return; // Still loading, wait
-        }
-        
-        const savedQueryFromRecord = savedQueries.find(
-          (query) => query.id === record.saved_query
-        );
-        
-        if (savedQueryFromRecord) {
-          setSelectedQueryId(savedQueryFromRecord.id);
-          form.setValue("saved_query", savedQueryFromRecord.id);
-          form.setValue("condition", savedQueryFromRecord.filters || {});
-        }
-      } else if (record.condition) {
-        // Set condition from record
-        form.setValue("condition", record.condition);
-        
-        // Try to find matching saved query by condition if queries are loaded
-        if (savedQueries.length > 0) {
-          const matchedQuery = savedQueries.find(
-            (query) =>
-              JSON.stringify(query.filters) === JSON.stringify(record.condition)
-          );
+    if (!record || hasInitialized || userHasCleared) {
+      return;
+    }
+    if (isLoading) {
+      return; // wait for the queries before deciding
+    }
 
-          if (matchedQuery) {
-            setSelectedQueryId(matchedQuery.id);
-            form.setValue("saved_query", matchedQuery.id);
-          }
-        }
-      }
-      
-      // Mark as initialized only if we're not waiting for queries to load
-      if (!isLoading) {
-        setHasInitialized(true);
+    const linkedId =
+      typeof record.saved_query === "object" && record.saved_query !== null
+        ? record.saved_query.id
+        : record.saved_query;
+
+    if (linkedId) {
+      setSelectedQueryId(linkedId);
+      form.setValue("saved_query", linkedId);
+    } else if (record.condition) {
+      form.setValue("condition", record.condition);
+
+      const matchedQuery = savedQueries.find(
+        (query) =>
+          JSON.stringify(query.filters) === JSON.stringify(record.condition)
+      );
+      if (matchedQuery) {
+        setSelectedQueryId(matchedQuery.id);
+        form.setValue("saved_query", matchedQuery.id);
       }
     }
+
+    setHasInitialized(true);
   }, [record, savedQueries, form, hasInitialized, userHasCleared, isLoading]);
 
   // Clear saved query when entity changes or is removed
@@ -195,43 +196,38 @@ const ScheduledEmailTaskFormFields = () => {
     }
   }, [selectedEntity]); // This triggers when selectedEntity changes OR becomes undefined/null
 
-  const handleQuerySelect = (event: any, value: any) => {
-    // Handle clearing the selection
-    if (!value) {
+  const selectQuery = (queryId: number | string | null) => {
+    if (queryId == null) {
       setSelectedQueryId(null);
+      form.setValue("saved_query", null);
       form.setValue("condition", {});
-      form.setValue("saved_query", "");
-      setUserHasCleared(true); // Mark as user cleared to prevent re-initialization
+      setUserHasCleared(true);
       return;
     }
 
     const selectedQuery = filteredSavedQueries.find(
-      (query) => query.id === (typeof value === 'object' ? value.id : value)
+      (query) => query.id === queryId
     );
 
-    if (selectedQuery) {
-      try {
-        setSelectedQueryId(selectedQuery.id);
-        form.setValue("condition", selectedQuery.filters);
-        form.setValue("saved_query", selectedQuery.id);
-        setUserHasCleared(false); // Reset the flag when user selects a query
-
-        // 🔹 Check if the selected query contains a "q" filter
-        if ("q" in selectedQuery.filters) {
-          notify("Search filters do not work as conditions.", {
-            type: "warning",
-          });
-          form.setValue("condition", {});
-        }
-      } catch (error) {
-        notify("Error parsing JSON", { type: "error" });
-        setSelectedQueryId(null);
-        form.setValue("condition", {});
-        form.setValue("saved_query", "");
-        setUserHasCleared(true);
-      }
+    // A "q" full-text filter has no meaning as a scheduler condition.
+    if (selectedQuery?.filters && "q" in selectedQuery.filters) {
+      notify("Search filters do not work as conditions.", { type: "warning" });
+      return;
     }
+
+    setSelectedQueryId(queryId as number);
+    form.setValue("saved_query", queryId);
+    // The task references the query rather than copying it, so editing the
+    // query updates every task using it. Clearing the stale copy keeps the
+    // link as the single source of truth.
+    form.setValue("condition", {});
+    setUserHasCleared(false);
   };
+
+  const handleQuerySelect = (_event: any, value: any) =>
+    selectQuery(
+      !value ? null : typeof value === "object" ? value.id : value
+    );
 
   if (!identity) {
     return null;
@@ -295,9 +291,9 @@ const ScheduledEmailTaskFormFields = () => {
 
         
 
-        {/* 🔍 JSON Condition Input */}
+        {/* 🔍 Saved query selector */}
         <Grid item xs={12} sm={6}>
-            <AutocompleteInput
+          <AutocompleteInput
             source="saved_query"
             label="Use Saved Query"
             choices={filteredSavedQueries.map((query) => ({
@@ -306,10 +302,24 @@ const ScheduledEmailTaskFormFields = () => {
             }))}
             onChange={handleQuerySelect}
             fullWidth
-            value={selectedQueryId ? filteredSavedQueries.find(q => q.id === selectedQueryId) || null : null}
             disabled={isLoading}
-            helperText={`Select a saved query to apply filters${selectedEntity ? ` for ${selectedEntity}` : ""}, or clear to remove all conditions`}
+            helperText={`Select a saved query to choose recipients${
+              selectedEntity ? ` for ${selectedEntity}` : ""
+            }, or clear to remove all conditions`}
           />
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={() => setIsCreatingQuery(true)}
+            disabled={!selectedEntity}
+          >
+            New query
+          </Button>
+          {!selectedEntity && (
+            <Typography variant="caption" display="block" color="text.secondary">
+              Pick an entity first to build a query for it.
+            </Typography>
+          )}
         </Grid>
 
         {/* 🔄 Entity Selector */}
@@ -343,6 +353,16 @@ const ScheduledEmailTaskFormFields = () => {
           />
         </Grid>
       </Grid>
+
+      <CreateSavedQueryDialog
+        open={isCreatingQuery}
+        onClose={() => setIsCreatingQuery(false)}
+        entity={selectedEntity}
+        onCreated={(query) => {
+          refetchSavedQueries();
+          selectQuery(query.id);
+        }}
+      />
     </Box>
   );
 };
