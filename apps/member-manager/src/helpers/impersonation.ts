@@ -99,14 +99,25 @@ const notifyChange = () => {
  * cookies so `stopImpersonation` can restore them exactly. The caller is
  * responsible for flushing the Admin's pending preferences BEFORE this (while
  * the Admin token is still active) and reloading the page AFTER.
+ *
+ * If impersonation is already active (an Admin jumps straight from one
+ * impersonated user to another without exiting first), the currently active
+ * cookies belong to that impersonated user, NOT the Admin. Re-snapshotting
+ * them here would silently overwrite — and permanently lose — the Admin's
+ * real backup, so `stopImpersonation` would only ever unwind one hop instead
+ * of returning to the Admin. Preserve the original backup across nested
+ * calls instead.
  */
 export const startImpersonation = (target: ImpersonationTarget): void => {
-  const backup: SessionBackup = {
-    token: CookieStore.getCookie('token'),
-    role: CookieStore.getCookie('role'),
-    email: CookieStore.getCookie('email'),
-    id: CookieStore.getCookie('id'),
-  };
+  const existing = getImpersonation();
+  const backup: SessionBackup = existing
+    ? existing.backup
+    : {
+        token: CookieStore.getCookie('token'),
+        role: CookieStore.getCookie('role'),
+        email: CookieStore.getCookie('email'),
+        id: CookieStore.getCookie('id'),
+      };
 
   const state: ImpersonationState = {
     userId: target.user.id,
