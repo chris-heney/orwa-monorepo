@@ -1,5 +1,14 @@
-import { Box, Button, Grid } from '@mui/material';
-import React from 'react';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Grid,
+} from '@mui/material';
+import React, { useState } from 'react';
 import {
   SaveButton,
   useGetRecordId,
@@ -23,6 +32,8 @@ const CustomToolBar = ({ onEdit, setIsEditing }: CustomToolBarProps) => {
 
   const reset = useResetStore();
   const refresh = useRefresh();
+
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
   const removeRegistration = async () => {
     const identity = await authProvider.getIdentity?.();
@@ -90,7 +101,7 @@ const CustomToolBar = ({ onEdit, setIsEditing }: CustomToolBarProps) => {
                 justifyContent: 'center',
               }}
             >
-              <Button color="error" onClick={() => removeRegistration()}>
+              <Button color="error" onClick={() => setConfirmRemoveOpen(true)}>
                 Remove Registration
               </Button>
               <span>
@@ -100,6 +111,39 @@ const CustomToolBar = ({ onEdit, setIsEditing }: CustomToolBarProps) => {
           )}
         </Grid>
       </Box>
+      <Dialog
+        open={confirmRemoveOpen}
+        onClose={() => setConfirmRemoveOpen(false)}
+      >
+        <DialogTitle>Remove this registration?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            This will permanently remove the registration and ALL attached
+            data: attendees and their extras, booths, contestants, and the
+            linked sponsor record (if any). Sponsorship packages themselves
+            are not deleted. This cannot be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => setConfirmRemoveOpen(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              setConfirmRemoveOpen(false);
+              removeRegistration();
+            }}
+          >
+            Remove Registration
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
