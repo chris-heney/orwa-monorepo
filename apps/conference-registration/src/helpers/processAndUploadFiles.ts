@@ -34,7 +34,16 @@ export const processAndUploadFiles = async (
     // Ticket/booth extra id lists are not files — never treat them as uploads
     // and never abort the rest of the payload (the previous `return` here
     // skipped the sponsor logo when an `extras` key existed).
-    if (key === "extras" || key === "tickets" || key === "booths") {
+    // `sponsors` holds sponsorship catalog line objects ({ id, name, amount…})
+    // — they match the uploaded-file shape (object with `id`, no `rawFile`),
+    // so without this skip they get collapsed to bare ids and the webhook
+    // rejects with "Sponsorship package not found (id: undefined)".
+    if (
+      key === "extras" ||
+      key === "tickets" ||
+      key === "booths" ||
+      key === "sponsors"
+    ) {
       continue;
     }
 
