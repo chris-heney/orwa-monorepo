@@ -58,6 +58,37 @@ describe("processAndUploadFiles", () => {
     expect(result.extras).toEqual([11, 12]);
   });
 
+  it("keeps sponsor line objects intact (never collapses them to bare ids)", async () => {
+    const file = new File(["logo"], "logo.png", { type: "image/png" });
+    uploadFiles.mockResolvedValue([99]);
+
+    const sponsors = [
+      {
+        id: 19,
+        name: "Golf Hole",
+        description: "Claim Your Spot on the Course!",
+        available: 15,
+        amount: 150,
+        allow_custom_amount: false,
+        max_purchasable: 15,
+      },
+    ];
+
+    const result = await processAndUploadFiles(
+      {
+        sponsors,
+        logo: [{ title: "logo.png", rawFile: file }],
+      },
+      notify
+    );
+
+    // Regression: sponsors matched the uploaded-file shape and were rewritten
+    // to [19], making the webhook throw "Sponsorship package not found
+    // (id: undefined)". They must pass through untouched.
+    expect(result.sponsors).toEqual(sponsors);
+    expect(result.logo).toEqual([99]);
+  });
+
   it("aborts when the logo rawFile is gone (blob leftover only)", async () => {
     await expect(
       processAndUploadFiles(
