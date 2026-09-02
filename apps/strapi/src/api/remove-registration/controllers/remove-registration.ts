@@ -2,11 +2,14 @@
  * A set of functions called "actions" for `remove-registration`
  *
  * Hard-deletes a conference registration and every registration-owned child
- * record (attendees, booths, contestants, taste-test contestants,
- * sponsorships, and the sponsor record). Extras ride along automatically:
- * they live as `items` components on the attendee/contestant rows, and
- * Strapi deletes components with their parent entry. The conference itself
- * and shared records (contacts, teams) are never touched.
+ * record (attendees, booths, contestants, taste-test contestants, and the
+ * sponsor record). Extras ride along automatically: they live as `items`
+ * components on the attendee/contestant rows, and Strapi deletes components
+ * with their parent entry. The conference itself and shared records
+ * (contacts, teams) are never touched. Sponsorship packages
+ * (conference-sponsorship) are shared catalog rows referenced by many
+ * registrations/sponsors — they are only unlinked (deleting the registration
+ * removes the link rows), never deleted.
  */
 
 import { findOneById } from '../../../utils/document-compat';
@@ -61,10 +64,6 @@ export default ({ strapi }) => {
         {
           uid: 'api::taste-test-contestant.taste-test-contestant',
           rows: registration.taste_test_contestants ?? [],
-        },
-        {
-          uid: 'api::conference-sponsorship.conference-sponsorship',
-          rows: registration.sponsorships ?? [],
         },
         {
           uid: 'api::conference-sponsor.conference-sponsor',
