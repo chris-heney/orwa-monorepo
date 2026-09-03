@@ -232,12 +232,7 @@ export interface IAwardNominationPayload {
   justification: string;
   /** Legacy form/API key; mapper still reads this if present. */
   nomination_description?: string;
-  award_type:
-    | "System of the Year"
-    | "Water/Wastewater System of the Year"
-    | "Excellence in Operations"
-    | "Excellence in Management"
-    | "Excellence in Office Operations";
+  award_type: string;
   award_year?: number;
 
   // Biography / Photos / Board list (GF 70)

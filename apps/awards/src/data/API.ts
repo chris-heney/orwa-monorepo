@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { getAcceptedTerms } from '@orwa/terms-gate'
+import { activeMembershipWatersystemsQuery } from '../helpers/activeMembershipWatersystemsQuery'
 import { EmailPayload, IAwardNominationPayload } from '../types/types'
 
 
@@ -88,15 +89,34 @@ const _transform_list = (data: IStrapiRecord[]) => data.map(_transform_single)
 
 export const useGetWatersystems = () => {
   return useQuery({
-    queryKey: ['watersystems'],
+    queryKey: ['watersystems', 'active-membership'],
     queryFn: async () =>
       _get(
         'watersystems',
-        '?pagination[limit]=1000&sort=name:ASC&fields[0]=id&fields[1]=documentId&fields[2]=name&fields[3]=legal_entity_name&fields[4]=county'
+        activeMembershipWatersystemsQuery([
+          'id',
+          'documentId',
+          'name',
+          'legal_entity_name',
+          'county',
+        ])
       ),
   })
 }
 
+
+export const useGetAwardTypes = () => {
+  return useQuery({
+    queryKey: ['award-types'],
+    queryFn: async () => {
+      const types = await _get(
+        'award-types',
+        '?pagination[limit]=200&sort=order:asc'
+      )
+      return Array.isArray(types) ? types : types ? [types] : []
+    },
+  })
+}
 
 export const useGetAwardWinners = () => {
   return useQuery({
@@ -129,7 +149,13 @@ export const useGetSubmissions = () => {
 export const getWatersystems = async () => {
   return _get(
     'watersystems',
-    '?pagination[limit]=1000&sort=name:ASC&fields[0]=id&fields[1]=documentId&fields[2]=name&fields[3]=legal_entity_name&fields[4]=county'
+    activeMembershipWatersystemsQuery([
+      'id',
+      'documentId',
+      'name',
+      'legal_entity_name',
+      'county',
+    ])
   )
 }
 

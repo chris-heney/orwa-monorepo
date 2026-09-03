@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useGetAwardWinners } from "../data/API";
+import { useGetAwardTypes, useGetAwardWinners } from "../data/API";
+import { nominatableAwardTypes } from "../helpers/awardTypeOptions";
+import { isSystemOfTheYearAward } from "../helpers/awardType";
+import { useNotify } from "../NotificationProvider";
 import {
   AWARD_CATEGORIES,
   CONTACT,
@@ -174,7 +177,32 @@ const Gallery = ({
 
 const LandingView = ({ onStartNomination }: LandingViewProps) => {
   const [lightbox, setLightbox] = useState<AwardWinner | null>(null);
+  const { notify } = useNotify();
   const { data: winnerRecords, isLoading: winnersLoading } = useGetAwardWinners();
+  const {
+    data: awardTypeRows,
+    isError: awardTypesError,
+    isFetched: awardTypesFetched,
+  } = useGetAwardTypes();
+  const categories = useMemo(() => {
+    const nominatable = nominatableAwardTypes(awardTypeRows);
+    if (!nominatable.length) return AWARD_CATEGORIES;
+    return nominatable.map((row) => ({
+      name: String(row.name),
+      audience: isSystemOfTheYearAward(row.name) ? "System" : "Individual",
+      description: row.description || "",
+    }));
+  }, [awardTypeRows]);
+
+  useEffect(() => {
+    if (!awardTypesFetched) return;
+    if (awardTypesError || !nominatableAwardTypes(awardTypeRows).length) {
+      notify(
+        "Could not load award types. Showing the previous category list.",
+        "error"
+      );
+    }
+  }, [awardTypeRows, awardTypesError, awardTypesFetched, notify]);
 
   const years = useMemo(
     () =>
@@ -296,7 +324,7 @@ const LandingView = ({ onStartNomination }: LandingViewProps) => {
 
           <SectionHeading>Award Categories</SectionHeading>
           <div className="mt-6 grid gap-8 sm:grid-cols-2 lg:grid-cols-1">
-            {AWARD_CATEGORIES.map((category) => (
+            {categories.map((category) => (
               <IconBox
                 key={category.name}
                 icon={category.audience === "System" ? UsersIcon : UserIcon}

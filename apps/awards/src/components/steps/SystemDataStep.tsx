@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { Card, CardContent, Typography } from "@mui/material";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -10,16 +10,9 @@ import { useFormContext } from "react-hook-form";
 import WatersystemAutocomplete from "../_components/WatersystemAutocomplete";
 import AwardNamePrintedField from "../_components/AwardNamePrintedField";
 import { isSystemOfTheYearAward } from "../../helpers/awardType";
-
-const awardTypeOptions = [
-  { value: "System of the Year", label: "System of the Year" },
-  { value: "Excellence in Operations", label: "Excellence in Operations" },
-  { value: "Excellence in Management", label: "Excellence in Management" },
-  {
-    value: "Excellence in Office Operations",
-    label: "Excellence in Office Operations",
-  },
-];
+import { useGetAwardTypes } from "../../data/API";
+import { toAwardTypeSelectOptions } from "../../helpers/awardTypeOptions";
+import { useNotify } from "../../NotificationProvider";
 
 const EMPLOYEE_FIELDS = [
   "clerical_employees",
@@ -38,7 +31,24 @@ const FieldPair: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
 const SystemDataStep: React.FC = () => {
   const { watch, setValue, register, unregister } = useFormContext();
+  const { notify } = useNotify();
+  const { data: awardTypes, isError: awardTypesError, isFetched } =
+    useGetAwardTypes();
   const awardType = watch("award_type");
+  const { options: awardTypeOptions, usedFallback } = useMemo(
+    () => toAwardTypeSelectOptions(awardTypes, awardType),
+    [awardTypes, awardType]
+  );
+
+  useEffect(() => {
+    if (!isFetched) return;
+    if (awardTypesError || usedFallback) {
+      notify(
+        "Could not load award types. Showing the previous list.",
+        "error"
+      );
+    }
+  }, [awardTypesError, isFetched, notify, usedFallback]);
   const showEmploymentDate = isIndividualAward(awardType);
   const showPrintedSystemName = isSystemOfTheYearAward(awardType);
   const showEmployeeCounts = isSystemOfTheYearAward(awardType);

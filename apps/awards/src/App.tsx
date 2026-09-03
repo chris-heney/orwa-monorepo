@@ -30,19 +30,19 @@ function App() {
   }, []);
 
   const content: ReactNode = (
-    <ErrorBoundary key={viewingEntries ? "entries" : "form"}>
-      {!isLoggedIn && <LoginModal />}
-      <Header />
-      {showForm ? (
-        <EntryListProvider>
-          <NotifyProvider>
+    <NotifyProvider>
+      <ErrorBoundary key={viewingEntries ? "entries" : "form"}>
+        {!isLoggedIn && <LoginModal />}
+        <Header />
+        {showForm ? (
+          <EntryListProvider>
             {viewingEntries ? <EntryList /> : <AwardNominationForm />}
-          </NotifyProvider>
-        </EntryListProvider>
-      ) : (
-        <LandingView onStartNomination={startNomination} />
-      )}
-    </ErrorBoundary>
+          </EntryListProvider>
+        ) : (
+          <LandingView onStartNomination={startNomination} />
+        )}
+      </ErrorBoundary>
+    </NotifyProvider>
   );
 
   return (
