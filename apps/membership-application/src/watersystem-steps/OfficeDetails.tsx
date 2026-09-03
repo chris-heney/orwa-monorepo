@@ -23,7 +23,7 @@ const OfficeDetails = () => {
             helperText="Please provide when your board meetings are held."
           />
           <MaskedPhoneInput source="phone" required />
-          <MaskedFaxInput source="fax" required />
+          <MaskedFaxInput source="fax" />
           <TextInput source="url" label="URL" />
           <TextInput source="email" label="Email" required />
           <SelectInput
