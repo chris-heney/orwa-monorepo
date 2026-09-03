@@ -4,11 +4,13 @@ import { TabContext, TabList, TabPanel } from "@mui/lab";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
+import SettingsIcon from "@mui/icons-material/Settings";
 import { Title } from "react-admin";
 import { useAwardContext } from "./AwardContextProvider";
 import AwardSummary from "./components/AwardSummary";
 import AwardNominationList from "./components/AwardNominationList";
 import AwardWinnerList from "./components/AwardWinnerList";
+import AwardTypeSettings from "./components/AwardTypeSettings";
 import AwardDashboardHeader from "./components/AwardDashboardHeader";
 import AwardFilterSidebar from "./components/AwardFilterSidebar";
 import { a11yTabPanelProps, a11yTabProps } from "../../helpers/TabFormatters";
@@ -47,6 +49,12 @@ const AwardDashboard = () => {
                 value="winners"
                 {...a11yTabProps(2)}
               />
+              <Tab
+                icon={<SettingsIcon />}
+                label="Settings"
+                value="settings"
+                {...a11yTabProps(3)}
+              />
             </TabList>
             <Divider />
           </TabContext>
@@ -60,6 +68,9 @@ const AwardDashboard = () => {
           </TabPanel>
           <TabPanel value="winners" {...a11yTabPanelProps(2)} sx={{ p: 0 }}>
             <AwardWinnerList />
+          </TabPanel>
+          <TabPanel value="settings" {...a11yTabPanelProps(3)} sx={{ p: 0 }}>
+            <AwardTypeSettings />
           </TabPanel>
         </TabContext>
       </Box>

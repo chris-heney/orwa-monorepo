@@ -30,7 +30,27 @@ describe("calendarYearChoices", () => {
 
 describe("buildAwardListFilter", () => {
   it("filters by award_year unless All years is selected", () => {
-    expect(buildAwardListFilter("", "all", 2027)).toEqual({ award_year: 2027 });
-    expect(buildAwardListFilter("", "all", "all")).toEqual({});
+    expect(buildAwardListFilter("", 2027)).toEqual({ award_year: 2027 });
+    expect(buildAwardListFilter("", "all")).toEqual({});
+  });
+
+  it("does not apply a nomination_status filter", () => {
+    expect(buildAwardListFilter("", "all", "all", "all")).not.toHaveProperty(
+      "nomination_status"
+    );
+  });
+
+  it("nests region on the linked watersystem (enum string, not an id)", () => {
+    expect(buildAwardListFilter("", "all", "Region 4")).toEqual({
+      watersystem: { region: "Region 4" },
+    });
+  });
+
+  it("filters award_type by the catalog name", () => {
+    expect(buildAwardListFilter("", "all", "all", "System of the Year")).toEqual(
+      {
+        award_type: "System of the Year",
+      }
+    );
   });
 });

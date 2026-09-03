@@ -42,7 +42,7 @@ const LIST_POPULATE = {
 };
 
 const AwardNominationList = () => {
-  const { search, status, year } = useAwardContext();
+  const { search, year, region, awardType } = useAwardContext();
   const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
   const listPerPage = agPrefs.pageSize || 50;
   useAwardColumnDefaults();
@@ -54,7 +54,7 @@ const AwardNominationList = () => {
         title=" "
         actions={false}
         disableSyncWithLocation
-        filter={buildAwardListFilter(search, status, year)}
+        filter={buildAwardListFilter(search, year, region, awardType)}
         sort={{ field: "award_year", order: "DESC" }}
         perPage={listPerPage}
         pagination={<CustomPagination />}

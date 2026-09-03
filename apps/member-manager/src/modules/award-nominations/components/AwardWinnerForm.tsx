@@ -4,9 +4,12 @@ import {
   ImageField,
   ImageInput,
   NumberInput,
+  SelectInput,
   SimpleForm,
   TextInput,
   required,
+  useGetList,
+  useNotify,
   useRecordContext,
 } from "react-admin";
 import { Box, Grid, Typography } from "@mui/material";
@@ -19,6 +22,10 @@ import {
 } from "../../_components/review-packet";
 import { nominationCycleYear } from "../helpers/listFilters";
 import { winnerImageUrl, type AwardWinnerRecord } from "../helpers/winnerImage";
+import {
+  awardTypeChoices,
+  type AwardTypeRecord,
+} from "../helpers/awardTypes";
 
 const AWARD_BACK = "/orwa-awards/dashboard";
 
@@ -45,6 +52,21 @@ const CurrentPhoto = () => {
 
 const AwardWinnerForm = () => {
   const record = useRecordContext<AwardWinnerRecord>();
+  const notify = useNotify();
+  const { data, isError } = useGetList<AwardTypeRecord>("award-types", {
+    pagination: { page: 1, perPage: 200 },
+    sort: { field: "order", order: "ASC" },
+  });
+  const typeChoices = awardTypeChoices(data, record?.title || null);
+
+  React.useEffect(() => {
+    if (isError) {
+      notify(
+        "Could not load award types. Using the previous hardcoded list.",
+        { type: "warning" }
+      );
+    }
+  }, [isError, notify]);
 
   return (
     <SimpleForm
@@ -78,25 +100,27 @@ const AwardWinnerForm = () => {
                     sx={fullFieldSx}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextInput
+                <Grid item xs={12} md={9}>
+                  <SelectInput
                     source="title"
                     label="Award"
-                    helperText="e.g. Man of the Year, Excellence in Operations, 5 Years of Service"
+                    choices={typeChoices}
                     validate={required()}
                     fullWidth
                     sx={fullFieldSx}
+                    helperText="Award types from Settings, including ceremony and historical titles"
                   />
                 </Grid>
                 <Grid item xs={12} md={3}>
                   <NumberInput
                     source="sort_order"
-                    label="Order within year"
+                    label="Order"
+                    helperText="Display order within the year"
                     fullWidth
                     sx={fullFieldSx}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} md={9}>
                   <TextInput
                     source="recipient"
                     label="Recipient"
