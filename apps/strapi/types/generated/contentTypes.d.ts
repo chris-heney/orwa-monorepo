@@ -892,16 +892,7 @@ export interface ApiAwardNominationAwardNomination
   attributes: {
     address: Schema.Attribute.String & Schema.Attribute.Required;
     award_name_printed: Schema.Attribute.String;
-    award_type: Schema.Attribute.Enumeration<
-      [
-        'System of the Year',
-        'Water/Wastewater System of the Year',
-        'Excellence in Operations',
-        'Excellence in Management',
-        'Excellence in Office Operations',
-      ]
-    > &
-      Schema.Attribute.Required;
+    award_type: Schema.Attribute.String & Schema.Attribute.Required;
     award_year: Schema.Attribute.Integer & Schema.Attribute.Required;
     beginning_members: Schema.Attribute.Integer;
     biography_file: Schema.Attribute.Media<'files' | 'images'>;
@@ -977,6 +968,44 @@ export interface ApiAwardNominationAwardNomination
       'api::watersystem.watersystem'
     >;
     zip: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
+export interface ApiAwardTypeAwardType extends Struct.CollectionTypeSchema {
+  collectionName: 'award_types';
+  info: {
+    description: 'Catalog of ORWA award types; nominatable types appear on the public nomination form';
+    displayName: 'Award Type';
+    pluralName: 'award-types';
+    singularName: 'award-type';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::award-type.award-type'
+    > &
+      Schema.Attribute.Private;
+    name: Schema.Attribute.String &
+      Schema.Attribute.Required &
+      Schema.Attribute.Unique;
+    nominatable: Schema.Attribute.Boolean &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<true>;
+    order: Schema.Attribute.Integer &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<0>;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -5489,6 +5518,7 @@ declare module '@strapi/strapi' {
       'api::asset.asset': ApiAssetAsset;
       'api::associate.associate': ApiAssociateAssociate;
       'api::award-nomination.award-nomination': ApiAwardNominationAwardNomination;
+      'api::award-type.award-type': ApiAwardTypeAwardType;
       'api::award-winner.award-winner': ApiAwardWinnerAwardWinner;
       'api::conference-attendee.conference-attendee': ApiConferenceAttendeeConferenceAttendee;
       'api::conference-booth.conference-booth': ApiConferenceBoothConferenceBooth;
