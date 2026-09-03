@@ -34,6 +34,34 @@ const user_base = {
 
 const currentYear = new Date().getFullYear();
 
+// Strip the sandbox `test` token and null out card fields before anything is
+// persisted or emailed. Card number / expiration / CVV must NEVER leave the
+// payment processor call.
+const sanitizeFormData = (data: any) => {
+  const { test: _testToken, ...safeData } = data ?? {};
+  return {
+    ...safeData,
+    paymentData: safeData.paymentData
+      ? {
+          ...safeData.paymentData,
+          cardNumber: null,
+          expirationDate: null,
+          cardCode: null,
+        }
+      : null,
+  };
+};
+
+const errorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+
 export default ({ strapi }) => {
   const serviceObj = {
     // Contact Management
@@ -223,21 +251,93 @@ export default ({ strapi }) => {
 
     // Logging
     logFormData: async (data: any, resource: string) => {
-      const { test: _testToken, ...safeData } = data;
       await strapi.documents("api::log.log").create({
         data: {
-          data: {
-            ...safeData,
-            paymentData: safeData.paymentData ? {
-              ...safeData.paymentData,
-              cardNumber: null,
-              expirationDate: null,
-              cardCode: null,
-            } : null,
-          },
+          data: sanitizeFormData(data),
           resource,
         },
       });
+    },
+
+    // Failure reporting: log (tagged for grep), persist to the same `logs`
+    // collection successful submissions use (distinguished by resource
+    // "conference-registration-error"), and email an alert. Each step is
+    // individually guarded so reporting can never mask the original failure.
+    // Motivation: sponsorship checkouts failed silently Aug 27 – Sep 1 2026 —
+    // the controller returned {result:"error"} bodies with zero server trace.
+    reportWebhookFailure: async (body: any, error: unknown, stage: string) => {
+      const message = errorMessage(error);
+      const summary = {
+        stage,
+        organization: body?.organization ?? null,
+        registrantName:
+          [body?.registrant?.first, body?.registrant?.last]
+            .filter(Boolean)
+            .join(" ") || null,
+        registrantEmail: body?.registrant?.email ?? null,
+        paymentType: body?.paymentType ?? null,
+        amount: body?.paymentData?.amount ?? null,
+        sponsorCount: Array.isArray(body?.sponsors) ? body.sponsors.length : 0,
+        ticketCount: Array.isArray(body?.tickets) ? body.tickets.length : 0,
+        boothCount: Array.isArray(body?.booths) ? body.booths.length : 0,
+      };
+
+      strapi.log.error(
+        `[conference-webhook] Registration failure (${stage}): ${message} | ` +
+          `org=${summary.organization ?? "?"} ` +
+          `registrant=${summary.registrantEmail ?? "?"} ` +
+          `paymentType=${summary.paymentType ?? "?"} ` +
+          `amount=${summary.amount ?? "?"} ` +
+          `sponsors=${summary.sponsorCount} tickets=${summary.ticketCount} ` +
+          `booths=${summary.boothCount}`
+      );
+
+      try {
+        await strapi.documents("api::log.log").create({
+          data: {
+            resource: "conference-registration-error",
+            data: {
+              result: "error",
+              error: message,
+              ...summary,
+              payload: sanitizeFormData(body),
+            },
+          },
+        });
+      } catch (persistErr) {
+        strapi.log.error(
+          `[conference-webhook] Failed to persist failure log: ${errorMessage(persistErr)}`
+        );
+      }
+
+      try {
+        const to = process.env.WEBHOOK_ALERT_EMAIL || "office@orwa.org";
+        const shortReason =
+          message.length > 120 ? `${message.slice(0, 117)}...` : message;
+        await strapi.plugins["email"].services.email.send({
+          to,
+          from: "website@orwa.org",
+          subject: `[ORWA] Conference registration failure: ${shortReason}`,
+          html: `
+            <h3>Conference registration webhook failure</h3>
+            <div><strong>Time:</strong> ${new Date().toISOString()}</div>
+            <div><strong>Stage:</strong> ${stage}</div>
+            <div><strong>Organization:</strong> ${summary.organization ?? "(none)"}</div>
+            <div><strong>Registrant:</strong> ${summary.registrantName ?? "(none)"} &lt;${summary.registrantEmail ?? "?"}&gt;</div>
+            <div><strong>Payment type:</strong> ${summary.paymentType ?? "?"} — <strong>Amount:</strong> ${summary.amount ?? "?"}</div>
+            <div><strong>Cart:</strong> ${summary.sponsorCount} sponsorship(s), ${summary.ticketCount} ticket(s), ${summary.boothCount} booth(s)</div>
+            <div style="margin-top:8px"><strong>Error:</strong> ${message}</div>
+            <p style="margin-top:12px;color:#666">Full sanitized payload is in the Strapi <em>logs</em> collection (resource: conference-registration-error). Card data is never logged.</p>
+          `,
+        });
+        strapi.log.info(
+          `[conference-webhook] Failure alert email sent to ${to}`
+        );
+      } catch (mailErr) {
+        strapi.log.error(
+          `[conference-webhook] Failure alert email failed: ${errorMessage(mailErr)}`
+        );
+      }
     },
 
     // Payment Processing
