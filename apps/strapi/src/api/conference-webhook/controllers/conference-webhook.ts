@@ -208,6 +208,7 @@ export default ({ strapi }) => {
             }
           } catch (err) {
             if (err instanceof SponsorAmountError) {
+              await reportFailure(ctx.request.body, err, "sponsor-amount");
               ctx.body = {
                 result: "error",
                 message: err.message,
@@ -240,6 +241,12 @@ export default ({ strapi }) => {
             );
 
             if (authorizeNetResponse.messages.resultCode !== "Ok") {
+              await reportFailure(
+                ctx.request.body,
+                authorizeNetResponse.messages.message?.[0]?.text ??
+                  "Authorize.net returned a non-Ok result",
+                "payment"
+              );
               ctx.body = {
                 result: "error",
                 message: authorizeNetResponse.messages.message[0].text,
@@ -481,84 +488,106 @@ export default ({ strapi }) => {
           // Downstream writes must not abort the confirmation email / invoice.
           // BancFirst's Sponsor-only invoice (Aug 19) created four registrations
           // then died in handleSponsors on an un-uploaded logo blob — no email.
-          await runSafely("water-taste-test", () =>
-            handleWaterTasteTestContestants(
-              registrationAddons,
-              registrant,
-              conference,
-              organization,
-              watersystem,
-              registrationId
-            )
+          await runSafely(
+            "water-taste-test",
+            () =>
+              handleWaterTasteTestContestants(
+                registrationAddons,
+                registrant,
+                conference,
+                organization,
+                watersystem,
+                registrationId
+              ),
+            ctx.request.body
           );
 
           if ((sponsors ?? []).length > 0) {
-            await runSafely("sponsors", () =>
-              handleSponsors(
-                sponsors,
-                conference,
-                registrationId,
-                registrant,
-                organization,
-                logo
-              )
+            await runSafely(
+              "sponsors",
+              () =>
+                handleSponsors(
+                  sponsors,
+                  conference,
+                  registrationId,
+                  registrant,
+                  organization,
+                  logo
+                ),
+              ctx.request.body
             );
           }
 
-          await runSafely("attendees", () =>
-            handleAttendees(
-              tickets,
-              conference,
-              registrationId,
-              registrationSource,
-              organization
-            )
-          );
-
-          await runSafely("booths", () =>
-            handleBooths(
-              booths,
-              conference,
-              registrationId,
-              organization,
-              conferenceData
-            )
-          );
-
-          await runSafely("contestants", async () => {
-            contestantIds = await handleContestants(
-              tickets,
-              conference,
-              registrationId,
-              registrationSource,
-              organization,
-              conferenceData
-            );
-          });
-
-          if (team && contestantIds.length > 0) {
-            await runSafely("team", () =>
-              handleTeamCreation(
-                team,
+          await runSafely(
+            "attendees",
+            () =>
+              handleAttendees(
+                tickets,
                 conference,
                 registrationId,
-                contestantIds
-              )
+                registrationSource,
+                organization
+              ),
+            ctx.request.body
+          );
+
+          await runSafely(
+            "booths",
+            () =>
+              handleBooths(
+                booths,
+                conference,
+                registrationId,
+                organization,
+                conferenceData
+              ),
+            ctx.request.body
+          );
+
+          await runSafely(
+            "contestants",
+            async () => {
+              contestantIds = await handleContestants(
+                tickets,
+                conference,
+                registrationId,
+                registrationSource,
+                organization,
+                conferenceData
+              );
+            },
+            ctx.request.body
+          );
+
+          if (team && contestantIds.length > 0) {
+            await runSafely(
+              "team",
+              () =>
+                handleTeamCreation(
+                  team,
+                  conference,
+                  registrationId,
+                  contestantIds
+                ),
+              ctx.request.body
             );
           }
           }
         }
 
         if (paymentType === "Invoice" && registrationId != null) {
-          await runSafely("invoice", () =>
-            createConferenceInvoice({
-              registrationId,
-              paymentData,
-              registrant,
-              organization,
-              paymentType,
-              body: ctx.request.body,
-            })
+          await runSafely(
+            "invoice",
+            () =>
+              createConferenceInvoice({
+                registrationId,
+                paymentData,
+                registrant,
+                organization,
+                paymentType,
+                body: ctx.request.body,
+              }),
+            ctx.request.body
           );
         }
 
@@ -577,6 +606,7 @@ export default ({ strapi }) => {
       } catch (err) {
         console.log("Error:", err);
         console.log("Error: Details", err?.details?.errors);
+        await reportFailure(ctx.request.body, err, "registration");
         ctx.body = err;
       }
     },
@@ -611,11 +641,34 @@ export default ({ strapi }) => {
     }
   }
 
-  async function runSafely(label: string, fn: () => Promise<unknown>) {
+  async function runSafely(
+    label: string,
+    fn: () => Promise<unknown>,
+    body?: any
+  ) {
     try {
       await fn();
     } catch (err) {
       console.error(`Registration step failed (${label}):`, err);
+      // Post-payment step failures are exactly the silent lost-revenue class
+      // (e.g. handleSponsors dying on an un-uploaded logo) — alert on them.
+      await reportFailure(body, err, `step:${label}`);
+    }
+  }
+
+  /**
+   * Logs, persists, and email-alerts a webhook failure via the service.
+   * Reporting must never mask the original error or break the response,
+   * so any reporter failure is swallowed after being logged.
+   */
+  async function reportFailure(body: any, error: unknown, stage: string) {
+    try {
+      await service.reportWebhookFailure(body, error, stage);
+    } catch (reportErr) {
+      console.error(
+        "[conference-webhook] failure reporting itself failed:",
+        reportErr
+      );
     }
   }
 
@@ -1028,7 +1081,12 @@ export default ({ strapi }) => {
           console.error("email-log write failed:", logErr);
         }
       } catch (err) {
+        // No email alert here — if the mailer is failing, the alert email
+        // would fail the same way. Tagged log line is the alert channel.
         console.error(`Conference email failed (${to}):`, err);
+        strapi.log?.error?.(
+          `[conference-webhook] Confirmation email failed (to=${to}): ${err?.message ?? err}`
+        );
       }
     };
 

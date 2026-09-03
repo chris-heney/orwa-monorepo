@@ -141,6 +141,7 @@ describe("conference registration matrix", () => {
 
     service = {
       logFormData: vi.fn(),
+      reportWebhookFailure: vi.fn(),
       processPayment: vi.fn(async () => ({
         messages: { resultCode: "Ok", message: [] },
         transactionResponse: {
