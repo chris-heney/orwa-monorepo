@@ -1,0 +1,34 @@
+{
+  "kind": "collectionType",
+  "collectionName": "award_types",
+  "info": {
+    "singularName": "award-type",
+    "pluralName": "award-types",
+    "displayName": "Award Type",
+    "description": "Catalog of ORWA award types; nominatable types appear on the public nomination form"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "nominatable": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "order": {
+      "type": "integer",
+      "required": true,
+      "default": 0
+    }
+  }
+}

@@ -128,12 +128,7 @@ export interface IAwardNominationPayload {
   management_employees?: number;
   justification: string;
   nomination_description?: string;
-  award_type:
-    | "System of the Year"
-    | "Water/Wastewater System of the Year"
-    | "Excellence in Operations"
-    | "Excellence in Management"
-    | "Excellence in Office Operations";
+  award_type: string;
   biography_method?: string;
   biography_text?: string;
   biography_file?: unknown;

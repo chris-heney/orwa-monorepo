@@ -8,10 +8,10 @@ type OrwefContextValue = {
   setSelectedTab: (tab: OrwefTab) => void;
   year: number | "all";
   setYear: (year: number | "all") => void;
-  status: string;
-  setStatus: (status: string) => void;
   search: string;
   setSearch: (search: string) => void;
+  region: string;
+  setRegion: (region: string) => void;
   isFilterSidebarOpen: boolean;
   setIsFilterSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -21,15 +21,15 @@ const OrwefContext = createContext<OrwefContextValue | null>(null);
 export const useOrwefContext = () =>
   useContext(OrwefContext) ?? {
     selectedTab: "summary" as OrwefTab,
-    setSelectedTab: () => {},
+    setSelectedTab: () => undefined,
     year: "all" as const,
-    setYear: () => {},
-    status: "all",
-    setStatus: () => {},
+    setYear: () => undefined,
     search: "",
-    setSearch: () => {},
+    setSearch: () => undefined,
+    region: "all",
+    setRegion: () => undefined,
     isFilterSidebarOpen: false,
-    setIsFilterSidebarOpen: () => {},
+    setIsFilterSidebarOpen: () => undefined,
   };
 
 const OrwefContextProvider = ({ children }: PropsWithChildren) => {
@@ -41,8 +41,8 @@ const OrwefContextProvider = ({ children }: PropsWithChildren) => {
     "orwef-year-filter",
     new Date().getFullYear()
   );
-  const [status, setStatus] = useStore("orwef-application-status", "all");
   const [search, setSearch] = useStore("orwef-application-search", "");
+  const [region, setRegion] = useStore("orwef-scholarships-region", "all");
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useStore(
     "orwef-filter-sidebar-open",
     false
@@ -55,10 +55,10 @@ const OrwefContextProvider = ({ children }: PropsWithChildren) => {
         setSelectedTab,
         year,
         setYear,
-        status,
-        setStatus,
         search,
         setSearch,
+        region,
+        setRegion,
         isFilterSidebarOpen,
         setIsFilterSidebarOpen,
       }}

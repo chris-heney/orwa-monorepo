@@ -213,8 +213,8 @@ export const APP_MODULES: AppModule[] = [
     key: 'awards',
     label: 'ORWA Awards',
     to: '/orwa-awards/dashboard',
-    pathPrefixes: ['/orwa-awards', '/award-nominations'],
-    resources: ['award-nominations'],
+    pathPrefixes: ['/orwa-awards', '/award-nominations', '/award-winners'],
+    resources: ['award-nominations', 'award-winners'],
   },
   {
     key: 'rbac',

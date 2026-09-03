@@ -23,7 +23,7 @@ const OrwefDashboardHeader = () => {
     isFilterSidebarOpen,
     setIsFilterSidebarOpen,
     search,
-    status,
+    region,
     year,
   } = useOrwefContext();
   const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
@@ -37,7 +37,7 @@ const OrwefDashboardHeader = () => {
             <ListBase
               disableSyncWithLocation
               resource={RESOURCE}
-              filter={buildScholarshipListFilter(search, status, year)}
+              filter={buildScholarshipListFilter(search, year, region)}
               perPage={agPrefs.pageSize || 50}
             >
               <RecordCount />

@@ -8,6 +8,8 @@ import {
   SimpleFormIterator,
   TextInput,
   required,
+  useGetList,
+  useNotify,
   useRecordContext,
 } from "react-admin";
 import { Box, Grid, Typography } from "@mui/material";
@@ -22,19 +24,40 @@ import {
 } from "../../_components/review-packet";
 import MediaLink from "../../orwef-scholarships/components/MediaLink";
 import {
-  AWARD_TYPE_CHOICES,
   BIOGRAPHY_METHOD_CHOICES,
   BOARD_LIST_METHOD_CHOICES,
   contactSummary,
   watersystemCounty,
   watersystemName,
 } from "../helpers/recordDisplay";
+import {
+  awardTypeChoices,
+  type AwardTypeRecord,
+} from "../helpers/awardTypes";
 import { AWARD_STATUSES } from "../helpers/listFilters";
 
 const AWARD_BACK = "/orwa-awards/dashboard";
 
 const AwardForm = () => {
   const record = useRecordContext<Record<string, unknown>>();
+  const notify = useNotify();
+  const { data, isError } = useGetList<AwardTypeRecord>("award-types", {
+    pagination: { page: 1, perPage: 200 },
+    sort: { field: "order", order: "ASC" },
+  });
+  const typeChoices = awardTypeChoices(
+    data,
+    typeof record?.award_type === "string" ? record.award_type : null
+  );
+
+  React.useEffect(() => {
+    if (isError) {
+      notify(
+        "Could not load award types. Using the previous hardcoded list.",
+        { type: "warning" }
+      );
+    }
+  }, [isError, notify]);
 
   return (
     <SimpleForm
@@ -69,7 +92,7 @@ const AwardForm = () => {
                   <SelectInput
                     source="award_type"
                     label="Please select the type of award"
-                    choices={AWARD_TYPE_CHOICES}
+                    choices={typeChoices}
                     fullWidth
                     sx={fullFieldSx}
                   />

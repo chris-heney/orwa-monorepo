@@ -33,6 +33,7 @@ const colors = {
 };
 
 let nxChild = null;
+const remapChildren = [];
 let shuttingDown = false;
 
 function restoreTerminal() {
@@ -347,73 +348,178 @@ function runPowershell(script, { timeout = 45000, label = 'powershell' } = {}) {
   }
 }
 
-function parseWindowsListenerRows(raw) {
+function parsePowershellJson(raw) {
   if (!raw) return [];
   try {
-    const parsed = JSON.parse(raw.replace(/^\uFEFF/, ''));
-    return (Array.isArray(parsed) ? parsed : [parsed]).map((row) => ({
+    const parsed = JSON.parse(String(raw).replace(/^\uFEFF/, ''));
+    return Array.isArray(parsed) ? parsed : [parsed];
+  } catch {
+    return [];
+  }
+}
+
+function parseWindowsListenerRows(raw) {
+  return parsePowershellJson(raw)
+    .map((row) => ({
       port: Number(row.port),
       pid: Number(row.pid),
       state: String(row.state || ''),
       name: String(row.name || ''),
       commandLine: String(row.commandLine || ''),
       hasWindow: Boolean(row.hasWindow),
-    }));
-  } catch {
-    return [];
+    }))
+    .filter((row) => Number.isInteger(row.port) && Number.isInteger(row.pid));
+}
+
+function parseNetstatTcpRows(text, portSet) {
+  const rows = [];
+  for (const line of String(text || '').split(/\r?\n/)) {
+    const parts = line.trim().split(/\s+/);
+    if (parts.length < 5 || !/^TCP$/i.test(parts[0])) continue;
+    const state = String(parts[3] || '');
+    if (!/^(LISTENING|TIME_WAIT)$/i.test(state)) continue;
+    const local = parts[1] || '';
+    const colon = local.lastIndexOf(':');
+    if (colon < 0) continue;
+    const port = Number(local.slice(colon + 1));
+    if (!portSet.has(port)) continue;
+    const pid = Number(parts[4]);
+    if (!Number.isInteger(pid)) continue;
+    rows.push({
+      port,
+      pid,
+      state: /^listen/i.test(state) ? 'Listen' : 'TimeWait',
+      name: '',
+      commandLine: '',
+      hasWindow: false,
+    });
   }
+  return rows;
+}
+
+function getWindowsListenersViaNetstatExe(ports) {
+  const portSet = new Set(ports);
+  const candidates = ['/mnt/c/Windows/System32/netstat.exe', 'netstat.exe'];
+  for (const bin of candidates) {
+    try {
+      if (bin.startsWith('/') && !fs.existsSync(bin)) continue;
+      const command = bin.startsWith('/') ? `${JSON.stringify(bin)} -ano -p tcp` : 'netstat.exe -ano -p tcp';
+      const out = execSync(command, {
+        encoding: 'utf8',
+        timeout: 15000,
+        stdio: ['ignore', 'pipe', 'ignore'],
+      });
+      return parseNetstatTcpRows(out, portSet);
+    } catch {
+      // try next
+    }
+  }
+  return [];
+}
+
+function getWindowsListenersViaPowershell(ports) {
+  // Never name a PowerShell variable $pid — $PID is a read-only automatic
+  // variable. Assigning it throws, SilentlyContinue swallows that, and the
+  // query looks empty (the post-reboot "ghost port" abort).
+  const script = `
+$ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+$ports = @(${ports.join(',')})
+$rows = New-Object System.Collections.Generic.List[object]
+$conns = Get-NetTCPConnection -LocalPort $ports -State Listen,TimeWait
+foreach ($conn in $conns) {
+  $rows.Add([PSCustomObject]@{
+    port = [int]$conn.LocalPort
+    pid = [int]$conn.OwningProcess
+    state = [string]$conn.State
+  })
+}
+if ($rows.Count -eq 0) { '' } else { $rows | ConvertTo-Json -Compress }
+`.trim();
+  return parseWindowsListenerRows(
+    runPowershell(script, { label: 'Windows port query' })
+  );
+}
+
+function enrichWindowsProcesses(pids) {
+  const unique = [...new Set(pids)].filter((id) => Number.isInteger(id) && id > 0);
+  const map = new Map();
+  if (unique.length === 0) return map;
+  const script = `
+$ErrorActionPreference = 'SilentlyContinue'
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
+$ids = @(${unique.join(',')})
+$rows = New-Object System.Collections.Generic.List[object]
+foreach ($procId in $ids) {
+  $gp = Get-Process -Id $procId -ErrorAction SilentlyContinue
+  $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$procId"
+  $cmd = [string]$cim.CommandLine
+  if ($cmd.Length -gt 500) { $cmd = $cmd.Substring(0, 500) }
+  $hasWindow = $false
+  if ($gp) { $hasWindow = ($gp.MainWindowHandle -ne [IntPtr]::Zero) }
+  $name = ''
+  if ($cim -and $cim.Name) { $name = [string]$cim.Name }
+  elseif ($gp) { $name = [string]$gp.Name }
+  $rows.Add([PSCustomObject]@{
+    pid = [int]$procId
+    name = $name
+    commandLine = $cmd
+    hasWindow = [bool]$hasWindow
+  })
+}
+if ($rows.Count -eq 0) { '' } else { $rows | ConvertTo-Json -Compress }
+`.trim();
+  for (const row of parsePowershellJson(
+    runPowershell(script, { label: 'Windows process enrich' })
+  )) {
+    const pid = Number(row.pid);
+    if (!Number.isInteger(pid)) continue;
+    map.set(pid, {
+      name: String(row.name || ''),
+      commandLine: String(row.commandLine || ''),
+      hasWindow: Boolean(row.hasWindow),
+    });
+  }
+  return map;
 }
 
 function getWindowsPortListeners(ports) {
   const uniquePorts = [...new Set(ports)].filter((port) => Number.isInteger(port) && port > 0);
   if (uniquePorts.length === 0) return [];
 
-  const script = `
-$ErrorActionPreference = 'SilentlyContinue'
-[Console]::OutputEncoding = [Text.UTF8Encoding]::new()
-$ports = @(${uniquePorts.join(',')})
-$rows = New-Object System.Collections.Generic.List[object]
-function Add-Row($port, $pid, $state, $name, $cmd, $hasWindow) {
-  $rows.Add([PSCustomObject]@{
-    port = [int]$port
-    pid = [int]$pid
-    state = [string]$state
-    name = [string]$name
-    commandLine = [string]$cmd
-    hasWindow = [bool]$hasWindow
-  })
-}
-function Enrich($pid) {
-  $gp = Get-Process -Id $pid -ErrorAction SilentlyContinue
-  $cim = Get-CimInstance Win32_Process -Filter "ProcessId=$pid"
-  $hasWindow = $false
-  if ($gp) { $hasWindow = ($gp.MainWindowHandle -ne [IntPtr]::Zero) }
-  @{ name = $cim.Name; cmd = $cim.CommandLine; hasWindow = $hasWindow }
-}
-$conns = Get-NetTCPConnection -LocalPort $ports -State Listen,TimeWait
-foreach ($conn in $conns) {
-  $info = Enrich $conn.OwningProcess
-  Add-Row $conn.LocalPort $conn.OwningProcess $conn.State $info.name $info.cmd $info.hasWindow
-}
-foreach ($line in (netstat -ano -p tcp)) {
-  if ($line -notmatch '^\\s*TCP\\s+(\\S+):(\\d+)\\s+\\S+\\s+(LISTENING|TIME_WAIT)\\s+(\\d+)') { continue }
-  $port = [int]$Matches[2]
-  if ($ports -notcontains $port) { continue }
-  $pid = [int]$Matches[4]
-  $dup = $false
-  foreach ($row in $rows) {
-    if ($row.port -eq $port -and $row.pid -eq $pid) { $dup = $true; break }
-  }
-  if ($dup) { continue }
-  $info = Enrich $pid
-  Add-Row $port $pid $Matches[3] $info.name $info.cmd $info.hasWindow
-}
-if ($rows.Count -eq 0) { '' } else { $rows | ConvertTo-Json -Compress }
-`.trim();
+  const byKey = new Map();
+  const add = (row) => {
+    const port = Number(row.port);
+    const pid = Number(row.pid);
+    const state = String(row.state || '');
+    if (!Number.isInteger(port) || !Number.isInteger(pid)) return;
+    const key = `${port}:${pid}:${state.toLowerCase()}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, {
+        port,
+        pid,
+        state,
+        name: String(row.name || ''),
+        commandLine: String(row.commandLine || ''),
+        hasWindow: Boolean(row.hasWindow),
+      });
+    }
+  };
 
-  return parseWindowsListenerRows(
-    runPowershell(script, { label: 'Windows port query' })
-  );
+  for (const row of getWindowsListenersViaNetstatExe(uniquePorts)) add(row);
+  for (const row of getWindowsListenersViaPowershell(uniquePorts)) add(row);
+
+  const merged = [...byKey.values()];
+  const enrich = enrichWindowsProcesses(merged.map((row) => row.pid));
+  return merged.map((row) => {
+    const extra = enrich.get(row.pid) || {};
+    return {
+      ...row,
+      name: extra.name || row.name,
+      commandLine: extra.commandLine || row.commandLine,
+      hasWindow: Boolean(extra.hasWindow),
+    };
+  });
 }
 
 let excludedRangesCache = null;
@@ -436,23 +542,39 @@ function excludedRangeFor(port) {
   return getHyperVExcludedRanges().find((range) => port >= range.start && port <= range.end) || null;
 }
 
+function windowsProcessName(listener) {
+  return String(listener.name || '')
+    .replace(/\.exe$/i, '')
+    .toLowerCase();
+}
+
+function isCursorOrCodeOwner(listener) {
+  const name = windowsProcessName(listener);
+  return name === 'cursor' || name === 'code' || name === 'code - insiders';
+}
+
 function isSafeWindowsPortOwner(listener) {
   const pid = Number(listener.pid);
   if (!Number.isInteger(pid) || pid <= 4) return false;
 
-  const name = String(listener.name || '')
-    .replace(/\.exe$/i, '')
-    .toLowerCase();
+  const name = windowsProcessName(listener);
   if (['node', 'wslrelay', 'vite'].includes(name)) return true;
 
   // WSL mirrored mode: Cursor/VS Code auto-forward leftover sockets are owned
   // by the shared-process utility (NodeService), not the main window.
   // Killing the main Cursor/Code window would close the editor — never do that.
-  if (name === 'cursor' || name === 'code' || name === 'code - insiders') {
+  if (isCursorOrCodeOwner(listener)) {
     const cmd = String(listener.commandLine || '');
     return cmd.includes('--type=utility') && cmd.includes('node.mojom.NodeService');
   }
   return false;
+}
+
+function isIgnorableWindowsHolder(listener) {
+  // Auto-forwards persist across host reboot. Vite cannot bind 127.0.0.1, but
+  // aborting the whole session is the false-positive after a clean boot.
+  // NodeService is still auto-killed when we can see it.
+  return isCursorOrCodeOwner(listener);
 }
 
 function killWindowsPids(pids) {
@@ -515,7 +637,9 @@ function freeWindowsHeldPorts(portEntries) {
     if (excludedRangeFor(port)) return false;
     const holders = listening.filter((row) => row.port === port);
     if (holders.some((row) => !isSafeWindowsPortOwner(row))) return false;
-    return timeWait.some((row) => row.port === port) || holders.length === 0;
+    // Only wait when we actually saw TIME_WAIT. An empty holder list used to
+    // wait 90s for a "ghost" that was really Cursor (query bug) or Hyper-V.
+    return timeWait.some((row) => row.port === port);
   });
 
   if (waitable.length === 0) return stillBusy;
@@ -637,19 +761,192 @@ function collectPortEntries(selectedApps) {
     .filter((entry) => entry.port);
 }
 
-function warnDuplicatePorts(portEntries) {
+const REMAP_PORT_START = 4210;
+
+function allocateDevPort(usedPorts) {
+  let candidate = REMAP_PORT_START;
+  while (candidate <= 65535) {
+    if (!usedPorts.has(candidate) && isPortBindable(candidate)) {
+      return candidate;
+    }
+    candidate += 1;
+  }
+  console.error(
+    `${colors.red}❌ Cannot assign a free port at or above ${REMAP_PORT_START}.${colors.reset}`
+  );
+  process.exit(1);
+}
+
+// Config collisions (associate-directory + awards both :4207) are not fatal.
+// First selected app keeps the configured port; extras get 4210+ (or next free).
+function remapCollidingPorts(portEntries) {
+  const remaps = [];
+  const usedPorts = new Set(portEntries.map((entry) => entry.port));
   const byPort = new Map();
   for (const entry of portEntries) {
     if (!byPort.has(entry.port)) byPort.set(entry.port, []);
-    byPort.get(entry.port).push(entry.app);
+    byPort.get(entry.port).push(entry);
   }
-  const duplicates = [...byPort.entries()].filter(([, names]) => names.length > 1);
-  if (duplicates.length === 0) return;
-  console.log(
-    `${colors.yellow}   Warning: multiple selected apps share a port (second will fail or hop onto another app):${colors.reset}`
+
+  for (const [port, group] of byPort) {
+    if (group.length < 2) continue;
+    const names = group.map((entry) => entry.app);
+    const assignedParts = [];
+    for (let i = 1; i < group.length; i++) {
+      const next = allocateDevPort(usedPorts);
+      usedPorts.add(next);
+      remaps.push({ app: group[i].app, from: port, to: next });
+      group[i].port = next;
+      assignedParts.push(`${group[i].app} to ${next}`);
+    }
+    console.log(
+      `${colors.yellow}   ${port}: ${names.join(', ')} — assigning ${assignedParts.join(', ')}${colors.reset}`
+    );
+  }
+  return remaps;
+}
+
+function busyForAssignedPorts(stillBusy, portEntries) {
+  const assigned = new Map(portEntries.map((entry) => [entry.app, entry.port]));
+  return stillBusy.filter((entry) => assigned.get(entry.app) === entry.port);
+}
+
+function remappedServeSpec(app, port) {
+  const appDir = path.join(ROOT, 'apps', app);
+  const viteBin = path.join(ROOT, 'node_modules', '.bin', 'vite');
+  const hasViteConfig = [
+    'vite.config.ts',
+    'vite.config.js',
+    'vite.config.mts',
+    'vite.config.mjs',
+  ].some((name) => fs.existsSync(path.join(appDir, name)));
+  // Call vite directly — `npm run dev` is rejected by this repo's packageManager=pnpm.
+  if (hasViteConfig && fs.existsSync(viteBin)) {
+    return {
+      command: viteBin,
+      args: ['--port', String(port), '--strictPort'],
+      cwd: appDir,
+      env: process.env,
+      display: `vite --port ${port} --strictPort`,
+    };
+  }
+  if (app === 'strapi') {
+    return {
+      command: 'npx',
+      args: ['nx', 'serve', 'strapi'],
+      cwd: ROOT,
+      env: { ...process.env, PORT: String(port) },
+      display: `PORT=${port} npx nx serve strapi`,
+    };
+  }
+  return {
+    command: 'npx',
+    args: ['nx', 'serve', app, `--port=${port}`, '--strictPort=true'],
+    cwd: ROOT,
+    env: process.env,
+    display: `npx nx serve ${app} --port=${port}`,
+  };
+}
+
+function spawnRemappedServe(app, port) {
+  const spec = remappedServeSpec(app, port);
+  console.log(`   ${app}: ${spec.display}`);
+  return spawn(spec.command, spec.args, {
+    stdio: 'inherit',
+    shell: false,
+    detached: process.platform !== 'win32',
+    cwd: spec.cwd,
+    env: spec.env,
+  });
+}
+
+function discoverStrictPort(appName) {
+  for (const fileName of ['vite.config.ts', 'vite.config.js', 'vite.config.mts']) {
+    const configPath = path.join(ROOT, 'apps', appName, fileName);
+    if (!fs.existsSync(configPath)) continue;
+    const content = fs.readFileSync(configPath, 'utf8');
+    const serverBlock = extractBalancedObjectBody(content, 'server') || content;
+    const match = serverBlock.match(/strictPort\s*:\s*(true|false)/);
+    if (match) return match[1] === 'true';
+  }
+  return false;
+}
+
+function isFatalBusyEntry({ port }) {
+  if (getPidsListeningOnPort(port).length > 0) return true;
+  const listens = getWindowsPortListeners([port]).filter((row) =>
+    /^listen/i.test(row.state)
   );
-  for (const [port, names] of duplicates) {
-    console.log(`     ${port}: ${names.join(', ')}`);
+  return listens.some((row) => !isIgnorableWindowsHolder(row));
+}
+
+function findHopSteals(portEntries, busyPorts) {
+  const busy = new Set(busyPorts);
+  const appsByPort = new Map();
+  for (const entry of portEntries) {
+    if (!appsByPort.has(entry.port)) appsByPort.set(entry.port, []);
+    appsByPort.get(entry.port).push(entry.app);
+  }
+  const steals = [];
+  for (const { app, port } of portEntries) {
+    if (!busy.has(port)) continue;
+    if (discoverStrictPort(app)) continue;
+    for (let hop = port + 1; hop <= port + 30; hop++) {
+      if (busy.has(hop)) continue;
+      const victims = (appsByPort.get(hop) || []).filter((name) => name !== app);
+      if (victims.length > 0) {
+        steals.push({ app, port, hop, victims });
+      }
+      break;
+    }
+  }
+  return steals;
+}
+
+function abortIfFatalBusy(portEntries, stillBusy) {
+  const fatal = stillBusy.filter(isFatalBusyEntry);
+  if (fatal.length > 0) {
+    printPortDiagnosis(fatal);
+    process.exit(1);
+  }
+  // Hop-steal abort is only for real leftovers we could not free — not Cursor
+  // auto-forwards / Hyper-V ghosts (Vite may hop; reportNonFatalBusy warns).
+  const steals = findHopSteals(
+    portEntries,
+    fatal.map((entry) => entry.port)
+  );
+  if (steals.length > 0) {
+    console.error(
+      `\n${colors.red}❌ Starting would hop one app onto another selected app.${colors.reset}`
+    );
+    for (const steal of steals) {
+      console.error(
+        `     ${steal.app}:${steal.port} would hop onto ${steal.hop} (${steal.victims.join(', ')})`
+      );
+    }
+    process.exit(1);
+  }
+}
+
+function reportNonFatalBusy(stillBusy) {
+  if (stillBusy.length === 0) return;
+  console.log(
+    `${colors.yellow}   Ports still not bindable (Cursor auto-forward / Hyper-V / hidden holder). Starting anyway; Vite may hop.${colors.reset}`
+  );
+  for (const { app, port } of stillBusy) {
+    const win = getWindowsPortListeners([port]).filter((row) =>
+      /^listen/i.test(row.state)
+    );
+    const range = excludedRangeFor(port);
+    const holder = win
+      .map((row) => `${row.name || 'unknown'} PID ${row.pid}`)
+      .join(', ');
+    const extra = range
+      ? ` hyperv ${range.start}-${range.end}`
+      : holder
+        ? ` ${holder}`
+        : ' no visible owner';
+    console.log(`     ${app}:${port}${extra}`);
   }
 }
 
@@ -793,17 +1090,27 @@ function stopExistingDevProcesses(selectedApps, { quiet = false } = {}) {
   return stillBusy;
 }
 
+function managedChildPids() {
+  const pids = [];
+  if (nxChild && nxChild.pid) pids.push(nxChild.pid);
+  for (const child of remapChildren) {
+    if (child && child.pid) pids.push(child.pid);
+  }
+  return pids.filter((pid) => isProcessAlive(pid));
+}
+
 function shutdown(exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
   restoreTerminal();
 
-  if (nxChild && nxChild.pid && isProcessAlive(nxChild.pid)) {
+  const managed = managedChildPids();
+  if (managed.length > 0) {
     console.log('\n🛑 Stopping development processes...');
     const processes = listProcesses();
-    const tree = collectDescendantPids(nxChild.pid, processes);
-    killPids([nxChild.pid, ...tree], 'SIGTERM');
-    forceKillPids([nxChild.pid, ...tree]);
+    const tree = managed.flatMap((pid) => collectDescendantPids(pid, processes));
+    killPids([...managed, ...tree], 'SIGTERM');
+    forceKillPids([...managed, ...tree]);
   }
 
   clearPidFile();
@@ -906,7 +1213,6 @@ function startApps() {
   console.log('==========================================');
 
   const portEntries = collectPortEntries(selectedApps);
-  warnDuplicatePorts(portEntries);
   stopExistingDevProcesses(selectedApps);
 
   console.log(`\n✅ Starting Docker services...`);
@@ -921,67 +1227,88 @@ function startApps() {
   // Cursor/Windows can re-grab auto-forwards while compose is coming up.
   console.log('\n🔍 Re-checking ports after Docker...');
   const stillBusy = stopExistingDevProcesses(selectedApps, { quiet: true });
-  if (stillBusy.length > 0) {
-    printPortDiagnosis(stillBusy);
-    process.exit(1);
+  // After leftovers are cleared, assign extras on shared configured ports
+  // (e.g. 4207) to 4210+ so selecting both associate-directory and awards works.
+  const remaps = remapCollidingPorts(portEntries);
+  const activeBusy = busyForAssignedPorts(stillBusy, portEntries);
+  abortIfFatalBusy(portEntries, activeBusy);
+  if (activeBusy.length === 0) {
+    console.log('   ✅ Configured ports are bindable');
+  } else {
+    reportNonFatalBusy(activeBusy);
   }
-  console.log('   ✅ Configured ports are bindable');
 
-  const projectsParam = selectedApps.join(',');
-  console.log(`\n🚀 Starting selected applications: ${projectsParam}`);
+  const remappedNames = new Set(remaps.map((remap) => remap.app));
+  const runManyApps = selectedApps.filter((app) => !remappedNames.has(app));
+  console.log(`\n🚀 Starting selected applications: ${selectedApps.join(',')}`);
 
   // Serve tasks are continuous (never finish), so every selected app needs its
   // own task-runner thread. Nx defaults to --parallel=3, which starves any app
   // beyond the first three with "Waiting for available thread...". Add headroom
   // for requisite one-shot tasks (e.g. dependency builds).
-  const parallelism = selectedApps.length + 3;
-  const nxArgs = [
-    'nx',
-    'run-many',
-    '-t',
-    'serve',
-    '-p',
-    projectsParam,
-    `--parallel=${parallelism}`,
-  ];
-  console.log(`\nRunning command: npx ${nxArgs.join(' ')}`);
+  if (runManyApps.length > 0) {
+    const parallelism = runManyApps.length + 3;
+    const nxArgs = [
+      'nx',
+      'run-many',
+      '-t',
+      'serve',
+      '-p',
+      runManyApps.join(','),
+      `--parallel=${parallelism}`,
+    ];
+    console.log(`\nRunning command: npx ${nxArgs.join(' ')}`);
 
-  nxChild = spawn('npx', nxArgs, {
-    stdio: 'inherit',
-    shell: false,
-    // New process group so we can kill the whole tree on shutdown (Unix).
-    detached: process.platform !== 'win32',
-    cwd: ROOT,
-    env: process.env,
-  });
+    nxChild = spawn('npx', nxArgs, {
+      stdio: 'inherit',
+      shell: false,
+      // New process group so we can kill the whole tree on shutdown (Unix).
+      detached: process.platform !== 'win32',
+      cwd: ROOT,
+      env: process.env,
+    });
 
-  writePidFile(nxChild.pid);
-  console.log(
-    `${colors.dim}   Session PID ${nxChild.pid} (saved to ${path.relative(
-      ROOT,
-      PID_FILE
-    )})${colors.reset}`
-  );
+    writePidFile(nxChild.pid);
+    console.log(
+      `${colors.dim}   Session PID ${nxChild.pid} (saved to ${path.relative(
+        ROOT,
+        PID_FILE
+      )})${colors.reset}`
+    );
 
-  nxChild.on('error', (error) => {
-    console.error(`❌ Error starting applications: ${error.message}`);
-    clearPidFile();
-    process.exit(1);
-  });
-
-  nxChild.on('exit', (code, signal) => {
-    clearPidFile();
-    if (shuttingDown) return;
-    if (signal) {
-      console.error(`❌ Process killed by signal ${signal}`);
+    nxChild.on('error', (error) => {
+      console.error(`❌ Error starting applications: ${error.message}`);
+      clearPidFile();
       process.exit(1);
+    });
+
+    nxChild.on('exit', (code, signal) => {
+      clearPidFile();
+      if (shuttingDown) return;
+      if (signal) {
+        console.error(`❌ Process killed by signal ${signal}`);
+        shutdown(1);
+        return;
+      }
+      if (code !== 0 && code != null) {
+        console.error(`❌ Process exited with code ${code}`);
+        shutdown(code);
+        return;
+      }
+      shutdown(0);
+    });
+  }
+
+  if (remaps.length > 0) {
+    console.log('\n🚀 Starting remapped apps on assigned ports:');
+    for (const remap of remaps) {
+      const child = spawnRemappedServe(remap.app, remap.to);
+      remapChildren.push(child);
+      child.on('error', (error) => {
+        console.error(`❌ Error starting ${remap.app}: ${error.message}`);
+      });
     }
-    if (code !== 0 && code != null) {
-      console.error(`❌ Process exited with code ${code}`);
-      process.exit(code);
-    }
-    process.exit(0);
-  });
+  }
 }
 
 function selectedAppsFromCli() {
@@ -998,29 +1325,52 @@ function selectedAppsFromCli() {
 if (FLAG_CHECK_PORTS) {
   const selected = selectedAppsFromCli();
   const ports = collectPortEntries(selected);
-  warnDuplicatePorts(ports);
+  const remaps = remapCollidingPorts(ports);
+  const remapByApp = new Map(remaps.map((remap) => [remap.app, remap]));
   console.log('Port check:');
   for (const { app, port } of ports) {
     const bindable = isPortBindable(port);
     const wsl = getPidsListeningOnPort(port);
     const range = excludedRangeFor(port);
+    const win = getWindowsPortListeners([port]).filter((row) =>
+      /^listen/i.test(row.state)
+    );
+    const remap = remapByApp.get(app);
+    const label = remap ? `${app}:${remap.from} -> ${port}` : `${app}:${port}`;
     const bits = [
       bindable ? 'FREE' : 'BUSY',
       wsl.length ? `wsl-pid=${wsl.join(',')}` : '',
+      win.length
+        ? `win=${win.map((row) => `${row.name || '?' }#${row.pid}`).join(',')}`
+        : '',
       range ? `hyperv=${range.start}-${range.end}` : '',
     ].filter(Boolean);
-    console.log(`  ${app}:${port} ${bits.join(' ')}`);
+    console.log(`  ${label} ${bits.join(' ')}`);
+  }
+  if (remaps.length > 0) {
+    console.log('\nRemap serve overrides (first app keeps the configured port):');
+    for (const remap of remaps) {
+      const spec = remappedServeSpec(remap.app, remap.to);
+      console.log(`  ${remap.app}: ${spec.display}`);
+    }
   }
   process.exit(ports.every(({ port }) => isPortBindable(port)) ? 0 : 1);
 }
 
 if (FLAG_FREE_PORTS) {
   const selected = selectedAppsFromCli();
-  warnDuplicatePorts(collectPortEntries(selected));
+  const ports = collectPortEntries(selected);
   const stillBusy = stopExistingDevProcesses(selected);
-  if (stillBusy.length > 0) {
-    printPortDiagnosis(stillBusy);
-    process.exit(1);
+  const remaps = remapCollidingPorts(ports);
+  const activeBusy = busyForAssignedPorts(stillBusy, ports);
+  abortIfFatalBusy(ports, activeBusy);
+  if (activeBusy.length > 0) {
+    reportNonFatalBusy(activeBusy);
+  }
+  if (remaps.length > 0) {
+    console.log(
+      `${colors.dim}   Remaps are start-time only; --free-ports cleared configured listeners.${colors.reset}`
+    );
   }
   process.exit(0);
 }

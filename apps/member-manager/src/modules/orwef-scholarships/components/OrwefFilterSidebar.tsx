@@ -12,7 +12,7 @@ import {
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
 import { useOrwefContext } from "../OrwefContextProvider";
 import {
-  SCHOLARSHIP_STATUSES,
+  WATER_SYSTEM_REGIONS,
   calendarYearChoices,
 } from "../helpers/listFilters";
 
@@ -22,8 +22,8 @@ const OrwefFilterSidebar = () => {
     setIsFilterSidebarOpen,
     search,
     setSearch,
-    status,
-    setStatus,
+    region,
+    setRegion,
     year,
     setYear,
   } = useOrwefContext();
@@ -45,18 +45,18 @@ const OrwefFilterSidebar = () => {
           />
         </FormControl>
         <FormControl>
-          <FormLabel>Status</FormLabel>
+          <FormLabel>Region</FormLabel>
           <RadioGroup
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
+            value={region}
+            onChange={(event) => setRegion(event.target.value)}
           >
             <FormControlLabel value="all" control={<Radio />} label="All" />
-            {SCHOLARSHIP_STATUSES.map((choice) => (
+            {WATER_SYSTEM_REGIONS.map((value) => (
               <FormControlLabel
-                key={choice.id}
-                value={choice.id}
+                key={value}
+                value={value}
                 control={<Radio />}
-                label={choice.name}
+                label={value}
               />
             ))}
           </RadioGroup>

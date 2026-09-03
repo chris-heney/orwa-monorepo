@@ -96,19 +96,11 @@ export const employeeTotal = (record: {
   return Number.isFinite(total) ? total : 0;
 };
 
-export const AWARD_TYPE_CHOICES = [
-  { id: "System of the Year", name: "System of the Year" },
-  {
-    id: "Water/Wastewater System of the Year",
-    name: "Water/Wastewater System of the Year (legacy)",
-  },
-  { id: "Excellence in Operations", name: "Excellence in Operations" },
-  { id: "Excellence in Management", name: "Excellence in Management" },
-  {
-    id: "Excellence in Office Operations",
-    name: "Excellence in Office Operations",
-  },
-];
+export {
+  AWARD_TYPE_CHOICES,
+  FALLBACK_AWARD_TYPE_CHOICES,
+  awardTypeChoices,
+} from "./awardTypes";
 
 export const BIOGRAPHY_METHOD_CHOICES = [
   {

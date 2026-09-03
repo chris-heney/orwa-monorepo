@@ -104,6 +104,27 @@ const AWARD_CRUD = [
   'api::award-nomination.award-nomination.delete',
 ];
 
+const AWARD_WINNER_CRUD = [
+  'api::award-winner.award-winner.find',
+  'api::award-winner.award-winner.findOne',
+  'api::award-winner.award-winner.create',
+  'api::award-winner.award-winner.update',
+  'api::award-winner.award-winner.delete',
+];
+
+const AWARD_TYPE_CRUD = [
+  'api::award-type.award-type.find',
+  'api::award-type.award-type.findOne',
+  'api::award-type.award-type.create',
+  'api::award-type.award-type.update',
+  'api::award-type.award-type.delete',
+];
+
+const AWARD_TYPE_PUBLIC = [
+  'api::award-type.award-type.find',
+  'api::award-type.award-type.findOne',
+];
+
 const SUBMISSION_PUBLIC_ACTIONS = [
   'api::submissions.submissions.createScholarshipApplication',
   'api::submissions.submissions.createAwardNomination',
@@ -111,25 +132,64 @@ const SUBMISSION_PUBLIC_ACTIONS = [
 
 const configureScholarshipAwardPermissions = async (strapi) => {
   try {
-    await ensureRolePermissions(
-      strapi,
-      { type: 'public' },
-      SUBMISSION_PUBLIC_ACTIONS,
-    );
+    await ensureRolePermissions(strapi, { type: 'public' }, [
+      ...SUBMISSION_PUBLIC_ACTIONS,
+      ...AWARD_TYPE_PUBLIC,
+    ]);
     await ensureRolePermissions(strapi, { type: 'authenticated' }, [
       ...SCHOLARSHIP_CRUD,
       ...AWARD_CRUD,
+      ...AWARD_WINNER_CRUD,
+      ...AWARD_TYPE_CRUD,
       ...SUBMISSION_PUBLIC_ACTIONS,
     ]);
     await ensureRolePermissions(strapi, { type: 'admin' }, [
       ...SCHOLARSHIP_CRUD,
       ...AWARD_CRUD,
+      ...AWARD_WINNER_CRUD,
+      ...AWARD_TYPE_CRUD,
       ...SUBMISSION_PUBLIC_ACTIONS,
     ]);
   } catch (error) {
     strapi.log.warn(
       `Unable to configure scholarship/award permissions: ${error.message}`,
     );
+  }
+};
+
+/** Custom API tokens used by public forms (VITE_API_KEY) need find on new types. */
+const configureAwardTypeApiTokenFind = async (strapi) => {
+  try {
+    const tokenQuery = strapi.db.query('admin::api-token');
+    const permQuery = strapi.db.query('admin::api-token-permission');
+    const tokens = await tokenQuery.findMany({ populate: ['permissions'] });
+    for (const token of tokens || []) {
+      if (token.type === 'full-access' || token.type === 'read-only') {
+        continue;
+      }
+      const existing = new Set(
+        (token.permissions || []).map((permission) => permission.action),
+      );
+      for (const action of AWARD_TYPE_PUBLIC) {
+        if (existing.has(action)) continue;
+        await permQuery.create({
+          data: { action, token: token.id },
+        });
+      }
+    }
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to grant award-type find on API tokens: ${error.message}`,
+    );
+  }
+};
+
+const seedAwardTypeCatalog = async (strapi) => {
+  try {
+    const { seedAwardTypes } = require('./api/award-type/seed');
+    await seedAwardTypes(strapi);
+  } catch (error) {
+    strapi.log.warn(`Unable to seed award types: ${error.message}`);
   }
 };
 
@@ -388,6 +448,8 @@ export default {
     await configureAdminRbacPermissions(strapi);
     await configureAdminImpersonationPermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
+    await configureAwardTypeApiTokenFind(strapi);
+    await seedAwardTypeCatalog(strapi);
     await seedOrwefFormEmails(strapi);
     await seedDefaultRoleModules(strapi);
   },

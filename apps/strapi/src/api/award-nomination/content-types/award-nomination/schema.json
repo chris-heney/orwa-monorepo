@@ -137,15 +137,8 @@
       "required": true
     },
     "award_type": {
-      "type": "enumeration",
-      "required": true,
-      "enum": [
-        "System of the Year",
-        "Water/Wastewater System of the Year",
-        "Excellence in Operations",
-        "Excellence in Management",
-        "Excellence in Office Operations"
-      ]
+      "type": "string",
+      "required": true
     },
     "biography_method": {
       "type": "enumeration",

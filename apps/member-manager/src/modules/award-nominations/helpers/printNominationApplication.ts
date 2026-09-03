@@ -1,34 +1,66 @@
 import {
   PDFDocument,
-  StandardFonts,
   rgb,
   type PDFEmbeddedPage,
   type PDFFont,
   type PDFImage,
   type PDFPage,
 } from "pdf-lib";
+import { embedPrintFonts } from "../../../helpers/printBrandFonts";
 import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
 import { resolveMediaUrl } from "../../orwef-scholarships/helpers/resolveMediaUrl";
+import {
+  extractAttachmentText,
+  isDocxAttachment,
+  isPdfAttachment,
+  isPlainTextAttachment,
+  toWinAnsi,
+  type DocumentTextBlock,
+  type DocumentTextRun,
+} from "./documentText";
+import { employeeTotal } from "./recordDisplay";
 import {
   asMediaItems,
   bestMediaUrl,
   countyRegion,
   displayValue,
-  identificationRows,
+  formatCount,
+  formatEstablishedDate,
   isPersonNomineeAward,
   isSystemOfTheYearAward,
   nominationApplicationFilename,
-  nomineeBasicRows,
+  nomineeAddressLines,
   nomineeNameAsPrinted,
+  nominatorAddressLines,
   nominatorFullName,
-  nominatorRows,
   printedAwardName,
   systemDisplayName,
   systemNameAsPrinted,
-  systemRecordRows,
   type AwardNominationPrintRecord,
   type AwardPrintMedia,
 } from "./nominationPrintModel";
+import {
+  CARD_GAP,
+  COL_GAP,
+  SIDEBAR_W,
+  SIDEBAR_WELL,
+  drawContactPair,
+  drawEmployeeCard,
+  drawEstCard,
+  drawFactCard,
+  drawMeteredCard,
+  drawWell,
+  measureContactPair,
+  measureEmployeeCard,
+  measureEstCard,
+  measureFactCard,
+  measureMeteredCard,
+  measureSidebar,
+  type ChromeFonts,
+  type EmployeeRow,
+  type StackedField,
+  type TextMetrics,
+} from "./printLayoutChrome";
 
 export type MediaEmbedResult = "embedded" | "merged" | "linked" | "skipped";
 
@@ -47,16 +79,28 @@ const MARGIN_RIGHT = 54;
 const MARGIN_TOP = 46;
 const MARGIN_BOTTOM = 50;
 const TEXT_X = MARGIN_LEFT;
+/** Inset field/section text inside the 54pt margin so labels don't kiss the stripe. */
+const CONTENT_INSET = 12;
+const LABEL_X = MARGIN_LEFT + CONTENT_INSET;
 const LABEL_COL = 168;
 const PRINT_MAX_EDGE = 1800;
 const LINE = 14;
-const COVER_BAND_H = 82;
+const COVER_BAND_H = 88;
 const COVER_GOLD_EDGE_H = 3;
-const COVER_BAND_PAD = 16;
+const COVER_BAND_PAD = 20;
 const COVER_KICKER_SIZE = 9;
 const COVER_TITLE_SIZE = 16;
-const COVER_ROW_GAP = 14;
+const COVER_ROW_GAP = 18;
+/** Extra inset so cover/identity right labels are not flush to the bar edge. */
+const HEADER_RIGHT_INSET = 16;
 const SECTION_BAR_H = 24;
+const IDENTITY_BAR_H = 30;
+const IDENTITY_LEFT_SIZE = 11;
+const IDENTITY_RIGHT_SIZE = 13;
+const SECTION_BAR_STACK = 8 + SECTION_BAR_H + 10;
+const PRINT_IMAGE_MAX_H = 280;
+const IMAGE_GAP = 12;
+const CAPTION_H = 16;
 const ACCENT_W = 3;
 const RULE_CLEARANCE = 3.5;
 const ROW_PAD_Y = 6;
@@ -145,6 +189,8 @@ type Layout = {
   page: PDFPage;
   regular: PDFFont;
   bold: PDFFont;
+  italic: PDFFont;
+  boldItalic: PDFFont;
   width: number;
   height: number;
   y: number;
@@ -157,6 +203,19 @@ type Layout = {
 const contentRight = (layout: Layout) =>
   layout.width - MARGIN_RIGHT;
 
+const chromeFonts = (layout: Layout): ChromeFonts => ({
+  regular: layout.regular,
+  bold: layout.bold,
+});
+
+const textMetrics = (): TextMetrics => ({
+  wrapLines,
+  fitText,
+  fontAscent,
+  fontDescent,
+  baselineCentered,
+});
+
 const newPage = (layout: Layout, cover: boolean) => {
   layout.page = layout.doc.addPage([612, 792]);
   layout.width = 612;
@@ -167,8 +226,10 @@ const newPage = (layout: Layout, cover: boolean) => {
   layout.y = layout.height - MARGIN_TOP;
 };
 
+const remainingHeight = (layout: Layout) => layout.y - MARGIN_BOTTOM;
+
 const ensureSpace = (layout: Layout, needed: number) => {
-  if (layout.y - needed >= MARGIN_BOTTOM) return;
+  if (remainingHeight(layout) >= needed) return;
   newPage(layout, false);
   drawRunningHeader(layout);
 };
@@ -240,11 +301,27 @@ const drawCover = (layout: Layout) => {
 
   const kickerAscent = fontAscent(bold, COVER_KICKER_SIZE);
   const titleAscent = fontAscent(bold, COVER_TITLE_SIZE);
-  const kickerBaseline = height - COVER_BAND_PAD - kickerAscent;
+  const kickerDescent = fontDescent(bold, COVER_KICKER_SIZE);
+  const stackH = kickerAscent + COVER_ROW_GAP + titleAscent;
+  const topPad = Math.max(COVER_BAND_PAD, (COVER_BAND_H - stackH) / 2);
+  const kickerBaseline = height - topPad - kickerAscent;
   const titleBaseline = kickerBaseline - COVER_ROW_GAP - titleAscent;
-  const rightMax = Math.min(240, layout.contentWidth * 0.42);
+  const rightMax = Math.min(220, layout.contentWidth * 0.38);
+  const rightEdge = width - MARGIN_RIGHT - HEADER_RIGHT_INSET;
+  const leftMax = Math.max(120, rightEdge - rightMax - TEXT_X - 16);
 
-  const kicker = "OKLAHOMA RURAL WATER ASSOCIATION";
+  const kicker = fitText(
+    "OKLAHOMA RURAL WATER ASSOCIATION",
+    bold,
+    COVER_KICKER_SIZE,
+    leftMax
+  );
+  const title = fitText(
+    "Award Nomination Application",
+    bold,
+    COVER_TITLE_SIZE,
+    leftMax
+  );
   page.drawText(kicker, {
     x: TEXT_X,
     y: kickerBaseline,
@@ -252,8 +329,6 @@ const drawCover = (layout: Layout) => {
     font: bold,
     color: GOLD,
   });
-
-  const title = "Award Nomination Application";
   page.drawText(title, {
     x: TEXT_X,
     y: titleBaseline,
@@ -270,7 +345,7 @@ const drawCover = (layout: Layout) => {
   );
   if (awardType) {
     page.drawText(awardType, {
-      x: width - MARGIN_RIGHT - bold.widthOfTextAtSize(awardType, COVER_KICKER_SIZE),
+      x: rightEdge - bold.widthOfTextAtSize(awardType, COVER_KICKER_SIZE),
       y: kickerBaseline,
       size: COVER_KICKER_SIZE,
       font: bold,
@@ -278,24 +353,33 @@ const drawCover = (layout: Layout) => {
     });
   }
 
-  const cycle = `Cycle ${layout.record.award_year ?? "—"}`;
+  const cycle = fitText(
+    `Cycle ${layout.record.award_year ?? "—"}`,
+    bold,
+    COVER_TITLE_SIZE,
+    rightMax
+  );
   page.drawText(cycle, {
-    x: width - MARGIN_RIGHT - bold.widthOfTextAtSize(cycle, COVER_TITLE_SIZE),
+    x: rightEdge - bold.widthOfTextAtSize(cycle, COVER_TITLE_SIZE),
     y: titleBaseline,
     size: COVER_TITLE_SIZE,
     font: bold,
     color: WHITE,
   });
 
-  // Short gold rule under the left kicker only — midway to the title caps, never through text.
+  const belowKicker = kickerBaseline - kickerDescent;
+  const aboveTitle = titleBaseline + titleAscent;
+  const ruleY = (belowKicker + aboveTitle) / 2;
   const kickerWidth = bold.widthOfTextAtSize(kicker, COVER_KICKER_SIZE);
-  const ruleY = kickerBaseline - COVER_ROW_GAP / 2;
-  page.drawLine({
-    start: { x: TEXT_X, y: ruleY },
-    end: { x: TEXT_X + kickerWidth, y: ruleY },
-    thickness: 0.7,
-    color: GOLD,
-  });
+  const ruleEnd = Math.min(TEXT_X + kickerWidth, rightEdge - rightMax - 12);
+  if (ruleEnd > TEXT_X + 12) {
+    page.drawLine({
+      start: { x: TEXT_X, y: ruleY },
+      end: { x: ruleEnd, y: ruleY },
+      thickness: 0.7,
+      color: GOLD,
+    });
+  }
 
   layout.y = bandBottom - COVER_GOLD_EDGE_H - 18;
 };
@@ -342,48 +426,61 @@ const drawLeadTitles = (layout: Layout) => {
   layout.y -= 10;
 };
 
-const sectionBar = (layout: Layout, left: string, right?: string) => {
-  ensureSpace(layout, SECTION_BAR_H + 16);
+const sectionBar = (
+  layout: Layout,
+  left: string,
+  right?: string,
+  minFollow = MIN_ROW_H * 2 + 4
+) => {
+  const isIdentity = Boolean(right);
+  const barH = isIdentity ? IDENTITY_BAR_H : SECTION_BAR_H;
+  const leftSize = isIdentity ? IDENTITY_LEFT_SIZE : 10;
+  ensureSpace(layout, 8 + barH + 10 + minFollow);
   layout.y -= 8;
-  const bandBottom = layout.y - SECTION_BAR_H;
+  const bandBottom = layout.y - barH;
   layout.page.drawRectangle({
     x: MARGIN_LEFT,
     y: bandBottom,
     width: layout.contentWidth,
-    height: SECTION_BAR_H,
+    height: barH,
     color: NAVY,
   });
   layout.page.drawRectangle({
     x: MARGIN_LEFT - ACCENT_W,
     y: bandBottom,
     width: ACCENT_W,
-    height: SECTION_BAR_H,
+    height: barH,
     color: GOLD,
   });
-  const leftSize = 10;
-  const rightSize = 9;
-  const leftMax = right ? layout.contentWidth * 0.58 : layout.contentWidth;
-  const barBaseline = baselineCentered(
-    bandBottom,
-    SECTION_BAR_H,
-    layout.bold,
-    leftSize
-  );
+  const rightPad = isIdentity ? HEADER_RIGHT_INSET : CONTENT_INSET;
+  let rightText = "";
+  let rightW = 0;
+  if (right) {
+    rightText = fitText(
+      right,
+      layout.bold,
+      IDENTITY_RIGHT_SIZE,
+      layout.contentWidth * 0.42
+    );
+    rightW = layout.bold.widthOfTextAtSize(rightText, IDENTITY_RIGHT_SIZE);
+  }
+  const leftMax = right
+    ? layout.contentWidth - rightW - rightPad - CONTENT_INSET - 16
+    : layout.contentWidth - CONTENT_INSET;
+  const barBaseline = baselineCentered(bandBottom, barH, layout.bold, leftSize);
   layout.page.drawText(fitText(left, layout.bold, leftSize, leftMax), {
-    x: TEXT_X,
+    x: LABEL_X,
     y: barBaseline,
     size: leftSize,
     font: layout.bold,
     color: WHITE,
   });
   if (right) {
-    const text = fitText(right, layout.regular, rightSize, layout.contentWidth * 0.36);
-    const textW = layout.regular.widthOfTextAtSize(text, rightSize);
-    layout.page.drawText(text, {
-      x: contentRight(layout) - textW,
-      y: barBaseline,
-      size: rightSize,
-      font: layout.regular,
+    layout.page.drawText(rightText, {
+      x: contentRight(layout) - rightPad - rightW,
+      y: baselineCentered(bandBottom, barH, layout.bold, IDENTITY_RIGHT_SIZE),
+      size: IDENTITY_RIGHT_SIZE,
+      font: layout.bold,
       color: WHITE,
     });
   }
@@ -421,13 +518,16 @@ const fieldRow = (
     lines.length <= 1
       ? baselineCentered(bandBottom, rowH, layout.regular, valueSize)
       : bandBottom + rowH - ROW_PAD_Y - firstAscent;
-  layout.page.drawText(fitText(label, layout.bold, labelSize, LABEL_COL - 8), {
-    x: TEXT_X,
-    y: firstBaseline,
-    size: labelSize,
-    font: layout.bold,
-    color: MUTED,
-  });
+  layout.page.drawText(
+    fitText(label, layout.bold, labelSize, LABEL_COL - CONTENT_INSET - 8),
+    {
+      x: LABEL_X,
+      y: firstBaseline,
+      size: labelSize,
+      font: layout.bold,
+      color: MUTED,
+    }
+  );
   lines.forEach((line, index) => {
     layout.page.drawText(line, {
       x: TEXT_X + LABEL_COL,
@@ -449,7 +549,11 @@ const fieldRow = (
 const narrativeBlock = (layout: Layout, heading: string, body: string) => {
   const headSize = 10;
   const headH = 20;
-  ensureSpace(layout, 40);
+  const bodySize = 10;
+  ensureSpace(
+    layout,
+    8 + headH + 8 + fontAscent(layout.regular, bodySize) + 4
+  );
   layout.y -= 8;
   const bandBottom = layout.y - headH;
   layout.page.drawRectangle({
@@ -460,14 +564,13 @@ const narrativeBlock = (layout: Layout, heading: string, body: string) => {
     color: BAND,
   });
   layout.page.drawText(heading, {
-    x: TEXT_X,
+    x: LABEL_X,
     y: baselineCentered(bandBottom, headH, layout.bold, headSize),
     size: headSize,
     font: layout.bold,
     color: NAVY,
   });
   layout.y = bandBottom - 8;
-  const bodySize = 10;
   const lines = wrapLines(
     body?.trim() ? body : "—",
     layout.regular,
@@ -488,6 +591,211 @@ const narrativeBlock = (layout: Layout, heading: string, body: string) => {
     layout.y -= 4;
   }
   layout.y -= 6;
+};
+
+const SOFT_HEAD_H = 20;
+const RULE_HEAD_H = 18;
+
+const drawSoftHeading = (layout: Layout, title: string, minFollow = 24) => {
+  ensureSpace(layout, 8 + SOFT_HEAD_H + 8 + minFollow);
+  layout.y -= 8;
+  const bandBottom = layout.y - SOFT_HEAD_H;
+  layout.page.drawRectangle({
+    x: MARGIN_LEFT,
+    y: bandBottom,
+    width: layout.contentWidth,
+    height: SOFT_HEAD_H,
+    color: BAND,
+  });
+  layout.page.drawText(
+    fitText(title, layout.bold, 10, layout.contentWidth - CONTENT_INSET * 2),
+    {
+      x: LABEL_X,
+      y: baselineCentered(bandBottom, SOFT_HEAD_H, layout.bold, 10),
+      size: 10,
+      font: layout.bold,
+      color: NAVY,
+    }
+  );
+  layout.y = bandBottom - 8;
+};
+
+const drawRuleHeading = (layout: Layout, title: string, minFollow = 20) => {
+  ensureSpace(layout, 10 + RULE_HEAD_H + minFollow);
+  layout.y -= 10;
+  const label = fitText(title.toUpperCase(), layout.bold, 8, layout.contentWidth);
+  layout.y -= fontAscent(layout.bold, 8);
+  layout.page.drawText(label, {
+    x: TEXT_X,
+    y: layout.y,
+    size: 8,
+    font: layout.bold,
+    color: MUTED,
+  });
+  layout.y -= 4;
+  layout.page.drawLine({
+    start: { x: TEXT_X, y: layout.y },
+    end: { x: contentRight(layout), y: layout.y },
+    thickness: 0.5,
+    color: RULE,
+  });
+  layout.y -= 8;
+};
+
+const drawSoftKvBar = (layout: Layout, label: string, value: string) => {
+  const barH = 20;
+  ensureSpace(layout, 6 + barH + 6);
+  layout.y -= 6;
+  const bandBottom = layout.y - barH;
+  layout.page.drawRectangle({
+    x: MARGIN_LEFT,
+    y: bandBottom,
+    width: layout.contentWidth,
+    height: barH,
+    color: BAND,
+  });
+  const baseline = baselineCentered(bandBottom, barH, layout.bold, 8);
+  layout.page.drawText(
+    fitText(label.toUpperCase(), layout.bold, 8, layout.contentWidth * 0.55),
+    {
+      x: LABEL_X,
+      y: baseline,
+      size: 8,
+      font: layout.bold,
+      color: MUTED,
+    }
+  );
+  const text = fitText(value, layout.regular, 9, layout.contentWidth * 0.38);
+  const textW = layout.regular.widthOfTextAtSize(text, 9);
+  layout.page.drawText(text, {
+    x: contentRight(layout) - CONTENT_INSET - textW,
+    y: baselineCentered(bandBottom, barH, layout.regular, 9),
+    size: 9,
+    font: layout.regular,
+    color: INK,
+  });
+  layout.y = bandBottom - 6;
+};
+
+const headingKindFor = (label: string): "navy" | "rule" =>
+  /board|photograph|biography file/i.test(label) ? "rule" : "navy";
+
+const drawPrintHeading = (
+  layout: Layout,
+  label: string,
+  minFollow = MIN_ROW_H * 2
+) => {
+  if (headingKindFor(label) === "rule") {
+    drawRuleHeading(layout, label, minFollow);
+    return;
+  }
+  sectionBar(layout, label, undefined, minFollow);
+};
+
+const drawSystemOverview = (layout: Layout) => {
+  const record = layout.record;
+  const fonts = chromeFonts(layout);
+  const metrics = textMetrics();
+  const leftW = layout.contentWidth - SIDEBAR_W - COL_GAP;
+  const addressLines = nomineeAddressLines(record);
+  const leftFields: StackedField[] = [
+    { label: "Address", lines: addressLines.length ? addressLines : ["—"] },
+  ];
+  const rightFields: StackedField[] = [
+    { label: "Phone", lines: [displayValue(record.daytime_phone)] },
+    { label: "Email", lines: [displayValue(record.email)] },
+  ];
+  const contactH = measureContactPair(leftFields, rightFields, fonts, metrics, leftW);
+
+  const sidebarParts: number[] = [];
+  const est = formatEstablishedDate(record.operation_start_date);
+  sidebarParts.push(measureEstCard(fonts, metrics));
+  if (!isSystemOfTheYearAward(record.award_type) && record.employment_date) {
+    sidebarParts.push(measureFactCard(fonts, metrics));
+  }
+  sidebarParts.push(measureMeteredCard(fonts, metrics));
+  const employeeRows: EmployeeRow[] = isSystemOfTheYearAward(record.award_type)
+    ? [
+        { label: "Clerical employees", value: formatCount(record.clerical_employees) },
+        {
+          label: "Operation & maintenance",
+          value: formatCount(record.operation_maintenance_employees),
+        },
+        { label: "Management", value: formatCount(record.management_employees) },
+        { label: "Total", value: formatCount(employeeTotal(record)), total: true },
+      ]
+    : [];
+  if (employeeRows.length) {
+    sidebarParts.push(measureEmployeeCard(employeeRows, fonts, metrics));
+  }
+  const sidebarH = measureSidebar(sidebarParts);
+  const blockH = Math.max(contactH, sidebarH);
+
+  ensureSpace(layout, blockH + 12);
+  const top = layout.y;
+  const sidebarX = MARGIN_LEFT + leftW + COL_GAP;
+  drawWell(layout.page, sidebarX, top - sidebarH, SIDEBAR_W, sidebarH, SIDEBAR_WELL);
+  drawContactPair(
+    layout.page,
+    fonts,
+    metrics,
+    MARGIN_LEFT,
+    top,
+    leftW,
+    leftFields,
+    rightFields,
+    blockH
+  );
+
+  let sideTop = top - 8;
+  const sideInnerX = sidebarX + 6;
+  const sideInnerW = SIDEBAR_W - 12;
+  sideTop -= drawEstCard(
+    layout.page,
+    fonts,
+    metrics,
+    sideInnerX,
+    sideTop,
+    sideInnerW,
+    est || "—"
+  );
+  sideTop -= CARD_GAP;
+  if (!isSystemOfTheYearAward(record.award_type) && record.employment_date) {
+    sideTop -= drawFactCard(
+      layout.page,
+      fonts,
+      metrics,
+      sideInnerX,
+      sideTop,
+      sideInnerW,
+      "DATE EMPLOYED",
+      formatEstablishedDate(record.employment_date) || displayValue(record.employment_date)
+    );
+    sideTop -= CARD_GAP;
+  }
+  sideTop -= drawMeteredCard(
+    layout.page,
+    fonts,
+    metrics,
+    sideInnerX,
+    sideTop,
+    sideInnerW,
+    formatCount(record.beginning_members),
+    formatCount(record.current_members)
+  );
+  if (employeeRows.length) {
+    sideTop -= CARD_GAP;
+    drawEmployeeCard(
+      layout.page,
+      fonts,
+      metrics,
+      sideInnerX,
+      sideTop,
+      sideInnerW,
+      employeeRows
+    );
+  }
+  layout.y = top - blockH - 10;
 };
 
 const LETTER_WIDTH = 612;
@@ -625,57 +933,212 @@ const toPrintImage = async (
   }
 };
 
-const addLinkPage = (
+const runFont = (layout: Layout, run: DocumentTextRun): PDFFont => {
+  if (run.bold && run.italic) return layout.boldItalic;
+  if (run.bold) return layout.bold;
+  if (run.italic) return layout.italic;
+  return layout.regular;
+};
+
+const wrapStyledRuns = (
   layout: Layout,
-  label: string,
-  fileName: string,
-  href: string
-) => {
-  newPage(layout, false);
-  drawRunningHeader(layout);
-  sectionBar(layout, label);
-  fieldRow(layout, "File", fileName || "Attachment", { alt: true });
-  fieldRow(
-    layout,
-    "Note",
-    "This file type cannot be inlined in the printed application. Open it from Media Library or the URL below."
-  );
-  const lines = wrapLines(href, layout.regular, 9, layout.contentWidth);
-  for (const line of lines.slice(0, 8)) {
-    ensureSpace(layout, 12);
-    layout.page.drawText(line, {
-      x: layout.contentLeft,
-      y: layout.y,
-      size: 9,
-      font: layout.regular,
-      color: rgb(0.05, 0.25, 0.55),
-    });
-    layout.y -= 12;
+  runs: DocumentTextRun[],
+  size: number,
+  maxWidth: number
+): Array<Array<{ text: string; font: PDFFont }>> => {
+  const lines: Array<Array<{ text: string; font: PDFFont }>> = [];
+  let current: Array<{ text: string; font: PDFFont }> = [];
+  let width = 0;
+  const flush = () => {
+    if (current.length) lines.push(current);
+    current = [];
+    width = 0;
+  };
+  for (const run of runs) {
+    const font = runFont(layout, run);
+    const pieces = toWinAnsi(run.text).split(/(\s+)/);
+    for (const piece of pieces) {
+      if (!piece) continue;
+      const pieceW = font.widthOfTextAtSize(piece, size);
+      if (width + pieceW > maxWidth && current.length) {
+        flush();
+        if (/^\s+$/.test(piece)) continue;
+      }
+      current.push({ text: piece, font });
+      width += pieceW;
+    }
   }
+  flush();
+  return lines.length ? lines : [[]];
+};
+
+const drawStyledRuns = (
+  layout: Layout,
+  runs: DocumentTextRun[],
+  size: number,
+  indent = 0
+) => {
+  const maxWidth = layout.contentWidth - indent;
+  const lines = wrapStyledRuns(layout, runs, size, maxWidth);
+  for (const line of lines) {
+    const ascent = Math.max(
+      fontAscent(layout.regular, size),
+      ...line.map((part) => fontAscent(part.font, size))
+    );
+    ensureSpace(layout, ascent + 4);
+    layout.y -= ascent;
+    let x = layout.contentLeft + indent;
+    for (const part of line) {
+      if (!part.text) continue;
+      layout.page.drawText(part.text, {
+        x,
+        y: layout.y,
+        size,
+        font: part.font,
+        color: INK,
+      });
+      x += part.font.widthOfTextAtSize(part.text, size);
+    }
+    layout.y -= 4;
+  }
+};
+
+const drawDocumentBlocks = (layout: Layout, blocks: DocumentTextBlock[]) => {
+  for (const block of blocks) {
+    if (block.kind === "heading") {
+      const size = block.level === 1 ? 13 : block.level === 2 ? 12 : 11;
+      layout.y -= 6;
+      drawStyledRuns(
+        layout,
+        block.runs.map((run) => ({ ...run, bold: true })),
+        size
+      );
+      layout.y -= 4;
+      continue;
+    }
+    if (block.kind === "list") {
+      block.items.forEach((item, index) => {
+        const marker = block.ordered ? `${index + 1}. ` : "- ";
+        const markerSize = 10;
+        const ascent = fontAscent(layout.regular, markerSize);
+        ensureSpace(layout, ascent + 4);
+        layout.y -= ascent;
+        layout.page.drawText(marker, {
+          x: layout.contentLeft,
+          y: layout.y,
+          size: markerSize,
+          font: layout.regular,
+          color: INK,
+        });
+        const markerW = layout.regular.widthOfTextAtSize(marker, markerSize);
+        const savedY = layout.y;
+        const lines = wrapStyledRuns(
+          layout,
+          item,
+          markerSize,
+          layout.contentWidth - markerW
+        );
+        let x = layout.contentLeft + markerW;
+        lines.forEach((line, lineIndex) => {
+          if (lineIndex > 0) {
+            const nextAscent = Math.max(
+              fontAscent(layout.regular, markerSize),
+              ...line.map((part) => fontAscent(part.font, markerSize))
+            );
+            ensureSpace(layout, nextAscent + 4);
+            layout.y -= nextAscent;
+            x = layout.contentLeft + markerW;
+          } else {
+            layout.y = savedY;
+          }
+          for (const part of line) {
+            layout.page.drawText(part.text, {
+              x,
+              y: layout.y,
+              size: markerSize,
+              font: part.font,
+              color: INK,
+            });
+            x += part.font.widthOfTextAtSize(part.text, markerSize);
+          }
+          layout.y -= 4;
+        });
+      });
+      layout.y -= 4;
+      continue;
+    }
+    drawStyledRuns(layout, block.runs, 10);
+    layout.y -= 6;
+  }
+};
+
+const drawCaption = (layout: Layout, caption: string) => {
+  if (!caption) return;
+  layout.page.drawText(toWinAnsi(caption).slice(0, 90), {
+    x: layout.contentLeft,
+    y: layout.y,
+    size: 9,
+    font: layout.regular,
+    color: MUTED,
+  });
+  layout.y -= CAPTION_H;
+};
+
+const addUnavailableNote = (
+  layout: Layout,
+  label: string | undefined,
+  fileName: string
+) => {
+  const captionH = fileName ? CAPTION_H : 0;
+  if (label) drawPrintHeading(layout, label, captionH + MIN_ROW_H + 4);
+  drawCaption(layout, fileName);
+  fieldRow(layout, "Note", "Attachment could not be included in print", {
+    alt: true,
+  });
+};
+
+const appendDocumentText = (
+  layout: Layout,
+  label: string | undefined,
+  fileName: string,
+  blocks: DocumentTextBlock[]
+) => {
+  const captionH = fileName ? CAPTION_H : 0;
+  if (label) {
+    drawPrintHeading(layout, label, captionH + fontAscent(layout.regular, 10) + 8);
+  } else {
+    ensureSpace(layout, captionH + fontAscent(layout.regular, 10) + 8);
+  }
+  drawCaption(layout, fileName);
+  drawDocumentBlocks(layout, blocks);
 };
 
 const appendImageOnPage = (
   layout: Layout,
-  label: string,
+  label: string | undefined,
   image: PDFImage,
   caption: string
 ) => {
-  newPage(layout, false);
-  drawRunningHeader(layout);
-  sectionBar(layout, label);
-  if (caption) {
-    layout.page.drawText(caption.slice(0, 90), {
-      x: layout.contentLeft,
-      y: layout.y,
-      size: 9,
-      font: layout.regular,
-      color: MUTED,
-    });
-    layout.y -= 16;
-  }
+  const captionH = caption ? CAPTION_H : 0;
   const maxW = layout.contentWidth;
-  const maxH = layout.y - MARGIN_BOTTOM - 8;
-  const scale = Math.min(maxW / image.width, maxH / image.height, 1);
+  const widthLimitedH = image.height * Math.min(maxW / Math.max(image.width, 1), 1);
+  const printSafeH = Math.min(widthLimitedH, PRINT_IMAGE_MAX_H);
+  const headingH = label ? 8 + RULE_HEAD_H + 10 : 8;
+  const needed = headingH + captionH + printSafeH + IMAGE_GAP;
+  ensureSpace(layout, needed);
+  if (label) {
+    drawPrintHeading(layout, label, captionH + Math.min(printSafeH, 80));
+  } else {
+    layout.y -= 8;
+  }
+  drawCaption(layout, caption);
+  const availH = Math.max(40, remainingHeight(layout) - 8);
+  const scale = Math.min(
+    maxW / Math.max(image.width, 1),
+    printSafeH / Math.max(image.height, 1),
+    availH / Math.max(image.height, 1),
+    1
+  );
   const drawW = image.width * scale;
   const drawH = image.height * scale;
   layout.page.drawImage(image, {
@@ -684,7 +1147,7 @@ const appendImageOnPage = (
     width: drawW,
     height: drawH,
   });
-  layout.y = MARGIN_BOTTOM;
+  layout.y -= drawH + IMAGE_GAP;
 };
 
 const pageHasContents = (page: PDFPage): boolean => {
@@ -701,9 +1164,8 @@ const dropQueuedEmbeddedPage = (
   doc: PDFDocument,
   embedded: { ref?: unknown }
 ) => {
-  const queued = (
-    doc as PDFDocument & { embeddedPages?: unknown[] }
-  ).embeddedPages;
+  const queued = (doc as unknown as { embeddedPages?: unknown[] })
+    .embeddedPages;
   if (!Array.isArray(queued)) return;
   const index = queued.indexOf(embedded);
   if (index >= 0) queued.splice(index, 1);
@@ -716,7 +1178,7 @@ const drawEmbeddedPageOnLetter = (
 ) => {
   newPage(layout, false);
   drawRunningHeader(layout);
-  if (label) sectionBar(layout, label);
+  if (label) drawPrintHeading(layout, label);
   const maxW = layout.contentWidth;
   const boxTop = layout.y;
   const boxBottom = MARGIN_BOTTOM + 8;
@@ -812,6 +1274,12 @@ const appendMediaSlot = async (
   }
 
   let outcome: MediaEmbedResult = "skipped";
+  let headingDrawn = false;
+  const heading = () => {
+    if (headingDrawn) return undefined;
+    headingDrawn = true;
+    return label;
+  };
   for (const item of items) {
     try {
       const fetched = await fetchMediaBytes(item);
@@ -820,30 +1288,59 @@ const appendMediaSlot = async (
       }
       const mime = (item.mime || "").toLowerCase();
       const fileName = item.name || "Attachment";
+      const ext = item.ext || fileName;
 
-      if (mime.includes("pdf") || (item.ext || "").toLowerCase() === "pdf") {
-        const merged = await appendPdfPages(layout, fetched.bytes, label);
+      if (isPdfAttachment(mime, ext)) {
+        const merged = await appendPdfPages(
+          layout,
+          fetched.bytes,
+          headingDrawn ? undefined : label
+        );
         if (merged) {
+          headingDrawn = true;
           outcome = "merged";
           continue;
         }
+        const extracted = await extractAttachmentText(fetched.bytes, mime, ext);
+        if (extracted.ok) {
+          appendDocumentText(layout, heading(), fileName, extracted.blocks);
+          if (outcome !== "merged") outcome = "embedded";
+          continue;
+        }
         console.warn(
-          `Award print: skipped PDF attachment ${fileName} (no printable pages)`
+          `Award print: could not include PDF attachment ${fileName}`
         );
+        addUnavailableNote(layout, heading(), fileName);
+        continue;
+      }
+
+      if (isDocxAttachment(mime, ext) || isPlainTextAttachment(mime, ext)) {
+        const extracted = await extractAttachmentText(fetched.bytes, mime, ext);
+        if (extracted.ok) {
+          appendDocumentText(layout, heading(), fileName, extracted.blocks);
+          if (outcome !== "merged") outcome = "embedded";
+          continue;
+        }
+        addUnavailableNote(layout, heading(), fileName);
         continue;
       }
 
       if (mime.startsWith("image/") || !mime) {
         const image = await toPrintImage(layout.doc, fetched.bytes, mime);
         if (image) {
-          appendImageOnPage(layout, label, image, fileName);
+          appendImageOnPage(layout, heading(), image, fileName);
           if (outcome !== "merged") outcome = "embedded";
           continue;
         }
       }
 
-      addLinkPage(layout, label, fileName, fetched.href);
-      if (outcome === "skipped") outcome = "linked";
+      const extracted = await extractAttachmentText(fetched.bytes, mime, ext);
+      if (extracted.ok) {
+        appendDocumentText(layout, heading(), fileName, extracted.blocks);
+        if (outcome !== "merged") outcome = "embedded";
+        continue;
+      }
+      addUnavailableNote(layout, heading(), fileName);
     } catch (error) {
       console.warn(
         `Award print: skipped attachment ${item.name || label}`,
@@ -862,35 +1359,21 @@ const drawSectionOneAndTwo = (layout: Layout) => {
     systemDisplayName(layout.record) || systemNameAsPrinted(layout.record) || "System",
     countyRegion(layout.record) || undefined
   );
-  identificationRows(layout.record).forEach((row, index) => {
-    fieldRow(layout, row.label, row.value, { alt: index % 2 === 1 });
-  });
-  systemRecordRows(layout.record).forEach((row, index) => {
-    fieldRow(layout, row.label, row.value, { alt: index % 2 === 0 });
-  });
-
-  if (isSystemOfTheYearAward(layout.record.award_type)) {
-    nomineeBasicRows(layout.record).forEach((row, index) => {
-      fieldRow(layout, row.label, row.value, { alt: index % 2 === 1 });
-    });
-  } else if (isPersonNomineeAward(layout.record)) {
-    ensureSpace(layout, 80);
-    sectionBar(layout, nomineeNameAsPrinted(layout.record));
-    nomineeBasicRows(layout.record).forEach((row, index) => {
-      fieldRow(layout, row.label, row.value, { alt: index % 2 === 1 });
-    });
-  }
+  drawSystemOverview(layout);
 
   narrativeBlock(
     layout,
     "What makes the nominee deserving of this award?",
     String(layout.record.justification || "")
   );
-  fieldRow(
+
+};
+
+const drawBiographyBlock = (layout: Layout) => {
+  drawSoftKvBar(
     layout,
     "Biography method",
-    displayValue(layout.record.biography_method),
-    { alt: true }
+    displayValue(layout.record.biography_method)
   );
   if (
     layout.record.biography_method === "Copy/Paste or Type Biography" ||
@@ -905,16 +1388,37 @@ const drawSectionOneAndTwo = (layout: Layout) => {
 };
 
 const drawSectionThree = (layout: Layout) => {
-  const nominatorBlock =
-    36 + 20 * (2 + nominatorRows(layout.record).length);
-  ensureSpace(layout, nominatorBlock);
-  sectionBar(layout, "Nominator Information");
-  fieldRow(layout, "Nominator", displayValue(nominatorFullName(layout.record)), {
-    alt: true,
-  });
-  nominatorRows(layout.record).forEach((row, index) => {
-    fieldRow(layout, row.label, row.value, { alt: index % 2 === 0 });
-  });
+  drawSoftHeading(layout, "Nominator Information", 40);
+  const fonts = chromeFonts(layout);
+  const metrics = textMetrics();
+  const name = nominatorFullName(layout.record);
+  const address = nominatorAddressLines(layout.record);
+  const left: StackedField[] = [
+    { label: "Nominator", lines: name ? [name, ...address] : address.length ? address : ["—"] },
+  ];
+  const right: StackedField[] = [
+    { label: "Phone", lines: [displayValue(layout.record.nominator_phone)] },
+    { label: "Email", lines: [displayValue(layout.record.nominator_email)] },
+  ];
+  const height = measureContactPair(
+    left,
+    right,
+    fonts,
+    metrics,
+    layout.contentWidth
+  );
+  ensureSpace(layout, height + 8);
+  drawContactPair(
+    layout.page,
+    fonts,
+    metrics,
+    MARGIN_LEFT,
+    layout.y,
+    layout.contentWidth,
+    left,
+    right
+  );
+  layout.y -= height + 8;
 };
 
 /** Build one nomination as its own PDF (never merged with siblings). */
@@ -926,8 +1430,7 @@ export const generateNominationApplicationPdf = async (
   media: Record<string, MediaEmbedResult>;
 }> => {
   const doc = await PDFDocument.create();
-  const regular = await doc.embedFont(StandardFonts.TimesRoman);
-  const bold = await doc.embedFont(StandardFonts.TimesRomanBold);
+  const { regular, bold, italic, boldItalic } = await embedPrintFonts(doc);
   const filename = nominationApplicationFilename(record);
   doc.setTitle(
     `ORWA Award Nomination — ${record.nominee_name || systemDisplayName(record) || "Nomination"}`
@@ -946,6 +1449,8 @@ export const generateNominationApplicationPdf = async (
     page,
     regular,
     bold,
+    italic,
+    boldItalic,
     width: 612,
     height: 792,
     y: 792 - MARGIN_TOP,
@@ -958,17 +1463,26 @@ export const generateNominationApplicationPdf = async (
   drawSectionOneAndTwo(layout);
 
   const media: Record<string, MediaEmbedResult> = {};
-  if (
-    isSystemOfTheYearAward(record.award_type) &&
-    asMediaItems(record.board_list_file).length > 0
-  ) {
-    await appendMediaSlot(
-      layout,
-      "Board member & employee list",
-      record.board_list_file,
-      media
-    );
+  if (isSystemOfTheYearAward(record.award_type)) {
+    if (asMediaItems(record.board_list_file).length > 0) {
+      await appendMediaSlot(
+        layout,
+        "Board / employee list",
+        record.board_list_file,
+        media
+      );
+    } else {
+      drawRuleHeading(layout, "Board / employee list");
+      if (record.board_list_method) {
+        drawSoftKvBar(
+          layout,
+          "Board / employee list via",
+          displayValue(record.board_list_method)
+        );
+      }
+    }
   }
+  drawBiographyBlock(layout);
   if (asMediaItems(record.biography_file).length > 0) {
     await appendMediaSlot(layout, "Biography file", record.biography_file, media);
   }
@@ -982,7 +1496,7 @@ export const generateNominationApplicationPdf = async (
     );
   } else {
     media.Photographs = "skipped";
-    fieldRow(layout, "Photographs", "None", { alt: true });
+    drawSoftKvBar(layout, "Photographs", "None");
   }
 
   drawSectionThree(layout);
@@ -1013,51 +1527,94 @@ export const generateNominationApplicationPdf = async (
   };
 };
 
+/** Chromium iframe `afterprint` often fires as the dialog opens — ignore that. */
+export const PRINT_AFTERPRINT_IGNORE_MS = 600;
+/** Blocked or dismissed dialogs must not leave Print Selected spinning. */
+export const PRINT_DIALOG_TIMEOUT_MS = 180_000;
+export const PRINT_NEXT_JOB_GAP_MS = 300;
+
+const delay = (ms: number) =>
+  new Promise<void>((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
 /**
  * Open one PDF in a hidden iframe and invoke the browser print dialog.
- * Sequential callers wait for `afterprint` so each nomination is its own job.
+ * Resolves only after the dialog closes (`afterprint` / window `focus`)
+ * or the timeout fires, so the next job can call `print()` safely.
  */
 export const printPdfBlob = (blob: Blob): Promise<void> =>
   new Promise((resolve, reject) => {
+    if (typeof document === "undefined") {
+      reject(new Error("Print preview requires a browser"));
+      return;
+    }
     const url = URL.createObjectURL(blob);
     const iframe = document.createElement("iframe");
     iframe.setAttribute("title", "Print nomination application");
     iframe.setAttribute("aria-hidden", "true");
     iframe.style.cssText =
       "position:fixed;inset:0;width:1px;height:1px;opacity:0;border:0;pointer-events:none;";
+
     let settled = false;
+    let openedAt = 0;
+    let timeoutId = 0;
+    let win: Window | null = null;
+
+    const dialogLikelyClosed = () =>
+      openedAt > 0 && Date.now() - openedAt >= PRINT_AFTERPRINT_IGNORE_MS;
+
+    const cleanup = () => {
+      window.clearTimeout(timeoutId);
+      window.removeEventListener("afterprint", onCloseSignal);
+      window.removeEventListener("focus", onCloseSignal);
+      win?.removeEventListener("afterprint", onCloseSignal);
+      iframe.remove();
+      URL.revokeObjectURL(url);
+    };
+
     const finish = () => {
       if (settled) return;
       settled = true;
-      iframe.remove();
-      URL.revokeObjectURL(url);
+      cleanup();
       resolve();
     };
+
+    const fail = (message: string) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error(message));
+    };
+
+    const onCloseSignal = () => {
+      if (dialogLikelyClosed()) finish();
+    };
+
     iframe.onload = () => {
-      const win = iframe.contentWindow;
+      if (settled) return;
+      win = iframe.contentWindow;
       if (!win) {
-        iframe.remove();
-        URL.revokeObjectURL(url);
-        reject(new Error("Print preview failed to load"));
+        fail("Print preview failed to load");
         return;
       }
-      win.addEventListener("afterprint", finish);
+      win.addEventListener("afterprint", onCloseSignal);
+      window.addEventListener("afterprint", onCloseSignal);
+      window.addEventListener("focus", onCloseSignal);
+      openedAt = Date.now();
       try {
         win.focus();
         win.print();
       } catch {
         finish();
-        return;
       }
-      window.setTimeout(finish, 120000);
     };
     iframe.onerror = () => {
-      iframe.remove();
-      URL.revokeObjectURL(url);
-      reject(new Error("Print preview failed to load"));
+      fail("Print preview failed to load");
     };
     iframe.src = url;
     document.body.appendChild(iframe);
+    timeoutId = window.setTimeout(finish, PRINT_DIALOG_TIMEOUT_MS);
   });
 
 /** One print job per nomination — do not concatenate into a single PDF. */
@@ -1071,14 +1628,36 @@ export const printNominationApplication = async (
   return { filename, media, byteLength: blob.size };
 };
 
+export type PrintQueueResult = {
+  printed: string[];
+  failed: Array<{ filename: string; message: string }>;
+};
+
+/** One print job per nomination — do not concatenate into a single PDF. */
 export const printNominationApplications = async (
-  records: AwardNominationPrintRecord[]
-) => {
+  records: AwardNominationPrintRecord[],
+  printOne: (
+    record: AwardNominationPrintRecord
+  ) => Promise<{ filename: string }> = printNominationApplication
+): Promise<PrintQueueResult> => {
   const printed: string[] = [];
-  for (const record of records) {
-    const result = await printNominationApplication(record);
-    printed.push(result.filename);
-    await new Promise((resolve) => window.setTimeout(resolve, 350));
+  const failed: PrintQueueResult["failed"] = [];
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index];
+    try {
+      const result = await printOne(record);
+      printed.push(result.filename);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn("Award print: job failed", error);
+      failed.push({
+        filename: nominationApplicationFilename(record),
+        message,
+      });
+    }
+    if (index < records.length - 1) {
+      await delay(PRINT_NEXT_JOB_GAP_MS);
+    }
   }
-  return printed;
+  return { printed, failed };
 };

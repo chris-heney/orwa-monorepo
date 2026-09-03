@@ -19,7 +19,10 @@ import {
 } from "../../_components/review-packet";
 import { useOrwefContext } from "../OrwefContextProvider";
 import { listFinancialResources } from "../helpers/financialResources";
-import { buildScholarshipListFilter } from "../helpers/listFilters";
+import {
+  buildScholarshipListFilter,
+  watersystemRegion,
+} from "../helpers/listFilters";
 import { SCHOLARSHIP_LIST_OMIT } from "../helpers/scholarshipListColumns";
 import { SCHOLARSHIP_SELECTED_IDS_KEY } from "./ScholarshipPrintButton";
 import MediaLink from "./MediaLink";
@@ -33,7 +36,7 @@ const mediaCell =
   );
 
 const ScholarshipApplicationList = () => {
-  const { search, status, year } = useOrwefContext();
+  const { search, year, region } = useOrwefContext();
   const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
   const listPerPage = agPrefs.pageSize || 50;
 
@@ -44,7 +47,7 @@ const ScholarshipApplicationList = () => {
         title=" "
         actions={false}
         disableSyncWithLocation
-        filter={buildScholarshipListFilter(search, status, year)}
+        filter={buildScholarshipListFilter(search, year, region)}
         sort={{ field: "submission_date", order: "DESC" }}
         perPage={listPerPage}
         pagination={<CustomPagination />}
@@ -79,6 +82,14 @@ const ScholarshipApplicationList = () => {
           <TextField source="applicant_email" label="Email" />
           <TextField source="applicant_phone" label="Phone" />
           <TextField source="system_name" label="Water System" />
+          <FunctionField
+            label="Region"
+            source="watersystem.region"
+            sortable={false}
+            render={(record: {
+              watersystem?: { region?: string | null } | null;
+            }) => watersystemRegion(record) || "—"}
+          />
           <TextField source="gpa" label="GPA" />
           <TextField source="application_status" label="Status" />
           <DateField source="submission_date" label="Submitted" />

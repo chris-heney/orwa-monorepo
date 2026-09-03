@@ -2,6 +2,7 @@ import React from "react";
 import { Box, IconButton, MenuItem, TextField, Tooltip } from "@mui/material";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import {
+  CreateButton,
   ExportButton,
   ListBase,
   SelectColumnsButton,
@@ -24,6 +25,8 @@ const RESOURCE = "award-nominations";
 const TAB_TITLES: Record<string, string> = {
   summary: "Summary",
   nominations: "Nominations",
+  winners: "Winners",
+  settings: "Settings",
 };
 
 const YEAR_SELECT_SX = {
@@ -40,13 +43,15 @@ const AwardDashboardHeader = () => {
     isFilterSidebarOpen,
     setIsFilterSidebarOpen,
     search,
-    status,
     year,
     setYear,
+    region,
+    awardType,
   } = useAwardContext();
   const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
   useAwardColumnDefaults();
 
+  const showYear = selectedTab !== "settings";
   const yearLabel = year === "all" ? "All Years" : String(year);
 
   return (
@@ -54,9 +59,11 @@ const AwardDashboardHeader = () => {
       title={
         <>
           {TAB_TITLES[selectedTab] || selectedTab}
-          <Box component="span" sx={{ fontWeight: 500, opacity: 0.85 }}>
-            {` · ${yearLabel}`}
-          </Box>
+          {showYear ? (
+            <Box component="span" sx={{ fontWeight: 500, opacity: 0.85 }}>
+              {` · ${yearLabel}`}
+            </Box>
+          ) : null}
         </>
       }
       actions={
@@ -65,7 +72,7 @@ const AwardDashboardHeader = () => {
             <ListBase
               disableSyncWithLocation
               resource={RESOURCE}
-              filter={buildAwardListFilter(search, status, year)}
+              filter={buildAwardListFilter(search, year, region, awardType)}
               perPage={agPrefs.pageSize || 50}
             >
               <RecordCount />
@@ -73,40 +80,59 @@ const AwardDashboardHeader = () => {
               <SelectColumnsButton style={{ color: "white" }} />
             </ListBase>
           ) : null}
-          <TextField
-            select
-            size="small"
-            value={year}
-            onChange={(event) =>
-              setYear(
-                event.target.value === "all" ? "all" : Number(event.target.value)
-              )
-            }
-            aria-label="Award year"
-            sx={YEAR_SELECT_SX}
-          >
-            {calendarYearChoices().map((value) => (
-              <MenuItem key={String(value)} value={value}>
-                {value === "all" ? "All years" : value}
-              </MenuItem>
-            ))}
-          </TextField>
-          <Tooltip title="Filter">
-            <IconButton
-              onClick={() => setIsFilterSidebarOpen((open) => !open)}
-              size="small"
-              color="primary"
-              aria-label="Filter"
+          {selectedTab === "winners" ? (
+            <ListBase
+              disableSyncWithLocation
+              resource="award-winners"
+              filter={year === "all" ? {} : { award_year: year }}
+              perPage={50}
             >
-              <FilterAltIcon
-                fontSize="small"
-                style={
-                  !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                }
-                sx={{ "&:hover": { color: "white" } }}
+              <RecordCount />
+              <CreateButton
+                resource="award-winners"
+                label="Add Winner"
+                sx={{ color: "white" }}
               />
-            </IconButton>
-          </Tooltip>
+            </ListBase>
+          ) : null}
+          {showYear ? (
+            <TextField
+              select
+              size="small"
+              value={year}
+              onChange={(event) =>
+                setYear(
+                  event.target.value === "all" ? "all" : Number(event.target.value)
+                )
+              }
+              aria-label="Award year"
+              sx={YEAR_SELECT_SX}
+            >
+              {calendarYearChoices().map((value) => (
+                <MenuItem key={String(value)} value={value}>
+                  {value === "all" ? "All years" : value}
+                </MenuItem>
+              ))}
+            </TextField>
+          ) : null}
+          {selectedTab !== "settings" ? (
+            <Tooltip title="Filter">
+              <IconButton
+                onClick={() => setIsFilterSidebarOpen((open) => !open)}
+                size="small"
+                color="primary"
+                aria-label="Filter"
+              >
+                <FilterAltIcon
+                  fontSize="small"
+                  style={
+                    !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
+                  }
+                  sx={{ "&:hover": { color: "white" } }}
+                />
+              </IconButton>
+            </Tooltip>
+          ) : null}
           {selectedTab === "nominations" ? <AwardPrintSelectedButton /> : null}
         </>
       }

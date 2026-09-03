@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAcceptedTerms } from "@orwa/terms-gate";
+import { activeMembershipWatersystemsQuery } from "../helpers/activeMembershipWatersystemsQuery";
 import {
   IScholarshipApplicationPayload,
   IWatersystemOption,
@@ -59,11 +60,16 @@ const _submitApplication = async (
 
 export const useGetWatersystems = () => {
   return useQuery({
-    queryKey: ["watersystems"],
+    queryKey: ["watersystems", "active-membership"],
     queryFn: async () =>
       _get(
         "watersystems",
-        "?pagination[limit]=1000&sort=name:ASC&fields[0]=id&fields[1]=documentId&fields[2]=name&fields[3]=county"
+        activeMembershipWatersystemsQuery([
+          "id",
+          "documentId",
+          "name",
+          "county",
+        ])
       ) as unknown as Promise<IWatersystemOption[]>,
   });
 };

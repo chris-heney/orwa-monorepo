@@ -2,17 +2,19 @@ import React, { createContext, useContext, PropsWithChildren } from "react";
 import { useStore } from "react-admin";
 import { nominationCycleYear } from "./helpers/listFilters";
 
-export type AwardTab = "summary" | "nominations";
+export type AwardTab = "summary" | "nominations" | "winners" | "settings";
 
 type AwardContextValue = {
   selectedTab: AwardTab;
   setSelectedTab: (tab: AwardTab) => void;
   year: number | "all";
   setYear: (year: number | "all") => void;
-  status: string;
-  setStatus: (status: string) => void;
   search: string;
   setSearch: (search: string) => void;
+  region: string;
+  setRegion: (region: string) => void;
+  awardType: string;
+  setAwardType: (awardType: string) => void;
   isFilterSidebarOpen: boolean;
   setIsFilterSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -25,10 +27,12 @@ export const useAwardContext = () =>
     setSelectedTab: () => {},
     year: nominationCycleYear(),
     setYear: () => {},
-    status: "all",
-    setStatus: () => {},
     search: "",
     setSearch: () => {},
+    region: "all",
+    setRegion: () => {},
+    awardType: "all",
+    setAwardType: () => {},
     isFilterSidebarOpen: false,
     setIsFilterSidebarOpen: () => {},
   };
@@ -42,8 +46,12 @@ const AwardContextProvider = ({ children }: PropsWithChildren) => {
     "orwa-awards-cycle-year",
     nominationCycleYear()
   );
-  const [status, setStatus] = useStore("orwa-awards-nomination-status", "all");
   const [search, setSearch] = useStore("orwa-awards-nomination-search", "");
+  const [region, setRegion] = useStore("orwa-awards-nomination-region", "all");
+  const [awardType, setAwardType] = useStore(
+    "orwa-awards-nomination-award-type",
+    "all"
+  );
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useStore(
     "orwa-awards-filter-sidebar-open",
     false
@@ -56,10 +64,12 @@ const AwardContextProvider = ({ children }: PropsWithChildren) => {
         setSelectedTab,
         year,
         setYear,
-        status,
-        setStatus,
         search,
         setSearch,
+        region,
+        setRegion,
+        awardType,
+        setAwardType,
         isFilterSidebarOpen,
         setIsFilterSidebarOpen,
       }}

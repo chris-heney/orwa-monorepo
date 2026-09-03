@@ -1,4 +1,5 @@
-import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { embedPrintFonts, type PrintFonts } from "../../../helpers/printBrandFonts";
 import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
 import {
   EDUCATION_LABELS,
@@ -10,7 +11,19 @@ import {
 } from "../../_components/review-packet";
 import { listFinancialResources } from "./financialResources";
 import { resolveMediaUrl } from "./resolveMediaUrl";
+import {
+  ORWEF_LEGAL_NAME,
+  SCHOLARSHIP_FOOTER_AWARD,
+  SCHOLARSHIP_TITLE,
+  drawLetterFooters,
+  drawScholarshipApplicationForm,
+  stackLines,
+  type PrintCard,
+  type PrintField,
+  type ScholarshipPrintModel,
+} from "./scholarshipPrintForm";
 import { scholarshipPacketFilename } from "./scholarshipPacketFilename";
+import { yearOf } from "./metrics";
 
 export type ScholarshipMediaFile = {
   url?: string | null;
@@ -99,8 +112,12 @@ export const SCHOLARSHIP_MEDIA_SLOTS: Array<{
 ];
 
 const authHeaders = (): HeadersInit => {
-  const token = CookieStore.getCookie("token");
-  if (token) return { Authorization: `Bearer ${token}` };
+  try {
+    const token = CookieStore.getCookie("token");
+    if (token) return { Authorization: `Bearer ${token}` };
+  } catch {
+    // Node / unit tests have no `document`.
+  }
   const apiKey = import.meta.env.VITE_API_KEY;
   if (apiKey) return { Authorization: `Bearer ${apiKey}` };
   return {};
@@ -120,22 +137,181 @@ const display = (value: unknown): string => {
   return String(value);
 };
 
-const wrapLines = (text: string, font: PDFFont, size: number, maxWidth: number) => {
-  const words = text.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [""];
-  const lines: string[] = [];
-  let current = words[0];
-  for (let i = 1; i < words.length; i += 1) {
-    const next = `${current} ${words[i]}`;
-    if (font.widthOfTextAtSize(next, size) <= maxWidth) {
-      current = next;
-    } else {
-      lines.push(current);
-      current = words[i];
-    }
-  }
-  lines.push(current);
-  return lines;
+const kv = (label: string, value: unknown): PrintField => ({
+  kind: "kv",
+  label,
+  value: display(value),
+});
+
+const contact = (...lines: Array<string | null | undefined>): PrintField => ({
+  kind: "contact",
+  lines: stackLines(...lines),
+});
+
+const addressStack = (
+  street?: string | null,
+  city?: string | null,
+  state?: string | null,
+  zip?: string | null
+): PrintField => {
+  const cityLine = [city, state].filter(Boolean).join(", ");
+  return contact(street, [cityLine, zip].filter(Boolean).join(" "));
+};
+
+const applicantName = (record: ScholarshipPacketRecord) =>
+  [record.applicant_first_name, record.applicant_middle_name, record.applicant_last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim() || "Applicant";
+
+const cycleYear = (record: ScholarshipPacketRecord) =>
+  String(
+    yearOf({
+      id: "print",
+      submission_date: record.submission_date,
+      createdAt: record.createdAt,
+    }) || new Date().getFullYear()
+  );
+
+export const buildScholarshipPrintModel = (
+  record: ScholarshipPacketRecord
+): ScholarshipPrintModel => {
+  const financialResources = listFinancialResources(record);
+  const financialFields: PrintField[] =
+    financialResources.length === 0
+      ? [kv("Financial aid", null)]
+      : financialResources.map((row) =>
+          contact(row.institution || "—", formatMoney(row.amount))
+        );
+
+  const presentAttachments = SCHOLARSHIP_MEDIA_SLOTS.map((slot) => {
+    const items = asMediaItems(
+      record[slot.key] as ScholarshipMediaFile | ScholarshipMediaFile[] | undefined
+    );
+    return kv(
+      slot.label,
+      items.length === 0 ? null : items.map((item) => item.name || "Attachment").join(", ")
+    );
+  }).filter((field) => field.kind === "kv" && field.value !== "—");
+  const attachmentFields: PrintField[] =
+    presentAttachments.length > 0 ? presentAttachments : [kv("Attachments", "None")];
+
+  const cards: PrintCard[] = [
+    {
+      title: "Personal Data",
+      fields: [
+        kv("Name", applicantName(record) === "Applicant" ? null : applicantName(record)),
+        kv("Email", record.applicant_email),
+        kv("Phone", record.applicant_phone),
+        addressStack(
+          record.applicant_street,
+          record.applicant_city,
+          record.applicant_state,
+          record.applicant_zip
+        ),
+      ],
+    },
+    {
+      title: "Eligibility Criteria",
+      fields: [
+        kv("Water system", record.system_name),
+        kv(
+          "Relationship",
+          record.relationship
+            ? RELATIONSHIP_LABELS[record.relationship] || record.relationship
+            : null
+        ),
+        contact(
+          formatPersonName(record.eligible_participant_name),
+          record.eligible_participant_title,
+          record.eligible_participant_email,
+          record.eligible_participant_phone
+        ),
+        contact(formatAddress(record.eligible_participant_address)),
+      ],
+    },
+    {
+      title: "High School Data",
+      fields: [
+        kv("School", record.school_name),
+        kv("Graduation", asDateString(record.graduation_date) || null),
+        contact(formatAddress(record.school_address)),
+        kv("GPA", record.gpa),
+        kv("SAT", record.sat_score),
+        kv("ACT", record.act_score),
+      ],
+    },
+    {
+      title: "College / University",
+      fields: [
+        kv("First year", record.first_year),
+        kv(
+          "Education type",
+          record.education_type
+            ? EDUCATION_LABELS[record.education_type] || record.education_type
+            : null
+        ),
+        kv("Credits done", record.credits_completed),
+        kv("Credits needed", record.credits_required),
+        kv("College GPA", record.college_gpa),
+        kv("Major", record.major),
+      ],
+    },
+    {
+      title: "Recommender 1",
+      fields: [
+        contact(
+          formatPersonName(record.recommender1_name),
+          record.recommender1_email,
+          record.recommender1_phone
+        ),
+      ],
+    },
+    {
+      title: "Recommender 2",
+      fields: [
+        contact(
+          formatPersonName(record.recommender2_name),
+          record.recommender2_email,
+          record.recommender2_phone
+        ),
+      ],
+    },
+    {
+      title: "Financial Data",
+      fields: financialFields,
+    },
+    {
+      title: "Certification",
+      fields: [
+        kv("Age 18+", record.age_confirm),
+        kv("Certified", record.applicant_certification),
+        kv("Cert. date", asDateString(record.applicant_certification_date) || null),
+        ...[
+          kv("Guardian", formatPersonName(record.guardian_name)),
+          kv("Guardian certified", record.guardian_certification),
+          kv("Guardian date", asDateString(record.guardian_certification_date) || null),
+        ].filter((field) => field.kind === "kv" && field.value !== "—"),
+      ],
+    },
+    {
+      title: "Awards and Recognition",
+      fields: [{ kind: "body", text: record.awards?.trim() ? String(record.awards) : "—" }],
+    },
+    {
+      title: "Attached Documents",
+      fields: attachmentFields,
+    },
+  ];
+
+  const fullWidth: PrintCard[] = [];
+
+  return {
+    applicantName: applicantName(record),
+    cycleYear: cycleYear(record),
+    cards,
+    fullWidth,
+  };
 };
 
 export const downloadBlob = (blob: Blob, filename: string) => {
@@ -163,210 +339,41 @@ const fetchMediaBytes = async (
   return { bytes: new Uint8Array(buffer), href };
 };
 
-const drawCoverPage = async (
-  pdfDoc: PDFDocument,
-  record: ScholarshipPacketRecord
-) => {
-  const regular = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const bold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  let page = pdfDoc.addPage();
-  const { width, height } = page.getSize();
-  const margin = 50;
-  const size = 11;
-  const line = 16;
-  const maxWidth = width - margin * 2;
-  let y = height - margin;
-
-  const ensureSpace = (needed = line) => {
-    if (y - needed < margin) {
-      page = pdfDoc.addPage();
-      y = height - margin;
+const wrapLink = (text: string, font: PDFFont, size: number, maxWidth: number) => {
+  const words = text.split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [""];
+  const lines: string[] = [];
+  let current = words[0];
+  for (let i = 1; i < words.length; i += 1) {
+    const next = `${current} ${words[i]}`;
+    if (font.widthOfTextAtSize(next, size) <= maxWidth) {
+      current = next;
+    } else {
+      lines.push(current);
+      current = words[i];
     }
-  };
-
-  const write = (text: string, options: { header?: boolean } = {}) => {
-    const font = options.header ? bold : regular;
-    const fontSize = options.header ? 13 : size;
-    const lines = wrapLines(text, font, fontSize, maxWidth);
-    for (const row of lines) {
-      ensureSpace(fontSize + 6);
-      page.drawText(row, {
-        x: margin,
-        y,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
-      y -= options.header ? line + 4 : line;
-    }
-  };
-
-  const field = (label: string, value: unknown) => {
-    write(`${label}: ${display(value)}`);
-  };
-
-  page.drawText("Oklahoma Rural Water Foundation", {
-    x: margin,
-    y,
-    size: 12,
-    font: bold,
-    color: rgb(0.07, 0.35, 0.55),
-  });
-  y -= 18;
-  page.drawText("ORWEF Scholarship Application", {
-    x: margin,
-    y,
-    size: 18,
-    font: bold,
-  });
-  y -= 22;
-  page.drawText(
-    `Submitted ${
-      asDateString(record.submission_date) ||
-      asDateString(record.createdAt) ||
-      "—"
-    }`,
-    { x: margin, y, size, font: regular }
-  );
-  y -= 28;
-
-  write("Personal Data", { header: true });
-  field(
-    "Name",
-    [
-      record.applicant_first_name,
-      record.applicant_middle_name,
-      record.applicant_last_name,
-    ]
-      .filter(Boolean)
-      .join(" ")
-  );
-  field("Email", record.applicant_email);
-  field("Phone", record.applicant_phone);
-  field(
-    "Address",
-    [
-      record.applicant_street,
-      [record.applicant_city, record.applicant_state].filter(Boolean).join(", "),
-      record.applicant_zip,
-    ]
-      .filter(Boolean)
-      .join(", ")
-  );
-
-  write("Eligibility Criteria", { header: true });
-  field("Water system", record.system_name);
-  field(
-    "Relationship",
-    record.relationship
-      ? RELATIONSHIP_LABELS[record.relationship] || record.relationship
-      : null
-  );
-  field(
-    "Eligible participant",
-    formatPersonName(record.eligible_participant_name)
-  );
-  field("Title", record.eligible_participant_title);
-  field("Participant email", record.eligible_participant_email);
-  field("Participant phone", record.eligible_participant_phone);
-  field(
-    "Participant address",
-    formatAddress(record.eligible_participant_address)
-  );
-
-  write("High School Data", { header: true });
-  field("School", record.school_name);
-  field("Graduation date", asDateString(record.graduation_date));
-  field("School address", formatAddress(record.school_address));
-  field("GPA", record.gpa);
-  field("SAT", record.sat_score);
-  field("ACT", record.act_score);
-
-  write("College / University Data", { header: true });
-  field("First year", record.first_year);
-  field(
-    "Education type",
-    record.education_type
-      ? EDUCATION_LABELS[record.education_type] || record.education_type
-      : null
-  );
-  field("Credits completed", record.credits_completed);
-  field("Credits required", record.credits_required);
-  field("College GPA", record.college_gpa);
-  field("Major", record.major);
-
-  write("Awards and Recognition", { header: true });
-  if (record.awards) {
-    String(record.awards)
-      .split("\n")
-      .forEach((row) => write(row || " "));
-  } else {
-    field("Awards", null);
   }
-
-  write("Letters of Recommendation", { header: true });
-  field("Recommender 1", formatPersonName(record.recommender1_name));
-  field("Recommender 1 email", record.recommender1_email);
-  field("Recommender 1 phone", record.recommender1_phone);
-  field("Recommender 2", formatPersonName(record.recommender2_name));
-  field("Recommender 2 email", record.recommender2_email);
-  field("Recommender 2 phone", record.recommender2_phone);
-
-  write("Financial Data", { header: true });
-  const financialResources = listFinancialResources(record);
-  if (financialResources.length === 0) {
-    field("Financial aid", null);
-  } else {
-    financialResources.forEach((row, index) => {
-      field(`Aid ${index + 1} institution`, row.institution);
-      field(`Aid ${index + 1} amount`, formatMoney(row.amount));
-    });
-  }
-
-  write("Certification", { header: true });
-  field("Age confirmation", record.age_confirm);
-  field("Applicant certified", record.applicant_certification);
-  field(
-    "Certification date",
-    asDateString(record.applicant_certification_date)
-  );
-  field("Guardian", formatPersonName(record.guardian_name));
-  field("Guardian certified", record.guardian_certification);
-  field(
-    "Guardian certification date",
-    asDateString(record.guardian_certification_date)
-  );
-
-  write("Attached Documents", { header: true });
-  for (const slot of SCHOLARSHIP_MEDIA_SLOTS) {
-    const items = asMediaItems(
-      record[slot.key] as ScholarshipMediaFile | ScholarshipMediaFile[] | undefined
-    );
-    field(
-      slot.label,
-      items.length === 0
-        ? null
-        : items.map((item) => item.name || "Attachment").join(", ")
-    );
-  }
+  lines.push(current);
+  return lines;
 };
 
 const addLinkPage = (
   pdfDoc: PDFDocument,
   page: PDFPage,
-  fonts: { regular: PDFFont; bold: PDFFont },
+  fonts: PrintFonts,
   label: string,
   fileName: string,
   href: string
 ) => {
   const { width, height } = page.getSize();
-  const margin = 50;
-  let y = height - margin;
+  const margin = 54;
+  let y = height - 72;
   page.drawText(label, {
     x: margin,
     y,
     size: 14,
     font: fonts.bold,
+    color: rgb(0.08, 0.2, 0.36),
   });
   y -= 24;
   page.drawText(`File: ${fileName.slice(0, 90)}`, {
@@ -376,17 +383,14 @@ const addLinkPage = (
     font: fonts.regular,
   });
   y -= 18;
-  page.drawText(
-    "This file type cannot be embedded. Open it in Media Library or via:",
-    {
-      x: margin,
-      y,
-      size: 11,
-      font: fonts.regular,
-    }
-  );
+  page.drawText("This file type cannot be embedded. Open it in Media Library or via:", {
+    x: margin,
+    y,
+    size: 11,
+    font: fonts.regular,
+  });
   y -= 18;
-  const linkLines = wrapLines(href, fonts.regular, 9, width - margin * 2);
+  const linkLines = wrapLink(href, fonts.regular, 9, width - margin * 2);
   for (const row of linkLines.slice(0, 6)) {
     page.drawText(row, {
       x: margin,
@@ -404,7 +408,7 @@ const appendImagePage = async (
   label: string,
   bytes: Uint8Array,
   mime: string,
-  fonts: { regular: PDFFont; bold: PDFFont }
+  fonts: PrintFonts
 ): Promise<boolean> => {
   let image;
   try {
@@ -419,14 +423,15 @@ const appendImagePage = async (
     return false;
   }
 
-  const page = pdfDoc.addPage();
+  const page = pdfDoc.addPage([612, 792]);
   const { width, height } = page.getSize();
-  const margin = 40;
+  const margin = 54;
   page.drawText(label, {
     x: margin,
     y: height - margin,
     size: 12,
     font: fonts.bold,
+    color: rgb(0.08, 0.2, 0.36),
   });
   const maxW = width - margin * 2;
   const maxH = height - margin * 2 - 24;
@@ -444,11 +449,9 @@ const appendImagePage = async (
 
 export const appendScholarshipMedia = async (
   pdfDoc: PDFDocument,
-  record: ScholarshipPacketRecord
+  record: ScholarshipPacketRecord,
+  fonts: PrintFonts
 ): Promise<Record<string, MediaEmbedResult>> => {
-  const regular = await pdfDoc.embedFont(StandardFonts.TimesRoman);
-  const bold = await pdfDoc.embedFont(StandardFonts.TimesRomanBold);
-  const fonts = { regular, bold };
   const results: Record<string, MediaEmbedResult> = {};
 
   for (const slot of SCHOLARSHIP_MEDIA_SLOTS) {
@@ -480,7 +483,7 @@ export const appendScholarshipMedia = async (
           outcome = "merged";
           continue;
         } catch {
-          const page = pdfDoc.addPage();
+          const page = pdfDoc.addPage([612, 792]);
           addLinkPage(pdfDoc, page, fonts, slot.label, fileName, fetched.href);
           outcome = "linked";
           continue;
@@ -501,7 +504,7 @@ export const appendScholarshipMedia = async (
         }
       }
 
-      const page = pdfDoc.addPage();
+      const page = pdfDoc.addPage([612, 792]);
       addLinkPage(pdfDoc, page, fonts, slot.label, fileName, fetched.href);
       outcome = "linked";
     }
@@ -514,22 +517,39 @@ export const appendScholarshipMedia = async (
 /** Build a full scholarship packet PDF (form pages + uploaded media). */
 export const generateScholarshipPacketPdf = async (
   record: ScholarshipPacketRecord
-): Promise<{ blob: Blob; filename: string; media: Record<string, MediaEmbedResult> }> => {
+): Promise<{
+  blob: Blob;
+  filename: string;
+  media: Record<string, MediaEmbedResult>;
+  fontFamily: PrintFonts["family"];
+}> => {
   const pdfDoc = await PDFDocument.create();
-  await drawCoverPage(pdfDoc, record);
-  const media = await appendScholarshipMedia(pdfDoc, record);
+  const fonts = await embedPrintFonts(pdfDoc);
+  const model = buildScholarshipPrintModel(record);
+  const filename = scholarshipPacketFilename(record);
+  pdfDoc.setTitle(`ORWEF Scholarship Application — ${model.applicantName}`);
+  pdfDoc.setAuthor(ORWEF_LEGAL_NAME);
+  pdfDoc.setSubject(SCHOLARSHIP_TITLE);
+  pdfDoc.setKeywords(["ORWEF", "Scholarship", model.cycleYear]);
+
+  drawScholarshipApplicationForm(pdfDoc, fonts, model);
+  const media = await appendScholarshipMedia(pdfDoc, record, fonts);
+  drawLetterFooters(pdfDoc, fonts, model.applicantName, SCHOLARSHIP_FOOTER_AWARD);
   const bytes = await pdfDoc.save();
   return {
     blob: new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
-    filename: scholarshipPacketFilename(record),
+    filename,
     media,
+    fontFamily: fonts.family,
   };
 };
 
 export const printScholarshipPacket = async (
   record: ScholarshipPacketRecord
 ) => {
-  const { blob, filename, media } = await generateScholarshipPacketPdf(record);
+  const { blob, filename, media, fontFamily } = await generateScholarshipPacketPdf(
+    record
+  );
   downloadBlob(blob, filename);
-  return { filename, media, byteLength: blob.size };
+  return { filename, media, byteLength: blob.size, fontFamily };
 };

@@ -7,6 +7,16 @@ export const AWARD_STATUSES = [
   { id: "Not Selected", name: "Not Selected" },
 ];
 
+/** Watersystem.region enum — filter nominations via the linked system. */
+export const WATER_SYSTEM_REGIONS = [
+  "Region 1",
+  "Region 2",
+  "Region 3",
+  "Region 4",
+] as const;
+
+export type WaterSystemRegion = (typeof WATER_SYSTEM_REGIONS)[number];
+
 /** Award cycle year = next annual conference (calendar year + 1). */
 export const nominationCycleYear = (now: Date = new Date()): number =>
   now.getFullYear() + 1;
@@ -22,12 +32,18 @@ export const calendarYearChoices = (now: Date = new Date()) => {
 
 export const buildAwardListFilter = (
   search: string,
-  status: string,
-  year: number | "all"
+  year: number | "all",
+  region: string = "all",
+  awardType: string = "all"
 ) => {
   const filter: Record<string, unknown> = {};
   if (search.trim()) filter.q = search.trim();
-  if (status && status !== "all") filter.nomination_status = status;
   if (year !== "all") filter.award_year = year;
+  if (region && region !== "all") {
+    filter.watersystem = { region };
+  }
+  if (awardType && awardType !== "all") {
+    filter.award_type = awardType;
+  }
   return filter;
 };

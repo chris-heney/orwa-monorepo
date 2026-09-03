@@ -33,7 +33,7 @@ const PacketLetterhead = ({
           lineHeight: 1.4,
         }}
       >
-        Oklahoma Rural Water Foundation · ORWA
+        Oklahoma Rural Water Enrichment Foundation · ORWA
       </Typography>
       <Typography
         component="h2"

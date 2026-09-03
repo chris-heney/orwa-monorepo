@@ -40,6 +40,8 @@ import {
   Terms,
   ScholarshipApplications,
   AwardNominations,
+  AwardWinners,
+  AwardTypes,
 } from './modules';
 import {
   AdminDashboard,
@@ -210,6 +212,8 @@ export const App = () => {
             name="award-nominations"
             {...resourceProps(AwardNominations)}
           />
+          <Resource name="award-winners" {...resourceProps(AwardWinners)} />
+          <Resource name="award-types" {...resourceProps(AwardTypes)} />
 
           {/* --- MUI Pages--- */}
           <CustomRoutes>

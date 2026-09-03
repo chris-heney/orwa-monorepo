@@ -28,4 +28,5 @@ export { default as EmailTasks } from './emails-magement/email-taks'
 export { default as Terms } from './terms'
 export { default as ScholarshipApplications } from './orwef-scholarships'
 export { default as AwardNominations } from './award-nominations'
-    
+export { default as AwardWinners } from './award-winners'
+export { default as AwardTypes } from './award-types'

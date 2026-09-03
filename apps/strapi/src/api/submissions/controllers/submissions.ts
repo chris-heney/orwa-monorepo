@@ -239,7 +239,7 @@ export default ({ strapi }) => {
     if (!documentId) return null;
     return strapi.documents(WATERSYSTEM_UID).findOne({
       documentId,
-      fields: ["id", "documentId", "name"],
+      fields: ["id", "documentId", "name", "county"],
     });
   };
 
@@ -506,7 +506,8 @@ export default ({ strapi }) => {
             award_name_printed:
               body.award_name_printed || body.system_name,
             watersystem: watersystem?.documentId ?? null,
-            county: emptyToNull(body.county),
+            // Not collected by the public wizard — take it from the linked system.
+            county: body.county || watersystem?.county || null,
             address: body.address,
             city: body.city,
             state: body.state || "OK",
