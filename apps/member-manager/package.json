@@ -39,6 +39,7 @@
     "json2csv": "^6.0.0-alpha.2",
     "jsonexport": "^3.2.0",
     "lodash": "^4.17.21",
+    "mammoth": "^1.12.2",
     "material-ui-popup-state": "^5.0.9",
     "pdf-lib": "^1.17.1",
     "qs": "^6.11.2",

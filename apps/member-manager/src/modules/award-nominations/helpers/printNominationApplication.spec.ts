@@ -3,12 +3,15 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { extractPdfPlainText } from "./documentText";
 import {
   baselineCentered,
   fontAscent,
   generateNominationApplicationPdf,
+  printNominationApplications,
   wrapLines,
 } from "./printNominationApplication";
+import type { AwardNominationPrintRecord } from "./nominationPrintModel";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tmpDir = resolve(here, "../../../../../../tmp");
@@ -24,7 +27,7 @@ const fakeFont = {
 describe("baselineCentered", () => {
   it("places the cap-box in the vertical middle of a band", async () => {
     const doc = await PDFDocument.create();
-    const font = await doc.embedFont(StandardFonts.TimesRomanBold);
+    const font = await doc.embedFont(StandardFonts.HelveticaBold);
     const ascent = fontAscent(font, 10);
     const bandBottom = 100;
     const bandHeight = 24;
@@ -69,6 +72,9 @@ describe("generateNominationApplicationPdf", () => {
       zip: "73401",
       daytime_phone: "(580) 555-0100",
       email: "achille@example.com",
+      operation_start_date: "1977-06-30",
+      beginning_members: 484,
+      current_members: 1174,
       justification:
         "Decades of service to a rural water system and a record of reliable operations that the committee can review on paper.",
       biography_method: "Copy/Paste or Type Biography",
@@ -90,13 +96,25 @@ describe("generateNominationApplicationPdf", () => {
     expect(blob.size).toBeGreaterThan(1000);
 
     const loaded = await PDFDocument.load(await blob.arrayBuffer());
-    expect(loaded.getPageCount()).toBeGreaterThanOrEqual(1);
+    expect(loaded.getPageCount()).toBeLessThanOrEqual(2);
     expect(loaded.getTitle()).toContain("JIMMY E. SEAGO");
     expect(loaded.getAuthor()).toBe("Oklahoma Rural Water Association");
 
     const loadedPages = loaded.getPages();
     expect(loadedPages.every((page) => page.getSize().width === 612)).toBe(true);
     expect(loadedPages.every((page) => page.getSize().height === 792)).toBe(true);
+
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    const text = await extractPdfPlainText(bytes);
+    if (text) {
+      expect(text).toMatch(/Bryan \/ Region 3/);
+      expect(text).toMatch(/JUN 30 1977/);
+      expect(text).toMatch(/METERED CONNECTIONS/);
+      expect(text).toMatch(/EMPLOYEE COUNTS/);
+    }
+
+    await mkdir(tmpDir, { recursive: true });
+    await writeFile(resolve(tmpDir, "orwa-award-nomination-achille-header.pdf"), Buffer.from(bytes));
   });
 
   it("fits a tiny imported packet onto letter pages and writes review PDFs", async () => {
@@ -269,5 +287,160 @@ describe("generateNominationApplicationPdf", () => {
       Buffer.from(await mixedPrint.blob.arrayBuffer())
     );
     warn.mockRestore();
+  });
+
+  it("embeds uploaded images and draws DOCX biography text instead of a URL", async () => {
+    const boardPdf = await PDFDocument.create();
+    const page = boardPdf.addPage([612, 792]);
+    page.drawText("Achille PUA board members", { x: 72, y: 720, size: 16 });
+    const boardBytes = await boardPdf.save();
+    const png = new Uint8Array(
+      await readFile(resolve(tmpDir, "achille-board-list-source.png"))
+    );
+    const docx = new Uint8Array(
+      await readFile(resolve(tmpDir, "achille-biography.docx"))
+    );
+    const nominationPdfBytes = new Uint8Array(
+      await readFile(resolve(tmpDir, "achille-nomination-pdf.pdf"))
+    );
+
+    const fetchMock = vi.fn(async (url: string) => {
+      const href = String(url);
+      const bytes = href.includes("JIMMY")
+        ? nominationPdfBytes
+        : href.toLowerCase().includes(".docx") || href.includes("Photo_permission")
+          ? docx
+          : href.includes(".png")
+            ? png
+            : boardBytes;
+      return {
+        ok: true,
+        arrayBuffer: async () =>
+          bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+      };
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const uploadedPng = {
+      url: "/uploads/Sponsorship_Verbiage_55a656bd4c.png",
+      mime: "image/png",
+      name: "Sponsorship Verbiage.png",
+      ext: ".png",
+    };
+
+    const achille = await generateNominationApplicationPdf({
+      id: "v9kv0s9tlw0dd5h9z2smdodh",
+      documentId: "v9kv0s9tlw0dd5h9z2smdodh",
+      entityId: 13,
+      nominee_name: "JIMMY E. SEAGO",
+      system_name: "Achille PUA",
+      award_name_printed: "Achille PUA",
+      award_type: "System of the Year",
+      award_year: 2027,
+      nomination_status: "Submitted",
+      address: "1410 SE 15th Street",
+      city: "OKLAHOMA CITY",
+      state: "OK",
+      zip: "73129",
+      daytime_phone: "4056728925",
+      email: "sjohnson@orwa.org",
+      operation_start_date: "2026-08-26",
+      beginning_members: 1,
+      current_members: 100,
+      clerical_employees: 2,
+      operation_maintenance_employees: 5,
+      management_employees: 3,
+      justification: "test test test test test test test test test test test test",
+      biography_method: "Upload Biography",
+      board_list_method: "File You Upload",
+      board_list_file: uploadedPng,
+      biography_file: {
+        url: "/uploads/Photo_permission_form_TEMPLATE_4964a8b079.docx",
+        mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        name: "Photo permission form (TEMPLATE).docx",
+        ext: ".docx",
+      },
+      photographs: [
+        uploadedPng,
+        {
+          ...uploadedPng,
+          url: "/uploads/Sponsorship_Verbiage_aad9b6503d.png",
+        },
+      ],
+      nominator_first_name: "stephanie",
+      nominator_last_name: "johnson",
+      nominator_email: "SJOHNSON@ORWA.ORG",
+      nominator_phone: "(405) 672-8925",
+      nominator_address: "1410 SE 15th Street",
+      nominator_city: "oklahoma city",
+      nominator_state: "OK",
+      nominator_zip: "73129",
+      nominator_country: "United States",
+      watersystem: { name: "Achille PUA", county: "Bryan", region: "Region 3" },
+      nomination_pdf: {
+        url: "/uploads/JIMMY_E_SEAGO_award_nomination_e34a0f548f.pdf",
+        mime: "application/pdf",
+        name: "JIMMY_E._SEAGO_award_nomination.pdf",
+        ext: ".pdf",
+      },
+    });
+
+    expect(achille.media["Board / employee list"]).toBe("embedded");
+    expect(achille.media["Biography file"]).toBe("embedded");
+    expect(achille.media["Photographs (2)"]).toBe("embedded");
+    expect(achille.media["Appendix  ·  Original submitted packet"]).toBe("merged");
+
+    const achilleBytes = Buffer.from(await achille.blob.arrayBuffer());
+    const achilleDoc = await PDFDocument.load(achilleBytes);
+    expect(achilleDoc.getPageCount()).toBeLessThan(6);
+
+    await mkdir(tmpDir, { recursive: true });
+    await writeFile(
+      resolve(tmpDir, "orwa-award-nomination-achille-2027.pdf"),
+      achilleBytes
+    );
+
+    const kept = await generateNominationApplicationPdf({
+      nominee_name: "JIMMY E. SEAGO",
+      system_name: "Achille PUA",
+      award_type: "System of the Year",
+      award_year: 2027,
+      board_list_file: {
+        url: "/uploads/achille-board.pdf",
+        mime: "application/pdf",
+        name: "achille-board.pdf",
+        ext: ".pdf",
+      },
+    });
+    expect(kept.media["Board / employee list"]).toBe("merged");
+  });
+});
+
+describe("printNominationApplications", () => {
+  it("prints each nomination as its own job and continues after a failure", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const order: string[] = [];
+    const printOne = async (record: AwardNominationPrintRecord) => {
+      order.push(String(record.nominee_name));
+      if (record.nominee_name === "Two") {
+        throw new Error("PDF failed");
+      }
+      return { filename: `${record.nominee_name}.pdf` };
+    };
+
+    const result = await printNominationApplications(
+      [
+        { nominee_name: "One", award_year: 2027 },
+        { nominee_name: "Two", award_year: 2027 },
+        { nominee_name: "Three", award_year: 2027 },
+      ],
+      printOne
+    );
+
+    expect(order).toEqual(["One", "Two", "Three"]);
+    expect(result.printed).toEqual(["One.pdf", "Three.pdf"]);
+    expect(result.failed).toHaveLength(1);
+    expect(result.failed[0].message).toBe("PDF failed");
+    expect(result.failed[0].filename).toContain("Two");
   });
 });

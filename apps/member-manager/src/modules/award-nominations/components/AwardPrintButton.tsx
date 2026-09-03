@@ -56,13 +56,23 @@ const usePrintNominations = () => {
       for (const id of ids) {
         records.push(await fetchNomination(dataProvider, id));
       }
-      await printNominationApplications(records);
-      showToast(
-        ids.length === 1
-          ? "Print dialog opened"
-          : `${ids.length} print jobs sent (one per nomination)`,
-        "info"
-      );
+      const { printed, failed } = await printNominationApplications(records);
+      const parts: string[] = [];
+      if (printed.length === 1) {
+        parts.push("Print dialog opened");
+      } else if (printed.length > 1) {
+        parts.push(`${printed.length} print jobs sent`);
+      }
+      if (failed.length === 1) {
+        parts.push(failed[0].message);
+      } else if (failed.length > 1) {
+        parts.push(`${failed.length} nominations could not be printed`);
+      }
+      if (parts.length > 0) {
+        showToast(parts.join(" · "), failed.length > 0 ? "warning" : "info");
+      } else {
+        showToast("Could not generate the application PDF", "warning");
+      }
     } catch (error) {
       console.error(error);
       showToast(

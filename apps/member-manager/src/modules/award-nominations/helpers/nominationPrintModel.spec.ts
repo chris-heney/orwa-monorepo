@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   countyRegion,
+  formatCount,
+  formatEstablishedDate,
   identificationRows,
   nominationApplicationFilename,
   nominationRecordId,
@@ -91,6 +93,15 @@ describe("identificationRows", () => {
         system_name: "Some RWD",
       })
     ).toBe("Some RWD");
+  });
+});
+
+describe("formatEstablishedDate / formatCount", () => {
+  it("prints EST dates as MON D YYYY without shifting the calendar day", () => {
+    expect(formatEstablishedDate("1977-06-30")).toBe("JUN 30 1977");
+    expect(formatEstablishedDate("")).toBe("");
+    expect(formatCount(1174)).toBe("1,174");
+    expect(formatCount(null)).toBe("—");
   });
 });
 

@@ -186,6 +186,77 @@ export const nomineeMailingAddress = (
     ", "
   );
 
+const MONTHS_SHORT = [
+  "JAN",
+  "FEB",
+  "MAR",
+  "APR",
+  "MAY",
+  "JUN",
+  "JUL",
+  "AUG",
+  "SEP",
+  "OCT",
+  "NOV",
+  "DEC",
+];
+
+/** Print EST callout — date-only strings stay on the calendar day (UTC). */
+export const formatEstablishedDate = (
+  value: string | null | undefined
+): string => {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const isoDay = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDay) {
+    const year = Number(isoDay[1]);
+    const month = Number(isoDay[2]) - 1;
+    const day = Number(isoDay[3]);
+    if (month >= 0 && month < 12 && day >= 1 && day <= 31) {
+      return `${MONTHS_SHORT[month]} ${day} ${year}`;
+    }
+  }
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) return raw;
+  return `${MONTHS_SHORT[parsed.getUTCMonth()]} ${parsed.getUTCDate()} ${parsed.getUTCFullYear()}`;
+};
+
+export const formatCount = (value: unknown): string => {
+  if (value === undefined || value === null || value === "") return "—";
+  const num = Number(value);
+  if (!Number.isFinite(num)) return displayValue(value);
+  return num.toLocaleString("en-US");
+};
+
+export const nomineeAddressLines = (
+  record: AwardNominationPrintRecord
+): string[] => {
+  const street = String(record.address || "").trim();
+  const cityLine = joinPresent(
+    [joinPresent([record.city, record.state], ", "), record.zip],
+    " "
+  );
+  return [street, cityLine].filter(Boolean);
+};
+
+export const nominatorAddressLines = (
+  record: AwardNominationPrintRecord
+): string[] => {
+  const lines = [
+    String(record.nominator_address || "").trim(),
+    String(record.nominator_address_2 || "").trim(),
+    joinPresent(
+      [
+        joinPresent([record.nominator_city, record.nominator_state], ", "),
+        record.nominator_zip,
+      ],
+      " "
+    ),
+    String(record.nominator_country || "").trim(),
+  ].filter(Boolean);
+  return lines;
+};
+
 export const nominatorFullName = (
   record: AwardNominationPrintRecord
 ): string =>
