@@ -4,13 +4,14 @@ import type { ITicketPayload } from "../types";
  * Golf tournament capacity enforcement.
  *
  * `conference.available_contestants` ("Available Golf Contestants" in
- * Conference Manager) is a live remaining-slot counter: the webhook
- * decrements it once per created contestant whose ticket is named exactly
- * "Golfer". "Golfer - Contestant Only" and all Fisher tickets do NOT
- * decrement it (per the Conference Manager help text), so validation here
- * must count the exact same way or the dashboard number and this gate
- * would disagree. The counter can already be negative (2026-09 oversell),
- * so remaining capacity is always clamped to zero.
+ * Conference Manager) is a live remaining-slot counter. Per user directive
+ * (2026-09-07): ANY Contestant ticket whose name CONTAINS "Golfer"
+ * (case-insensitive) consumes a slot — e.g. both "Golfer" and
+ * "Golfer - Contestant Only". Fisher tickets never count. Both the
+ * capacity gate and the webhook decrement use this one predicate, and the
+ * frontend (`apps/conference-registration/src/helpers/golfCapacity.ts`)
+ * mirrors it exactly. The counter can already be negative (2026-09
+ * oversell), so remaining capacity is always clamped to zero.
  */
 
 // Mirrors the frontend's ticketMatchesContext fallback: legacy Fall tickets
@@ -28,12 +29,17 @@ export const isContestantTicket = (ticket: ITicketPayload): boolean => {
   );
 };
 
-export const GOLF_CAPACITY_TICKET_NAME = "Golfer";
+export const GOLF_CAPACITY_NAME_SUBSTRING = "golfer";
 
-/** Does one cart line consume a golf slot? Same rule as the decrement. */
+/**
+ * Does one cart line consume a golf slot? Same rule as the decrement:
+ * a Contestant ticket whose name contains "Golfer" (case-insensitive).
+ */
 export const countsAgainstGolfCapacity = (ticket: ITicketPayload): boolean =>
   isContestantTicket(ticket) &&
-  ticket?.ticket_type?.name === GOLF_CAPACITY_TICKET_NAME;
+  (ticket?.ticket_type?.name ?? "")
+    .toLowerCase()
+    .includes(GOLF_CAPACITY_NAME_SUBSTRING);
 
 /** How many golf slots does this payload consume? */
 export const golferCount = (

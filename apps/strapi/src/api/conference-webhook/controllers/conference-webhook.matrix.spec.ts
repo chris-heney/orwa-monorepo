@@ -565,9 +565,9 @@ describe("conference registration matrix", () => {
     expect(updated["api::conference.conference"]).toBeUndefined();
   });
 
-  it("does not count 'Golfer - Contestant Only' against golf capacity (same rule as the dashboard counter)", async () => {
+  it("counts 'Golfer - Contestant Only' against golf capacity (contains-'Golfer' rule) and rejects when sold out", async () => {
     availableContestants = 0;
-    await submit({
+    const body = await submitRaw({
       ...basePayload("ContestantOnly"),
       registration_type: "Contestant",
       contestant_already_registered: "No",
@@ -584,8 +584,50 @@ describe("conference registration matrix", () => {
       ],
     });
 
-    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(1);
+    expect(body).toMatchObject({ result: "error" });
+    expect(String(body.message)).toMatch(/sold out/i);
+    expect(created["api::conference-contestant.conference-contestant"]).toBeUndefined();
     expect(dbDecrement).not.toHaveBeenCalled();
+  });
+
+  it("sells and decrements for 'Golfer - Contestant Only' while capacity remains", async () => {
+    availableContestants = 1;
+    await submit({
+      ...basePayload("ContestantOnlyOk"),
+      registration_type: "Contestant",
+      contestant_already_registered: "No",
+      tickets: [
+        {
+          ...golferLine("StandaloneOk"),
+          price: 150,
+          ticket_type: {
+            id: 47,
+            name: "Golfer - Contestant Only",
+            context: "Contestant",
+          },
+        },
+      ],
+    });
+
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(1);
+    expect(dbDecrement).toHaveBeenCalledWith("available_contestants", 1);
+  });
+
+  it("matches the capacity substring case-insensitively", async () => {
+    availableContestants = 0;
+    const body = await submitRaw({
+      ...basePayload("CaseInsensitive"),
+      registration_type: "Contestant",
+      tickets: [
+        {
+          ...golferLine("Case"),
+          ticket_type: { id: 48, name: "GOLFER (late entry)", context: "Contestant" },
+        },
+      ],
+    });
+
+    expect(body).toMatchObject({ result: "error" });
+    expect(String(body.message)).toMatch(/sold out/i);
   });
 
   it("ignores the cap when available_contestants is not configured", async () => {
