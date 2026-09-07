@@ -75,6 +75,48 @@ export const useGetConferences = () => {
   return useQuery({ queryKey: ['conferences'], queryFn: async () => _get('conferences', '?populate=*') })
 }
 
+/**
+ * Fresh golf availability (conference.available_contestants), read at
+ * interaction time instead of the conference row cached at boot — stale
+ * client data is exactly how the 2026 golf tournament oversold. Returns
+ * `undefined` on fetch failure so callers can fall back to the boot value
+ * (the Strapi webhook re-validates authoritatively either way).
+ */
+export const fetchGolfAvailability = async (
+  conference_id: string | number
+): Promise<number | null | undefined> => {
+  try {
+    const rows = await _get(
+      'conferences',
+      `?filters[id]=${conference_id}&fields[0]=available_contestants`
+    )
+    const row = (Array.isArray(rows) ? rows[0] : rows) as
+      | { available_contestants?: number | null }
+      | undefined
+    if (!row) return undefined
+    return row.available_contestants ?? null
+  } catch {
+    return undefined
+  }
+}
+
+export const useGolfAvailability = (conference_id: string | number | null) => {
+  return useQuery({
+    queryKey: ['golf-availability', String(conference_id)],
+    queryFn: async () => {
+      const value = await fetchGolfAvailability(conference_id as string | number)
+      // react-query v5 forbids `undefined` — surface fetch failure as an
+      // error so callers fall back to the boot-time conference row.
+      if (value === undefined) throw new Error('Golf availability unavailable')
+      return value
+    },
+    enabled: conference_id != null,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  })
+}
+
 export const useGetTickets = (conference_id: string) => {
   return useQuery({ queryKey: ['conference-tickets'], queryFn: async () => _get('conference-tickets', `?filters[conferences]=${conference_id}`) })
 }

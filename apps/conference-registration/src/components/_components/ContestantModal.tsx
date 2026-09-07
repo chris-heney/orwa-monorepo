@@ -14,7 +14,7 @@ import {
   useRegistrationSource,
   useTicketIndex,
 } from "../../AppContextProvider";
-import { IExtraOption, ITicketPayload } from "../../types/types";
+import { IExtraOption, ITicketOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
 import {
@@ -31,10 +31,17 @@ import {
   contactFieldsFromPerson,
   emailAutoSelect,
 } from "../../helpers/copyContestantPerson";
-import { useGetRegistrations } from "../../data/API";
+import { useGetRegistrations, useGolfAvailability } from "../../data/API";
 import { hasSelectedId } from "../../helpers/hasSelectedId";
 import { availableCartParticipants } from "../../helpers/availableCartParticipants";
 import { resolveCartAttachIndex } from "../../helpers/isContestantLinkedToCart";
+import {
+  countsAgainstGolfCapacity,
+  golfCapacityMessage,
+  golfersInCart,
+  remainingGolfCapacity,
+  remainingGolfSlots,
+} from "../../helpers/golfCapacity";
 
 interface ContestantModalProps {
   setIsOpen: React.Dispatch<
@@ -49,7 +56,8 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
 }) => {
   const { ticketIndex } = useTicketIndex();
   const conferenceId = useConferenceId();
-  const { TicketOptions, ExtraOptions } = useRegistrationOptions();
+  const { TicketOptions, ExtraOptions, ConferenceOptions } =
+    useRegistrationOptions();
   const registrationSource = useRegistrationSource();
   const { control, watch, setValue, trigger, getValues } = useFormContext();
   const { update, remove } = useFieldArray({ control, name: "tickets" });
@@ -74,6 +82,37 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
 
   const { data: registrations, isLoading: registrationsLoading } =
     useGetRegistrations(String(conferenceId), new Date().getFullYear());
+
+  // Golf capacity — fetch fresh availability while the modal is open (stale
+  // boot data is how the tournament oversold), fall back to the boot-time
+  // conference row when the fetch fails. The webhook re-validates either way.
+  const golfAvailabilityQuery = useGolfAvailability(conferenceId);
+  const golfAvailability =
+    golfAvailabilityQuery.data !== undefined
+      ? golfAvailabilityQuery.data
+      : ConferenceOptions?.available_contestants;
+  // Exclude the row being edited so an existing golfer doesn't count
+  // against themselves when re-saved.
+  const golfersElsewhere = golfersInCart(
+    tickets as ITicketPayload[],
+    ticketIndex
+  );
+  const golfSlotsLeft = remainingGolfSlots(golfAvailability, golfersElsewhere);
+  const golfCapConfigured = golfSlotsLeft !== null;
+  const golfCapBlocked = golfCapConfigured && golfSlotsLeft <= 0;
+
+  const wouldExceedGolfCapacity = (
+    option: Pick<ITicketOption, "name" | "context"> | null | undefined
+  ): boolean => golfCapBlocked && countsAgainstGolfCapacity(option);
+
+  const notifyGolfCapacity = () =>
+    notify(
+      golfCapacityMessage(
+        remainingGolfCapacity(golfAvailability) ?? 0,
+        golfersElsewhere + 1
+      ),
+      "error"
+    );
   const eligibleRegistrations = (registrations ?? []).filter(
     (registration) =>
       registration.type === "Attendee" || registration.type === "Vendor"
@@ -177,6 +216,9 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
       tier,
     });
     if (!option) return;
+    // Never apply a capacity-consuming Golfer ticket past the cap. Callers
+    // toast; this silent guard also covers the auto-apply effect.
+    if (wouldExceedGolfCapacity(option)) return;
     // Always read fresh row — stale `ticket` from render can drop attach fields.
     const fresh =
       (getValues(`tickets.${ticketIndex}`) as ITicketPayload | undefined) ||
@@ -346,6 +388,15 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
       notify("Select Golfer or Fisher", "error");
       return;
     }
+    // Final capacity gate: the ticket this save would keep in the cart must
+    // not consume a golf slot past the cap (covers edits, restored drafts,
+    // and slots that sold out while the modal was open).
+    if (
+      wouldExceedGolfCapacity(resolvedTicket ?? ticket.ticket_type ?? null)
+    ) {
+      notifyGolfCapacity();
+      return;
+    }
     if (needsFisherTier && !fisherTier) {
       notify("Select Already registered or Contestant only", "error");
       return;
@@ -437,21 +488,40 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
               {sports.map((option) => {
                 const selected = sport === option;
                 const label = option === "golf" ? "Golfer" : "Fisher";
+                const willAskFisherTier =
+                  option === "fish" && isContestantOnly;
+                const willAskParticipantTier =
+                  isAttendeeVendorCheckout &&
+                  sportHasUnregisteredOption(option);
+                // With no tier question the card immediately applies a
+                // ticket — block golf here when that ticket is capped out.
+                const directTicket =
+                  !willAskFisherTier && !willAskParticipantTier
+                    ? resolveContestantTicket({
+                        ticketOptions: TicketOptions,
+                        sport: option,
+                      })
+                    : null;
+                const blockedByCapacity =
+                  directTicket != null && wouldExceedGolfCapacity(directTicket);
+                const showGolfBadge = option === "golf" && golfCapConfigured;
                 return (
                   <button
                     key={option}
                     type="button"
                     aria-pressed={selected}
-                    className={selectCardClass(selected)}
+                    aria-disabled={blockedByCapacity}
+                    className={`${selectCardClass(selected)}${
+                      blockedByCapacity ? " opacity-60" : ""
+                    }`}
                     onClick={() => {
+                      if (blockedByCapacity) {
+                        notifyGolfCapacity();
+                        return;
+                      }
                       setSport(option);
                       setFisherTier(null);
                       setParticipantTier(null);
-                      const willAskFisherTier =
-                        option === "fish" && isContestantOnly;
-                      const willAskParticipantTier =
-                        isAttendeeVendorCheckout &&
-                        sportHasUnregisteredOption(option);
                       if (!willAskFisherTier && !willAskParticipantTier) {
                         applyResolvedTicket(option);
                       }
@@ -463,6 +533,17 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                       }`}
                     >
                       {label}
+                      {showGolfBadge &&
+                        (golfCapBlocked ? (
+                          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-red-700">
+                            Sold Out
+                          </span>
+                        ) : (
+                          <span className="ml-2 text-xs font-semibold text-amber-700">
+                            {golfSlotsLeft} spot
+                            {golfSlotsLeft === 1 ? "" : "s"} left
+                          </span>
+                        ))}
                     </span>
                   </button>
                 );
@@ -557,13 +638,22 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                   ] as const
                 ).map((option) => {
                   const selected = participantTier === option.value;
+                  const tierTicket = resolveTierTicket(sport, option.value);
+                  const blockedByCapacity = wouldExceedGolfCapacity(tierTicket);
                   return (
                     <button
                       key={option.value}
                       type="button"
                       aria-pressed={selected}
-                      className={selectCardClass(selected)}
+                      aria-disabled={blockedByCapacity}
+                      className={`${selectCardClass(selected)}${
+                        blockedByCapacity ? " opacity-60" : ""
+                      }`}
                       onClick={() => {
+                        if (blockedByCapacity) {
+                          notifyGolfCapacity();
+                          return;
+                        }
                         setParticipantTier(option.value);
                         applyResolvedTicket(sport, option.value);
                       }}
@@ -577,6 +667,11 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                         {option.price != null && (
                           <span className="ml-2 tabular-nums">
                             {currencyFormatter.format(Number(option.price))}
+                          </span>
+                        )}
+                        {blockedByCapacity && (
+                          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-red-700">
+                            Sold Out
                           </span>
                         )}
                       </span>

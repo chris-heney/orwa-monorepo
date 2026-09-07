@@ -31,6 +31,12 @@ import {
 import { buildSandboxTestToken } from "../helpers/buildSandboxTestToken";
 import { hasSelectedId } from "../helpers/hasSelectedId";
 import { isContestantLinkedToCart } from "../helpers/isContestantLinkedToCart";
+import { fetchGolfAvailability } from "../data/API";
+import {
+  golfCapacityMessage,
+  golfersInCart,
+  remainingGolfCapacity,
+} from "../helpers/golfCapacity";
 import { isStandaloneContestantTicket } from "../helpers/contestantTicketTiers";
 
 const StepNavigation = () => {
@@ -266,6 +272,24 @@ const StepNavigation = () => {
     return true;
   };
 
+  // Golf capacity gate — re-fetch availability whenever the cart holds
+  // golfers (covers Contestants step, TicketModal admin ticket-type edits,
+  // restored drafts, kiosk and admin-view flows). Falls back to the
+  // boot-time conference row if the fetch fails; the Strapi webhook
+  // re-validates authoritatively at submit either way.
+  const golfCapacityOk = async (): Promise<boolean> => {
+    const requested = golfersInCart(payload.tickets as ITicketPayload[]);
+    if (requested === 0) return true;
+    const fresh = await fetchGolfAvailability(conferenceId);
+    const available =
+      fresh === undefined
+        ? ConferenceOptions?.available_contestants
+        : fresh;
+    const inventory = remainingGolfCapacity(available);
+    if (inventory === null || requested <= inventory) return true;
+    return fail(golfCapacityMessage(inventory, requested), ["contestants"]);
+  };
+
   const isRegistrationStepValid = (toast = true): boolean => {
     const registrationType = payload.registration_type;
     const hasValidType =
@@ -379,6 +403,10 @@ const StepNavigation = () => {
       return;
     }
 
+    if (!(await golfCapacityOk())) {
+      return;
+    }
+
     if (stepIndex < activeSteps.length - 1) {
       clearAllInvalid();
       setStepIndex(stepIndex + 1);
@@ -425,6 +453,12 @@ const StepNavigation = () => {
         );
         return;
       }
+    }
+
+    // Last-chance golf capacity re-check before charging — slots may have
+    // sold while this user filled out the wizard.
+    if (!(await golfCapacityOk())) {
+      return;
     }
 
     setIsSubmitting(true);

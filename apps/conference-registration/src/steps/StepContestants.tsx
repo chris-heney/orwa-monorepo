@@ -4,6 +4,7 @@ import { TextInput } from "mj-react-form-builder";
 import AddTicketComponent from "../components/_components/AddTicket";
 import {
   RegistrationOptions,
+  useConferenceId,
   useTicketIndex,
 } from "../AppContextProvider";
 import currencyFormatter from "../helpers/currencyFormat";
@@ -13,10 +14,17 @@ import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 import { ValidationHighlight } from "../helpers/validationHighlight";
 import { hasSelectedId } from "../helpers/hasSelectedId";
 import { resolveCartAttachIndex } from "../helpers/isContestantLinkedToCart";
+import { availableContestantSports } from "../helpers/contestantSport";
+import {
+  golfersInCart,
+  remainingGolfCapacity,
+} from "../helpers/golfCapacity";
+import { useGolfAvailability } from "../data/API";
 
 const StepContestants = () => {
   const { ticketIndex } = useTicketIndex();
-  const { ConferenceOptions } = useContext(RegistrationOptions);
+  const { ConferenceOptions, TicketOptions } = useContext(RegistrationOptions);
+  const conferenceId = useConferenceId();
   const { watch, getValues, setValue } = useFormContext();
 
   const [isModalOpen, setIsModalOpen] = useState({
@@ -39,6 +47,20 @@ const StepContestants = () => {
     (ticket: ITicketPayload) => ticket.ticket_type?.name === "Golfer"
   ).length;
   const needsTeamName = golferCount >= 2;
+
+  // Golf capacity — fresh availability, falling back to the boot-time
+  // conference row when the fetch fails. Only shown when this conference
+  // actually offers golf and has a configured cap.
+  const offersGolf = availableContestantSports(TicketOptions).includes("golf");
+  const golfAvailabilityQuery = useGolfAvailability(conferenceId);
+  const golfAvailability =
+    golfAvailabilityQuery.data !== undefined
+      ? golfAvailabilityQuery.data
+      : ConferenceOptions?.available_contestants;
+  const golfInventory = remainingGolfCapacity(golfAvailability);
+  const cartGolfers = golfersInCart(tickets as ITicketPayload[]);
+  const golfSpotsLeft =
+    golfInventory === null ? null : golfInventory - cartGolfers;
 
   useEffect(() => {
     const ticketPrice = contestantTickets.reduce(
@@ -86,6 +108,22 @@ const StepContestants = () => {
             ? "Add each tournament contestant below. At least one contestant is required."
             : "Optional — add tournament contestants for this registration, or click Next to skip."}
         </p>
+        {offersGolf && golfSpotsLeft !== null && (
+          <div
+            role="status"
+            className={`mt-3 rounded-lg border px-4 py-3 text-sm font-semibold ${
+              golfSpotsLeft <= 0
+                ? "border-red-300 bg-red-50 text-red-800"
+                : "border-amber-300 bg-amber-50 text-amber-900"
+            }`}
+          >
+            {golfSpotsLeft <= 0
+              ? "Golf tournament is SOLD OUT — no golfer spots remain."
+              : `Golf tournament: ${golfSpotsLeft} spot${
+                  golfSpotsLeft === 1 ? "" : "s"
+                } remaining.`}
+          </div>
+        )}
       </header>
 
       {needsTeamName && (
