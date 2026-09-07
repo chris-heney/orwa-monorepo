@@ -1,0 +1,65 @@
+---
+description: The data model is a requirements document — derive and enforce implicit requirements from schema anatomy when creating or extending features
+alwaysApply: true
+---
+
+# Feature completeness — the schema is a requirements document
+
+Incident (2026-09-07): conference-registration oversold golf slots to −20.
+The `available_contestants` counter existed, was labeled "Available Golfers" in
+Conference Manager, and was decremented per Golfer sale by the webhook. The
+agent building the new golfer sales paths even wrote, two weeks before the
+breach, that "`available_contestants` decrements only for ticket name
+'Golfer'" — then shipped three new sales paths on top of it with no floor, no
+pre-charge check, and no warning. The user never typed "enforce the maximum"
+because the counter's name already said it. A junior developer who sees
+`available_contestants` just knows to incorporate it. That is the bar.
+
+## The binding principle (everything below is illustration, not a whitelist)
+
+Mistakes SIMILAR IN NATURE to this incident must not recur — not merely this
+exact one. The user should never need to be surgically precise for intent to
+be honored. If a reasonable developer reading the code, schema, labels, helper
+text, or admin UI would infer an expectation, that expectation is a
+requirement. Absence of a pattern from the examples in this rule is never
+license to ignore it; when in doubt, implement it or surface it — silently
+skipping is the only wrong answer.
+
+## Read the anatomy before extending (mandatory)
+
+When creating or extending any flow, first read the Strapi content-type
+schema(s), webhooks, and services for every entity the feature touches, and
+derive requirements from the fields themselves — the prompt is not the full
+spec, the system is:
+
+- For EACH field ask: who writes it, who reads it, and what behavior does its
+  name imply? Examples (not exhaustive): `*_available` / `available_*` /
+  `purchasable_*` / `maximum_*` → stop selling at 0. `*_price` → must be
+  charged. `registration_start/end` → gate access. Status enums → every state
+  needs handling. Anything counted, dated, priced, flagged, or labeled in an
+  admin UI implies behavior somewhere — find it or flag it.
+- Any field your new code paths write, decrement, consume, or bypass is IN
+  SCOPE for your change, even if no prompt mentions it.
+- If you discover such a field is unenforced, either enforce it in the paths
+  you are adding or state unprompted in your summary: "NOTE: nothing enforces
+  `<field>` — writes continue past its limit." Never observe an inventory
+  counter in writing and then build sales paths that ignore it.
+
+## Enforcement standards
+
+- Server-side is authoritative: re-check capacity/gating at write time in
+  Strapi and reject violations; use atomic decrements. Client checks lose
+  races and are UX only (show remaining / sold-out, block adding, surface
+  server rejections with the shared red toast).
+- Enforce in EVERY entry point: online, kiosk (`source=kiosk`), admin
+  override, resubmit, and direct API. One path unenforced = not implemented.
+- Count with the same logic the manager dashboards display, so "available"
+  can never go negative there.
+
+## Before calling it done
+
+- Summaries must include a requirement → enforcement-location → verification
+  mapping, covering both stated requirements AND schema-derived ones. Any
+  schema-derived requirement intentionally skipped must be listed as such.
+- E2E-verify the boundary itself (cap−1, cap, cap+1 locally), not just the
+  happy path.
