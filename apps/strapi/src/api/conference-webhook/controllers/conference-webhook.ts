@@ -28,24 +28,17 @@ import {
   conferenceNotificationRecipients,
   conferenceNotificationSubject,
 } from "../helpers/conferenceEmail";
+import {
+  assertGolfCapacity,
+  ContestantCapacityError,
+  countsAgainstGolfCapacity,
+  golferCount,
+  isContestantTicket,
+} from "../helpers/contestant-capacity";
 
 /**
  * Conference webhook controller
  */
-// Mirrors the frontend's ticketMatchesContext fallback: legacy Fall tickets
-// have no `context`, so match by name too or they get stored as attendees.
-const CONTESTANT_NAME_FALLBACKS = ["Golfer", "Fisher", "Contestant"];
-
-const isContestantTicket = (ticket: ITicketPayload): boolean => {
-  if (ticket?.ticket_type?.context === "Contestant") return true;
-  if (ticket?.ticket_type?.context) return false;
-  return CONTESTANT_NAME_FALLBACKS.some(
-    (name) =>
-      ticket?.ticket_type?.name?.localeCompare(name, undefined, {
-        sensitivity: "accent",
-      }) === 0
-  );
-};
 
 // Extras with `requires_selection` (e.g. "Free T-Shirt" → Shirt Size) ship the
 // chosen option in an `extra_selections` map keyed by extra id. Resolve it for
@@ -223,6 +216,37 @@ export default ({ strapi }) => {
 
         // Only proceed with new registration if not a resubmission or no admin options
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
+          // Authoritative golf-capacity gate. Client checks alone oversold the
+          // 2026 Fall golf tournament (available_contestants went to -20), so
+          // re-count against the fresh conference row at write time — BEFORE
+          // charging the card or creating anything. Applies to every source
+          // (online, kiosk, admin view, resubmit) and both checkout branches.
+          const requestedGolfers = golferCount(tickets);
+          if (requestedGolfers > 0) {
+            try {
+              assertGolfCapacity(
+                conferenceData?.available_contestants,
+                requestedGolfers
+              );
+            } catch (err) {
+              if (err instanceof ContestantCapacityError) {
+                console.warn(
+                  "[conference-webhook] golf capacity rejected:",
+                  err.message
+                );
+                strapi.log?.warn?.(
+                  `[conference-webhook] golf capacity rejected (conference=${conference}, requested=${requestedGolfers}, available=${conferenceData?.available_contestants}): ${err.message}`
+                );
+                ctx.body = {
+                  result: "error",
+                  message: err.message,
+                };
+                return;
+              }
+              throw err;
+            }
+          }
+
           // Log form data
           await service.logFormData(ctx.request.body, "conference-registration");
 
@@ -1000,19 +1024,17 @@ export default ({ strapi }) => {
 
     await Promise.all(contestantPromises);
 
-    // Update available contestants count
-    const golferCount = contestants.filter(
-      contestant => contestant.ticket_type.name === "Golfer"
-    ).length;
-    
-    if (golferCount > 0) {
-      await strapi.documents("api::conference.conference").update({
-        documentId: conferenceData.documentId,
+    // Update available contestants count. Must be an atomic SQL decrement:
+    // the old read-modify-write from the request-start conferenceData lost
+    // concurrent decrements (and mixed carts calling handleContestants more
+    // than once per request overwrote each other), which drifted the counter.
+    const soldGolfers = contestants.filter(countsAgainstGolfCapacity).length;
 
-        data: {
-          available_contestants: conferenceData.available_contestants - golferCount,
-        }
-      });
+    if (soldGolfers > 0 && conferenceData?.available_contestants != null) {
+      await strapi.db
+        .connection("conferences")
+        .where({ id: conferenceData.id })
+        .decrement("available_contestants", soldGolfers);
     }
 
     return contestantIds;

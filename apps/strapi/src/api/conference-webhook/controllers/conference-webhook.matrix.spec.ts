@@ -66,15 +66,19 @@ describe("conference registration matrix", () => {
   let service: Record<string, any>;
   let emailSend: ReturnType<typeof vi.fn>;
   let controller: ReturnType<typeof createController>;
+  let dbDecrement: ReturnType<typeof vi.fn>;
+  let availableContestants: number | null;
 
   beforeEach(() => {
     created = {};
     updated = {};
     nextId = 1000;
     emailSend = vi.fn(async () => undefined);
+    availableContestants = 100;
     findOneById.mockReset();
     findOneById.mockImplementation(async (uid: string, id: number | string) => {
-      if (uid === "api::conference.conference") return conference;
+      if (uid === "api::conference.conference")
+        return { ...conference, available_contestants: availableContestants };
       if (
         uid ===
           "api::conference-registration.conference-registration" &&
@@ -161,9 +165,18 @@ describe("conference registration matrix", () => {
       generateEmailHTML: vi.fn(async () => "<p>matrix</p>"),
     };
 
+    dbDecrement = vi.fn(async () => 1);
+
     const strapi = {
       config: { environment: "test" },
       service: () => service,
+      db: {
+        connection: (_table: string) => ({
+          where: (_criteria: Record<string, unknown>) => ({
+            decrement: dbDecrement,
+          }),
+        }),
+      },
       documents: (uid: string) => ({
         create: vi.fn(async ({ data }: { data: any }) => {
           const entity = {
@@ -477,4 +490,113 @@ describe("conference registration matrix", () => {
       );
     }
   );
+
+  const golferLine = (suffix: string) => ({
+    first: "Cap",
+    last: suffix,
+    email: `cap-${suffix.toLowerCase()}@example.invalid`,
+    phone: "4055550107",
+    type: "Contestant",
+    price: 125,
+    extras: [],
+    ticket_type: { id: 37, name: "Golfer", context: "Contestant" },
+  });
+
+  const submitRaw = async (body: Record<string, any>) => {
+    const ctx = { request: { body }, body: undefined as any };
+    await controller.registration(ctx, vi.fn());
+    return ctx.body;
+  };
+
+  it("rejects golfers before charging when the golf tournament is sold out", async () => {
+    availableContestants = 0;
+    const body = await submitRaw({
+      ...basePayload("SoldOut"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [golferLine("SoldOut")],
+      paymentData: { ...basePayload("SoldOut").paymentData, amount: 125 },
+    });
+
+    expect(body).toMatchObject({ result: "error" });
+    expect(String(body.message)).toMatch(/sold out/i);
+    expect(service.processPayment).not.toHaveBeenCalled();
+    expect(service.logFormData).not.toHaveBeenCalled();
+    expect(created["api::conference-contestant.conference-contestant"]).toBeUndefined();
+    expect(dbDecrement).not.toHaveBeenCalled();
+  });
+
+  it("rejects golfers when availability is already negative (oversold)", async () => {
+    availableContestants = -20;
+    const body = await submitRaw({
+      ...basePayload("Negative"),
+      registration_type: "Contestant",
+      tickets: [golferLine("Negative")],
+    });
+
+    expect(body).toMatchObject({ result: "error" });
+    expect(String(body.message)).toMatch(/sold out/i);
+  });
+
+  it("rejects when the cart holds more golfers than remaining spots", async () => {
+    availableContestants = 1;
+    const body = await submitRaw({
+      ...basePayload("Partial"),
+      registration_type: "Contestant",
+      tickets: [golferLine("One"), golferLine("Two")],
+    });
+
+    expect(body).toMatchObject({ result: "error" });
+    expect(String(body.message)).toMatch(/Only 1 golfer spot remains/);
+  });
+
+  it("still sells the last golf spots and decrements atomically", async () => {
+    availableContestants = 2;
+    await submit({
+      ...basePayload("LastSpots"),
+      registration_type: "Contestant",
+      tickets: [golferLine("Three"), golferLine("Four")],
+      team: "Last Team",
+    });
+
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(2);
+    expect(dbDecrement).toHaveBeenCalledWith("available_contestants", 2);
+    // No stale read-modify-write documents().update on the conference row.
+    expect(updated["api::conference.conference"]).toBeUndefined();
+  });
+
+  it("does not count 'Golfer - Contestant Only' against golf capacity (same rule as the dashboard counter)", async () => {
+    availableContestants = 0;
+    await submit({
+      ...basePayload("ContestantOnly"),
+      registration_type: "Contestant",
+      contestant_already_registered: "No",
+      tickets: [
+        {
+          ...golferLine("Standalone"),
+          price: 150,
+          ticket_type: {
+            id: 47,
+            name: "Golfer - Contestant Only",
+            context: "Contestant",
+          },
+        },
+      ],
+    });
+
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(1);
+    expect(dbDecrement).not.toHaveBeenCalled();
+  });
+
+  it("ignores the cap when available_contestants is not configured", async () => {
+    availableContestants = null;
+    await submit({
+      ...basePayload("NoCap"),
+      registration_type: "Contestant",
+      tickets: [golferLine("Five")],
+    });
+
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(1);
+    expect(dbDecrement).not.toHaveBeenCalled();
+  });
 });
