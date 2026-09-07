@@ -494,7 +494,12 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                   isAttendeeVendorCheckout &&
                   sportHasUnregisteredOption(option);
                 // With no tier question the card immediately applies a
-                // ticket — block golf here when that ticket is capped out.
+                // ticket — block golf when that ticket is capped out. When a
+                // tier question follows, block only if EVERY selectable tier
+                // ticket counts against the (exhausted) golf capacity: since
+                // the contains-"Golfer" rule, "Golfer - Contestant Only"
+                // consumes slots too, so a sold-out conference usually has
+                // no golf path left at all.
                 const directTicket =
                   !willAskFisherTier && !willAskParticipantTier
                     ? resolveContestantTicket({
@@ -502,8 +507,20 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
                         sport: option,
                       })
                     : null;
+                const tierCandidates =
+                  directTicket != null
+                    ? [directTicket]
+                    : (["addon", "standalone"] as const)
+                        .map((tier) => resolveTierTicket(option, tier))
+                        .filter(
+                          (candidate): candidate is ITicketOption =>
+                            candidate != null
+                        );
                 const blockedByCapacity =
-                  directTicket != null && wouldExceedGolfCapacity(directTicket);
+                  tierCandidates.length > 0 &&
+                  tierCandidates.every((candidate) =>
+                    wouldExceedGolfCapacity(candidate)
+                  );
                 const showGolfBadge = option === "golf" && golfCapConfigured;
                 return (
                   <button

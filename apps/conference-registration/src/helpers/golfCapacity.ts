@@ -4,20 +4,21 @@ import { ticketMatchesContext } from "./ticketMatchesContext";
 /**
  * Golf tournament capacity (conference.available_contestants).
  *
- * Mirrors the Strapi webhook's counting exactly: only Contestant tickets
- * named "Golfer" consume a slot. "Golfer - Contestant Only" and all Fisher
- * tickets never count (per the Conference Manager "Available Golf
- * Contestants" help text). The field is a live remaining counter and can be
- * negative after an oversell — always clamp to zero before comparing.
+ * Mirrors the Strapi webhook's counting exactly (helpers/
+ * contestant-capacity.ts). Per user directive (2026-09-07): ANY Contestant
+ * ticket whose name CONTAINS "Golfer" (case-insensitive) consumes a slot —
+ * both "Golfer" and "Golfer - Contestant Only". Fisher tickets never
+ * count. The field is a live remaining counter and can be negative after
+ * an oversell — always clamp to zero before comparing.
  */
-export const GOLF_CAPACITY_TICKET_NAME = "Golfer";
+export const GOLF_CAPACITY_NAME_SUBSTRING = "golfer";
 
 export const countsAgainstGolfCapacity = (
   ticketType: Pick<ITicketOption, "name" | "context"> | null | undefined
 ): boolean =>
   !!ticketType &&
   ticketMatchesContext(ticketType, "Contestant") &&
-  ticketType.name === GOLF_CAPACITY_TICKET_NAME;
+  (ticketType.name ?? "").toLowerCase().includes(GOLF_CAPACITY_NAME_SUBSTRING);
 
 /**
  * Golf slots consumed by the cart. `excludeIndex` skips one row — used when

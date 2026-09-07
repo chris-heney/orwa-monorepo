@@ -25,13 +25,22 @@ describe("countsAgainstGolfCapacity", () => {
     expect(countsAgainstGolfCapacity({ name: "Golfer" } as never)).toBe(true);
   });
 
-  it("does NOT count 'Golfer - Contestant Only' (same rule as the dashboard counter)", () => {
+  it("counts 'Golfer - Contestant Only' (contains-'Golfer' rule)", () => {
     expect(
       countsAgainstGolfCapacity({
         name: "Golfer - Contestant Only",
         context: "Contestant",
       })
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it("matches the substring case-insensitively", () => {
+    expect(
+      countsAgainstGolfCapacity({
+        name: "GOLFER (late entry)",
+        context: "Contestant",
+      })
+    ).toBe(true);
   });
 
   it("does not count Fisher or Attendee tickets", () => {
@@ -52,12 +61,12 @@ describe("golfersInCart", () => {
     line("Golfer - Contestant Only", "Contestant"),
   ];
 
-  it("counts only capacity-consuming golfers", () => {
-    expect(golfersInCart(cart)).toBe(2);
+  it("counts every capacity-consuming golfer, including Contestant Only", () => {
+    expect(golfersInCart(cart)).toBe(3);
   });
 
   it("excludes the row being edited", () => {
-    expect(golfersInCart(cart, 0)).toBe(1);
+    expect(golfersInCart(cart, 0)).toBe(2);
   });
 
   it("handles empty carts", () => {
