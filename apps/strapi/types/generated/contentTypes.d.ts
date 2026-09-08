@@ -1175,6 +1175,9 @@ export interface ApiConferenceContestantConferenceContestant
     draftAndPublish: false;
   };
   attributes: {
+    cancelled_at: Schema.Attribute.DateTime;
+    cancelled_by: Schema.Attribute.String;
+    cancelled_reason: Schema.Attribute.Text;
     conference: Schema.Attribute.Relation<
       'oneToOne',
       'api::conference.conference'
@@ -1204,6 +1207,9 @@ export interface ApiConferenceContestantConferenceContestant
       'manyToOne',
       'api::conference-registration.conference-registration'
     >;
+    status: Schema.Attribute.Enumeration<['active', 'cancelled']> &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'active'>;
     team: Schema.Attribute.Relation<
       'manyToOne',
       'api::conference-team.conference-team'

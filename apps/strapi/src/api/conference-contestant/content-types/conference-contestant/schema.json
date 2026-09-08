@@ -62,6 +62,15 @@
       "relation": "manyToOne",
       "target": "api::conference-registration.conference-registration",
       "inversedBy": "contestants"
-    }
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": ["active", "cancelled"],
+      "default": "active",
+      "required": true
+    },
+    "cancelled_at": { "type": "datetime" },
+    "cancelled_reason": { "type": "text" },
+    "cancelled_by": { "type": "string" }
   }
 }
