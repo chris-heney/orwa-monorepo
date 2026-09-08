@@ -42,6 +42,7 @@ import RegistrationReceipt from './RegistrationReceipt';
 import EditIcon from '@mui/icons-material/Edit';
 import { ISharedMeta } from '../types/IConference';
 import { useCan } from '../../rbac-manager/useCan';
+import { CONFERENCE_REGISTRATION_RECEIPT_POPULATE } from '../helpers/registrationReceiptContestants';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 
 interface RegistrationProps {
@@ -293,7 +294,7 @@ const ConferenceRegistrations = () => {
             >
               <Button
                 onClick={() => {
-                  isEditing ? setIsEditing(false) : setIsEditing(true);
+                  setIsEditing((current) => !current);
                 }}
               >
                 {' '}
@@ -328,7 +329,8 @@ const ConferenceRegistrations = () => {
               component={'div'}
               queryOptions={{
                 meta: {
-                  populate: false,
+                  populate: CONFERENCE_REGISTRATION_RECEIPT_POPULATE,
+                  raw: true,
                 },
               }}
               id={record.id}
@@ -336,7 +338,7 @@ const ConferenceRegistrations = () => {
               {canUpdate && (
                 <Button
                   onClick={() => {
-                    isEditing ? setIsEditing(false) : setIsEditing(true);
+                    setIsEditing((current) => !current);
                   }}
                 >
                   {' '}

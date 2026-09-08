@@ -8,7 +8,10 @@ import {
   getPrimaryConferenceId,
 } from "../../helpers/mergeConferenceAcrossTabFilters";
 import { useConferenceContext } from "../../ConferenceContext";
-import { partitionContestants } from "../../helpers/partitionContestants";
+import {
+  activeMetricContestants,
+  buildContestantMetricsFilter,
+} from "../../helpers/conferenceMetricContestants";
 
 /** Coerce Strapi decimals / bigintegers (often strings) into numbers. */
 export const num = (v: unknown): number => {
@@ -196,7 +199,7 @@ export const useConferenceMetrics = (
   });
   const { data: contestants } = useGetList("conference-contestants", {
     ...RAW,
-    filter: { ...scope, status: "active" },
+    filter: buildContestantMetricsFilter(scope),
     pagination: PER_PAGE,
   });
   const { data: teams } = useGetList("conference-teams", {
@@ -266,7 +269,7 @@ export const useConferenceMetrics = (
     const att = attendees ?? [];
     const boo = booths ?? [];
     const spo = sponsors ?? [];
-    const con = partitionContestants(contestants ?? []).active;
+    const con = activeMetricContestants(contestants ?? []);
 
     const ticketName = (a: RaRecord): string =>
       ((a.conference_ticket as RaRecord | null)?.name as string) ||
