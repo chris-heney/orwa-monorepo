@@ -21,8 +21,9 @@ import type { ITicketPayload } from "../types";
 const CONTESTANT_NAME_FALLBACKS = ["Golfer", "Fisher", "Contestant"];
 const ticketNameRepresents = (ticketName: string, label: string): boolean => {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const token = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
-  const negated = new RegExp(`(^|[^a-z0-9])non[-\\s]+${escaped}([^a-z0-9]|$)`, "i");
+  const pluralSuffix = label.toLowerCase() === "golfer" ? "s?" : "";
+  const token = new RegExp(`(^|[^a-z0-9])${escaped}${pluralSuffix}([^a-z0-9]|$)`, "i");
+  const negated = new RegExp(`(^|[^a-z0-9])non[-\\s]+${escaped}${pluralSuffix}([^a-z0-9]|$)`, "i");
   return token.test(ticketName) && !negated.test(ticketName);
 };
 

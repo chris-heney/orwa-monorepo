@@ -8,19 +8,18 @@ const payload = (name: string, context?: string | null) =>
   } as never);
 
 describe("countsAgainstGolfCapacity", () => {
-  it("counts null-context 'Golfer - Contestant Only' by name", () => {
-    expect(countsAgainstGolfCapacity(payload("Golfer - Contestant Only", null))).toBe(
-      true
-    );
-  });
-
-  it("does not count Fisher tickets", () => {
-    expect(countsAgainstGolfCapacity(payload("Fisher - Contestant Only", null))).toBe(
-      false
-    );
-  });
-
-  it("does not count negated Non-Golfer names", () => {
-    expect(countsAgainstGolfCapacity(payload("Non-Golfer Guest", null))).toBe(false);
+  it.each([
+    ["Golfer", "Contestant", true],
+    ["Golfer - Contestant Only", "Contestant", true],
+    ["GOLFER (late entry)", "Contestant", true],
+    ["Golfers Team", "Contestant", true],
+    ["Golfer - Contestant Only", null, true],
+    ["Non-Golfer Guest", "Contestant", false],
+    ["Non Golfer", "Contestant", false],
+    ["Golfer Spouse (Non-Golfer)", "Contestant", false],
+    ["Non-Golfer Guest", null, false],
+    ["Fisher - Contestant Only", null, false],
+  ])("classifies %s / %s as golf capacity=%s", (name, context, expected) => {
+    expect(countsAgainstGolfCapacity(payload(name, context))).toBe(expected);
   });
 });

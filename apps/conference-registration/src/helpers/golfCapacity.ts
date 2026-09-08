@@ -1,5 +1,5 @@
 import { ITicketOption, ITicketPayload } from "../types/types";
-import { ticketMatchesContext } from "./ticketMatchesContext";
+import { ticketMatchesContext, ticketNameRepresents } from "./ticketMatchesContext";
 /**
  * Golf tournament capacity (conference.available_contestants).
  *
@@ -17,7 +17,7 @@ export const countsAgainstGolfCapacity = (
 ): boolean =>
   !!ticketType &&
   ticketMatchesContext(ticketType, "Contestant") &&
-  (ticketType.name ?? "").toLowerCase().includes(GOLF_CAPACITY_NAME_SUBSTRING);
+  ticketNameRepresents(ticketType.name ?? "", GOLF_CAPACITY_NAME_SUBSTRING);
 
 /**
  * Golf slots consumed by the cart. `excludeIndex` skips one row — used when

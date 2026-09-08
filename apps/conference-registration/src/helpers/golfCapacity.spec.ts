@@ -15,50 +15,19 @@ const line = (name: string, context?: string) =>
   } as unknown as ITicketPayload);
 
 describe("countsAgainstGolfCapacity", () => {
-  it("counts the Golfer ticket (Contestant context)", () => {
-    expect(
-      countsAgainstGolfCapacity({ name: "Golfer", context: "Contestant" })
-    ).toBe(true);
-  });
-
-  it("counts legacy Golfer tickets with no context (name fallback)", () => {
-    expect(countsAgainstGolfCapacity({ name: "Golfer" } as never)).toBe(true);
-  });
-
-  it("counts 'Golfer - Contestant Only' (contains-'Golfer' rule)", () => {
-    expect(
-      countsAgainstGolfCapacity({
-        name: "Golfer - Contestant Only",
-        context: "Contestant",
-      })
-    ).toBe(true);
-  });
-
-  it("counts null-context 'Golfer - Contestant Only' by name", () => {
-    expect(
-      countsAgainstGolfCapacity({
-        name: "Golfer - Contestant Only",
-        context: null,
-      } as never)
-    ).toBe(true);
-  });
-
-  it("does not count negated Non-Golfer names", () => {
-    expect(
-      countsAgainstGolfCapacity({
-        name: "Non-Golfer Guest",
-        context: null,
-      } as never)
-    ).toBe(false);
-  });
-
-  it("matches the substring case-insensitively", () => {
-    expect(
-      countsAgainstGolfCapacity({
-        name: "GOLFER (late entry)",
-        context: "Contestant",
-      })
-    ).toBe(true);
+  it.each([
+    ["Golfer", "Contestant", true],
+    ["Golfer", undefined, true],
+    ["Golfer - Contestant Only", "Contestant", true],
+    ["Golfer - Contestant Only", null, true],
+    ["GOLFER (late entry)", "Contestant", true],
+    ["Golfers Team", "Contestant", true],
+    ["Non-Golfer Guest", "Contestant", false],
+    ["Non Golfer", "Contestant", false],
+    ["Golfer Spouse (Non-Golfer)", "Contestant", false],
+    ["Non-Golfer Guest", null, false],
+  ])("classifies %s / %s as golf capacity=%s", (name, context, expected) => {
+    expect(countsAgainstGolfCapacity({ name, context } as never)).toBe(expected);
   });
 
   it("does not count Fisher or Attendee tickets", () => {

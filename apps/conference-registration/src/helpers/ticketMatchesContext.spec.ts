@@ -41,12 +41,24 @@ describe("ticketMatchesContext", () => {
     ).toBe(true);
   });
 
-  it("does not treat negated Non-Golfer names as Contestant", () => {
+  it.each(["Non-Golfer Guest", "Non Golfer", "Golfer Spouse (Non-Golfer)"])(
+    "does not treat negated %s as Contestant when context is missing",
+    (name) => {
+      expect(
+        ticketMatchesContext(
+          { name, context: null as unknown as "Contestant" },
+          "Contestant"
+        )
+      ).toBe(false);
+    }
+  );
+
+  it("still honors explicit Contestant context for routing without implying golf capacity", () => {
     expect(
       ticketMatchesContext(
-        { name: "Non-Golfer Guest", context: null as unknown as "Contestant" },
+        { name: "Non-Golfer Guest", context: "Contestant" },
         "Contestant"
       )
-    ).toBe(false);
+    ).toBe(true);
   });
 });
