@@ -71,6 +71,8 @@ const makeRegistration = (id: number, offset: number) => ({
   id,
   documentId: `registration-${id}`,
   year: 2026,
+  registration_date: "2026-08-01",
+  registrant: { email: `payer-${id}@example.invalid` },
   organization: `Water System ${id}`,
   total: 600,
   payment_method: "Credit Card",
@@ -242,6 +244,30 @@ describe("golf overage reconciliation operation", () => {
         item: expect.objectContaining({ name: "Mulligans" }),
       }),
     ]);
+  });
+
+  it("preserves registration payment lookup keys without guessing transaction IDs", async () => {
+    const snapshot = fixtureSnapshot();
+    snapshot.registrations[0].registration_date = "2026-08-01";
+    snapshot.registrations[0].registrant = { email: "payer@example.invalid" };
+
+    const result = await runGolfOverageOperation({
+      apply: false,
+      client: makeClient([snapshot]),
+      writeAudit: vi.fn(),
+    });
+    const summary = result.before;
+
+    expect(summary.registrations[0].paymentLookupKey).toEqual({
+      registrationId: 16781,
+      payerEmail: "payer@example.invalid",
+      amount: 600,
+      registrationDate: "2026-08-01",
+      paymentMethod: "Credit Card",
+    });
+    expect(summary.registrations[0].paymentReference).not.toHaveProperty(
+      "transactionIds"
+    );
   });
 
   it("allows partial rerun when one target golfer is already cancelled correctly", async () => {
@@ -650,6 +676,7 @@ describe("golf overage HTTP client and CLI safety", () => {
     const activeCountUrl = String(fetchImpl.mock.calls[1][0]);
 
     expect(activeCountUrl).not.toContain("filters%5Bstatus%5D");
+    expect(activeCountUrl).toContain("fields%5B2%5D=status");
     expect(activeCountUrl).toContain("filters%5Byear%5D%5B%24eq%5D=2026");
     expect(snapshot.activeGolferCount).toBe(2);
   });

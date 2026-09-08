@@ -62,8 +62,10 @@ export type RegistrationRow = {
   organization?: string | null;
   total?: number | string | null;
   payment_method?: string | null;
+  registration_date?: string | null;
   wp_eid?: number | string | null;
   passport_id?: number | string | null;
+  registrant?: { email?: string | null } | null;
   conference?: ConferenceRow | null;
   contestants?: ContestantRow[] | null;
 };
@@ -136,6 +138,14 @@ type PaymentReference = {
   passportId?: number | string | null;
 };
 
+type PaymentLookupKey = {
+  registrationId: number;
+  payerEmail?: string | null;
+  amount?: number | string | null;
+  registrationDate?: string | null;
+  paymentMethod?: string | null;
+};
+
 type OperationSummary = {
   conferenceDocumentId: string;
   activeGolferCount: number;
@@ -149,6 +159,7 @@ type OperationSummary = {
     cancelledGolfers: number;
     total?: number | string | null;
     paymentReference: PaymentReference;
+    paymentLookupKey: PaymentLookupKey;
     golfers: Array<{
       documentId: string;
       status?: string | null;
@@ -270,6 +281,16 @@ function paymentReference(registration: RegistrationRow): PaymentReference {
   };
 }
 
+function paymentLookupKey(registration: RegistrationRow): PaymentLookupKey {
+  return {
+    registrationId: registration.id,
+    payerEmail: registration.registrant?.email,
+    amount: registration.total,
+    registrationDate: registration.registration_date,
+    paymentMethod: registration.payment_method,
+  };
+}
+
 function requireTargetConference(conference: ConferenceRow | null | undefined, label: string) {
   if (
     !conference ||
@@ -319,6 +340,7 @@ function summarizeSnapshot(snapshot: GolfOverageSnapshot): OperationSummary {
         cancelledGolfers: golfers.filter(isCancelled).length,
         total: registration.total,
         paymentReference: paymentReference(registration),
+        paymentLookupKey: paymentLookupKey(registration),
         golfers: golfers.map((golfer) => ({
           documentId: golfer.documentId,
           status: golfer.status ?? "active",
@@ -558,6 +580,10 @@ function sanitizeFailureSummary(summary: OperationSummary): OperationSummary {
       organization: undefined,
       total: undefined,
       paymentReference: { method: registration.paymentReference.method },
+      paymentLookupKey: {
+        registrationId: registration.id,
+        paymentMethod: registration.paymentLookupKey.paymentMethod,
+      },
       golfers: registration.golfers.map((golfer) => ({
         ...golfer,
         name: "[redacted]",
@@ -859,6 +885,8 @@ export function createStrapiApiClient({
         ["fields[5]", "wp_eid"],
         ["fields[6]", "passport_id"],
         ["fields[7]", "year"],
+        ["fields[8]", "registration_date"],
+        ["populate[registrant][fields][0]", "email"],
         ["populate[conference][fields][0]", "id"],
         ["populate[conference][fields][1]", "documentId"],
         ["populate[conference][fields][2]", "name"],
@@ -907,6 +935,7 @@ export function createStrapiApiClient({
           ["sort[0]", "id:ASC"],
           ["fields[0]", "documentId"],
           ["fields[1]", "year"],
+          ["fields[2]", "status"],
           ["filters[conference][documentId][$eq]", conference.documentId],
           ["filters[year][$eq]", TARGET_YEAR],
           ["populate[conference_ticket][fields][0]", "name"],
@@ -997,6 +1026,8 @@ function makeFixtureClient(): GolfOverageClient {
     id,
     documentId: `registration-${id}`,
     year: TARGET_YEAR,
+    registration_date: "2026-08-01",
+    registrant: { email: `fixture-payer-${id}@example.invalid` },
     organization: `Fixture System ${id}`,
     total: 600,
     payment_method: "Credit Card",
@@ -1126,6 +1157,7 @@ export function renderAuditMarkdown(payload: AuditPayload): string {
     "",
     "- The counter update uses an immediate quiet-window recheck, not true database CAS.",
     "- Cancel endpoint permission must be verified by local rehearsal and production role inspection before production apply.",
+    "- Conference transaction rows have no durable registration relation; payment lookup keys are preserved, but transaction IDs are not guessed or mutated.",
     "- No secrets, raw endpoint responses, card data, refunds, invoice mutations, payment mutations, or email sends are included in this audit.",
     "",
   ]

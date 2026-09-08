@@ -829,7 +829,7 @@ headlessly without mutating production data.
 - [ ] **Step 1: Run production dry run**
 
 ```bash
-npx tsx scripts/reconcile-and-cancel-golf-overage.ts
+npx tsx scripts/reconcile-and-cancel-golf-overage.ts --live
 ```
 
 Require output to confirm:
