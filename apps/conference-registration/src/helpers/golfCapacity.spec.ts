@@ -34,6 +34,15 @@ describe("countsAgainstGolfCapacity", () => {
     ).toBe(true);
   });
 
+  it("counts null-context 'Golfer - Contestant Only' by name", () => {
+    expect(
+      countsAgainstGolfCapacity({
+        name: "Golfer - Contestant Only",
+        context: null,
+      } as never)
+    ).toBe(true);
+  });
+
   it("matches the substring case-insensitively", () => {
     expect(
       countsAgainstGolfCapacity({

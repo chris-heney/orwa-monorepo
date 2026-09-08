@@ -4,10 +4,10 @@ import type { ITicketPayload } from "../types";
  * Golf tournament capacity enforcement.
  *
  * `conference.available_contestants` ("Available Golf Contestants" in
- * Conference Manager) is a live remaining-slot counter. Per user directive
- * (2026-09-07): ANY Contestant ticket whose name CONTAINS "Golfer"
- * (case-insensitive) consumes a slot — e.g. both "Golfer" and
- * "Golfer - Contestant Only". Fisher tickets never count. Both the
+ * Conference Manager) is a live remaining-slot counter. Per binding user
+ * directive (2026-09-07): ANY ticket whose name CONTAINS "Golfer"
+ * (case-insensitive) consumes a slot, regardless of context. Fisher tickets
+ * never count. Both the
  * capacity gate and the webhook decrement use this one predicate, and the
  * frontend (`apps/conference-registration/src/helpers/golfCapacity.ts`)
  * mirrors it exactly. The counter can already be negative (2026-09
@@ -33,10 +33,9 @@ export const GOLF_CAPACITY_NAME_SUBSTRING = "golfer";
 
 /**
  * Does one cart line consume a golf slot? Same rule as the decrement:
- * a Contestant ticket whose name contains "Golfer" (case-insensitive).
+ * any ticket name containing "Golfer" (case-insensitive).
  */
 export const countsAgainstGolfCapacity = (ticket: ITicketPayload): boolean =>
-  isContestantTicket(ticket) &&
   (ticket?.ticket_type?.name ?? "")
     .toLowerCase()
     .includes(GOLF_CAPACITY_NAME_SUBSTRING);

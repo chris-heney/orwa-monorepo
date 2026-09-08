@@ -8,8 +8,10 @@ import {
   EXPECTED_CANCELLED_GOLFERS,
   REQUIRED_REGISTRATION_IDS,
   REQUIRED_REASON,
+  TARGET_CONFERENCE,
   createStrapiApiClient,
   expectedAfter,
+  renderAuditMarkdown,
   resolveApiConfig,
   parseCliArgs,
   reconciledAvailability,
@@ -30,6 +32,7 @@ const makeGolfer = (
     cancelled_reason: string | null;
     cancelled_at: string | null;
     cancelled_by: string | null;
+    conference: { id: number; documentId: string; name: string } | null;
   }> = {}
 ) => ({
   id: 1000 + Number(suffix.replace(/\D/g, "") || 0),
@@ -50,6 +53,11 @@ const makeGolfer = (
   cancelled_at: overrides.cancelled_at ?? null,
   cancelled_reason: overrides.cancelled_reason ?? null,
   cancelled_by: overrides.cancelled_by ?? null,
+  conference: overrides.conference ?? {
+    id: TARGET_CONFERENCE.id,
+    documentId: TARGET_CONFERENCE.documentId,
+    name: TARGET_CONFERENCE.name,
+  },
   conference_ticket: {
     documentId: `ticket-${suffix}`,
     name: overrides.ticketName ?? "Golfer - Contestant Only",
@@ -73,9 +81,7 @@ const makeRegistration = (id: number, offset: number) => ({
 const fixtureSnapshot = (alreadyCancelled = 0) => {
   let cancelled = 0;
   const conference = {
-    id: 98,
-    documentId: "fall-conference-2026",
-    name: "2026 Fall Conference",
+    ...TARGET_CONFERENCE,
     available_contestants: reconciledAvailability(
       36,
       EXPECTED_ACTIVE_BEFORE - alreadyCancelled
@@ -118,7 +124,7 @@ const makeClient = (snapshots: ReturnType<typeof fixtureSnapshot>[]) => ({
     return next;
   }),
   fetchConferenceAvailability: vi.fn(async () => EXPECTED_AVAILABLE_BEFORE),
-  preflightCancelPermission: vi.fn(async () => ({ ok: true })),
+  readinessCheck: vi.fn(async () => ({ ok: true })),
   updateConferenceAvailability: vi.fn(async (_documentId: string, value: number) => ({
     documentId: "fall-conference-2026",
     available_contestants: value,
@@ -136,6 +142,14 @@ const makeClient = (snapshots: ReturnType<typeof fixtureSnapshot>[]) => ({
 describe("golf overage reconciliation guards", () => {
   it("uses the exact approved cancellation reason with an em dash", () => {
     expect(REQUIRED_REASON).toBe("2026 Fall golf overage — pending card refund");
+  });
+
+  it("pins the approved Fall conference identity in the operation", () => {
+    expect(TARGET_CONFERENCE).toEqual({
+      id: 98,
+      documentId: "fall-conference-2026",
+      name: "2026 Fall Conference",
+    });
   });
 
   it("refuses any registration outside the fixed allowlist", () => {
@@ -201,7 +215,33 @@ describe("golf overage reconciliation operation", () => {
     );
   });
 
-  it("refuses a parent registration without exactly four active golfers", async () => {
+  it("extracts Mulligans from key and related item name shapes", async () => {
+    const snapshot = fixtureSnapshot();
+    snapshot.registrations[0].contestants[0].items = [
+      {
+        key: "mulligan_count",
+        label: "Add-on",
+        value: "2",
+        selection: "Two",
+        item: { documentId: "extra-mulligans", name: "Mulligans" },
+      },
+    ];
+
+    const result = await runGolfOverageOperation({
+      apply: false,
+      client: makeClient([snapshot]),
+      writeAudit: vi.fn(),
+    });
+
+    expect(result.cancelRequests[0].mulligans).toEqual([
+      expect.objectContaining({
+        key: "mulligan_count",
+        item: expect.objectContaining({ name: "Mulligans" }),
+      }),
+    ]);
+  });
+
+  it("allows partial rerun when one target golfer is already cancelled correctly", async () => {
     const snapshot = fixtureSnapshot(1);
     const client = makeClient([snapshot]);
 
@@ -220,6 +260,23 @@ describe("golf overage reconciliation operation", () => {
     await expect(
       runGolfOverageOperation({ apply: false, client, writeAudit: vi.fn() })
     ).rejects.toThrow("expected exactly 4 golfer records");
+  });
+
+  it("refuses target contestants from a different conference before any write", async () => {
+    const snapshot = fixtureSnapshot();
+    snapshot.registrations[0].contestants[0].conference = {
+      id: 99,
+      documentId: "wrong-conference",
+      name: "Wrong Conference",
+    };
+    const client = makeClient([snapshot]);
+
+    await expect(
+      runGolfOverageOperation({ apply: true, client, writeAudit: vi.fn() })
+    ).rejects.toThrow("contestant conference mismatch");
+    expect(client.fetchConferenceAvailability).not.toHaveBeenCalled();
+    expect(client.updateConferenceAvailability).not.toHaveBeenCalled();
+    expect(client.cancelContestant).not.toHaveBeenCalled();
   });
 
   it("refuses already-cancelled target golfers without the exact reason", async () => {
@@ -259,8 +316,15 @@ describe("golf overage reconciliation operation", () => {
   it("applies through the supported counter update and cancel endpoint only", async () => {
     const before = fixtureSnapshot();
     before.conference.available_contestants = -20;
-    const client = makeClient([before, completedSnapshot()]);
+    const mid = fixtureSnapshot();
+    mid.conference.available_contestants = EXPECTED_AVAILABLE_BEFORE;
+    const client = makeClient([before, mid, completedSnapshot()]);
     const calls: string[] = [];
+    client.fetchSnapshot.mockImplementation(async () => {
+      calls.push("fetch-snapshot");
+      const snapshots = [before, mid, completedSnapshot()];
+      return snapshots[client.fetchSnapshot.mock.calls.length - 1];
+    });
     client.fetchConferenceAvailability
       .mockImplementationOnce(async () => {
       calls.push("recheck-before-put");
@@ -297,10 +361,12 @@ describe("golf overage reconciliation operation", () => {
       EXPECTED_AVAILABLE_BEFORE
     );
     expect(calls.slice(0, 3)).toEqual([
+      "fetch-snapshot",
       "recheck-before-put",
       "put-counter",
-      "recheck-before-put",
     ]);
+    expect(calls.slice(3, 5)).toEqual(["recheck-before-put", "fetch-snapshot"]);
+    expect(calls[5]).toMatch(/^cancel:/);
     expect(client.cancelContestant).toHaveBeenCalledTimes(
       EXPECTED_CANCELLED_GOLFERS
     );
@@ -312,7 +378,7 @@ describe("golf overage reconciliation operation", () => {
   });
 
   it("skips the absolute counter PUT when stored availability already equals the derived target", async () => {
-    const client = makeClient([fixtureSnapshot(), completedSnapshot()]);
+    const client = makeClient([fixtureSnapshot(), fixtureSnapshot(), completedSnapshot()]);
     client.fetchConferenceAvailability.mockResolvedValue(EXPECTED_AVAILABLE_BEFORE);
 
     await runGolfOverageOperation({
@@ -338,7 +404,7 @@ describe("golf overage reconciliation operation", () => {
   });
 
   it("stops on the kth cancel failure and can resume from exact-reason partial state", async () => {
-    const failingClient = makeClient([fixtureSnapshot()]);
+    const failingClient = makeClient([fixtureSnapshot(), fixtureSnapshot()]);
     failingClient.cancelContestant.mockImplementation(async (documentId: string) => {
       if (failingClient.cancelContestant.mock.calls.length === 5) {
         throw new Error("HTTP 500");
@@ -360,7 +426,11 @@ describe("golf overage reconciliation operation", () => {
     ).rejects.toThrow("HTTP 500");
     expect(failingClient.cancelContestant).toHaveBeenCalledTimes(5);
 
-    const resumeClient = makeClient([fixtureSnapshot(4), completedSnapshot()]);
+    const resumeClient = makeClient([
+      fixtureSnapshot(4),
+      fixtureSnapshot(4),
+      completedSnapshot(),
+    ]);
     await expect(
       runGolfOverageOperation({
         apply: true,
@@ -369,6 +439,59 @@ describe("golf overage reconciliation operation", () => {
       })
     ).resolves.toMatchObject({ cancelRequests: { length: 8 } });
     expect(resumeClient.cancelContestant).toHaveBeenCalledTimes(8);
+  });
+
+  it("keeps first-cancel failure resumable after counter reconciliation", async () => {
+    const before = fixtureSnapshot();
+    before.conference.available_contestants = -20;
+    const mid = fixtureSnapshot();
+    mid.conference.available_contestants = EXPECTED_AVAILABLE_BEFORE;
+    const failingClient = makeClient([before, mid]);
+    failingClient.fetchConferenceAvailability
+      .mockResolvedValueOnce(-20)
+      .mockResolvedValueOnce(EXPECTED_AVAILABLE_BEFORE);
+    failingClient.cancelContestant.mockRejectedValueOnce(new Error("HTTP 500"));
+
+    await expect(
+      runGolfOverageOperation({
+        apply: true,
+        client: failingClient,
+        writeAudit: vi.fn(),
+      })
+    ).rejects.toThrow("HTTP 500");
+    expect(failingClient.updateConferenceAvailability).toHaveBeenCalledTimes(1);
+    expect(failingClient.cancelContestant).toHaveBeenCalledTimes(1);
+
+    const resume = fixtureSnapshot();
+    resume.conference.available_contestants = EXPECTED_AVAILABLE_BEFORE;
+    const resumeClient = makeClient([resume, resume, completedSnapshot()]);
+    await runGolfOverageOperation({
+      apply: true,
+      client: resumeClient,
+      writeAudit: vi.fn(),
+    });
+    expect(resumeClient.updateConferenceAvailability).not.toHaveBeenCalled();
+    expect(resumeClient.cancelContestant).toHaveBeenCalledTimes(12);
+  });
+
+  it("writes sanitized apply audit details instead of raw endpoint responses", async () => {
+    const writeAudit = vi.fn();
+    const client = makeClient([fixtureSnapshot(), fixtureSnapshot(), completedSnapshot()]);
+    client.cancelContestant.mockImplementation(async (documentId: string) => ({
+      documentId,
+      status: "cancelled",
+      cancelled_at: cancelledAt,
+      cancelled_reason: REQUIRED_REASON,
+      email: "golfer@example.invalid",
+      phone: "4055550100",
+    }));
+
+    await runGolfOverageOperation({ apply: true, client, writeAudit });
+
+    const audit = writeAudit.mock.calls[0][0];
+    expect(audit.responses).toBeUndefined();
+    expect(JSON.stringify(audit.responseAudit)).not.toContain("golfer@example.invalid");
+    expect(audit.responseAudit.cancelledContestants).toHaveLength(12);
   });
 
   it("treats a fully completed exact-reason rerun as a no-op audit", async () => {
@@ -481,8 +604,58 @@ describe("golf overage HTTP client and CLI safety", () => {
     expect(snapshot.activeGolferCount).toBe(2);
   });
 
+  it("sorts active golfer pages, dedupes documentIds, and detects duplicate IDs", async () => {
+    const registrations = fixtureSnapshot().registrations;
+    const pageOne = [makeGolfer("1"), makeGolfer("2")];
+    const pageTwo = [makeGolfer("2"), makeGolfer("3")];
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(ok({ data: registrations }))
+      .mockResolvedValueOnce(
+        ok({ data: pageOne, meta: { pagination: { page: 1, pageCount: 2 } } })
+      )
+      .mockResolvedValueOnce(
+        ok({ data: pageTwo, meta: { pagination: { page: 2, pageCount: 2 } } })
+      );
+    const client = createStrapiApiClient({
+      apiBase: "https://admin.orwa.org/api",
+      apiKey: "not-printed",
+      fetchImpl,
+    });
+
+    await expect(client.fetchSnapshot()).rejects.toThrow("duplicate active golfer");
+    const pageOneUrl = String(fetchImpl.mock.calls[1][0]);
+    const pageTwoUrl = String(fetchImpl.mock.calls[2][0]);
+    expect(pageOneUrl).toContain("sort%5B0%5D=id%3AASC");
+    expect(pageTwoUrl).toContain("sort%5B0%5D=id%3AASC");
+  });
+
+  it("detects missing active golfer documentIds", async () => {
+    const registrations = fixtureSnapshot().registrations;
+    const missingId = makeGolfer("missing") as { documentId?: string };
+    delete missingId.documentId;
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(ok({ data: registrations }))
+      .mockResolvedValueOnce(
+        ok({ data: [missingId], meta: { pagination: { page: 1, pageCount: 1 } } })
+      );
+    const client = createStrapiApiClient({
+      apiBase: "https://admin.orwa.org/api",
+      apiKey: "not-printed",
+      fetchImpl,
+    });
+
+    await expect(client.fetchSnapshot()).rejects.toThrow("missing documentId");
+  });
+
   it("rejects unknown CLI flags and unsafe apply API bases", () => {
     expect(() => parseCliArgs(["--bogus"])).toThrow("Unknown flag");
+    expect(parseCliArgs(["--apply", "--rehearse-local"])).toMatchObject({
+      apply: true,
+      rehearseLocal: true,
+      live: true,
+    });
     expect(() =>
       resolveApiConfig({
         env: {
@@ -503,6 +676,37 @@ describe("golf overage HTTP client and CLI safety", () => {
         cwd: "/repo",
       })
     ).toThrow("must end with /api");
+    expect(
+      resolveApiConfig({
+        env: {
+          STRAPI_API_ENDPOINT: "http://localhost:13370/api",
+          STRAPI_API_TOKEN: "secret",
+        },
+        apply: true,
+        rehearseLocal: true,
+        cwd: "/repo",
+      }).apiBase
+    ).toBe("http://localhost:13370/api");
+  });
+
+  it("does not call users/me and performs only a contestant readiness GET", async () => {
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(ok({ data: { documentId: "contestant-1", status: "active" } }));
+    const client = createStrapiApiClient({
+      apiBase: "https://admin.orwa.org/api",
+      apiKey: "not-printed",
+      fetchImpl,
+    });
+
+    await (client as unknown as { readinessCheck: (id: string) => Promise<unknown> })
+      .readinessCheck("contestant-1");
+
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(String(fetchImpl.mock.calls[0][0])).toContain(
+      "conference-contestants/contestant-1"
+    );
+    expect(String(fetchImpl.mock.calls[0][0])).not.toContain("users/me");
   });
 
   it("includes response bodies in HTTP errors and attaches timeout signals", async () => {
@@ -525,5 +729,57 @@ describe("golf overage HTTP client and CLI safety", () => {
     expect((fetchImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1]).toEqual(
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
+  });
+
+  it("renders a fee and Mulligan audit table with operational caveats", () => {
+    const before = fixtureSnapshot();
+    const payload = {
+      mode: "dry-run" as const,
+      before: {
+        conferenceDocumentId: TARGET_CONFERENCE.documentId,
+        activeGolferCount: 59,
+        availableContestants: -23,
+        targetAvailableContestants: -23,
+        registrations: [
+          {
+            id: 16781,
+            documentId: "registration-16781",
+            activeGolfers: 4,
+            cancelledGolfers: 0,
+            totalGolfers: 4,
+            total: 600,
+            paymentReference: { method: "Credit Card" },
+            golfers: [
+              {
+                documentId: before.registrations[0].contestants[0].documentId,
+                status: "active",
+                cancelled_at: null,
+                cancelled_reason: null,
+                cancelled_by: null,
+                name: "Fixture Golfer",
+                ticket: "Golfer - Contestant Only",
+                fee: 150,
+                mulligans: before.registrations[0].contestants[0].items,
+                itemsSnapshot: before.registrations[0].contestants[0].items,
+              },
+            ],
+          },
+        ],
+      },
+      plannedCounterReconciliation: {
+        conferenceDocumentId: TARGET_CONFERENCE.documentId,
+        currentAvailableContestants: -23,
+        targetAvailableContestants: -23,
+      },
+      plannedCancelRequests: [],
+    };
+
+    const markdown = renderAuditMarkdown(payload);
+
+    expect(markdown).toContain("| Registration | Contestant | Fee | Mulligans | Status |");
+    expect(markdown).toContain("Two Mulligans");
+    expect(markdown).toContain("quiet-window");
+    expect(markdown).toContain("local rehearsal");
+    expect(markdown).toContain("production role inspection");
   });
 });

@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { config as loadDotenv } from "dotenv";
 import { countsAgainstGolfCapacity } from "../apps/strapi/src/api/conference-webhook/helpers/contestant-capacity";
 
@@ -13,9 +13,15 @@ export const EXPECTED_ACTIVE_AFTER = 47;
 export const EXPECTED_AVAILABLE_AFTER = -11;
 
 export const REQUIRED_REASON = "2026 Fall golf overage — pending card refund";
+export const TARGET_CONFERENCE = {
+  id: 98,
+  documentId: "fall-conference-2026",
+  name: "2026 Fall Conference",
+} as const;
 const AUDIT_DIR = "tmp/golf-overage-2026-fall";
 const DEFAULT_HTTP_TIMEOUT_MS = 15_000;
 const MAX_PAGES = 100;
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 type RegistrationId = (typeof REQUIRED_REGISTRATION_IDS)[number];
 
@@ -43,6 +49,7 @@ export type ContestantRow = {
   cancelled_at?: string | null;
   cancelled_reason?: string | null;
   cancelled_by?: string | null;
+  conference?: ConferenceRow | null;
   conference_ticket?: TicketRow | null;
 };
 
@@ -75,13 +82,21 @@ type AuditPayload = {
     targetAvailableContestants: number;
   };
   plannedCancelRequests: CancelRequest[];
-  responses?: unknown[];
+  responseAudit?: {
+    counterUpdated?: boolean;
+    cancelledContestants: Array<{
+      documentId: string;
+      status?: string | null;
+      cancelled_at?: string | null;
+      cancelled_reason?: string | null;
+    }>;
+  };
 };
 
 type GolfOverageClient = {
   fetchSnapshot: () => Promise<GolfOverageSnapshot>;
   fetchConferenceAvailability: (conferenceDocumentId: string) => Promise<number | null>;
-  preflightCancelPermission: (firstContestantDocumentId: string) => Promise<unknown>;
+  readinessCheck: (firstContestantDocumentId: string) => Promise<unknown>;
   updateConferenceAvailability: (
     conferenceDocumentId: string,
     availableContestants: number
@@ -214,7 +229,15 @@ function contestantName(contestant: ContestantRow): string {
 
 function extractMulligans(items: ContestantRow["items"]): unknown {
   return (items ?? []).filter((item) =>
-    String(item.label ?? item.name ?? item.field ?? "")
+    [
+      item.key,
+      item.label,
+      item.name,
+      item.field,
+      (item.item as { name?: unknown } | undefined)?.name,
+    ]
+      .map((part) => String(part ?? ""))
+      .join(" ")
       .toLowerCase()
       .includes("mulligan")
   );
@@ -242,7 +265,21 @@ function paymentReference(registration: RegistrationRow): PaymentReference {
   };
 }
 
+function requireTargetConference(conference: ConferenceRow | null | undefined, label: string) {
+  if (
+    !conference ||
+    conference.id !== TARGET_CONFERENCE.id ||
+    conference.documentId !== TARGET_CONFERENCE.documentId ||
+    conference.name !== TARGET_CONFERENCE.name
+  ) {
+    throw new Error(
+      `${label} conference mismatch; expected ${TARGET_CONFERENCE.id}/${TARGET_CONFERENCE.documentId}/${TARGET_CONFERENCE.name}`
+    );
+  }
+}
+
 function summarizeSnapshot(snapshot: GolfOverageSnapshot): OperationSummary {
+  requireTargetConference(snapshot.conference, "target");
   const conferenceDocumentId = snapshot.conference.documentId;
   const availableContestants = numericOrNull(snapshot.conference.available_contestants);
 
@@ -255,7 +292,14 @@ function summarizeSnapshot(snapshot: GolfOverageSnapshot): OperationSummary {
       snapshot.activeGolferCount
     ),
     registrations: snapshot.registrations.map((registration) => {
+      requireTargetConference(registration.conference, `registration ${registration.id}`);
       const golfers = (registration.contestants ?? []).filter(isGolfer);
+      for (const golfer of golfers) {
+        requireTargetConference(
+          golfer.conference,
+          `contestant conference mismatch ${golfer.documentId}`
+        );
+      }
       return {
         id: registration.id,
         documentId: registration.documentId,
@@ -501,7 +545,7 @@ export async function runGolfOverageOperation(options: RunOptions) {
       after: before,
       plannedCounterReconciliation,
       plannedCancelRequests: [],
-      responses: [],
+      responseAudit: { cancelledContestants: [] },
     } satisfies AuditPayload;
     await options.writeAudit(audit);
     return {
@@ -529,7 +573,7 @@ export async function runGolfOverageOperation(options: RunOptions) {
   }
 
   const responses: unknown[] = [];
-  await options.client.preflightCancelPermission(cancelRequests[0].contestantDocumentId);
+  await options.client.readinessCheck(cancelRequests[0].contestantDocumentId);
 
   if (validatedAvailableBefore !== before.targetAvailableContestants) {
     const immediateBefore = await options.client.fetchConferenceAvailability(
@@ -558,6 +602,14 @@ export async function runGolfOverageOperation(options: RunOptions) {
     }
   }
 
+  const beforeFirstCancel = summarizeSnapshot(await options.client.fetchSnapshot());
+  requireOperableState(beforeFirstCancel);
+  if (beforeFirstCancel.activeGolferCount !== before.activeGolferCount) {
+    throw new Error(
+      `active golfer count changed before first cancellation: expected ${before.activeGolferCount}, found ${beforeFirstCancel.activeGolferCount}`
+    );
+  }
+
   for (const request of cancelRequests) {
     const response = await options.client.cancelContestant(
       request.contestantDocumentId,
@@ -584,22 +636,37 @@ export async function runGolfOverageOperation(options: RunOptions) {
     after,
     plannedCounterReconciliation,
     plannedCancelRequests: cancelRequests,
-    responses,
+    responseAudit: {
+      counterUpdated: validatedAvailableBefore !== before.targetAvailableContestants,
+      cancelledContestants: responses
+        .filter((response) => (response as { status?: string }).status === "cancelled")
+        .map((response) => {
+          const contestant = response as ContestantRow;
+          return {
+            documentId: contestant.documentId,
+            status: contestant.status,
+            cancelled_at: contestant.cancelled_at,
+            cancelled_reason: contestant.cancelled_reason,
+          };
+        }),
+    },
   });
 
   return { mode: "apply" as const, before, after, cancelRequests, responses };
 }
 
 export function parseCliArgs(argv: string[]) {
-  const allowed = new Set(["--apply", "--live", "--help", "-h"]);
+  const allowed = new Set(["--apply", "--live", "--rehearse-local", "--help", "-h"]);
   for (const arg of argv) {
     if (!allowed.has(arg)) {
       throw new Error(`Unknown flag: ${arg}`);
     }
   }
+  const rehearseLocal = argv.includes("--rehearse-local");
   return {
     apply: argv.includes("--apply"),
-    live: argv.includes("--live") || argv.includes("--apply"),
+    rehearseLocal,
+    live: argv.includes("--live") || argv.includes("--apply") || rehearseLocal,
     help: argv.includes("--help") || argv.includes("-h"),
   };
 }
@@ -607,10 +674,12 @@ export function parseCliArgs(argv: string[]) {
 export function resolveApiConfig({
   env,
   apply,
+  rehearseLocal = false,
   cwd,
 }: {
   env: NodeJS.ProcessEnv;
   apply: boolean;
+  rehearseLocal?: boolean;
   cwd: string;
 }) {
   const apiBase = (
@@ -628,15 +697,18 @@ export function resolveApiConfig({
   if (!apiBase.endsWith("/api")) {
     throw new Error("Strapi API base must end with /api");
   }
-  if (apply && apiBase !== "https://admin.orwa.org/api") {
+  if (apply && rehearseLocal && apiBase !== "http://localhost:13370/api") {
+    throw new Error("apply rehearsal requires apiBase === http://localhost:13370/api");
+  }
+  if (apply && !rehearseLocal && apiBase !== "https://admin.orwa.org/api") {
     throw new Error("apply mode requires apiBase === https://admin.orwa.org/api");
   }
 
   return { apiBase, apiKey, cwd };
 }
 
-function loadApiConfig(apply: boolean) {
-  const repoRoot = resolve(".");
+function loadApiConfig(apply: boolean, rehearseLocal: boolean) {
+  const repoRoot = REPO_ROOT;
   const envPaths = [
     join(repoRoot, ".env.local"),
     join(repoRoot, "apps/conference-registration/.env.production"),
@@ -646,7 +718,7 @@ function loadApiConfig(apply: boolean) {
     if (existsSync(envPath)) loadDotenv({ path: envPath, override: false });
   }
 
-  return resolveApiConfig({ env: process.env, apply, cwd: repoRoot });
+  return resolveApiConfig({ env: process.env, apply, rehearseLocal, cwd: repoRoot });
 }
 
 function strapiParams(params: Array<[string, string | number]>) {
@@ -735,6 +807,9 @@ export function createStrapiApiClient({
         ["populate[contestants][populate][conference_ticket][fields][0]", "documentId"],
         ["populate[contestants][populate][conference_ticket][fields][1]", "name"],
         ["populate[contestants][populate][conference_ticket][fields][2]", "context"],
+        ["populate[contestants][populate][conference][fields][0]", "id"],
+        ["populate[contestants][populate][conference][fields][1]", "documentId"],
+        ["populate[contestants][populate][conference][fields][2]", "name"],
         ["populate[contestants][populate][items][fields][0]", "key"],
         ["populate[contestants][populate][items][fields][1]", "label"],
         ["populate[contestants][populate][items][fields][2]", "value"],
@@ -765,11 +840,12 @@ export function createStrapiApiClient({
         throw new Error("target registrations do not share one conference");
       }
 
-      let activeGolferCount = 0;
+      const activeGolferIds = new Set<string>();
       for (let page = 1; page <= MAX_PAGES; page += 1) {
         const params = strapiParams([
           ["pagination[page]", page],
           ["pagination[pageSize]", 100],
+          ["sort[0]", "id:ASC"],
           ["fields[0]", "documentId"],
           ["fields[1]", "status"],
           ["filters[conference][documentId][$eq]", conference.documentId],
@@ -780,9 +856,18 @@ export function createStrapiApiClient({
           data: ContestantRow[];
           meta?: { pagination?: { pageCount?: number } };
         }>(`conference-contestants?${params}`);
-        activeGolferCount += (pageResponse.data ?? [])
+        const activeGolfers = (pageResponse.data ?? [])
           .filter((contestant) => contestant.status !== "cancelled")
-          .filter(isGolfer).length;
+          .filter(isGolfer);
+        for (const contestant of activeGolfers) {
+          if (!contestant.documentId) {
+            throw new Error("active golfer row is missing documentId");
+          }
+          if (activeGolferIds.has(contestant.documentId)) {
+            throw new Error(`duplicate active golfer documentId ${contestant.documentId}`);
+          }
+          activeGolferIds.add(contestant.documentId);
+        }
         const pageCount = pageResponse.meta?.pagination?.pageCount ?? 1;
         if (page >= pageCount) break;
         if (page === MAX_PAGES) {
@@ -790,7 +875,7 @@ export function createStrapiApiClient({
         }
       }
 
-      return { conference, registrations, activeGolferCount };
+      return { conference, registrations, activeGolferCount: activeGolferIds.size };
     },
 
     async fetchConferenceAvailability(conferenceDocumentId) {
@@ -801,18 +886,13 @@ export function createStrapiApiClient({
       return numericOrNull(response.data?.available_contestants);
     },
 
-    async preflightCancelPermission(firstContestantDocumentId) {
-      try {
-        return await getJson("users/me?populate[role][populate][permissions][fields][0]=action");
-      } catch (error) {
-        await getJson(
-          `conference-contestants/${firstContestantDocumentId}?${strapiParams([
-            ["fields[0]", "documentId"],
-            ["fields[1]", "status"],
-          ])}`
-        );
-        return { fallback: "contestant-readiness-get", reason: (error as Error).message };
-      }
+    async readinessCheck(firstContestantDocumentId) {
+      return getJson(
+        `conference-contestants/${firstContestantDocumentId}?${strapiParams([
+          ["fields[0]", "documentId"],
+          ["fields[1]", "status"],
+        ])}`
+      );
     },
 
     async updateConferenceAvailability(conferenceDocumentId, availableContestants) {
@@ -865,6 +945,11 @@ function makeFixtureClient(): GolfOverageClient {
       id: id * 10 + index,
       documentId: `fixture-contestant-${id}-${index + 1}`,
       status: "active",
+      conference: {
+        id: TARGET_CONFERENCE.id,
+        documentId: TARGET_CONFERENCE.documentId,
+        name: TARGET_CONFERENCE.name,
+      },
       first: `Fixture${registrationIndex + 1}`,
       last: `Golfer${index + 1}`,
       fee: 150,
@@ -899,7 +984,7 @@ function makeFixtureClient(): GolfOverageClient {
     async fetchConferenceAvailability() {
       throw new Error("fixture client is dry-run only");
     },
-    async preflightCancelPermission() {
+    async readinessCheck() {
       throw new Error("fixture client is dry-run only");
     },
     async cancelContestant() {
@@ -909,47 +994,87 @@ function makeFixtureClient(): GolfOverageClient {
 }
 
 async function writeAuditFiles(payload: AuditPayload) {
-  const auditDir = resolve(".", AUDIT_DIR);
+  const auditDir = join(REPO_ROOT, AUDIT_DIR);
   mkdirSync(auditDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const jsonPath = join(auditDir, `${stamp}-${payload.mode}.json`);
   const markdownPath = join(auditDir, `${stamp}-${payload.mode}.md`);
 
   writeFileSync(jsonPath, JSON.stringify(payload, null, 2));
-  writeFileSync(
-    markdownPath,
-    [
-      `# 2026 Fall Golf Overage ${payload.mode === "apply" ? "Apply" : "Dry Run"} Audit`,
-      "",
-      `- Mode: ${payload.mode}`,
-      payload.noOpReason ? `- No-op: ${payload.noOpReason}` : "",
-      `- Explicit maximum golfers: ${MAXIMUM_GOLFERS}`,
-      `- Active golfers before: ${payload.before.activeGolferCount}`,
-      `- Counter reconciliation: ${payload.plannedCounterReconciliation.currentAvailableContestants} -> ${payload.plannedCounterReconciliation.targetAvailableContestants}`,
-      `- Planned cancellation requests: ${payload.plannedCancelRequests.length}`,
-      payload.after
-        ? `- Active golfers after: ${payload.after.activeGolferCount}; availability after: ${payload.after.availableContestants}`
-        : "",
-      "",
-      "No secrets, card data, refunds, invoice mutations, payment mutations, or email sends are included in this audit.",
-      "",
-    ]
-      .filter(Boolean)
-      .join("\n")
-  );
+  writeFileSync(markdownPath, renderAuditMarkdown(payload));
 
   console.log(`Audit JSON: ${jsonPath}`);
   console.log(`Audit Markdown: ${markdownPath}`);
+}
+
+function formatMulligans(value: unknown): string {
+  if (!Array.isArray(value) || value.length === 0) return "None";
+  return value
+    .map((item) => {
+      const record = item as Record<string, unknown>;
+      const relatedName = (record.item as { name?: unknown } | undefined)?.name;
+      return [record.selection, relatedName, record.label, record.value]
+        .filter(Boolean)
+        .map(String)
+        .join(" / ");
+    })
+    .join("; ");
+}
+
+export function renderAuditMarkdown(payload: AuditPayload): string {
+  const rows = payload.before.registrations.flatMap((registration) =>
+    registration.golfers.map((golfer) =>
+      [
+        registration.id,
+        golfer.documentId,
+        golfer.fee ?? "",
+        formatMulligans(golfer.mulligans),
+        golfer.status ?? "",
+      ].join(" | ")
+    )
+  );
+
+  return [
+    `# 2026 Fall Golf Overage ${payload.mode === "apply" ? "Apply" : "Dry Run"} Audit`,
+    "",
+    `- Mode: ${payload.mode}`,
+    payload.noOpReason ? `- No-op: ${payload.noOpReason}` : "",
+    `- Target conference: ${TARGET_CONFERENCE.id}/${TARGET_CONFERENCE.documentId}/${TARGET_CONFERENCE.name}`,
+    `- Explicit maximum golfers: ${MAXIMUM_GOLFERS}`,
+    `- Active golfers before: ${payload.before.activeGolferCount}`,
+    `- Counter reconciliation: ${payload.plannedCounterReconciliation.currentAvailableContestants} -> ${payload.plannedCounterReconciliation.targetAvailableContestants}`,
+    `- Planned cancellation requests: ${payload.plannedCancelRequests.length}`,
+    payload.after
+      ? `- Active golfers after: ${payload.after.activeGolferCount}; availability after: ${payload.after.availableContestants}`
+      : "",
+    "",
+    "## Fee And Mulligan Evidence",
+    "",
+    "| Registration | Contestant | Fee | Mulligans | Status |",
+    "| --- | --- | ---: | --- | --- |",
+    ...rows.map((row) => `| ${row} |`),
+    "",
+    "## Operational Caveats",
+    "",
+    "- The counter update uses an immediate quiet-window recheck, not true database CAS.",
+    "- Cancel endpoint permission must be verified by local rehearsal and production role inspection before production apply.",
+    "- No secrets, raw endpoint responses, card data, refunds, invoice mutations, payment mutations, or email sends are included in this audit.",
+    "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function printUsage() {
   console.log(`Usage:
   npx tsx scripts/reconcile-and-cancel-golf-overage.ts
   npx tsx scripts/reconcile-and-cancel-golf-overage.ts --live
+  npx tsx scripts/reconcile-and-cancel-golf-overage.ts --apply --rehearse-local
   npx tsx scripts/reconcile-and-cancel-golf-overage.ts --apply
 
 Default mode is a fixture-backed dry run and performs zero network calls or writes.
 --live performs a read-only API dry run using local env/secret files.
+--apply --rehearse-local allows apply only against http://localhost:13370/api.
 --apply performs the guarded live reconciliation and cancellation operation.`);
 }
 
@@ -962,11 +1087,13 @@ async function main() {
 
   if (!args.live) {
     console.log("Mode: DRY RUN (fixture, zero writes, zero network calls)");
+  } else if (args.rehearseLocal) {
+    console.log("Mode: APPLY REHEARSAL (local API)");
   } else {
     console.log(`Mode: ${args.apply ? "APPLY" : "DRY RUN"} (live API)`);
   }
 
-  const apiConfig = args.live ? loadApiConfig(args.apply) : null;
+  const apiConfig = args.live ? loadApiConfig(args.apply, args.rehearseLocal) : null;
   console.log(`API base: ${apiConfig?.apiBase ?? "(fixture)"}`);
   const client = apiConfig
     ? createStrapiApiClient(apiConfig)
