@@ -36,4 +36,34 @@ describe("normalizeFiltersForListQuery", () => {
       )
     ).toEqual({ conferences: [1] });
   });
+
+  it("defaults conference contestants to active", () => {
+    expect(
+      normalizeFiltersForListQuery(
+        "conference-contestants",
+        { conference: 3, year: 2026 },
+        "contestants"
+      )
+    ).toEqual({ conference: 3, year: 2026, status: "active" });
+  });
+
+  it("keeps an explicit cancelled status", () => {
+    expect(
+      normalizeFiltersForListQuery(
+        "conference-contestants",
+        { conference: 3, year: 2026, status: "cancelled" },
+        "contestants"
+      )
+    ).toEqual({ conference: 3, year: 2026, status: "cancelled" });
+  });
+
+  it("omits contestant status when all is selected", () => {
+    expect(
+      normalizeFiltersForListQuery(
+        "conference-contestants",
+        { conference: 3, year: 2026, status: "all" },
+        "contestants"
+      )
+    ).toEqual({ conference: 3, year: 2026 });
+  });
 });

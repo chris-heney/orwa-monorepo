@@ -147,6 +147,7 @@ const ConferenceDashboard = () => {
 
   const listResource =
     resource.length > 0 ? resource : "conference-attendees";
+  // Applies resource-specific query defaults, including active contestants.
   const listFilterDefaults = normalizeFiltersForListQuery(
     listResource,
     tabFilters[selectedTab],

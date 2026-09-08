@@ -59,5 +59,22 @@ export function normalizeFiltersForListQuery(
     useMulti ? tab ?? "tickets" : tab ?? "sponsorships"
   );
 
-  return omitYearForListQuery(resource, shaped);
+  const normalized = omitYearForListQuery(resource, shaped);
+
+  if (
+    resource === "conference-contestants" &&
+    normalized.status == null
+  ) {
+    return { ...normalized, status: "active" };
+  }
+
+  if (
+    resource === "conference-contestants" &&
+    normalized.status === "all"
+  ) {
+    const { status: _status, ...rest } = normalized;
+    return rest;
+  }
+
+  return normalized;
 }
