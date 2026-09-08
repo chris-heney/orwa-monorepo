@@ -30,11 +30,20 @@ vi.mock("../services/contestant-cancellation", () => ({
   restoreContestant: vi.fn(),
 }));
 
+vi.mock("../services/conference-contestant", () => ({
+  createContestant: vi.fn(),
+  updateContestant: vi.fn(),
+}));
+
 import controller from "./conference-contestant";
 import {
   cancelContestant,
   restoreContestant,
 } from "../services/contestant-cancellation";
+import {
+  createContestant,
+  updateContestant,
+} from "../services/conference-contestant";
 
 const ctx = (
   body: Record<string, unknown> = {},
@@ -61,6 +70,14 @@ describe("conference contestant controller", () => {
       status: "cancelled",
     } as any);
     vi.mocked(restoreContestant).mockResolvedValue({
+      documentId: "contestant-1",
+      status: "active",
+    } as any);
+    vi.mocked(createContestant).mockResolvedValue({
+      documentId: "contestant-2",
+      status: "active",
+    } as any);
+    vi.mocked(updateContestant).mockResolvedValue({
       documentId: "contestant-1",
       status: "active",
     } as any);
@@ -165,6 +182,59 @@ describe("conference contestant controller", () => {
         },
       },
     });
+  });
+
+  it("creates contestants through the lifecycle service", async () => {
+    const request = ctx({ data: { first: "Ada", conference_ticket: "golfer" } });
+
+    const response = await (controller as any).create(request);
+
+    expect(createContestant).toHaveBeenCalledWith(testState.strapi, {
+      data: { first: "Ada", conference_ticket: "golfer" },
+    });
+    expect(response).toEqual({
+      data: {
+        sanitized: {
+          documentId: "contestant-2",
+          status: "active",
+        },
+      },
+    });
+  });
+
+  it("updates contestants through the lifecycle service", async () => {
+    const request = ctx({ data: { first: "Grace" } });
+
+    await (controller as any).update(request);
+
+    expect(updateContestant).toHaveBeenCalledWith(testState.strapi, {
+      documentId: "contestant-1",
+      data: { first: "Grace" },
+    });
+  });
+
+  it("maps direct create/update lifecycle errors without leaking internals", async () => {
+    const createRequest = ctx({ data: { status: "cancelled" } });
+    vi.mocked(createContestant).mockRejectedValueOnce(
+      new Error("Lifecycle fields must use cancel/restore actions")
+    );
+
+    await (controller as any).create(createRequest);
+
+    expect(createRequest.badRequest).toHaveBeenCalledWith(
+      "Unable to update conference contestant."
+    );
+
+    const updateRequest = ctx({ data: { conference_ticket: "other" } });
+    vi.mocked(updateContestant).mockRejectedValueOnce(
+      new Error("Cancel and create a new contestant to change conference or ticket.")
+    );
+
+    await (controller as any).update(updateRequest);
+
+    expect(updateRequest.badRequest).toHaveBeenCalledWith(
+      "Unable to update conference contestant."
+    );
   });
 
   it("sanitizes and transforms the cancelled contestant response", async () => {

@@ -1014,7 +1014,7 @@ export default ({ strapi }) => {
         data: coerceToSchema("api::conference-contestant.conference-contestant", newContestant),
       });
 
-      if (contestant.ticket_type.name === "Golfer") {
+      if (countsAgainstGolfCapacity(contestant)) {
         contestantIds.push(contestantEntity.id);
       }
 

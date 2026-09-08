@@ -19,13 +19,19 @@ import type { ITicketPayload } from "../types";
 // have no `context`, so match by containing these names or they get stored as
 // attendees.
 const CONTESTANT_NAME_FALLBACKS = ["Golfer", "Fisher", "Contestant"];
+const ticketNameRepresents = (ticketName: string, label: string): boolean => {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const token = new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i");
+  const negated = new RegExp(`(^|[^a-z0-9])non[-\\s]+${escaped}([^a-z0-9]|$)`, "i");
+  return token.test(ticketName) && !negated.test(ticketName);
+};
 
 export const isContestantTicket = (ticket: ITicketPayload): boolean => {
   if (ticket?.ticket_type?.context === "Contestant") return true;
   if (ticket?.ticket_type?.context) return false;
-  const ticketName = (ticket?.ticket_type?.name ?? "").toLowerCase();
+  const ticketName = ticket?.ticket_type?.name ?? "";
   return CONTESTANT_NAME_FALLBACKS.some((name) =>
-    ticketName.includes(name.toLowerCase())
+    ticketNameRepresents(ticketName, name)
   );
 };
 
@@ -37,9 +43,7 @@ export const GOLF_CAPACITY_NAME_SUBSTRING = "golfer";
  */
 export const countsAgainstGolfCapacity = (ticket: ITicketPayload): boolean =>
   isContestantTicket(ticket) &&
-  (ticket?.ticket_type?.name ?? "")
-    .toLowerCase()
-    .includes(GOLF_CAPACITY_NAME_SUBSTRING);
+  ticketNameRepresents(ticket?.ticket_type?.name ?? "", GOLF_CAPACITY_NAME_SUBSTRING);
 
 /** How many golf slots does this payload consume? */
 export const golferCount = (

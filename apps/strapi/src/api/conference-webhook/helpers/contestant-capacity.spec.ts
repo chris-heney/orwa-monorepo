@@ -19,4 +19,8 @@ describe("countsAgainstGolfCapacity", () => {
       false
     );
   });
+
+  it("does not count negated Non-Golfer names", () => {
+    expect(countsAgainstGolfCapacity(payload("Non-Golfer Guest", null))).toBe(false);
+  });
 });

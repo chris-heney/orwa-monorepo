@@ -8,6 +8,10 @@ import {
   cancelContestant,
   restoreContestant,
 } from "../services/contestant-cancellation";
+import {
+  createContestant,
+  updateContestant,
+} from "../services/conference-contestant";
 
 type ContestantAction = "cancel" | "restore";
 
@@ -59,7 +63,10 @@ const mapContestantActionError = (ctx: any, error: unknown) => {
   if (
     lowerMessage.includes("required") ||
     lowerMessage.includes("missing") ||
-    lowerMessage.includes("invalid")
+    lowerMessage.includes("invalid") ||
+    lowerMessage.includes("lifecycle") ||
+    lowerMessage.includes("cancel and create") ||
+    lowerMessage.includes("read-only")
   ) {
     return ctx.badRequest("Unable to update conference contestant.");
   }
@@ -105,6 +112,31 @@ export default factories.createCoreController(
 
     async restore(ctx) {
       return runContestantAction(ctx, strapi, "restore", this);
+    },
+
+    async create(ctx) {
+      try {
+        const entity = await createContestant(strapi, {
+          data: ctx.request?.body?.data ?? ctx.request?.body ?? {},
+        });
+        const sanitized = await this.sanitizeOutput(entity, ctx);
+        return this.transformResponse(sanitized);
+      } catch (error) {
+        return mapContestantActionError(ctx, error);
+      }
+    },
+
+    async update(ctx) {
+      try {
+        const entity = await updateContestant(strapi, {
+          documentId: ctx.params?.documentId ?? ctx.params?.id,
+          data: ctx.request?.body?.data ?? ctx.request?.body ?? {},
+        });
+        const sanitized = await this.sanitizeOutput(entity, ctx);
+        return this.transformResponse(sanitized);
+      } catch (error) {
+        return mapContestantActionError(ctx, error);
+      }
     },
 
     async delete(ctx) {
