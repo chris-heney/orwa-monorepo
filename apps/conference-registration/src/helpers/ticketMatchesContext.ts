@@ -21,7 +21,8 @@ export const ticketMatchesContext = (
   if (ticket.context) return false;
 
   const names = NAME_FALLBACKS[context] || [context];
+  const ticketName = ticket.name?.toLowerCase() ?? "";
   return names.some(
-    (name) => ticket.name?.localeCompare(name, undefined, { sensitivity: "accent" }) === 0
+    (name) => ticketName.includes(name.toLowerCase())
   );
 };

@@ -613,6 +613,30 @@ describe("conference registration matrix", () => {
     expect(dbDecrement).toHaveBeenCalledWith("available_contestants", 1);
   });
 
+  it("routes, gates, and decrements null-context 'Golfer - Contestant Only'", async () => {
+    availableContestants = 1;
+    await submit({
+      ...basePayload("ContestantOnlyNullContext"),
+      registration_type: "Contestant",
+      contestant_already_registered: "No",
+      tickets: [
+        {
+          ...golferLine("StandaloneNullContext"),
+          price: 150,
+          ticket_type: {
+            id: 47,
+            name: "Golfer - Contestant Only",
+            context: null,
+          },
+        },
+      ],
+    });
+
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(1);
+    expect(created["api::conference-attendee.conference-attendee"]).toBeUndefined();
+    expect(dbDecrement).toHaveBeenCalledWith("available_contestants", 1);
+  });
+
   it("matches the capacity substring case-insensitively", async () => {
     availableContestants = 0;
     const body = await submitRaw({

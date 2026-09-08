@@ -1,11 +1,13 @@
 import { ITicketOption, ITicketPayload } from "../types/types";
+import { ticketMatchesContext } from "./ticketMatchesContext";
 /**
  * Golf tournament capacity (conference.available_contestants).
  *
  * Mirrors the Strapi webhook's counting exactly (helpers/
  * contestant-capacity.ts). Per binding user directive (2026-09-07): ANY
- * ticket whose name CONTAINS "Golfer" (case-insensitive) consumes a slot,
- * regardless of context. Fisher tickets never count. The field is a live remaining counter and can be negative after
+ * contestant-routed ticket whose name CONTAINS "Golfer" (case-insensitive)
+ * consumes a slot. Legacy no-context routing recognizes names containing
+ * Golfer/Fisher/Contestant. Fisher tickets never count. The field is a live remaining counter and can be negative after
  * an oversell — always clamp to zero before comparing.
  */
 export const GOLF_CAPACITY_NAME_SUBSTRING = "golfer";
@@ -14,6 +16,7 @@ export const countsAgainstGolfCapacity = (
   ticketType: Pick<ITicketOption, "name" | "context"> | null | undefined
 ): boolean =>
   !!ticketType &&
+  ticketMatchesContext(ticketType, "Contestant") &&
   (ticketType.name ?? "").toLowerCase().includes(GOLF_CAPACITY_NAME_SUBSTRING);
 
 /**

@@ -33,11 +33,13 @@ const makeGolfer = (
     cancelled_at: string | null;
     cancelled_by: string | null;
     conference: { id: number; documentId: string; name: string } | null;
+    year: number;
   }> = {}
 ) => ({
   id: 1000 + Number(suffix.replace(/\D/g, "") || 0),
   documentId: overrides.documentId ?? `contestant-${suffix}`,
   status: overrides.status ?? "active",
+  year: overrides.year ?? 2026,
   first: `First${suffix}`,
   last: `Last${suffix}`,
   fee: overrides.fee ?? 150,
@@ -68,6 +70,7 @@ const makeGolfer = (
 const makeRegistration = (id: number, offset: number) => ({
   id,
   documentId: `registration-${id}`,
+  year: 2026,
   organization: `Water System ${id}`,
   total: 600,
   payment_method: "Credit Card",
@@ -146,9 +149,9 @@ describe("golf overage reconciliation guards", () => {
 
   it("pins the approved Fall conference identity in the operation", () => {
     expect(TARGET_CONFERENCE).toEqual({
-      id: 98,
-      documentId: "fall-conference-2026",
-      name: "2026 Fall Conference",
+      id: 3,
+      documentId: "s55n2bz60qx2c2cxg7mb6jx5",
+      name: "Fall Conference",
     });
   });
 
@@ -279,6 +282,19 @@ describe("golf overage reconciliation operation", () => {
     expect(client.cancelContestant).not.toHaveBeenCalled();
   });
 
+  it("refuses a malicious snapshot with a non-allowlisted parent id before any write", async () => {
+    const snapshot = fixtureSnapshot();
+    snapshot.registrations[0].id = 99999;
+    const client = makeClient([snapshot]);
+
+    await expect(
+      runGolfOverageOperation({ apply: true, client, writeAudit: vi.fn() })
+    ).rejects.toThrow("not authorized");
+    expect(client.fetchConferenceAvailability).not.toHaveBeenCalled();
+    expect(client.updateConferenceAvailability).not.toHaveBeenCalled();
+    expect(client.cancelContestant).not.toHaveBeenCalled();
+  });
+
   it("refuses already-cancelled target golfers without the exact reason", async () => {
     const snapshot = fixtureSnapshot();
     snapshot.registrations[0].contestants[0].status = "cancelled";
@@ -357,7 +373,7 @@ describe("golf overage reconciliation operation", () => {
     expect(result.mode).toBe("apply");
     expect(client.updateConferenceAvailability).toHaveBeenCalledTimes(1);
     expect(client.updateConferenceAvailability).toHaveBeenCalledWith(
-      "fall-conference-2026",
+      TARGET_CONFERENCE.documentId,
       EXPECTED_AVAILABLE_BEFORE
     );
     expect(calls.slice(0, 3)).toEqual([
@@ -439,6 +455,36 @@ describe("golf overage reconciliation operation", () => {
       })
     ).resolves.toMatchObject({ cancelRequests: { length: 8 } });
     expect(resumeClient.cancelContestant).toHaveBeenCalledTimes(8);
+  });
+
+  it("writes a sanitized failure audit before rethrowing a kth cancellation error", async () => {
+    const writeAudit = vi.fn();
+    const client = makeClient([fixtureSnapshot(), fixtureSnapshot()]);
+    client.cancelContestant.mockImplementation(async (documentId: string) => {
+      if (client.cancelContestant.mock.calls.length === 3) {
+        throw new Error("HTTP 500 with customer@example.invalid");
+      }
+      return {
+        documentId,
+        status: "cancelled",
+        cancelled_at: cancelledAt,
+        cancelled_reason: REQUIRED_REASON,
+        email: "golfer@example.invalid",
+      };
+    });
+
+    await expect(
+      runGolfOverageOperation({ apply: true, client, writeAudit })
+    ).rejects.toThrow("HTTP 500");
+
+    const audit = writeAudit.mock.calls[0][0];
+    expect(audit.mode).toBe("apply");
+    expect(audit.currentPhase).toContain("cancel");
+    expect(audit.errorMessage).toBe("HTTP 500 with [redacted-email]");
+    expect(JSON.stringify(audit)).not.toContain("golfer@example.invalid");
+    expect(JSON.stringify(audit)).not.toContain("First16781");
+    expect(JSON.stringify(audit)).not.toContain("Water System");
+    expect(audit.responseAudit.cancelledContestants).toHaveLength(2);
   });
 
   it("keeps first-cancel failure resumable after counter reconciliation", async () => {
@@ -573,11 +619,14 @@ describe("golf overage HTTP client and CLI safety", () => {
     ).resolves.toMatchObject({ cancelRequests: { length: 12 } });
   });
 
-  it("counts active golfers client-side so null or missing status is still active", async () => {
+  it("counts active golfers client-side for 2026 only so null or missing status is still active", async () => {
     const registrations = fixtureSnapshot().registrations;
+    const crossYear = makeGolfer("cross-year");
+    crossYear.year = 2025;
     const scopedRows = [
       makeGolfer("active-null", { status: null as unknown as string }),
       makeGolfer("active-missing"),
+      crossYear,
       makeGolfer("cancelled", {
         status: "cancelled",
         cancelled_reason: REQUIRED_REASON,
@@ -601,7 +650,23 @@ describe("golf overage HTTP client and CLI safety", () => {
     const activeCountUrl = String(fetchImpl.mock.calls[1][0]);
 
     expect(activeCountUrl).not.toContain("filters%5Bstatus%5D");
+    expect(activeCountUrl).toContain("filters%5Byear%5D%5B%24eq%5D=2026");
     expect(snapshot.activeGolferCount).toBe(2);
+  });
+
+  it("fails closed when pagination metadata is missing", async () => {
+    const registrations = fixtureSnapshot().registrations;
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(ok({ data: registrations }))
+      .mockResolvedValueOnce(ok({ data: [makeGolfer("1")] }));
+    const client = createStrapiApiClient({
+      apiBase: "https://admin.orwa.org/api",
+      apiKey: "not-printed",
+      fetchImpl,
+    });
+
+    await expect(client.fetchSnapshot()).rejects.toThrow("pagination metadata");
   });
 
   it("sorts active golfer pages, dedupes documentIds, and detects duplicate IDs", async () => {
@@ -651,6 +716,9 @@ describe("golf overage HTTP client and CLI safety", () => {
 
   it("rejects unknown CLI flags and unsafe apply API bases", () => {
     expect(() => parseCliArgs(["--bogus"])).toThrow("Unknown flag");
+    expect(() => parseCliArgs(["--rehearse-local"])).toThrow(
+      "--rehearse-local requires --apply"
+    );
     expect(parseCliArgs(["--apply", "--rehearse-local"])).toMatchObject({
       apply: true,
       rehearseLocal: true,

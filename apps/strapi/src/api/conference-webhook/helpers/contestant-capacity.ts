@@ -5,9 +5,10 @@ import type { ITicketPayload } from "../types";
  *
  * `conference.available_contestants` ("Available Golf Contestants" in
  * Conference Manager) is a live remaining-slot counter. Per binding user
- * directive (2026-09-07): ANY ticket whose name CONTAINS "Golfer"
- * (case-insensitive) consumes a slot, regardless of context. Fisher tickets
- * never count. Both the
+ * directive (2026-09-07): ANY contestant-routed ticket whose name CONTAINS
+ * "Golfer" (case-insensitive) consumes a slot. Legacy no-context routing
+ * recognizes names containing Golfer/Fisher/Contestant. Fisher tickets never
+ * count. Both the
  * capacity gate and the webhook decrement use this one predicate, and the
  * frontend (`apps/conference-registration/src/helpers/golfCapacity.ts`)
  * mirrors it exactly. The counter can already be negative (2026-09
@@ -15,17 +16,16 @@ import type { ITicketPayload } from "../types";
  */
 
 // Mirrors the frontend's ticketMatchesContext fallback: legacy Fall tickets
-// have no `context`, so match by name too or they get stored as attendees.
+// have no `context`, so match by containing these names or they get stored as
+// attendees.
 const CONTESTANT_NAME_FALLBACKS = ["Golfer", "Fisher", "Contestant"];
 
 export const isContestantTicket = (ticket: ITicketPayload): boolean => {
   if (ticket?.ticket_type?.context === "Contestant") return true;
   if (ticket?.ticket_type?.context) return false;
-  return CONTESTANT_NAME_FALLBACKS.some(
-    (name) =>
-      ticket?.ticket_type?.name?.localeCompare(name, undefined, {
-        sensitivity: "accent",
-      }) === 0
+  const ticketName = (ticket?.ticket_type?.name ?? "").toLowerCase();
+  return CONTESTANT_NAME_FALLBACKS.some((name) =>
+    ticketName.includes(name.toLowerCase())
   );
 };
 
@@ -33,9 +33,10 @@ export const GOLF_CAPACITY_NAME_SUBSTRING = "golfer";
 
 /**
  * Does one cart line consume a golf slot? Same rule as the decrement:
- * any ticket name containing "Golfer" (case-insensitive).
+ * a contestant-routed ticket name containing "Golfer" (case-insensitive).
  */
 export const countsAgainstGolfCapacity = (ticket: ITicketPayload): boolean =>
+  isContestantTicket(ticket) &&
   (ticket?.ticket_type?.name ?? "")
     .toLowerCase()
     .includes(GOLF_CAPACITY_NAME_SUBSTRING);

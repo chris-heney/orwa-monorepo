@@ -14,10 +14,11 @@ export const EXPECTED_AVAILABLE_AFTER = -11;
 
 export const REQUIRED_REASON = "2026 Fall golf overage — pending card refund";
 export const TARGET_CONFERENCE = {
-  id: 98,
-  documentId: "fall-conference-2026",
-  name: "2026 Fall Conference",
+  id: 3,
+  documentId: "s55n2bz60qx2c2cxg7mb6jx5",
+  name: "Fall Conference",
 } as const;
+export const TARGET_YEAR = 2026;
 const AUDIT_DIR = "tmp/golf-overage-2026-fall";
 const DEFAULT_HTTP_TIMEOUT_MS = 15_000;
 const MAX_PAGES = 100;
@@ -41,6 +42,7 @@ type TicketRow = {
 export type ContestantRow = {
   id?: number;
   documentId: string;
+  year?: number | string | null;
   status?: string | null;
   first?: string | null;
   last?: string | null;
@@ -56,6 +58,7 @@ export type ContestantRow = {
 export type RegistrationRow = {
   id: number;
   documentId: string;
+  year?: number | string | null;
   organization?: string | null;
   total?: number | string | null;
   payment_method?: string | null;
@@ -74,6 +77,8 @@ export type GolfOverageSnapshot = {
 type AuditPayload = {
   mode: "dry-run" | "apply";
   noOpReason?: string;
+  currentPhase?: string;
+  errorMessage?: string;
   before: OperationSummary;
   after?: OperationSummary;
   plannedCounterReconciliation: {
@@ -293,8 +298,14 @@ function summarizeSnapshot(snapshot: GolfOverageSnapshot): OperationSummary {
     ),
     registrations: snapshot.registrations.map((registration) => {
       requireTargetConference(registration.conference, `registration ${registration.id}`);
+      if (Number(registration.year) !== TARGET_YEAR) {
+        throw new Error(`registration ${registration.id} expected year ${TARGET_YEAR}`);
+      }
       const golfers = (registration.contestants ?? []).filter(isGolfer);
       for (const golfer of golfers) {
+        if (Number(golfer.year) !== TARGET_YEAR) {
+          throw new Error(`contestant ${golfer.documentId} expected year ${TARGET_YEAR}`);
+        }
         requireTargetConference(
           golfer.conference,
           `contestant conference mismatch ${golfer.documentId}`
@@ -525,10 +536,50 @@ function verifyTotalsAndPaymentsUnchanged(
   }
 }
 
+function sanitizedCancelResponse(response: unknown) {
+  const contestant = response as ContestantRow;
+  return {
+    documentId: contestant.documentId,
+    status: contestant.status,
+    cancelled_at: contestant.cancelled_at,
+    cancelled_reason: contestant.cancelled_reason,
+  };
+}
+
+function redactMessage(message: string): string {
+  return message.replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[redacted-email]");
+}
+
+function sanitizeFailureSummary(summary: OperationSummary): OperationSummary {
+  return {
+    ...summary,
+    registrations: summary.registrations.map((registration) => ({
+      ...registration,
+      organization: undefined,
+      total: undefined,
+      paymentReference: { method: registration.paymentReference.method },
+      golfers: registration.golfers.map((golfer) => ({
+        ...golfer,
+        name: "[redacted]",
+      })),
+    })),
+  };
+}
+
+function sanitizeFailureRequests(cancelRequests: CancelRequest[]): CancelRequest[] {
+  return cancelRequests.map((request) => ({
+    ...request,
+    name: "[redacted]",
+    registrationTotal: undefined,
+    paymentReference: { method: request.paymentReference.method },
+  }));
+}
+
 export async function runGolfOverageOperation(options: RunOptions) {
   validateTargets(REQUIRED_REGISTRATION_IDS);
 
   const beforeSnapshot = await options.client.fetchSnapshot();
+  validateTargets(beforeSnapshot.registrations.map((registration) => registration.id));
   const before = summarizeSnapshot(beforeSnapshot);
   const completedBeforeStart = isCompletedState(before);
   const plannedCounterReconciliation = {
@@ -573,86 +624,99 @@ export async function runGolfOverageOperation(options: RunOptions) {
   }
 
   const responses: unknown[] = [];
-  await options.client.readinessCheck(cancelRequests[0].contestantDocumentId);
+  const responseAudit: NonNullable<AuditPayload["responseAudit"]> = {
+    counterUpdated: false,
+    cancelledContestants: [],
+  };
+  let currentPhase = "readiness check";
 
-  if (validatedAvailableBefore !== before.targetAvailableContestants) {
-    const immediateBefore = await options.client.fetchConferenceAvailability(
-      before.conferenceDocumentId
-    );
-    if (immediateBefore !== validatedAvailableBefore) {
-      throw new Error(
-        `available_contestants changed before counter update: expected ${validatedAvailableBefore}, found ${immediateBefore}`
+  try {
+    await options.client.readinessCheck(cancelRequests[0].contestantDocumentId);
+
+    if (validatedAvailableBefore !== before.targetAvailableContestants) {
+      currentPhase = "counter quiet-window recheck";
+      const immediateBefore = await options.client.fetchConferenceAvailability(
+        before.conferenceDocumentId
       );
-    }
+      if (immediateBefore !== validatedAvailableBefore) {
+        throw new Error(
+          `available_contestants changed before counter update: expected ${validatedAvailableBefore}, found ${immediateBefore}`
+        );
+      }
 
-    responses.push(
+      currentPhase = "counter update";
       await options.client.updateConferenceAvailability(
         before.conferenceDocumentId,
         before.targetAvailableContestants
-      )
-    );
+      );
+      responseAudit.counterUpdated = true;
 
-    const immediateAfter = await options.client.fetchConferenceAvailability(
-      before.conferenceDocumentId
-    );
-    if (immediateAfter !== before.targetAvailableContestants) {
+      currentPhase = "counter post-update recheck";
+      const immediateAfter = await options.client.fetchConferenceAvailability(
+        before.conferenceDocumentId
+      );
+      if (immediateAfter !== before.targetAvailableContestants) {
+        throw new Error(
+          `available_contestants after counter update expected ${before.targetAvailableContestants}, found ${immediateAfter}`
+        );
+      }
+    }
+
+    currentPhase = "pre-cancel active recount";
+    const beforeFirstCancel = summarizeSnapshot(await options.client.fetchSnapshot());
+    requireOperableState(beforeFirstCancel);
+    if (beforeFirstCancel.activeGolferCount !== before.activeGolferCount) {
       throw new Error(
-        `available_contestants after counter update expected ${before.targetAvailableContestants}, found ${immediateAfter}`
+        `active golfer count changed before first cancellation: expected ${before.activeGolferCount}, found ${beforeFirstCancel.activeGolferCount}`
       );
     }
-  }
 
-  const beforeFirstCancel = summarizeSnapshot(await options.client.fetchSnapshot());
-  requireOperableState(beforeFirstCancel);
-  if (beforeFirstCancel.activeGolferCount !== before.activeGolferCount) {
-    throw new Error(
-      `active golfer count changed before first cancellation: expected ${before.activeGolferCount}, found ${beforeFirstCancel.activeGolferCount}`
-    );
-  }
-
-  for (const request of cancelRequests) {
-    const response = await options.client.cancelContestant(
-      request.contestantDocumentId,
-      request.reason
-    );
-    if (
-      !response ||
-      (response as { status?: string }).status !== "cancelled" ||
-      (response as { cancelled_reason?: string | null }).cancelled_reason !== REQUIRED_REASON
-    ) {
-      throw new Error(`cancel endpoint returned unexpected response for ${request.contestantDocumentId}`);
+    for (const request of cancelRequests) {
+      currentPhase = `cancel ${request.contestantDocumentId}`;
+      const response = await options.client.cancelContestant(
+        request.contestantDocumentId,
+        request.reason
+      );
+      if (
+        !response ||
+        (response as { status?: string }).status !== "cancelled" ||
+        (response as { cancelled_reason?: string | null }).cancelled_reason !== REQUIRED_REASON
+      ) {
+        throw new Error(`cancel endpoint returned unexpected response for ${request.contestantDocumentId}`);
+      }
+      responses.push(response);
+      responseAudit.cancelledContestants.push(sanitizedCancelResponse(response));
     }
-    responses.push(response);
+
+    currentPhase = "post-cancel verification";
+    const afterSnapshot = await options.client.fetchSnapshot();
+    const after = summarizeSnapshot(afterSnapshot);
+    requireCompletedState(after);
+    verifyTotalsAndPaymentsUnchanged(before, after);
+
+    await options.writeAudit({
+      mode: "apply",
+      currentPhase,
+      before,
+      after,
+      plannedCounterReconciliation,
+      plannedCancelRequests: cancelRequests,
+      responseAudit,
+    });
+
+    return { mode: "apply" as const, before, after, cancelRequests, responses };
+  } catch (error) {
+    await options.writeAudit({
+      mode: "apply",
+      currentPhase,
+      errorMessage: redactMessage(error instanceof Error ? error.message : String(error)),
+      before: sanitizeFailureSummary(before),
+      plannedCounterReconciliation,
+      plannedCancelRequests: sanitizeFailureRequests(cancelRequests),
+      responseAudit,
+    });
+    throw error;
   }
-
-  const afterSnapshot = await options.client.fetchSnapshot();
-  const after = summarizeSnapshot(afterSnapshot);
-  requireCompletedState(after);
-  verifyTotalsAndPaymentsUnchanged(before, after);
-
-  await options.writeAudit({
-    mode: "apply",
-    before,
-    after,
-    plannedCounterReconciliation,
-    plannedCancelRequests: cancelRequests,
-    responseAudit: {
-      counterUpdated: validatedAvailableBefore !== before.targetAvailableContestants,
-      cancelledContestants: responses
-        .filter((response) => (response as { status?: string }).status === "cancelled")
-        .map((response) => {
-          const contestant = response as ContestantRow;
-          return {
-            documentId: contestant.documentId,
-            status: contestant.status,
-            cancelled_at: contestant.cancelled_at,
-            cancelled_reason: contestant.cancelled_reason,
-          };
-        }),
-    },
-  });
-
-  return { mode: "apply" as const, before, after, cancelRequests, responses };
 }
 
 export function parseCliArgs(argv: string[]) {
@@ -663,6 +727,9 @@ export function parseCliArgs(argv: string[]) {
     }
   }
   const rehearseLocal = argv.includes("--rehearse-local");
+  if (rehearseLocal && !argv.includes("--apply")) {
+    throw new Error("--rehearse-local requires --apply");
+  }
   return {
     apply: argv.includes("--apply"),
     rehearseLocal,
@@ -715,7 +782,7 @@ function loadApiConfig(apply: boolean, rehearseLocal: boolean) {
     join(repoRoot, "apps/member-manager/.env.production"),
   ];
   for (const envPath of envPaths) {
-    if (existsSync(envPath)) loadDotenv({ path: envPath, override: false });
+    if (existsSync(envPath)) loadDotenv({ path: envPath, override: false, quiet: true });
   }
 
   return resolveApiConfig({ env: process.env, apply, rehearseLocal, cwd: repoRoot });
@@ -791,19 +858,11 @@ export function createStrapiApiClient({
         ["fields[4]", "payment_method"],
         ["fields[5]", "wp_eid"],
         ["fields[6]", "passport_id"],
+        ["fields[7]", "year"],
         ["populate[conference][fields][0]", "id"],
         ["populate[conference][fields][1]", "documentId"],
         ["populate[conference][fields][2]", "name"],
         ["populate[conference][fields][3]", "available_contestants"],
-        ["populate[contestants][fields][0]", "id"],
-        ["populate[contestants][fields][1]", "documentId"],
-        ["populate[contestants][fields][2]", "status"],
-        ["populate[contestants][fields][3]", "first"],
-        ["populate[contestants][fields][4]", "last"],
-        ["populate[contestants][fields][5]", "fee"],
-        ["populate[contestants][fields][6]", "cancelled_at"],
-        ["populate[contestants][fields][7]", "cancelled_reason"],
-        ["populate[contestants][fields][8]", "cancelled_by"],
         ["populate[contestants][populate][conference_ticket][fields][0]", "documentId"],
         ["populate[contestants][populate][conference_ticket][fields][1]", "name"],
         ["populate[contestants][populate][conference_ticket][fields][2]", "context"],
@@ -847,8 +906,9 @@ export function createStrapiApiClient({
           ["pagination[pageSize]", 100],
           ["sort[0]", "id:ASC"],
           ["fields[0]", "documentId"],
-          ["fields[1]", "status"],
+          ["fields[1]", "year"],
           ["filters[conference][documentId][$eq]", conference.documentId],
+          ["filters[year][$eq]", TARGET_YEAR],
           ["populate[conference_ticket][fields][0]", "name"],
           ["populate[conference_ticket][fields][1]", "context"],
         ]);
@@ -856,7 +916,13 @@ export function createStrapiApiClient({
           data: ContestantRow[];
           meta?: { pagination?: { pageCount?: number } };
         }>(`conference-contestants?${params}`);
+        const pagination = pageResponse.meta?.pagination;
+        if (!pagination || typeof pagination.pageCount !== "number") {
+          throw new Error("active golfer pagination metadata is required");
+        }
+
         const activeGolfers = (pageResponse.data ?? [])
+          .filter((contestant) => Number(contestant.year) === TARGET_YEAR)
           .filter((contestant) => contestant.status !== "cancelled")
           .filter(isGolfer);
         for (const contestant of activeGolfers) {
@@ -868,7 +934,7 @@ export function createStrapiApiClient({
           }
           activeGolferIds.add(contestant.documentId);
         }
-        const pageCount = pageResponse.meta?.pagination?.pageCount ?? 1;
+        const pageCount = pagination.pageCount;
         if (page >= pageCount) break;
         if (page === MAX_PAGES) {
           throw new Error(`pagination exceeded ${MAX_PAGES} pages`);
@@ -930,20 +996,22 @@ function makeFixtureClient(): GolfOverageClient {
   const registrations = REQUIRED_REGISTRATION_IDS.map((id, registrationIndex) => ({
     id,
     documentId: `registration-${id}`,
+    year: TARGET_YEAR,
     organization: `Fixture System ${id}`,
     total: 600,
     payment_method: "Credit Card",
     wp_eid: id + 50000,
     passport_id: id + 60000,
     conference: {
-      id: 98,
-      documentId: "fall-conference-2026",
-      name: "2026 Fall Conference",
+      id: TARGET_CONFERENCE.id,
+      documentId: TARGET_CONFERENCE.documentId,
+      name: TARGET_CONFERENCE.name,
       available_contestants: EXPECTED_AVAILABLE_BEFORE,
     },
     contestants: [0, 1, 2, 3].map((index) => ({
       id: id * 10 + index,
       documentId: `fixture-contestant-${id}-${index + 1}`,
+      year: TARGET_YEAR,
       status: "active",
       conference: {
         id: TARGET_CONFERENCE.id,
