@@ -8,6 +8,7 @@ import {
   ArrayField,
   FunctionField,
   RaRecord,
+  RecordContextProvider,
 } from "react-admin";
 import { Grid, Typography, Box, Chip } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
@@ -17,6 +18,45 @@ import { freeVendorAllowance } from "../helpers/freeVendorAllowance";
 import AttendeeTicketPriceField from "./AttendeeTicketPriceField";
 import { Datagrid } from "@orwa/entity-id";
 import { getDisplayEntityId } from "../../../helpers/strapiIds";
+import { partitionContestants } from "../helpers/partitionContestants";
+
+const relationName = (
+  relation: RaRecord | string | number | null | undefined,
+  fallback = "Unspecified"
+): string => {
+  if (relation && typeof relation === "object") {
+    return ((relation.name as string | undefined) || "").trim() || fallback;
+  }
+  return relation != null ? String(relation) : fallback;
+};
+
+const money = (value: unknown): string =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(Number.isFinite(Number(value)) ? Number(value) : 0);
+
+const mulliganItems = (items: ISharedMeta[] | null | undefined): ISharedMeta[] =>
+  (items ?? []).filter((item) =>
+    `${item.key ?? ""} ${item.label ?? ""}`.toLowerCase().includes("mulligan")
+  );
+
+const mulliganLabels = (items: ISharedMeta[] | null | undefined): string[] => {
+  const counts = new Map<string, { label: string; value: unknown; count: number }>();
+  for (const item of mulliganItems(items)) {
+    const key = `${item.label}:${item.value}`;
+    const existing = counts.get(key) ?? {
+      label: item.label,
+      value: item.value,
+      count: 0,
+    };
+    existing.count += 1;
+    counts.set(key, existing);
+  }
+  return Array.from(counts.values()).map(
+    (item) => `${item.label} x${formatNumber(item.count)} (${money(item.value)} each)`
+  );
+};
 
 // interface IRegistrant {
 //   id: number;
@@ -59,13 +99,34 @@ import { getDisplayEntityId } from "../../../helpers/strapiIds";
 
 const RegistrationReceipt = () => {
   const { record } = useShowContext();
+  const contestantPartitions = React.useMemo(
+    () =>
+      partitionContestants(
+        Array.isArray(record?.contestants) ? record.contestants : []
+      ),
+    [record?.contestants]
+  );
+  const receiptRecord = React.useMemo(
+    () =>
+      record
+        ? {
+            ...record,
+            active_contestants: contestantPartitions.active,
+            cancelled_contestants: contestantPartitions.cancelled,
+          }
+        : record,
+    [record, contestantPartitions]
+  );
 
   if (!record) return <Typography>Loading...</Typography>;
 
   const boothCount = Array.isArray(record.booths) ? record.booths.length : 0;
   const freeVendorSlots = freeVendorAllowance(boothCount);
+  const activeContestants = contestantPartitions.active;
+  const cancelledContestants = contestantPartitions.cancelled;
 
   return (
+    <RecordContextProvider value={receiptRecord}>
     <Box p={4} maxWidth="lg" mx="auto">
       {/* Header */}
       <Typography variant="h6" fontWeight="bold" mb={4}>
@@ -262,35 +323,93 @@ const RegistrationReceipt = () => {
       )}
 
       {/* Contestants */}
-      {record.contestants && record.contestants.length > 0 && (
+      {activeContestants.length > 0 && (
         <Box mb={4}>
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            Contestants
+            Contestants ({activeContestants.length})
           </Typography>
-          <ReferenceArrayField
-            source="contestants"
-            reference="conference-contestants"
-          >
+          <ArrayField source="active_contestants">
             <Datagrid bulkActionButtons={false}>
               <TextField source="first" label="First" />
               <TextField source="last" label="Last" />
-              <ReferenceField
-                source="conference_ticket"
-                reference="conference-tickets"
-              >
-                <TextField source="name" label="Type  " />
-              </ReferenceField>
-              <ReferenceField
-                source="conference_ticket"
-                reference="conference-tickets"
-              >
-                <TextField source="price_online" label="Prcie" />
-              </ReferenceField>
-              <ReferenceField source="team" reference="conference-teams">
-                <TextField source="name" label="Team Name" />
-              </ReferenceField>
+              <FunctionField
+                label="Type"
+                render={(record: RaRecord) =>
+                  relationName(record.conference_ticket as RaRecord | number | null)
+                }
+              />
+              <FunctionField
+                label="Price"
+                render={(record: RaRecord) =>
+                  money((record.conference_ticket as RaRecord | null)?.price_online)
+                }
+              />
+              <FunctionField
+                label="Team Name"
+                render={(record: RaRecord) =>
+                  relationName(record.team as RaRecord | number | null, "")
+                }
+              />
             </Datagrid>
-          </ReferenceArrayField>
+          </ArrayField>
+        </Box>
+      )}
+
+      {cancelledContestants.length > 0 && (
+        <Box
+          mb={4}
+          p={2}
+          border={1}
+          borderColor="warning.main"
+          borderRadius={2}
+          bgcolor="action.hover"
+        >
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            Cancelled Contestants — retained for refund history (
+            {cancelledContestants.length})
+          </Typography>
+          <ArrayField source="cancelled_contestants">
+            <Datagrid bulkActionButtons={false}>
+              <FunctionField
+                label="Name"
+                render={(record: RaRecord) =>
+                  `${record.first ?? ""} ${record.last ?? ""}`.trim() ||
+                  "Unnamed contestant"
+                }
+              />
+              <FunctionField
+                label="Ticket"
+                render={(record: RaRecord) =>
+                  relationName(record.conference_ticket as RaRecord | number | null)
+                }
+              />
+              <NumberField source="fee" label="Fee" options={CurrencyOptions} />
+              <FunctionField
+                sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}
+                label="Mulligans"
+                render={(record: RaRecord) => {
+                  const mulligans = mulliganLabels(record.items as ISharedMeta[]);
+                  if (mulligans.length === 0) return "None";
+                  return mulligans.map((label: string, index: number) => (
+                    <Chip
+                      key={`cancelled-mulligan-${record.id}-${index}`}
+                      label={label}
+                    />
+                  ));
+                }}
+              />
+              <FunctionField
+                label="Cancelled At"
+                render={(record: RaRecord) =>
+                  record.cancelled_at
+                    ? new Date(record.cancelled_at as string).toLocaleString()
+                    : "Unrecorded"
+                }
+              />
+              <TextField source="cancelled_reason" label="Reason" />
+              <TextField source="cancelled_by" label="Cancelled By" />
+            </Datagrid>
+          </ArrayField>
         </Box>
       )}
 
@@ -384,6 +503,7 @@ const RegistrationReceipt = () => {
         </Box>
       )}
     </Box>
+    </RecordContextProvider>
   );
 };
 
