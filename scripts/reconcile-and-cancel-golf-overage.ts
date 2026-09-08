@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { config as loadDotenv } from "dotenv";
+import { countsAgainstGolfCapacity } from "../apps/strapi/src/api/conference-webhook/helpers/contestant-capacity";
 
 export const REQUIRED_REGISTRATION_IDS = [16781, 16792, 16817] as const;
 export const MAXIMUM_GOLFERS = 36;
@@ -11,8 +12,10 @@ export const EXPECTED_CANCELLED_GOLFERS = 12;
 export const EXPECTED_ACTIVE_AFTER = 47;
 export const EXPECTED_AVAILABLE_AFTER = -11;
 
-const REQUIRED_REASON = "2026 Fall golf overage - pending card refund";
+export const REQUIRED_REASON = "2026 Fall golf overage — pending card refund";
 const AUDIT_DIR = "tmp/golf-overage-2026-fall";
+const DEFAULT_HTTP_TIMEOUT_MS = 15_000;
+const MAX_PAGES = 100;
 
 type RegistrationId = (typeof REQUIRED_REGISTRATION_IDS)[number];
 
@@ -63,6 +66,7 @@ export type GolfOverageSnapshot = {
 
 type AuditPayload = {
   mode: "dry-run" | "apply";
+  noOpReason?: string;
   before: OperationSummary;
   after?: OperationSummary;
   plannedCounterReconciliation: {
@@ -76,6 +80,8 @@ type AuditPayload = {
 
 type GolfOverageClient = {
   fetchSnapshot: () => Promise<GolfOverageSnapshot>;
+  fetchConferenceAvailability: (conferenceDocumentId: string) => Promise<number | null>;
+  preflightCancelPermission: (firstContestantDocumentId: string) => Promise<unknown>;
   updateConferenceAvailability: (
     conferenceDocumentId: string,
     availableContestants: number
@@ -126,10 +132,14 @@ type OperationSummary = {
     golfers: Array<{
       documentId: string;
       status?: string | null;
+      cancelled_at?: string | null;
+      cancelled_reason?: string | null;
+      cancelled_by?: string | null;
       name: string;
       ticket: string | null;
       fee: number | string | null | undefined;
       mulligans: unknown;
+      itemsSnapshot: unknown[];
     }>;
     totalGolfers: number;
   }>;
@@ -176,14 +186,12 @@ export function expectedAfter({
 }
 
 function isGolfer(contestant: ContestantRow): boolean {
-  const ticket = contestant.conference_ticket;
-  const name = ticket?.name ?? "";
-  const context = ticket?.context;
-  const contestantTicket =
-    context === "Contestant" ||
-    (!context && ["Golfer", "Fisher", "Contestant"].includes(name));
-
-  return contestantTicket && name.toLowerCase().includes("golfer");
+  return countsAgainstGolfCapacity({
+    ticket_type: {
+      name: contestant.conference_ticket?.name,
+      context: contestant.conference_ticket?.context,
+    },
+  } as Parameters<typeof countsAgainstGolfCapacity>[0]);
 }
 
 function isActive(contestant: ContestantRow): boolean {
@@ -210,6 +218,20 @@ function extractMulligans(items: ContestantRow["items"]): unknown {
       .toLowerCase()
       .includes("mulligan")
   );
+}
+
+function requireItemsSnapshot(registrationId: number, contestant: ContestantRow): unknown[] {
+  if (!Object.prototype.hasOwnProperty.call(contestant, "items")) {
+    throw new Error(
+      `contestant ${contestant.documentId} on registration ${registrationId} items were not populated`
+    );
+  }
+  if (!Array.isArray(contestant.items)) {
+    throw new Error(
+      `contestant ${contestant.documentId} on registration ${registrationId} items were not an array`
+    );
+  }
+  return structuredClone(contestant.items);
 }
 
 function paymentReference(registration: RegistrationRow): PaymentReference {
@@ -245,10 +267,14 @@ function summarizeSnapshot(snapshot: GolfOverageSnapshot): OperationSummary {
         golfers: golfers.map((golfer) => ({
           documentId: golfer.documentId,
           status: golfer.status ?? "active",
+          cancelled_at: golfer.cancelled_at ?? null,
+          cancelled_reason: golfer.cancelled_reason ?? null,
+          cancelled_by: golfer.cancelled_by ?? null,
           name: contestantName(golfer),
           ticket: golfer.conference_ticket?.name ?? null,
           fee: golfer.fee,
           mulligans: extractMulligans(golfer.items),
+          itemsSnapshot: requireItemsSnapshot(registration.id, golfer),
         })),
         totalGolfers: golfers.length,
       };
@@ -256,18 +282,19 @@ function summarizeSnapshot(snapshot: GolfOverageSnapshot): OperationSummary {
   };
 }
 
-function requireFreshPendingState(summary: OperationSummary): void {
-  if (summary.activeGolferCount !== EXPECTED_ACTIVE_BEFORE) {
-    throw new Error(
-      `expected ${EXPECTED_ACTIVE_BEFORE} active golfers before cancellation, found ${summary.activeGolferCount}`
-    );
+function requireStoredAvailability(summary: OperationSummary): number {
+  if (summary.availableContestants === null) {
+    throw new Error("conference available_contestants is required");
   }
+  if (summary.availableContestants > 0) {
+    throw new Error("conference available_contestants must be non-positive");
+  }
+  return summary.availableContestants;
+}
 
-  if (summary.targetAvailableContestants !== EXPECTED_AVAILABLE_BEFORE) {
-    throw new Error(
-      `expected target availability ${EXPECTED_AVAILABLE_BEFORE}, found ${summary.targetAvailableContestants}`
-    );
-  }
+function requireOperableState(summary: OperationSummary): number {
+  const storedAvailable = requireStoredAvailability(summary);
+  let alreadyCancelledTargets = 0;
 
   for (const registration of summary.registrations) {
     if (registration.totalGolfers !== 4) {
@@ -275,15 +302,46 @@ function requireFreshPendingState(summary: OperationSummary): void {
         `registration ${registration.id} expected exactly 4 golfer records, found ${registration.totalGolfers}`
       );
     }
-    if (registration.activeGolfers !== 4) {
+
+    for (const golfer of registration.golfers) {
+      if (golfer.status !== "cancelled") continue;
+      if (golfer.cancelled_reason !== REQUIRED_REASON) {
+        throw new Error(
+          `contestant ${golfer.documentId} is cancelled without the exact cancellation reason`
+        );
+      }
+      if (!golfer.cancelled_at) {
+        throw new Error(`contestant ${golfer.documentId} is cancelled without cancelled_at`);
+      }
+    }
+
+    alreadyCancelledTargets += registration.cancelledGolfers;
+    if (registration.activeGolfers + registration.cancelledGolfers !== 4) {
       throw new Error(
-        `registration ${registration.id} expected 4 active golfers, found ${registration.activeGolfers}`
+        `registration ${registration.id} expected active plus already-cancelled golfers to equal 4`
       );
     }
   }
+
+  const expectedActive = EXPECTED_ACTIVE_BEFORE - alreadyCancelledTargets;
+  if (summary.activeGolferCount !== expectedActive) {
+    throw new Error(
+      `expected ${expectedActive} active golfers before cancellation, found ${summary.activeGolferCount}`
+    );
+  }
+
+  const expectedTarget = reconciledAvailability(MAXIMUM_GOLFERS, summary.activeGolferCount);
+  if (summary.targetAvailableContestants !== expectedTarget) {
+    throw new Error(
+      `expected target availability ${expectedTarget}, found ${summary.targetAvailableContestants}`
+    );
+  }
+
+  return storedAvailable;
 }
 
 function isCompletedState(summary: OperationSummary): boolean {
+  if (summary.availableContestants === null) return false;
   return (
     summary.activeGolferCount === EXPECTED_ACTIVE_AFTER &&
     summary.availableContestants === EXPECTED_AVAILABLE_AFTER &&
@@ -291,7 +349,11 @@ function isCompletedState(summary: OperationSummary): boolean {
       (registration) =>
         registration.totalGolfers === 4 &&
         registration.activeGolfers === 0 &&
-        registration.cancelledGolfers === 4
+        registration.cancelledGolfers === 4 &&
+        registration.golfers.every(
+          (golfer) =>
+            golfer.cancelled_reason === REQUIRED_REASON && Boolean(golfer.cancelled_at)
+        )
     )
   );
 }
@@ -321,13 +383,47 @@ function buildCancelRequests(summary: OperationSummary): CancelRequest[] {
       }))
   );
 
-  if (requests.length !== EXPECTED_CANCELLED_GOLFERS) {
+  const alreadyCancelled = summary.registrations.reduce(
+    (total, registration) => total + registration.cancelledGolfers,
+    0
+  );
+  const expectedRemaining = EXPECTED_CANCELLED_GOLFERS - alreadyCancelled;
+
+  if (requests.length !== expectedRemaining) {
     throw new Error(
-      `expected ${EXPECTED_CANCELLED_GOLFERS} cancel requests, found ${requests.length}`
+      `expected ${expectedRemaining} cancel requests, found ${requests.length}`
     );
   }
 
   return requests;
+}
+
+function projectDryRunAfter(before: OperationSummary, cancelRequests: CancelRequest[]): OperationSummary {
+  const cancelIds = new Set(cancelRequests.map((request) => request.contestantDocumentId));
+  return {
+    ...before,
+    activeGolferCount: EXPECTED_ACTIVE_AFTER,
+    availableContestants: EXPECTED_AVAILABLE_AFTER,
+    targetAvailableContestants: EXPECTED_AVAILABLE_AFTER,
+    registrations: before.registrations.map((registration) => {
+      const golfers = registration.golfers.map((golfer) =>
+        cancelIds.has(golfer.documentId)
+          ? {
+              ...golfer,
+              status: "cancelled",
+              cancelled_at: "(dry-run)",
+              cancelled_reason: REQUIRED_REASON,
+            }
+          : golfer
+      );
+      return {
+        ...registration,
+        golfers,
+        activeGolfers: golfers.filter((golfer) => golfer.status !== "cancelled").length,
+        cancelledGolfers: golfers.filter((golfer) => golfer.status === "cancelled").length,
+      };
+    }),
+  };
 }
 
 function verifyTotalsAndPaymentsUnchanged(
@@ -366,6 +462,21 @@ function verifyTotalsAndPaymentsUnchanged(
       if (JSON.stringify(afterGolfer.mulligans) !== JSON.stringify(beforeGolfer.mulligans)) {
         throw new Error(`contestant ${beforeGolfer.documentId} Mulligans changed`);
       }
+      if (
+        JSON.stringify(afterGolfer.itemsSnapshot) !==
+        JSON.stringify(beforeGolfer.itemsSnapshot)
+      ) {
+        throw new Error(`contestant ${beforeGolfer.documentId} item snapshot changed`);
+      }
+      if (afterGolfer.status !== "cancelled") {
+        throw new Error(`contestant ${beforeGolfer.documentId} was not cancelled`);
+      }
+      if (afterGolfer.cancelled_reason !== REQUIRED_REASON) {
+        throw new Error(`contestant ${beforeGolfer.documentId} cancellation reason changed`);
+      }
+      if (!afterGolfer.cancelled_at) {
+        throw new Error(`contestant ${beforeGolfer.documentId} missing cancelled_at`);
+      }
     }
   }
 }
@@ -379,12 +490,13 @@ export async function runGolfOverageOperation(options: RunOptions) {
   const plannedCounterReconciliation = {
     conferenceDocumentId: before.conferenceDocumentId,
     currentAvailableContestants: before.availableContestants,
-    targetAvailableContestants: EXPECTED_AVAILABLE_BEFORE,
+    targetAvailableContestants: before.targetAvailableContestants,
   };
 
   if (completedBeforeStart) {
     const audit = {
       mode: options.apply ? "apply" : "dry-run",
+      noOpReason: "already completed with exact target cancellations",
       before,
       after: before,
       plannedCounterReconciliation,
@@ -401,16 +513,11 @@ export async function runGolfOverageOperation(options: RunOptions) {
     };
   }
 
-  requireFreshPendingState(before);
+  const validatedAvailableBefore = requireOperableState(before);
   const cancelRequests = buildCancelRequests(before);
 
   if (!options.apply) {
-    const after = {
-      ...before,
-      activeGolferCount: EXPECTED_ACTIVE_AFTER,
-      availableContestants: EXPECTED_AVAILABLE_AFTER,
-      targetAvailableContestants: EXPECTED_AVAILABLE_AFTER,
-    };
+    const after = projectDryRunAfter(before, cancelRequests);
     await options.writeAudit({
       mode: "dry-run",
       before,
@@ -422,19 +529,45 @@ export async function runGolfOverageOperation(options: RunOptions) {
   }
 
   const responses: unknown[] = [];
-  responses.push(
-    await options.client.updateConferenceAvailability(
-      before.conferenceDocumentId,
-      EXPECTED_AVAILABLE_BEFORE
-    )
-  );
+  await options.client.preflightCancelPermission(cancelRequests[0].contestantDocumentId);
+
+  if (validatedAvailableBefore !== before.targetAvailableContestants) {
+    const immediateBefore = await options.client.fetchConferenceAvailability(
+      before.conferenceDocumentId
+    );
+    if (immediateBefore !== validatedAvailableBefore) {
+      throw new Error(
+        `available_contestants changed before counter update: expected ${validatedAvailableBefore}, found ${immediateBefore}`
+      );
+    }
+
+    responses.push(
+      await options.client.updateConferenceAvailability(
+        before.conferenceDocumentId,
+        before.targetAvailableContestants
+      )
+    );
+
+    const immediateAfter = await options.client.fetchConferenceAvailability(
+      before.conferenceDocumentId
+    );
+    if (immediateAfter !== before.targetAvailableContestants) {
+      throw new Error(
+        `available_contestants after counter update expected ${before.targetAvailableContestants}, found ${immediateAfter}`
+      );
+    }
+  }
 
   for (const request of cancelRequests) {
     const response = await options.client.cancelContestant(
       request.contestantDocumentId,
       request.reason
     );
-    if (!response || (response as { status?: string }).status !== "cancelled") {
+    if (
+      !response ||
+      (response as { status?: string }).status !== "cancelled" ||
+      (response as { cancelled_reason?: string | null }).cancelled_reason !== REQUIRED_REASON
+    ) {
       throw new Error(`cancel endpoint returned unexpected response for ${request.contestantDocumentId}`);
     }
     responses.push(response);
@@ -457,7 +590,13 @@ export async function runGolfOverageOperation(options: RunOptions) {
   return { mode: "apply" as const, before, after, cancelRequests, responses };
 }
 
-function parseArgs(argv: string[]) {
+export function parseCliArgs(argv: string[]) {
+  const allowed = new Set(["--apply", "--live", "--help", "-h"]);
+  for (const arg of argv) {
+    if (!allowed.has(arg)) {
+      throw new Error(`Unknown flag: ${arg}`);
+    }
+  }
   return {
     apply: argv.includes("--apply"),
     live: argv.includes("--live") || argv.includes("--apply"),
@@ -465,30 +604,49 @@ function parseArgs(argv: string[]) {
   };
 }
 
-function loadApiConfig() {
-  const envPaths = [
-    ".env.local",
-    "apps/conference-registration/.env.production",
-    "apps/member-manager/.env.production",
-  ];
-  for (const envPath of envPaths) {
-    if (existsSync(envPath)) loadDotenv({ path: envPath, override: false });
-  }
-
+export function resolveApiConfig({
+  env,
+  apply,
+  cwd,
+}: {
+  env: NodeJS.ProcessEnv;
+  apply: boolean;
+  cwd: string;
+}) {
   const apiBase = (
-    process.env.STRAPI_API_ENDPOINT ??
-    process.env.STRAPI_API_BASE ??
-    process.env.VITE_API_ENDPOINT
+    env.STRAPI_API_ENDPOINT ??
+    env.STRAPI_API_BASE ??
+    env.VITE_API_ENDPOINT
   )?.replace(/\/$/, "");
-  const apiKey = process.env.STRAPI_API_TOKEN ?? process.env.STRAPI_API_KEY ?? process.env.VITE_API_KEY;
+  const apiKey = env.STRAPI_API_TOKEN ?? env.STRAPI_API_KEY ?? env.VITE_API_KEY;
 
   if (!apiBase || !apiKey) {
     throw new Error(
       "live mode requires STRAPI_API_ENDPOINT/STRAPI_API_BASE/VITE_API_ENDPOINT and STRAPI_API_TOKEN/STRAPI_API_KEY/VITE_API_KEY"
     );
   }
+  if (!apiBase.endsWith("/api")) {
+    throw new Error("Strapi API base must end with /api");
+  }
+  if (apply && apiBase !== "https://admin.orwa.org/api") {
+    throw new Error("apply mode requires apiBase === https://admin.orwa.org/api");
+  }
 
-  return { apiBase, apiKey };
+  return { apiBase, apiKey, cwd };
+}
+
+function loadApiConfig(apply: boolean) {
+  const repoRoot = resolve(".");
+  const envPaths = [
+    join(repoRoot, ".env.local"),
+    join(repoRoot, "apps/conference-registration/.env.production"),
+    join(repoRoot, "apps/member-manager/.env.production"),
+  ];
+  for (const envPath of envPaths) {
+    if (existsSync(envPath)) loadDotenv({ path: envPath, override: false });
+  }
+
+  return resolveApiConfig({ env: process.env, apply, cwd: repoRoot });
 }
 
 function strapiParams(params: Array<[string, string | number]>) {
@@ -501,24 +659,54 @@ async function fetchJson<T>(
   apiBase: string,
   apiKey: string,
   pathAndQuery: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  fetchImpl: typeof fetch = fetch,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS
 ): Promise<T> {
-  const res = await fetch(`${apiBase}/${pathAndQuery}`, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      Authorization: `Bearer ${apiKey}`,
-      ...(init.body ? { "Content-Type": "application/json" } : {}),
-      ...init.headers,
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`${init.method ?? "GET"} ${pathAndQuery} failed with HTTP ${res.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const headers = new Headers(init.headers);
+    headers.set("Accept", "application/json");
+    headers.set("Authorization", `Bearer ${apiKey}`);
+    if (init.body) headers.set("Content-Type", "application/json");
+
+    const res = await fetchImpl(`${apiBase}/${pathAndQuery}`, {
+      ...init,
+      headers,
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      throw new Error(
+        `${init.method ?? "GET"} ${pathAndQuery} failed with HTTP ${res.status}: ${body.slice(0, 500)}`
+      );
+    }
+    return (await res.json()) as T;
+  } catch (error) {
+    if ((error as { name?: string }).name === "AbortError") {
+      throw new Error(`${init.method ?? "GET"} ${pathAndQuery} timed out after ${timeoutMs}ms`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-  return (await res.json()) as T;
 }
 
-function makeApiClient(apiBase: string, apiKey: string): GolfOverageClient {
+export function createStrapiApiClient({
+  apiBase,
+  apiKey,
+  fetchImpl = fetch,
+  timeoutMs = DEFAULT_HTTP_TIMEOUT_MS,
+}: {
+  apiBase: string;
+  apiKey: string;
+  fetchImpl?: typeof fetch;
+  timeoutMs?: number;
+}): GolfOverageClient {
+  const getJson = <T>(pathAndQuery: string, init: RequestInit = {}) =>
+    fetchJson<T>(apiBase, apiKey, pathAndQuery, init, fetchImpl, timeoutMs);
+
   return {
     async fetchSnapshot() {
       const registrationParams: Array<[string, string | number]> = [
@@ -541,21 +729,24 @@ function makeApiClient(apiBase: string, apiKey: string): GolfOverageClient {
         ["populate[contestants][fields][3]", "first"],
         ["populate[contestants][fields][4]", "last"],
         ["populate[contestants][fields][5]", "fee"],
-        ["populate[contestants][fields][6]", "items"],
-        ["populate[contestants][fields][7]", "cancelled_at"],
-        ["populate[contestants][fields][8]", "cancelled_reason"],
-        ["populate[contestants][fields][9]", "cancelled_by"],
+        ["populate[contestants][fields][6]", "cancelled_at"],
+        ["populate[contestants][fields][7]", "cancelled_reason"],
+        ["populate[contestants][fields][8]", "cancelled_by"],
         ["populate[contestants][populate][conference_ticket][fields][0]", "documentId"],
         ["populate[contestants][populate][conference_ticket][fields][1]", "name"],
         ["populate[contestants][populate][conference_ticket][fields][2]", "context"],
+        ["populate[contestants][populate][items][fields][0]", "key"],
+        ["populate[contestants][populate][items][fields][1]", "label"],
+        ["populate[contestants][populate][items][fields][2]", "value"],
+        ["populate[contestants][populate][items][fields][3]", "selection"],
+        ["populate[contestants][populate][items][populate][item][fields][0]", "documentId"],
+        ["populate[contestants][populate][items][populate][item][fields][1]", "name"],
       ];
       REQUIRED_REGISTRATION_IDS.forEach((id, index) => {
         registrationParams.push([`filters[id][$in][${index}]`, id]);
       });
 
-      const registrationsResponse = await fetchJson<{ data: RegistrationRow[] }>(
-        apiBase,
-        apiKey,
+      const registrationsResponse = await getJson<{ data: RegistrationRow[] }>(
         `conference-registrations?${strapiParams(registrationParams)}`
       );
       const registrations = registrationsResponse.data ?? [];
@@ -575,33 +766,57 @@ function makeApiClient(apiBase: string, apiKey: string): GolfOverageClient {
       }
 
       let activeGolferCount = 0;
-      for (let page = 1; page <= 20; page += 1) {
+      for (let page = 1; page <= MAX_PAGES; page += 1) {
         const params = strapiParams([
           ["pagination[page]", page],
           ["pagination[pageSize]", 100],
           ["fields[0]", "documentId"],
           ["fields[1]", "status"],
           ["filters[conference][documentId][$eq]", conference.documentId],
-          ["filters[status][$eq]", "active"],
           ["populate[conference_ticket][fields][0]", "name"],
           ["populate[conference_ticket][fields][1]", "context"],
         ]);
-        const pageResponse = await fetchJson<{
+        const pageResponse = await getJson<{
           data: ContestantRow[];
           meta?: { pagination?: { pageCount?: number } };
-        }>(apiBase, apiKey, `conference-contestants?${params}`);
-        activeGolferCount += (pageResponse.data ?? []).filter(isGolfer).length;
+        }>(`conference-contestants?${params}`);
+        activeGolferCount += (pageResponse.data ?? [])
+          .filter((contestant) => contestant.status !== "cancelled")
+          .filter(isGolfer).length;
         const pageCount = pageResponse.meta?.pagination?.pageCount ?? 1;
         if (page >= pageCount) break;
+        if (page === MAX_PAGES) {
+          throw new Error(`pagination exceeded ${MAX_PAGES} pages`);
+        }
       }
 
       return { conference, registrations, activeGolferCount };
     },
 
+    async fetchConferenceAvailability(conferenceDocumentId) {
+      const params = strapiParams([["fields[0]", "available_contestants"]]);
+      const response = await getJson<{ data: ConferenceRow }>(
+        `conferences/${conferenceDocumentId}?${params}`
+      );
+      return numericOrNull(response.data?.available_contestants);
+    },
+
+    async preflightCancelPermission(firstContestantDocumentId) {
+      try {
+        return await getJson("users/me?populate[role][populate][permissions][fields][0]=action");
+      } catch (error) {
+        await getJson(
+          `conference-contestants/${firstContestantDocumentId}?${strapiParams([
+            ["fields[0]", "documentId"],
+            ["fields[1]", "status"],
+          ])}`
+        );
+        return { fallback: "contestant-readiness-get", reason: (error as Error).message };
+      }
+    },
+
     async updateConferenceAvailability(conferenceDocumentId, availableContestants) {
-      const response = await fetchJson<{ data: ConferenceRow }>(
-        apiBase,
-        apiKey,
+      const response = await getJson<{ data: ConferenceRow }>(
         `conferences/${conferenceDocumentId}`,
         {
           method: "PUT",
@@ -615,9 +830,7 @@ function makeApiClient(apiBase: string, apiKey: string): GolfOverageClient {
     },
 
     async cancelContestant(contestantDocumentId, reason) {
-      const response = await fetchJson<{ data?: ContestantRow }>(
-        apiBase,
-        apiKey,
+      const response = await getJson<{ data?: ContestantRow }>(
         `conference-contestants/${contestantDocumentId}/cancel`,
         {
           method: "POST",
@@ -655,7 +868,15 @@ function makeFixtureClient(): GolfOverageClient {
       first: `Fixture${registrationIndex + 1}`,
       last: `Golfer${index + 1}`,
       fee: 150,
-      items: [{ label: "Mulligans", value: "2" }],
+      items: [
+        {
+          key: "mulligans",
+          label: "Mulligans",
+          value: "2",
+          selection: "Two Mulligans",
+          item: { documentId: "extra-mulligans", name: "Mulligans" },
+        },
+      ],
       conference_ticket: {
         documentId: "fixture-golfer-ticket",
         name: "Golfer - Contestant Only",
@@ -675,6 +896,12 @@ function makeFixtureClient(): GolfOverageClient {
     async updateConferenceAvailability() {
       throw new Error("fixture client is dry-run only");
     },
+    async fetchConferenceAvailability() {
+      throw new Error("fixture client is dry-run only");
+    },
+    async preflightCancelPermission() {
+      throw new Error("fixture client is dry-run only");
+    },
     async cancelContestant() {
       throw new Error("fixture client is dry-run only");
     },
@@ -682,7 +909,7 @@ function makeFixtureClient(): GolfOverageClient {
 }
 
 async function writeAuditFiles(payload: AuditPayload) {
-  const auditDir = resolve(AUDIT_DIR);
+  const auditDir = resolve(".", AUDIT_DIR);
   mkdirSync(auditDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const jsonPath = join(auditDir, `${stamp}-${payload.mode}.json`);
@@ -695,6 +922,8 @@ async function writeAuditFiles(payload: AuditPayload) {
       `# 2026 Fall Golf Overage ${payload.mode === "apply" ? "Apply" : "Dry Run"} Audit`,
       "",
       `- Mode: ${payload.mode}`,
+      payload.noOpReason ? `- No-op: ${payload.noOpReason}` : "",
+      `- Explicit maximum golfers: ${MAXIMUM_GOLFERS}`,
       `- Active golfers before: ${payload.before.activeGolferCount}`,
       `- Counter reconciliation: ${payload.plannedCounterReconciliation.currentAvailableContestants} -> ${payload.plannedCounterReconciliation.targetAvailableContestants}`,
       `- Planned cancellation requests: ${payload.plannedCancelRequests.length}`,
@@ -725,7 +954,7 @@ Default mode is a fixture-backed dry run and performs zero network calls or writ
 }
 
 async function main() {
-  const args = parseArgs(process.argv.slice(2));
+  const args = parseCliArgs(process.argv.slice(2));
   if (args.help) {
     printUsage();
     return;
@@ -737,9 +966,10 @@ async function main() {
     console.log(`Mode: ${args.apply ? "APPLY" : "DRY RUN"} (live API)`);
   }
 
-  const apiConfig = args.live ? loadApiConfig() : null;
+  const apiConfig = args.live ? loadApiConfig(args.apply) : null;
+  console.log(`API base: ${apiConfig?.apiBase ?? "(fixture)"}`);
   const client = apiConfig
-    ? makeApiClient(apiConfig.apiBase, apiConfig.apiKey)
+    ? createStrapiApiClient(apiConfig)
     : makeFixtureClient();
 
   const result = await runGolfOverageOperation({
