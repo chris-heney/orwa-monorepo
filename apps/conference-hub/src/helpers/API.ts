@@ -7,6 +7,7 @@ import { EmailPayload } from "../types/IEmailPayload";
 import { ISponsor } from "../types/ISponsor";
 import { FeedbackPayload } from "../types/IFeedbackPayload";
 import { IContestant } from "../types/IContestant";
+import { activeContestants } from "./contestantStatus";
 
 const API_ENDPOINT = import.meta.env.VITE_API_ENDPOINT;
 const API_KEY = import.meta.env.VITE_API_KEY;
@@ -52,7 +53,7 @@ const getVendors = async () => {
 
 const getContestants = async () => {
   return await _get(
-    `/conference-contestants?filters[year]=${currentYear}&filters[conference]=${conferenceId}&sort=team.name:ASC&populate=*&pagination[limit]=1000`
+    `/conference-contestants?filters[year]=${currentYear}&filters[conference]=${conferenceId}&filters[status][$eq]=active&sort=team.name:ASC&populate=*&pagination[limit]=1000`
   );
 };
 
@@ -237,7 +238,7 @@ export function useGetContestants() {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     getContestants().then((v) => {
-      setData(Array.isArray(v?.data) ? v.data : []);
+      setData(activeContestants(Array.isArray(v?.data) ? v.data : []));
       setLoading(false);
     });
   }, []);

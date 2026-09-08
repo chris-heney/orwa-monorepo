@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useState } from "react";
 import TournamentRules from "../assets/tournament-rules.jpg?format=webp";
 import { useGetContestants } from "../helpers/API";
+import { activeContestants } from "../helpers/contestantStatus";
 import { IContestant } from "../types/IContestant";
 
 interface ITeam {
@@ -64,6 +65,7 @@ const transformContestants = (
       conference: record.conference,
       conference_ticket: record.conference_ticket,
       items: record.items ?? [],
+      status: record.status,
     };
     const team: string =
       record.team?.name || record.organization || "Unassigned";
@@ -97,7 +99,7 @@ export default function Tournament() {
 
   useEffect(() => {
     if (!isContestantsLoading) {
-      const { g, f } = transformContestants(contestants);
+      const { g, f } = transformContestants(activeContestants(contestants));
       setGolfers(g);
       setFishers(f);
     }

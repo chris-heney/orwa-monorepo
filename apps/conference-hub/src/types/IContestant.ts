@@ -2,6 +2,7 @@ export interface IContestant {
     conference: number | { id?: number; name?: string } | null
     year: number
     type: string | null
+    status?: "active" | "cancelled" | string | null
     organization: string
     team: {
         id: number

@@ -205,7 +205,7 @@ export default ({ strapi}) => ({
       populate: {
         conference_ticket: true,
       },
-      filters: filter,
+      filters: { ...filter, status: "active" },
     });
 
     // Count attendees by type
