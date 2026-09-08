@@ -162,3 +162,98 @@ The final commit hash is reported by the task runner after commit creation.
   local implementation with the existing member-manager typecheck baseline
   failing outside Task 5. The UI uses MUI palette tokens and `alpha()` for light
   and dark mode compatibility.
+
+## Review Follow-Up Evidence
+
+### RED
+
+Command:
+
+```bash
+npx vitest run apps/member-manager/src/helpers/ra-strapi-data-provider/src/DataProviderFactory.spec.ts apps/member-manager/src/modules/conference/helpers/contestantStatus.spec.ts
+```
+
+Observed failures:
+
+```text
+provider.invalidateResourceCache is not a function
+expected 'undefined' to be 'function' for canEditContestant
+expected 'undefined' to be 'function' for contestantActionPermissionUid
+```
+
+These covered the stale provider cache invalidation gap and the missing pure
+helpers for read-only/action permission state.
+
+### GREEN
+
+Command:
+
+```bash
+npx vitest run apps/member-manager/src/helpers/ra-strapi-data-provider/src/DataProviderFactory.spec.ts apps/member-manager/src/modules/conference/helpers/contestantStatus.spec.ts apps/member-manager/src/modules/conference/helpers/listQueryFilters.spec.ts
+```
+
+Result:
+
+```text
+Test Files  3 passed (3)
+Tests       13 passed (13)
+```
+
+### Fixes
+
+- Added `invalidateResourceCache(resource)` to the Strapi react-admin data
+  provider. It narrowly invalidates cached `getList`, `getOne`, `getMany`, and
+  `getManyReference` keys for the supplied resource.
+- Added a provider regression test proving a stale
+  `conference-contestants` cached list is evicted after
+  `invalidateResourceCache("conference-contestants")`.
+- Cancel/Restore now calls the provider invalidation API after the successful
+  custom POST and before `refresh()`.
+- Added `canEditContestant()` so cancelled contestants render read-only in the
+  expanded panel. Active contestants still render the editable `SimpleForm`.
+- Cancelled expanded records now show identity, fee, ticket, status audit, and
+  grouped item/Mulligan evidence without save controls or item editors.
+- Added a synchronous `useRef` in-flight guard in
+  `ContestantCancellationActions` in addition to disabled button state.
+- Reused `ContestantCancellationActions` in the active edit toolbar and
+  cancelled read-only header, so expanded views also expose Cancel/Restore
+  without a separate request implementation.
+- RBAC now uses `useCan().canAction()` with the actual custom Strapi action UIDs:
+  `api::conference-contestant.conference-contestant.cancel` and
+  `api::conference-contestant.conference-contestant.restore`.
+
+### Production RBAC Requirement
+
+Production roles that should be able to cancel or restore contestants need the
+custom controller permissions above enabled in the Strapi role permission matrix.
+If a role has only generic `update` or `delete` on `conference-contestant`, this
+UI will not show Cancel/Restore unless the corresponding custom action
+permission is also present.
+
+### Final Verification
+
+Edited-file lints:
+
+```text
+No linter errors found.
+```
+
+Full member-manager typecheck:
+
+```bash
+cd apps/member-manager && npx tsc --noEmit
+```
+
+Result: still fails on the pre-existing baseline outside these review fixes,
+including `src/helpers/ra-strapi-rest/index.ts`, missing CKEditor declarations,
+stale Schedule context properties, existing settings/training/soonerwarn errors,
+and `libs/terms-gate` TypeScript errors.
+
+Scoped edited-file typecheck filter:
+
+```bash
+cd apps/member-manager && npx tsc --noEmit --pretty false 2>&1 | rg "src/(helpers/ra-strapi-data-provider/src/(DataProviderFactory|types)|modules/conference/(components/ConferenceContestants|components/ContestantCancellationActions|helpers/contestantStatus|helpers/listQueryFilters))"
+```
+
+Result: no output, so the current typecheck baseline does not include edited-file
+errors from the Task 5 review follow-up.

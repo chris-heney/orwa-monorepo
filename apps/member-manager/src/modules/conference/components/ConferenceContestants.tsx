@@ -5,6 +5,7 @@ import {
   DateField,
   NumberField,
   RaRecord,
+  RecordContextProvider,
   Edit,
   SimpleForm,
   ReferenceInput,
@@ -30,6 +31,7 @@ import {
   Chip,
   Divider,
   Grid,
+  Stack,
   ToggleButton,
   ToggleButtonGroup,
   type SxProps,
@@ -48,7 +50,10 @@ import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilte
 import { groupItemsByExtra } from '../helpers/contestantExtras';
 import ContestantExtrasEditor from './ContestantExtrasEditor';
 import ContestantCancellationActions from './ContestantCancellationActions';
-import { isCancelledContestant } from '../helpers/contestantStatus';
+import {
+  canEditContestant,
+  isCancelledContestant,
+} from '../helpers/contestantStatus';
 import { useCan } from '../../rbac-manager/useCan';
 
 const ContestantFormFields = () => {
@@ -226,13 +231,32 @@ const ContestantStatusFilterControl = () => {
   );
 };
 
-const ContestantEditToolbar = () => {
+const contestantRecordStatus = (record: RaRecord) => ({
+  status: record.status as string | null | undefined,
+});
+
+const ContestantItemsChips = ({ record }: { record: RaRecord }) => {
+  const grouped = groupItemsByExtra((record?.items ?? []) as ISharedMeta[]);
+
+  return (
+    <>
+      {Array.from(grouped.entries()).map(([groupKey, { label, count }]) => (
+        <Chip
+          key={`item-${record.id}-${groupKey}`}
+          size="small"
+          label={`${label} (x${count})`}
+        />
+      ))}
+    </>
+  );
+};
+
+const ContestantEditToolbar = ({ record }: { record: RaRecord }) => {
   const resource = useResourceContext();
   const { canOnResource } = useCan();
-
-  if (!canOnResource('update', resource ?? '')) {
-    return null;
-  }
+  const canSave =
+    canOnResource('update', resource ?? '') &&
+    canEditContestant(contestantRecordStatus(record));
 
   return (
     <Card
@@ -243,13 +267,116 @@ const ContestantEditToolbar = () => {
       }}
     >
       <Grid container spacing={2}>
-        <Grid item>
-          <SaveButton alwaysEnable />
+        {canSave && (
+          <Grid item>
+            <SaveButton alwaysEnable />
+          </Grid>
+        )}
+        <Grid item sx={{ marginLeft: 'auto' }}>
+          <ContestantCancellationActions record={record} />
         </Grid>
       </Grid>
     </Card>
   );
 };
+
+const ReadOnlyValue = ({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) => (
+  <Grid item xs={12} md={6} lg={4}>
+    <Typography variant="caption" color="text.secondary">
+      {label}
+    </Typography>
+    <Typography variant="body2">{children || 'Not recorded'}</Typography>
+  </Grid>
+);
+
+const ContestantReadonlyExpansion = ({ record }: { record: RaRecord }) => (
+  <RecordContextProvider value={record}>
+    <Card
+      sx={{
+        ...positionStickyComponent,
+        p: 2,
+        bgcolor: 'background.paper',
+        border: (theme: Theme) => `1px solid ${theme.palette.divider}`,
+      }}
+    >
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={2}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+        justifyContent="space-between"
+        sx={{ mb: 2 }}
+      >
+        <Box>
+          <Typography variant="h6">Cancelled Contestant</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Historical contestant details are read-only. Restore remains
+            available for authorized roles.
+          </Typography>
+        </Box>
+        <ContestantCancellationActions record={record} />
+      </Stack>
+
+      <Grid container spacing={2}>
+        <ReadOnlyValue label="First Name">{record.first}</ReadOnlyValue>
+        <ReadOnlyValue label="Last Name">{record.last}</ReadOnlyValue>
+        <ReadOnlyValue label="Organization">{record.organization}</ReadOnlyValue>
+        <ReadOnlyValue label="Email">{record.email}</ReadOnlyValue>
+        <ReadOnlyValue label="Phone">{record.phone}</ReadOnlyValue>
+        <ReadOnlyValue label="Type">{record.type}</ReadOnlyValue>
+        <Grid item xs={12} md={6} lg={4}>
+          <Typography variant="caption" color="text.secondary">
+            Ticket
+          </Typography>
+          <Typography variant="body2">
+            <ReferenceField
+              source="conference_ticket"
+              reference="conference-tickets"
+              link={false}
+            >
+              <TextField source="name" />
+            </ReferenceField>
+          </Typography>
+        </Grid>
+        <Grid item xs={12} md={6} lg={4}>
+          <Typography variant="caption" color="text.secondary">
+            Fee
+          </Typography>
+          <Typography variant="body2">
+            <NumberField
+              source="fee"
+              options={CurrencyOptions}
+              sortable={false}
+            />
+          </Typography>
+        </Grid>
+        <ReadOnlyValue label="Cancelled By">{record.cancelled_by}</ReadOnlyValue>
+        <Grid item xs={12} md={6} lg={4}>
+          <Typography variant="caption" color="text.secondary">
+            Cancelled At
+          </Typography>
+          <Typography variant="body2">
+            <DateField source="cancelled_at" showTime />
+          </Typography>
+        </Grid>
+        <ReadOnlyValue label="Reason">{record.cancelled_reason}</ReadOnlyValue>
+        <Grid item xs={12}>
+          <Typography variant="caption" color="text.secondary">
+            Items
+          </Typography>
+          <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
+            <ContestantItemsChips record={record} />
+          </Stack>
+        </Grid>
+      </Grid>
+    </Card>
+  </RecordContextProvider>
+);
 
 const cancelledContestantRowSx = {
   backgroundColor: (theme: Theme) => alpha(theme.palette.warning.main, 0.14),
@@ -259,7 +386,7 @@ const cancelledContestantRowSx = {
 } as unknown as SxProps;
 
 const contestantRowSx = (record: RaRecord, _index: number): SxProps =>
-  isCancelledContestant({ status: record.status as string | null | undefined })
+  isCancelledContestant(contestantRecordStatus(record))
     ? cancelledContestantRowSx
     : {};
 
@@ -315,6 +442,10 @@ const ConferenceContestants = () => {
         isRowSelectable={() => false}
         rowClick="expand"
         expand={(record: RaRecord) => {
+          if (!canEditContestant(contestantRecordStatus(record))) {
+            return <ContestantReadonlyExpansion record={record} />;
+          }
+
           return (
             <Edit
               sx={positionStickyComponent}
@@ -335,7 +466,7 @@ const ConferenceContestants = () => {
                     'conference-contestants'
                   )
                 }
-                toolbar={<ContestantEditToolbar />}
+                toolbar={<ContestantEditToolbar record={record} />}
               >
                 <Grid container spacing={2}>
                   <ContestantFormFields />
@@ -349,9 +480,7 @@ const ConferenceContestants = () => {
           source="status"
           label="Status"
           render={(record: RaRecord) => {
-            const cancelled = isCancelledContestant({
-              status: record.status as string | null | undefined,
-            });
+            const cancelled = isCancelledContestant(contestantRecordStatus(record));
             return (
               <Chip
                 size="small"
@@ -398,16 +527,7 @@ const ConferenceContestants = () => {
           label="Items"
           sortBy="items.label"
           render={(record: RaRecord) => {
-            const grouped = groupItemsByExtra(
-              (record?.items ?? []) as ISharedMeta[]
-            );
-            return Array.from(grouped.entries()).map(([groupKey, { label, count }]) => (
-              <Chip
-                key={`item-${record.id}-${groupKey}`}
-                size="small"
-                label={`${label} (x${count})`}
-              />
-            ));
+            return <ContestantItemsChips record={record} />;
           }}
         />
         <DateField source="cancelled_at" label="Cancelled At" showTime />

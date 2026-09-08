@@ -145,7 +145,10 @@ export interface IStrapiDataProviderFactory {
   type: 'graphql' | 'rest'
 
   init(): DataProvider
-  restProvider(): DataProvider
+  restProvider(): DataProvider & {
+    invalidateResourceCache: (resource: string) => void
+  }
+  invalidateResourceCache: (resource: string) => void
   // @TODO: Implement this:
   // graphProvider(): DataProvider
 

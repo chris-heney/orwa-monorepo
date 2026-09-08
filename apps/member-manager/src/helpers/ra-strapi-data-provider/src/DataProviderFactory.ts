@@ -83,6 +83,9 @@ const debounce = (func: Function, wait: number) => {
   };
 };
 
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // Simple in-memory cache for GET requests
 class RequestCache {
   private cache: Map<string, { data: any; timestamp: number }> = new Map();
@@ -714,8 +717,20 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     }
   }
 
-  restProvider(): DataProvider {
+  invalidateResourceCache = (resource: string): void => {
+    const escapedResource = escapeRegExp(resource);
+    this.cache.invalidate(
+      new RegExp(
+        `^(getOne|getList|getMany|getManyReference):.*\\/${escapedResource}(?:[/?]|$)`
+      )
+    );
+  };
+
+  restProvider(): DataProvider & {
+    invalidateResourceCache: (resource: string) => void;
+  } {
     return {
+      invalidateResourceCache: this.invalidateResourceCache,
       getList: async (resource, params) => {
         const { populate = [], raw } = params?.meta || {
           populate: [],
@@ -952,7 +967,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const requestKey = `update:${resource}:${params.id}`;
 
         // Invalidate cache for this resource
-        this.cache.invalidate(new RegExp(`^(getOne|getList|getMany|getManyReference):.*${resource}`));
+        this.invalidateResourceCache(resource);
 
         // Process and optimize the update request
         return this.executeRequest(requestKey, async () => {
@@ -980,7 +995,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
 
       updateMany: async (resource, params) => {
         // Invalidate cache for this resource
-        this.cache.invalidate(new RegExp(`^(getOne|getList|getMany|getManyReference):.*${resource}`));
+        this.invalidateResourceCache(resource);
 
         const payload = await this.prepareWritePayload(
           params.data as Record<string, any>
@@ -1027,7 +1042,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const requestKey = `create:${resource}`;
         
         // Invalidate cache for this resource
-        this.cache.invalidate(new RegExp(`^(getList|getMany|getManyReference):.*${resource}`));
+        this.invalidateResourceCache(resource);
 
         return this.executeRequest(requestKey, async () => {
           // Strapi 5 rejects multipart writes: upload files first, send JSON.
@@ -1051,7 +1066,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         const requestKey = `delete:${resource}:${params.id}`;
         
         // Invalidate cache for this resource
-        this.cache.invalidate(new RegExp(`^(getOne|getList|getMany|getManyReference):.*${resource}`));
+        this.invalidateResourceCache(resource);
 
         return this.executeRequest(requestKey, async () => {
           // Strapi 5 DELETE returns 204 with an empty body
@@ -1068,7 +1083,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
 
       deleteMany: async (resource, params) => {
         // Invalidate cache for this resource
-        this.cache.invalidate(new RegExp(`^(getOne|getList|getMany|getManyReference):.*${resource}`));
+        this.invalidateResourceCache(resource);
 
         // Process deletes in parallel with a concurrency limit
         const batchSize = 5; // Process 5 deletes at a time
@@ -1099,7 +1114,9 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
 
         return { data: results };
       },
-    } as DataProvider;
+    } as DataProvider & {
+      invalidateResourceCache: (resource: string) => void;
+    };
   }
 }
 

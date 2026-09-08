@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Button,
   Dialog,
@@ -9,15 +9,22 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
-import { RaRecord, useNotify, useRefresh } from 'react-admin';
+import { RaRecord, useDataProvider, useNotify, useRefresh } from 'react-admin';
 import httpClient from '../../../helpers/ra-strapi-data-provider/src/httpClient';
-import { isCancelledContestant } from '../helpers/contestantStatus';
-
-type ContestantAction = 'cancel' | 'restore';
+import {
+  ContestantAction,
+  contestantActionPermissionUid,
+  isCancelledContestant,
+} from '../helpers/contestantStatus';
+import { useCan } from '../../rbac-manager/useCan';
 
 interface ContestantCancellationActionsProps {
   record?: RaRecord;
 }
+
+type CacheInvalidatingDataProvider = {
+  invalidateResourceCache?: (resource: string) => void;
+};
 
 const actionCopy: Record<
   ContestantAction,
@@ -63,6 +70,9 @@ const ContestantCancellationActions = ({
 }: ContestantCancellationActionsProps) => {
   const notify = useNotify();
   const refresh = useRefresh();
+  const dataProvider = useDataProvider() as CacheInvalidatingDataProvider;
+  const { canAction } = useCan();
+  const inFlightRef = useRef(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reason, setReason] = useState('');
   const [reasonError, setReasonError] = useState(false);
@@ -77,8 +87,13 @@ const ContestantCancellationActions = ({
   })
     ? 'restore'
     : 'cancel';
+  const canRunAction = canAction(contestantActionPermissionUid(action));
   const copy = actionCopy[action];
   const trimmedReason = reason.trim();
+
+  if (!canRunAction) {
+    return null;
+  }
 
   const closeDialog = () => {
     if (isSaving) return;
@@ -88,11 +103,16 @@ const ContestantCancellationActions = ({
   };
 
   const submitAction = async () => {
+    if (inFlightRef.current) {
+      return;
+    }
+
     if (!trimmedReason) {
       setReasonError(true);
       return;
     }
 
+    inFlightRef.current = true;
     setIsSaving(true);
     try {
       await httpClient(
@@ -113,10 +133,12 @@ const ContestantCancellationActions = ({
       setDialogOpen(false);
       setReason('');
       setReasonError(false);
+      dataProvider.invalidateResourceCache?.('conference-contestants');
       refresh();
     } catch (error) {
       notify(getErrorMessage(error, copy.errorMessage), { type: 'error' });
     } finally {
+      inFlightRef.current = false;
       setIsSaving(false);
     }
   };
