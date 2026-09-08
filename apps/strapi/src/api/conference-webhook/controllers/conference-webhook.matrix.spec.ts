@@ -14,6 +14,7 @@ vi.mock("../../../utils/coerce-to-schema", () => ({
 }));
 
 import createController from "./conference-webhook";
+import contestantLifecycles from "../../conference-contestant/content-types/conference-contestant/lifecycles";
 
 const year = new Date().getFullYear();
 const conference = {
@@ -68,6 +69,7 @@ describe("conference registration matrix", () => {
   let controller: ReturnType<typeof createController>;
   let dbDecrement: ReturnType<typeof vi.fn>;
   let availableContestants: number | null;
+  let failContestantCreate: boolean;
 
   beforeEach(() => {
     created = {};
@@ -75,6 +77,7 @@ describe("conference registration matrix", () => {
     nextId = 1000;
     emailSend = vi.fn(async () => undefined);
     availableContestants = 100;
+    failContestantCreate = false;
     findOneById.mockReset();
     findOneById.mockImplementation(async (uid: string, id: number | string) => {
       if (uid === "api::conference.conference")
@@ -179,6 +182,12 @@ describe("conference registration matrix", () => {
       },
       documents: (uid: string) => ({
         create: vi.fn(async ({ data }: { data: any }) => {
+          if (uid === "api::conference-contestant.conference-contestant") {
+            await contestantLifecycles.beforeCreate({ params: { data } });
+            if (failContestantCreate) {
+              throw new Error("contestant lifecycle create failed");
+            }
+          }
           const entity = {
             ...data,
             id: nextId++,
@@ -455,6 +464,46 @@ describe("conference registration matrix", () => {
     expect(
       created["api::conference-contestant.conference-contestant"]
     ).toHaveLength(3);
+  });
+
+  it("does not swallow post-charge contestant create failures in mixed carts", async () => {
+    failContestantCreate = true;
+    const body = {
+      ...basePayload("MixedFail"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [
+        {
+          first: "Solo",
+          last: "Golfer",
+          email: "solo-golfer@example.invalid",
+          phone: "4055550106",
+          type: "Contestant",
+          price: 125,
+          extras: [],
+          ticket_type: {
+            id: 37,
+            name: "Golfer",
+            context: "Contestant",
+          },
+        },
+      ],
+      paymentData: {
+        ...basePayload("MixedFail").paymentData,
+        amount: 125,
+      },
+    };
+
+    const request = { request: { body }, body: undefined as any };
+    await controller.registration(request, vi.fn());
+
+    expect(service.processPayment).toHaveBeenCalled();
+    expect(request.body).not.toMatchObject({ result: "success" });
+    expect(service.reportWebhookFailure).toHaveBeenCalledWith(
+      body,
+      expect.any(Error),
+      expect.stringMatching(/registration/i)
+    );
   });
 
   it.each([

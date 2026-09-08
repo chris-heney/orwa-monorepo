@@ -7,7 +7,12 @@ import {
   assertGolfCapacity,
   countsAgainstGolfCapacity,
 } from "../../conference-webhook/helpers/contestant-capacity";
+import { findOneById } from "../../../utils/document-compat";
 import { withContestantRestCreate } from "./contestant-lifecycle-context";
+import {
+  badRequest,
+  notFound,
+} from "./contestant-domain-error";
 
 const CONTESTANT_UID = "api::conference-contestant.conference-contestant";
 const CONFERENCE_UID = "api::conference.conference";
@@ -40,14 +45,14 @@ const hasOwn = (value: Record<string, unknown>, key: string): boolean =>
 const rejectLifecycleFields = (data: Record<string, unknown>) => {
   const attempted = LIFECYCLE_FIELDS.filter((field) => hasOwn(data, field));
   if (attempted.length > 0) {
-    throw new Error(LIFECYCLE_MESSAGE);
+    throw badRequest(LIFECYCLE_MESSAGE);
   }
 };
 
 const rejectRelationChanges = (data: Record<string, unknown>) => {
   const attempted = RELATION_CHANGE_FIELDS.filter((field) => hasOwn(data, field));
   if (attempted.length > 0) {
-    throw new Error(RELATION_CHANGE_MESSAGE);
+    throw badRequest(RELATION_CHANGE_MESSAGE);
   }
 };
 
@@ -71,14 +76,21 @@ const relationDocumentId = (value: unknown): string | null => {
   return null;
 };
 
-const loadRelation = async <T>(
+const isNumericId = (value: string | number): boolean =>
+  typeof value === "number" || /^\d+$/.test(value);
+
+const loadRelation = async <T extends { documentId?: string | null }>(
   strapi: any,
   uid: string,
   documentId: string | null,
   populate?: unknown
 ): Promise<T | null> => {
   if (!documentId) return null;
-  return strapi.documents(uid).findOne({ documentId, ...(populate ? { populate } : {}) });
+  const params = populate ? { populate } : {};
+  if (isNumericId(documentId)) {
+    return findOneById(uid, documentId, params);
+  }
+  return strapi.documents(uid).findOne({ ...params, documentId });
 };
 
 const ticketConsumesGolfCapacity = (ticket: {
@@ -95,7 +107,7 @@ const ticketConsumesGolfCapacity = (ticket: {
 const requireIntegerYear = (value: unknown): number => {
   const year = typeof value === "string" && value.trim() ? Number(value) : value;
   if (!Number.isInteger(year)) {
-    throw new Error("Conference contestant year is required and must be an integer.");
+    throw badRequest("Conference contestant year is required and must be an integer.");
   }
   return year as number;
 };
@@ -112,11 +124,15 @@ const conferenceCycleYear = (conference: Record<string, unknown>): number | null
 };
 
 const ticketBelongsToConference = (
-  ticket: { conferences?: Array<{ documentId?: string | null }> } | null,
-  conferenceDocumentId: string
+  ticket: { conferences?: Array<{ id?: string | number | null; documentId?: string | null }> } | null,
+  conferenceId: string | number
 ): boolean =>
   Array.isArray(ticket?.conferences) &&
-  ticket.conferences.some((conference) => conference.documentId === conferenceDocumentId);
+  ticket.conferences.some(
+    (conference) =>
+      conference.documentId === conferenceId ||
+      String(conference.id) === String(conferenceId)
+  );
 
 const lockConference = async (strapi: any, trx: unknown, documentId: string) => {
   const row = await strapi.db
@@ -149,16 +165,23 @@ export const createContestant = async (
     conferenceDocumentId
   );
   if (!conference) {
-    throw new Error("Selected conference was not found.");
+    throw notFound("Selected conference was not found.");
   }
   const expectedYear = conferenceCycleYear(conference);
-  if (expectedYear != null && year !== expectedYear) {
-    throw new Error(`Conference contestant year must match conference cycle ${expectedYear}.`);
+  if (expectedYear == null) {
+    throw badRequest("Conference cycle year is required for contestant creation.");
   }
+  if (expectedYear != null && year !== expectedYear) {
+    throw badRequest(`Conference contestant year must match conference cycle ${expectedYear}.`);
+  }
+  const selectedConferenceDocumentId =
+    typeof conference.documentId === "string" && conference.documentId
+      ? conference.documentId
+      : conferenceDocumentId;
   const ticket = await loadRelation<{
     name?: string | null;
     context?: string | null;
-    conferences?: Array<{ documentId?: string | null }>;
+    conferences?: Array<{ id?: string | number | null; documentId?: string | null }>;
   }>(
     strapi,
     TICKET_UID,
@@ -166,20 +189,20 @@ export const createContestant = async (
     { conferences: true }
   );
   if (!ticket) {
-    throw new Error("Selected conference ticket was not found.");
+    throw notFound("Selected conference ticket was not found.");
   }
-  if (!ticketBelongsToConference(ticket, conferenceDocumentId!)) {
-    throw new Error("Selected ticket does not belong to the selected conference.");
+  if (!ticketBelongsToConference(ticket, selectedConferenceDocumentId!)) {
+    throw badRequest("Selected ticket does not belong to the selected conference.");
   }
   const countsAgainstGolf = ticketConsumesGolfCapacity(ticket);
 
   return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
     if (countsAgainstGolf) {
-      if (!conferenceDocumentId) {
-        throw new Error("Conference is required for golfer capacity enforcement.");
+      if (!selectedConferenceDocumentId) {
+        throw badRequest("Conference is required for golfer capacity enforcement.");
       }
 
-      const conference = await lockConference(strapi, trx, conferenceDocumentId);
+      const conference = await lockConference(strapi, trx, selectedConferenceDocumentId);
       assertGolfCapacity(conference.available_contestants, 1);
     }
 
@@ -193,7 +216,7 @@ export const createContestant = async (
     if (countsAgainstGolf) {
       await strapi.db
         .connection(CONFERENCE_TABLE)
-        .where({ document_id: conferenceDocumentId })
+        .where({ document_id: selectedConferenceDocumentId })
         .decrement("available_contestants", 1)
         .transacting(trx);
     }
@@ -215,10 +238,10 @@ export const updateContestant = async (
     populate: { conference_ticket: true, conference: true },
   });
   if (!existing) {
-    throw new Error("Conference contestant not found.");
+    throw notFound("Conference contestant not found.");
   }
   if (existing.status === "cancelled") {
-    throw new Error("Cancelled conference contestants are read-only.");
+    throw badRequest("Cancelled conference contestants are read-only.");
   }
 
   return strapi.documents(CONTESTANT_UID).update({

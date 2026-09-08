@@ -42,7 +42,11 @@ export const updateRecord = (
       },
       onError: (error: unknown) => {
         console.error(`Error updating ${resource}:`, error);
-        notify(`Error updating ${title}`, { type: 'error' });
+        const backendMessage =
+          typeof (error as { message?: unknown })?.message === 'string'
+            ? (error as { message: string }).message
+            : null;
+        notify(backendMessage || `Error updating ${title}`, { type: 'error' });
       },
     }
   );

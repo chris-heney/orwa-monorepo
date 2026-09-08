@@ -8,6 +8,7 @@ import {
 } from "../types";
 import { findOneById } from "../../../utils/document-compat";
 import { coerceToSchema } from "../../../utils/coerce-to-schema";
+import { withContestantRestCreate } from "../../conference-contestant/services/contestant-lifecycle-context";
 import { shouldUseAuthorizeNetTestMode } from "../helpers/payment-mode";
 import {
   assertEligiblePreviousRegistration,
@@ -1010,9 +1011,11 @@ export default ({ strapi }) => {
         items: contestantExtras,
       };
 
-      const contestantEntity = await strapi.documents("api::conference-contestant.conference-contestant").create({
-        data: coerceToSchema("api::conference-contestant.conference-contestant", newContestant),
-      });
+      const contestantEntity = await withContestantRestCreate(() =>
+        strapi.documents("api::conference-contestant.conference-contestant").create({
+          data: coerceToSchema("api::conference-contestant.conference-contestant", newContestant),
+        })
+      );
 
       if (countsAgainstGolfCapacity(contestant)) {
         contestantIds.push(contestantEntity.id);

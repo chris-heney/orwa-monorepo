@@ -9,6 +9,7 @@ vi.mock("@strapi/strapi", () => ({
 import { createContestant, updateContestant } from "./conference-contestant";
 
 type ConferenceRecord = {
+  id?: number;
   documentId: string;
   available_contestants: number | null;
   registration_start?: string;
@@ -16,6 +17,7 @@ type ConferenceRecord = {
 };
 
 type TicketRecord = {
+  id?: number;
   documentId: string;
   name: string;
   context?: string | null;
@@ -35,10 +37,16 @@ describe("conference contestant REST write service", () => {
   beforeEach(() => {
     conferences = {
       "conf-1": {
+        id: 3,
         documentId: "conf-1",
         available_contestants: 2,
         registration_start: "2026-01-01",
         registration_end: "2026-12-31",
+      },
+      "conf-no-dates": {
+        id: 4,
+        documentId: "conf-no-dates",
+        available_contestants: 2,
       },
       "conf-2": {
         documentId: "conf-2",
@@ -55,10 +63,15 @@ describe("conference contestant REST write service", () => {
     };
     tickets = {
       golfer: {
+        id: 37,
         documentId: "golfer",
         name: "Golfer",
         context: "Contestant",
-        conferences: [{ documentId: "conf-1" }, { documentId: "sold-out-conf" }],
+        conferences: [
+          { id: 3, documentId: "conf-1" },
+          { documentId: "sold-out-conf" },
+          { id: 4, documentId: "conf-no-dates" },
+        ],
       },
       standalone: {
         documentId: "standalone",
@@ -110,6 +123,7 @@ describe("conference contestant REST write service", () => {
     };
 
     strapi = {
+      contentTypes: {},
       db: {
         transaction: vi.fn(async (callback: (args: { trx: unknown }) => unknown) =>
           callback({ trx: { id: "trx" } })
@@ -119,6 +133,9 @@ describe("conference contestant REST write service", () => {
       documents: vi.fn((uid: string) => {
         if (uid === "api::conference.conference") {
           return {
+            findFirst: vi.fn(async ({ filters }: { filters: { id: number } }) =>
+              Object.values(conferences).find((row) => String(row.id) === String(filters.id)) ?? null
+            ),
             findOne: vi.fn(async ({ documentId }: { documentId: string }) =>
               conferences[documentId] ? structuredClone(conferences[documentId]) : null
             ),
@@ -126,6 +143,9 @@ describe("conference contestant REST write service", () => {
         }
         if (uid === "api::conference-ticket.conference-ticket") {
           return {
+            findFirst: vi.fn(async ({ filters }: { filters: { id: number } }) =>
+              Object.values(tickets).find((row) => String(row.id) === String(filters.id)) ?? null
+            ),
             findOne: vi.fn(async ({ documentId }: { documentId: string }) =>
               tickets[documentId] ? structuredClone(tickets[documentId]) : null
             ),
@@ -149,6 +169,7 @@ describe("conference contestant REST write service", () => {
         };
       }),
     };
+    (globalThis as any).strapi = strapi;
   });
 
   it("rejects direct lifecycle fields on create and update", async () => {
@@ -240,6 +261,28 @@ describe("conference contestant REST write service", () => {
     expect(decrements).toBe(1);
     expect(conferences["conf-1"].available_contestants).toBe(1);
     expect(locks).toContain("conferences:conf-1");
+  });
+
+  it("accepts numeric entity ids and documentIds for create relations", async () => {
+    await createContestant(strapi, {
+      data: { conference: 3, conference_ticket: 37, year: 2026 },
+    });
+    await createContestant(strapi, {
+      data: { conference: "conf-1", conference_ticket: "golfer", year: 2026 },
+    });
+
+    expect(created).toHaveLength(2);
+    expect(decrements).toBe(2);
+  });
+
+  it("rejects direct create when conference dates cannot establish a cycle year", async () => {
+    await expect(
+      createContestant(strapi, {
+        data: { conference: "conf-no-dates", conference_ticket: "golfer", year: 2026 },
+      })
+    ).rejects.toThrow("Conference cycle year is required");
+    expect(created).toHaveLength(0);
+    expect(decrements).toBe(0);
   });
 
   it("creates contextless Golfer - Contestant Only and decrements capacity once", async () => {

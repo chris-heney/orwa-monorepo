@@ -13,7 +13,7 @@
  */
 
 import { findOneById } from '../../../utils/document-compat';
-import { withContestantHardDelete } from '../../conference-contestant/services/contestant-lifecycle-context';
+import { hardDeleteContestantForRegistrationRemoval } from '../../conference-contestant/services/contestant-hard-delete';
 
 export default ({ strapi }) => {
   return {
@@ -77,9 +77,7 @@ export default ({ strapi }) => {
           for (const row of rows) {
             if (row?.documentId) {
               if (uid === 'api::conference-contestant.conference-contestant') {
-                await withContestantHardDelete(() =>
-                  strapi.documents(uid).delete({ documentId: row.documentId })
-                );
+                await hardDeleteContestantForRegistrationRemoval(strapi, row.documentId);
               } else {
                 await strapi.documents(uid).delete({ documentId: row.documentId });
               }

@@ -46,6 +46,7 @@ import {
   createContestant,
   updateContestant,
 } from "../services/conference-contestant";
+import { ContestantDomainError } from "../services/contestant-domain-error";
 
 const ctx = (
   body: Record<string, unknown> = {},
@@ -264,6 +265,33 @@ describe("conference contestant controller", () => {
 
     expect(updateRequest.badRequest).toHaveBeenCalledWith(
       "Unable to update conference contestant."
+    );
+  });
+
+  it("maps typed direct-write validation errors to public 400 and 404 messages", async () => {
+    const mismatchRequest = ctx({ data: { conference_ticket: "other" } });
+    vi.mocked(createContestant).mockRejectedValueOnce(
+      new ContestantDomainError(
+        400,
+        "Selected ticket does not belong to the selected conference."
+      )
+    );
+
+    await (controller as any).create(mismatchRequest);
+
+    expect(mismatchRequest.badRequest).toHaveBeenCalledWith(
+      "Selected ticket does not belong to the selected conference."
+    );
+
+    const missingRequest = ctx({ data: { conference: "missing" } });
+    vi.mocked(createContestant).mockRejectedValueOnce(
+      new ContestantDomainError(404, "Selected conference was not found.")
+    );
+
+    await (controller as any).create(missingRequest);
+
+    expect(missingRequest.notFound).toHaveBeenCalledWith(
+      "Selected conference was not found."
     );
   });
 

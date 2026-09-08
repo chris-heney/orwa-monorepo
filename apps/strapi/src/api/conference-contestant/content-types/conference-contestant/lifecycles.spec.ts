@@ -1,4 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { vi } from "vitest";
+
+const { findOneById } = vi.hoisted(() => ({
+  findOneById: vi.fn(),
+}));
+
+vi.mock("../../../../utils/document-compat", () => ({
+  findOneById,
+}));
 
 import lifecycles from "./lifecycles";
 import {
@@ -7,9 +16,21 @@ import {
   withContestantRestCreate,
 } from "../../services/contestant-lifecycle-context";
 
-const event = (data: Record<string, unknown> = {}) => ({ params: { data } });
+const event = (data: Record<string, unknown> = {}, where: Record<string, unknown> = {}) => ({
+  params: { data, where },
+});
 
 describe("conference contestant lifecycle guard", () => {
+  it("exports the hooks Strapi should register for the content type", () => {
+    expect(lifecycles).toEqual(
+      expect.objectContaining({
+        beforeCreate: expect.any(Function),
+        beforeUpdate: expect.any(Function),
+        beforeDelete: expect.any(Function),
+      })
+    );
+  });
+
   it("blocks direct lifecycle field changes from Content Manager/document service", async () => {
     await expect(
       lifecycles.beforeUpdate(event({ status: "cancelled" }) as never)
@@ -35,11 +56,44 @@ describe("conference contestant lifecycle guard", () => {
   });
 
   it("blocks direct conference and ticket relation repoints", async () => {
+    findOneById.mockResolvedValue({
+      documentId: "contestant-1",
+      conference: { id: 3, documentId: "conf-doc" },
+      conference_ticket: { id: 37, documentId: "ticket-doc" },
+    });
+
     await expect(
-      lifecycles.beforeUpdate(event({ conference_ticket: "other-ticket" }) as never)
+      lifecycles.beforeUpdate(
+        event({ conference_ticket: "other-ticket" }, { documentId: "contestant-1" }) as never
+      )
     ).rejects.toThrow("Cancel and create");
     await expect(
-      lifecycles.beforeUpdate(event({ conference: "other-conference" }) as never)
+      lifecycles.beforeUpdate(
+        event({ conference: "other-conference" }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("Cancel and create");
+  });
+
+  it("allows unchanged relation payloads while blocking actual repoints", async () => {
+    findOneById.mockResolvedValue({
+      documentId: "contestant-1",
+      conference: { id: 3, documentId: "conf-doc" },
+      conference_ticket: { id: 37, documentId: "ticket-doc" },
+    });
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event(
+          { conference: { set: [{ id: 3 }] }, conference_ticket: { set: [{ documentId: "ticket-doc" }] }, first: "Ada" },
+          { documentId: "contestant-1" }
+        ) as never
+      )
+    ).resolves.toBeUndefined();
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ conference_ticket: { set: [{ documentId: "other-ticket" }] } }, { documentId: "contestant-1" }) as never
+      )
     ).rejects.toThrow("Cancel and create");
   });
 

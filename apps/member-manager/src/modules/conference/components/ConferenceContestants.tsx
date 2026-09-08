@@ -92,6 +92,7 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
           defaultValue={createDefaults.year}
           fullWidth
           helperText={false}
+          validate={required('Year is required')}
         />
       </Grid>
       <Grid container spacing={2}>

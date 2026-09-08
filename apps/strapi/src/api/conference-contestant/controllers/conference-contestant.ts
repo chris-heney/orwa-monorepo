@@ -12,6 +12,7 @@ import {
   createContestant,
   updateContestant,
 } from "../services/conference-contestant";
+import { ContestantDomainError } from "../services/contestant-domain-error";
 
 type ContestantAction = "cancel" | "restore";
 
@@ -50,6 +51,12 @@ const strongestActor = (ctx: any): string | null => {
 
 const mapContestantActionError = (ctx: any, error: unknown) => {
   const message = error instanceof Error ? error.message : "";
+  if (error instanceof ContestantDomainError) {
+    if (error.statusCode === 404) return ctx.notFound(error.publicMessage);
+    if (error.statusCode === 409) return ctx.conflict(error.publicMessage);
+    return ctx.badRequest(error.publicMessage);
+  }
+
   const lowerMessage = message.toLowerCase();
 
   if (lowerMessage.includes("not found")) {

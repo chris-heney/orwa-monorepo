@@ -61,4 +61,13 @@ describe("ticketMatchesContext", () => {
       )
     ).toBe(true);
   });
+
+  it("does not route arbitrary contextless names containing Contestant later in the label", () => {
+    expect(
+      ticketMatchesContext(
+        { name: "Attendee + Contestant", context: null as unknown as "Contestant" },
+        "Contestant"
+      )
+    ).toBe(false);
+  });
 });

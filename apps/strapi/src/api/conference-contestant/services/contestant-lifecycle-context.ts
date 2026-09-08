@@ -2,6 +2,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 type ContestantLifecycleContext = {
   allowLifecycleTransition?: boolean;
+  allowRelationRepoint?: boolean;
   allowHardDelete?: boolean;
   allowRestCreate?: boolean;
 };
