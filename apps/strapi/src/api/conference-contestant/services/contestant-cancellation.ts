@@ -4,6 +4,7 @@ import {
 } from "../../conference-webhook/helpers/contestant-capacity";
 
 const CONTESTANT_UID = "api::conference-contestant.conference-contestant";
+const CONTESTANT_TABLE = "conference_contestants";
 const CONFERENCE_TABLE = "conferences";
 
 export type Contestant = {
@@ -82,6 +83,51 @@ const requireConferenceDocumentId = (contestant: Contestant): string => {
   return documentId;
 };
 
+const lockDocumentRow = async (
+  strapi: any,
+  trx: unknown,
+  table: string,
+  documentId: string,
+  notFoundMessage: string
+): Promise<void> => {
+  const row = await strapi.db
+    .connection(table)
+    .where({ document_id: documentId })
+    .forUpdate()
+    .transacting(trx)
+    .first();
+
+  if (!row) {
+    throw new Error(notFoundMessage);
+  }
+};
+
+const lockContestant = (
+  strapi: any,
+  trx: unknown,
+  documentId: string
+): Promise<void> =>
+  lockDocumentRow(
+    strapi,
+    trx,
+    CONTESTANT_TABLE,
+    documentId,
+    "Conference contestant not found."
+  );
+
+const lockConference = (
+  strapi: any,
+  trx: unknown,
+  documentId: string
+): Promise<void> =>
+  lockDocumentRow(
+    strapi,
+    trx,
+    CONFERENCE_TABLE,
+    documentId,
+    "Conference not found."
+  );
+
 export const cancelContestant = async (
   strapi: any,
   input: ContestantCancellationInput
@@ -90,10 +136,13 @@ export const cancelContestant = async (
   const actor = normalizeActor(input.actor);
 
   return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
+    await lockContestant(strapi, trx, input.documentId);
+
     const fresh = await loadContestant(strapi, input.documentId);
     if (fresh.status === "cancelled") return fresh;
 
     if (isGolferTicket(fresh)) {
+      await lockConference(strapi, trx, requireConferenceDocumentId(fresh));
       await strapi.db
         .connection(CONFERENCE_TABLE)
         .where({ document_id: requireConferenceDocumentId(fresh) })
@@ -121,10 +170,14 @@ export const restoreContestant = async (
   normalizeRequiredReason(input.reason);
 
   return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
-    const fresh = await loadContestant(strapi, input.documentId);
+    await lockContestant(strapi, trx, input.documentId);
+
+    let fresh = await loadContestant(strapi, input.documentId);
     if (fresh.status !== "cancelled") return fresh;
 
     if (isGolferTicket(fresh)) {
+      await lockConference(strapi, trx, requireConferenceDocumentId(fresh));
+      fresh = await loadContestant(strapi, input.documentId);
       assertGolfCapacity(fresh.conference?.available_contestants, 1);
       await strapi.db
         .connection(CONFERENCE_TABLE)
