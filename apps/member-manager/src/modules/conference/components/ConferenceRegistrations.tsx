@@ -42,7 +42,7 @@ import RegistrationReceipt from './RegistrationReceipt';
 import EditIcon from '@mui/icons-material/Edit';
 import { ISharedMeta } from '../types/IConference';
 import { useCan } from '../../rbac-manager/useCan';
-import { CONFERENCE_REGISTRATION_RECEIPT_POPULATE } from '../helpers/registrationReceiptContestants';
+import { buildRegistrationReceiptShowQueryOptions } from '../helpers/registrationReceiptContestants';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 
 interface RegistrationProps {
@@ -327,12 +327,7 @@ const ConferenceRegistrations = () => {
               title={' '}
               resource="conference-registrations"
               component={'div'}
-              queryOptions={{
-                meta: {
-                  populate: CONFERENCE_REGISTRATION_RECEIPT_POPULATE,
-                  raw: true,
-                },
-              }}
+              queryOptions={buildRegistrationReceiptShowQueryOptions()}
               id={record.id}
             >
               {canUpdate && (

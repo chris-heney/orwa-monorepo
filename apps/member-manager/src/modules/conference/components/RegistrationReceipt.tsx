@@ -7,8 +7,10 @@ import {
   NumberField,
   ArrayField,
   FunctionField,
+  Identifier,
   RaRecord,
   RecordContextProvider,
+  useGetMany,
 } from "react-admin";
 import { Grid, Typography, Box, Chip } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
@@ -18,7 +20,10 @@ import { freeVendorAllowance } from "../helpers/freeVendorAllowance";
 import AttendeeTicketPriceField from "./AttendeeTicketPriceField";
 import { Datagrid } from "@orwa/entity-id";
 import { getDisplayEntityId } from "../../../helpers/strapiIds";
-import { buildRegistrationReceiptRecord } from "../helpers/registrationReceiptContestants";
+import {
+  buildContestantHistoryGetManyParams,
+  buildRegistrationReceiptRecord,
+} from "../helpers/registrationReceiptContestants";
 
 // interface IRegistrant {
 //   id: number;
@@ -59,22 +64,142 @@ import { buildRegistrationReceiptRecord } from "../helpers/registrationReceiptCo
 //   taste_test_contestants: any[]; //relation to taste_test_contestants
 // }
 
+type ContestantRelationValue =
+  | Identifier
+  | { id?: Identifier | null }
+  | null
+  | undefined;
+
+const ContestantHistoryReceiptSection = ({
+  contestants,
+}: {
+  contestants: ContestantRelationValue[] | null | undefined;
+}) => {
+  const getManyParams = React.useMemo(
+    () => buildContestantHistoryGetManyParams(contestants),
+    [contestants]
+  );
+  const { data: contestantRecords = [], isLoading } = useGetMany(
+    "conference-contestants",
+    getManyParams,
+    { enabled: getManyParams.ids.length > 0 }
+  );
+  const receiptRecord = React.useMemo(
+    () =>
+      buildRegistrationReceiptRecord({
+        id: "contestant-history",
+        contestants: contestantRecords,
+      }),
+    [contestantRecords]
+  );
+  const activeContestants = receiptRecord.active_contestants;
+  const cancelledContestants = receiptRecord.cancelled_contestants;
+
+  if (getManyParams.ids.length === 0) return null;
+  if (isLoading) {
+    return (
+      <Box mb={4}>
+        <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+          Contestants
+        </Typography>
+        <Typography color="text.secondary">Loading contestant history...</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <RecordContextProvider value={receiptRecord}>
+      {activeContestants.length > 0 && (
+        <Box mb={4}>
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            Contestants ({activeContestants.length})
+          </Typography>
+          <ArrayField source="active_contestants">
+            <Datagrid bulkActionButtons={false}>
+              <TextField source="first" label="First" />
+              <TextField source="last" label="Last" />
+              <FunctionField
+                label="Type"
+                render={(record: RaRecord) => record.ticket}
+              />
+              <NumberField source="fee" label="Fee" options={CurrencyOptions} />
+              <FunctionField
+                label="Team Name"
+                render={(record: RaRecord) => record.team}
+              />
+            </Datagrid>
+          </ArrayField>
+        </Box>
+      )}
+
+      {cancelledContestants.length > 0 && (
+        <Box
+          mb={4}
+          p={2}
+          border={1}
+          borderColor="warning.main"
+          borderRadius={2}
+          bgcolor="action.hover"
+        >
+          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
+            Cancelled Contestants — retained for refund history (
+            {cancelledContestants.length})
+          </Typography>
+          <ArrayField source="cancelled_contestants">
+            <Datagrid bulkActionButtons={false}>
+              <FunctionField
+                label="Name"
+                render={(record: RaRecord) =>
+                  `${record.first ?? ""} ${record.last ?? ""}`.trim() ||
+                  "Unnamed contestant"
+                }
+              />
+              <FunctionField
+                label="Ticket"
+                render={(record: RaRecord) => record.ticket}
+              />
+              <NumberField source="fee" label="Fee" options={CurrencyOptions} />
+              <FunctionField
+                sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}
+                label="Mulligans"
+                render={(record: RaRecord) => {
+                  const mulligans = record.mulligans as string[];
+                  if (mulligans.length === 0) return "None";
+                  return mulligans.map((label: string, index: number) => (
+                    <Chip
+                      key={`cancelled-mulligan-${record.id}-${index}`}
+                      label={label}
+                    />
+                  ));
+                }}
+              />
+              <FunctionField
+                label="Cancelled At"
+                render={(record: RaRecord) =>
+                  record.cancelled_at
+                    ? new Date(record.cancelled_at as string).toLocaleString()
+                    : "Unrecorded"
+                }
+              />
+              <TextField source="cancelled_reason" label="Reason" />
+              <TextField source="cancelled_by" label="Cancelled By" />
+            </Datagrid>
+          </ArrayField>
+        </Box>
+      )}
+    </RecordContextProvider>
+  );
+};
+
 const RegistrationReceipt = () => {
   const { record } = useShowContext();
-  const receiptRecord = React.useMemo(
-    () => (record ? buildRegistrationReceiptRecord(record) : record),
-    [record]
-  );
 
   if (!record) return <Typography>Loading...</Typography>;
 
   const boothCount = Array.isArray(record.booths) ? record.booths.length : 0;
   const freeVendorSlots = freeVendorAllowance(boothCount);
-  const activeContestants = receiptRecord?.active_contestants ?? [];
-  const cancelledContestants = receiptRecord?.cancelled_contestants ?? [];
 
   return (
-    <RecordContextProvider value={receiptRecord}>
     <Box p={4} maxWidth="lg" mx="auto">
       {/* Header */}
       <Typography variant="h6" fontWeight="bold" mb={4}>
@@ -270,85 +395,13 @@ const RegistrationReceipt = () => {
         </Box>
       )}
 
-      {/* Contestants */}
-      {activeContestants.length > 0 && (
-        <Box mb={4}>
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            Contestants ({activeContestants.length})
-          </Typography>
-          <ArrayField source="active_contestants">
-            <Datagrid bulkActionButtons={false}>
-              <TextField source="first" label="First" />
-              <TextField source="last" label="Last" />
-              <FunctionField
-                label="Type"
-                render={(record: RaRecord) => record.ticket}
-              />
-              <NumberField source="fee" label="Fee" options={CurrencyOptions} />
-              <FunctionField
-                label="Team Name"
-                render={(record: RaRecord) => record.team}
-              />
-            </Datagrid>
-          </ArrayField>
-        </Box>
-      )}
-
-      {cancelledContestants.length > 0 && (
-        <Box
-          mb={4}
-          p={2}
-          border={1}
-          borderColor="warning.main"
-          borderRadius={2}
-          bgcolor="action.hover"
-        >
-          <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-            Cancelled Contestants — retained for refund history (
-            {cancelledContestants.length})
-          </Typography>
-          <ArrayField source="cancelled_contestants">
-            <Datagrid bulkActionButtons={false}>
-              <FunctionField
-                label="Name"
-                render={(record: RaRecord) =>
-                  `${record.first ?? ""} ${record.last ?? ""}`.trim() ||
-                  "Unnamed contestant"
-                }
-              />
-              <FunctionField
-                label="Ticket"
-                render={(record: RaRecord) => record.ticket}
-              />
-              <NumberField source="fee" label="Fee" options={CurrencyOptions} />
-              <FunctionField
-                sx={{ display: "flex", gap: "5px", flexWrap: "wrap" }}
-                label="Mulligans"
-                render={(record: RaRecord) => {
-                  const mulligans = record.mulligans as string[];
-                  if (mulligans.length === 0) return "None";
-                  return mulligans.map((label: string, index: number) => (
-                    <Chip
-                      key={`cancelled-mulligan-${record.id}-${index}`}
-                      label={label}
-                    />
-                  ));
-                }}
-              />
-              <FunctionField
-                label="Cancelled At"
-                render={(record: RaRecord) =>
-                  record.cancelled_at
-                    ? new Date(record.cancelled_at as string).toLocaleString()
-                    : "Unrecorded"
-                }
-              />
-              <TextField source="cancelled_reason" label="Reason" />
-              <TextField source="cancelled_by" label="Cancelled By" />
-            </Datagrid>
-          </ArrayField>
-        </Box>
-      )}
+      <ContestantHistoryReceiptSection
+        contestants={
+          Array.isArray(record.contestants)
+            ? (record.contestants as ContestantRelationValue[])
+            : []
+        }
+      />
 
       {/* Team */}
       {record.team && record.team.data && (
@@ -440,7 +493,6 @@ const RegistrationReceipt = () => {
         </Box>
       )}
     </Box>
-    </RecordContextProvider>
   );
 };
 

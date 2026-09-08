@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildContestantHistoryGetManyParams,
   buildRegistrationReceiptRecord,
+  buildRegistrationReceiptShowQueryOptions,
   buildReceiptContestantRows,
 } from "./registrationReceiptContestants";
 
@@ -71,5 +73,41 @@ describe("registrationReceiptContestants", () => {
     expect(receiptRecord.contestants).toBe(contestants);
     expect(receiptRecord.active_contestants).toHaveLength(1);
     expect(receiptRecord.cancelled_contestants).toHaveLength(1);
+  });
+
+  it("keeps the parent registration Show query react-admin compatible", () => {
+    expect(buildRegistrationReceiptShowQueryOptions()).toEqual({
+      meta: {
+        populate: {
+          registrant: true,
+          attendees: true,
+          booths: true,
+          conference_sponsor: true,
+          team: true,
+          contestants: true,
+          taste_test_contestants: true,
+        },
+      },
+    });
+  });
+
+  it("builds a focused raw contestant history fetch from relation ids", () => {
+    expect(
+      buildContestantHistoryGetManyParams([
+        "w3wzeuycgq136zyx3pzp9vnu",
+        { id: "b2dssimoi6cw2ttcf7zj43da" },
+        null,
+      ])
+    ).toEqual({
+      ids: ["w3wzeuycgq136zyx3pzp9vnu", "b2dssimoi6cw2ttcf7zj43da"],
+      meta: {
+        raw: true,
+        populate: {
+          conference_ticket: true,
+          team: true,
+          items: { populate: { item: true } },
+        },
+      },
+    });
   });
 });

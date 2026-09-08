@@ -1,22 +1,60 @@
-import { RaRecord } from "react-admin";
+import { Identifier, RaRecord } from "react-admin";
 import { ISharedMeta } from "../types/IConference";
 import { partitionContestants } from "./partitionContestants";
 
-export const CONFERENCE_REGISTRATION_RECEIPT_POPULATE = {
+export const CONFERENCE_REGISTRATION_RECEIPT_SHOW_POPULATE = {
   registrant: true,
-  attendees: { populate: { conference_ticket: true } },
+  attendees: true,
   booths: true,
-  conference_sponsor: { populate: { sponsorship_items: true, logo: true } },
+  conference_sponsor: true,
   team: true,
-  contestants: {
-    populate: {
-      conference_ticket: true,
-      team: true,
-      items: { populate: { item: true } },
-    },
-  },
-  taste_test_contestants: { populate: { watersystem: true } },
+  contestants: true,
+  taste_test_contestants: true,
 } as const;
+
+export const CONFERENCE_CONTESTANT_RECEIPT_POPULATE = {
+  conference_ticket: true,
+  team: true,
+  items: { populate: { item: true } },
+} as const;
+
+export const buildRegistrationReceiptShowQueryOptions = () => ({
+  meta: {
+    populate: CONFERENCE_REGISTRATION_RECEIPT_SHOW_POPULATE,
+  },
+});
+
+type ContestantRelationValue =
+  | Identifier
+  | { id?: Identifier | null }
+  | null
+  | undefined;
+
+const contestantRelationId = (
+  value: ContestantRelationValue
+): Identifier | null => {
+  if (value && typeof value === "object") {
+    return value.id ?? null;
+  }
+  return value ?? null;
+};
+
+export const contestantHistoryIds = (
+  contestants: ContestantRelationValue[] | null | undefined
+): Identifier[] =>
+  (contestants ?? [])
+    .map(contestantRelationId)
+    .filter((id): id is Identifier => id != null && id !== "");
+
+export const buildContestantHistoryGetManyParams = (
+  contestants: ContestantRelationValue[] | null | undefined
+) => ({
+  ids: contestantHistoryIds(contestants),
+  meta: {
+    raw: true,
+    populate: CONFERENCE_CONTESTANT_RECEIPT_POPULATE,
+  },
+});
 
 const money = (value: unknown): string =>
   new Intl.NumberFormat("en-US", {
