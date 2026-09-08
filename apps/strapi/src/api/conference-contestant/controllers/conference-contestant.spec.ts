@@ -2,14 +2,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const testState = vi.hoisted(() => ({
   strapi: {},
+  sanitizeOutput: vi.fn(),
+  transformResponse: vi.fn(),
 }));
 
 vi.mock("@strapi/strapi", () => ({
   factories: {
-    createCoreController: vi.fn(
-      (_uid: string, extension?: (args: { strapi: unknown }) => unknown) =>
-        extension?.({ strapi: testState.strapi }) ?? {}
-    ),
+    createCoreController: vi.fn((_uid: string, extension?: (args: { strapi: unknown }) => any) => {
+      const controller: Record<string, unknown> = {
+        sanitizeOutput: testState.sanitizeOutput,
+        transformResponse: testState.transformResponse,
+      };
+      const extensionMethods = extension?.({ strapi: testState.strapi }) ?? {};
+
+      for (const [key, value] of Object.entries(extensionMethods)) {
+        controller[key] =
+          typeof value === "function" ? value.bind(controller) : value;
+      }
+
+      return controller;
+    }),
   },
 }));
 
@@ -52,6 +64,12 @@ describe("conference contestant controller", () => {
       documentId: "contestant-1",
       status: "active",
     } as any);
+    testState.sanitizeOutput.mockImplementation(async (entity) => ({
+      sanitized: entity,
+    }));
+    testState.transformResponse.mockImplementation((sanitized) => ({
+      data: sanitized,
+    }));
   });
 
   it("requires a cancellation reason", async () => {
@@ -71,7 +89,7 @@ describe("conference contestant controller", () => {
       }
     );
 
-    await (controller as any).cancel(request);
+    const response = await (controller as any).cancel(request);
 
     expect(cancelContestant).toHaveBeenCalledWith(
       testState.strapi,
@@ -81,9 +99,13 @@ describe("conference contestant controller", () => {
         actor: "staff@example.org",
       })
     );
-    expect(request.body).toEqual({
-      documentId: "contestant-1",
-      status: "cancelled",
+    expect(response).toEqual({
+      data: {
+        sanitized: {
+          documentId: "contestant-1",
+          status: "cancelled",
+        },
+      },
     });
   });
 
@@ -126,7 +148,7 @@ describe("conference contestant controller", () => {
   it("restores a contestant through the cancellation service", async () => {
     const request = ctx({ reason: "Refund reversed" });
 
-    await (controller as any).restore(request);
+    const response = await (controller as any).restore(request);
 
     expect(restoreContestant).toHaveBeenCalledWith(
       testState.strapi,
@@ -135,10 +157,54 @@ describe("conference contestant controller", () => {
         reason: "Refund reversed",
       })
     );
-    expect(request.body).toEqual({
+    expect(response).toEqual({
+      data: {
+        sanitized: {
+          documentId: "contestant-1",
+          status: "active",
+        },
+      },
+    });
+  });
+
+  it("sanitizes and transforms the cancelled contestant response", async () => {
+    const request = ctx({ reason: "Golf overage" });
+    const entity = {
+      documentId: "contestant-1",
+      status: "cancelled",
+      privateAuditField: "internal",
+    };
+    const sanitized = { documentId: "contestant-1", status: "cancelled" };
+    const transformed = { data: { id: "contestant-1", attributes: sanitized } };
+    vi.mocked(cancelContestant).mockResolvedValueOnce(entity as any);
+    testState.sanitizeOutput.mockResolvedValueOnce(sanitized);
+    testState.transformResponse.mockReturnValueOnce(transformed);
+
+    const response = await (controller as any).cancel(request);
+
+    expect(testState.sanitizeOutput).toHaveBeenCalledWith(entity, request);
+    expect(testState.transformResponse).toHaveBeenCalledWith(sanitized);
+    expect(response).toEqual(transformed);
+  });
+
+  it("sanitizes and transforms the restored contestant response", async () => {
+    const request = ctx({ reason: "Refund reversed" });
+    const entity = {
       documentId: "contestant-1",
       status: "active",
-    });
+      privateAuditField: "internal",
+    };
+    const sanitized = { documentId: "contestant-1", status: "active" };
+    const transformed = { data: { id: "contestant-1", attributes: sanitized } };
+    vi.mocked(restoreContestant).mockResolvedValueOnce(entity as any);
+    testState.sanitizeOutput.mockResolvedValueOnce(sanitized);
+    testState.transformResponse.mockReturnValueOnce(transformed);
+
+    const response = await (controller as any).restore(request);
+
+    expect(testState.sanitizeOutput).toHaveBeenCalledWith(entity, request);
+    expect(testState.transformResponse).toHaveBeenCalledWith(sanitized);
+    expect(response).toEqual(transformed);
   });
 
   it("maps known service errors without leaking internal messages", async () => {

@@ -70,7 +70,8 @@ const mapContestantActionError = (ctx: any, error: unknown) => {
 const runContestantAction = async (
   ctx: any,
   strapi: any,
-  action: ContestantAction
+  action: ContestantAction,
+  controller: any
 ) => {
   const reason = normalizeReason(ctx);
   if (!reason) {
@@ -84,10 +85,12 @@ const runContestantAction = async (
   };
 
   try {
-    ctx.body =
+    const entity =
       action === "cancel"
         ? await cancelContestant(strapi, input)
         : await restoreContestant(strapi, input);
+    const sanitized = await controller.sanitizeOutput(entity, ctx);
+    return controller.transformResponse(sanitized);
   } catch (error) {
     return mapContestantActionError(ctx, error);
   }
@@ -97,11 +100,11 @@ export default factories.createCoreController(
   'api::conference-contestant.conference-contestant',
   ({ strapi }) => ({
     async cancel(ctx) {
-      return runContestantAction(ctx, strapi, "cancel");
+      return runContestantAction(ctx, strapi, "cancel", this);
     },
 
     async restore(ctx) {
-      return runContestantAction(ctx, strapi, "restore");
+      return runContestantAction(ctx, strapi, "restore", this);
     },
 
     async delete(ctx) {
