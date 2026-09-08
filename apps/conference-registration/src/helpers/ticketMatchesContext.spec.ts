@@ -31,4 +31,22 @@ describe("ticketMatchesContext", () => {
       )
     ).toBe(true);
   });
+
+  it("matches contextless standalone golfer ticket names as Contestant", () => {
+    expect(
+      ticketMatchesContext(
+        { name: "Golfer - Contestant Only", context: null as unknown as "Contestant" },
+        "Contestant"
+      )
+    ).toBe(true);
+  });
+
+  it("does not treat negated Non-Golfer names as Contestant", () => {
+    expect(
+      ticketMatchesContext(
+        { name: "Non-Golfer Guest", context: null as unknown as "Contestant" },
+        "Contestant"
+      )
+    ).toBe(false);
+  });
 });

@@ -56,7 +56,7 @@ import {
 } from '../helpers/contestantStatus';
 import { useCan } from '../../rbac-manager/useCan';
 
-const ContestantFormFields = () => {
+const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) => {
   const { filterValues } = useListContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
 
@@ -69,12 +69,14 @@ const ContestantFormFields = () => {
           source="conference"
           reference="conferences"
           label="Conference"
+          disabled={isEditing}
         >
           <AutocompleteInput
             optionText="name"
             fullWidth
             defaultValue={{ conference: filterConferenceId }}
             helperText={false}
+            disabled={isEditing}
           />
         </ReferenceInput>
       </Grid>
@@ -142,11 +144,13 @@ const ContestantFormFields = () => {
             label="Title"
             fullWidth
             helperText={false}
+            disabled={isEditing}
           >
             <AutocompleteInput
               optionText={'name'}
               helperText={false}
               validate={required('Conference Ticket is required')}
+              disabled={isEditing}
             />
           </ReferenceInput>
           {/* <SelectInput source="type" label='Type' fullWidth choices={[
@@ -390,6 +394,11 @@ const contestantRowSx = (record: RaRecord, _index: number): SxProps =>
     ? cancelledContestantRowSx
     : {};
 
+const omitLockedContestantRelations = (formData: RaRecord): RaRecord => {
+  const { conference, conference_ticket, ...editable } = formData;
+  return editable;
+};
+
 const ConferenceContestants = () => {
   const { isCreating, setIsCreating } = useContext(ConferenceContext);
 
@@ -458,7 +467,7 @@ const ConferenceContestants = () => {
               <SimpleForm
                 onSubmit={(formData) =>
                   updateRecord(
-                    formData,
+                    omitLockedContestantRelations(formData),
                     record,
                     update,
                     notify,
@@ -469,7 +478,7 @@ const ConferenceContestants = () => {
                 toolbar={<ContestantEditToolbar record={record} />}
               >
                 <Grid container spacing={2}>
-                  <ContestantFormFields />
+                  <ContestantFormFields isEditing />
                 </Grid>
               </SimpleForm>
             </Edit>

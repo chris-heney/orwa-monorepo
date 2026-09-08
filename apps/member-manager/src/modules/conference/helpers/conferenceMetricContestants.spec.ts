@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   activeMetricContestants,
   buildContestantMetricsFilter,
+  deriveConferenceRevenueBreakdown,
 } from "./conferenceMetricContestants";
 
 describe("conferenceMetricContestants", () => {
@@ -25,5 +26,30 @@ describe("conferenceMetricContestants", () => {
       { id: "missing" },
       { id: "null", status: null },
     ]);
+  });
+
+  it("separates cancelled pending-refund contestant fees from tickets and extras", () => {
+    expect(
+      deriveConferenceRevenueBreakdown({
+        registrations: [{ total: 2000 }],
+        booths: [],
+        sponsors: [],
+        contestants: [
+          { fee: 400, status: "active" },
+          {
+            fee: 1600,
+            status: "cancelled",
+            cancelled_reason: "2026 Fall golf overage — pending card refund",
+          },
+        ],
+      })
+    ).toEqual({
+      total: 2000,
+      booths: 0,
+      sponsorships: 0,
+      activeContestants: 400,
+      cancelledPendingRefundContestants: 1600,
+      ticketsExtras: 0,
+    });
   });
 });

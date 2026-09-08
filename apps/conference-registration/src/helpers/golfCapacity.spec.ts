@@ -43,6 +43,15 @@ describe("countsAgainstGolfCapacity", () => {
     ).toBe(true);
   });
 
+  it("does not count negated Non-Golfer names", () => {
+    expect(
+      countsAgainstGolfCapacity({
+        name: "Non-Golfer Guest",
+        context: null,
+      } as never)
+    ).toBe(false);
+  });
+
   it("matches the substring case-insensitively", () => {
     expect(
       countsAgainstGolfCapacity({

@@ -11,6 +11,7 @@ import { useConferenceContext } from "../../ConferenceContext";
 import {
   activeMetricContestants,
   buildContestantMetricsFilter,
+  deriveConferenceRevenueBreakdown,
 } from "../../helpers/conferenceMetricContestants";
 
 /** Coerce Strapi decimals / bigintegers (often strings) into numbers. */
@@ -269,7 +270,8 @@ export const useConferenceMetrics = (
     const att = attendees ?? [];
     const boo = booths ?? [];
     const spo = sponsors ?? [];
-    const con = activeMetricContestants(contestants ?? []);
+    const allContestants = contestants ?? [];
+    const con = activeMetricContestants(allContestants);
 
     const ticketName = (a: RaRecord): string =>
       ((a.conference_ticket as RaRecord | null)?.name as string) ||
@@ -301,14 +303,19 @@ export const useConferenceMetrics = (
     const speakers = att.filter((a) => a.speaker === true).length;
 
     // --- Money ---------------------------------------------------------
-    const totalRevenue = regs.reduce((s, r) => s + num(r.total), 0);
-    const boothRevenue = boo.reduce((s, b) => s + num(b.subtotal), 0);
-    const sponsorRevenue = spo.reduce((s, sp) => s + num(sp.amount), 0);
-    const contestantRevenue = con.reduce((s, c) => s + num(c.fee), 0);
-    const ticketExtraRevenue = Math.max(
-      totalRevenue - boothRevenue - sponsorRevenue - contestantRevenue,
-      0
-    );
+    const revenueBreakdown = deriveConferenceRevenueBreakdown({
+      registrations: regs,
+      booths: boo,
+      sponsors: spo,
+      contestants: allContestants,
+    });
+    const totalRevenue = revenueBreakdown.total;
+    const boothRevenue = revenueBreakdown.booths;
+    const sponsorRevenue = revenueBreakdown.sponsorships;
+    const contestantRevenue = revenueBreakdown.activeContestants;
+    const cancelledPendingRefundContestantRevenue =
+      revenueBreakdown.cancelledPendingRefundContestants;
+    const ticketExtraRevenue = revenueBreakdown.ticketsExtras;
     const paidRegs = regs.filter((r) => num(r.total) > 0);
     const avgPerRegistration = paidRegs.length
       ? totalRevenue / paidRegs.length
@@ -407,6 +414,7 @@ export const useConferenceMetrics = (
         booths: boothRevenue,
         sponsorships: sponsorRevenue,
         contestants: contestantRevenue,
+        cancelledPendingRefundContestants: cancelledPendingRefundContestantRevenue,
         ticketsExtras: ticketExtraRevenue,
         avgPerRegistration,
         largestRegistration,
@@ -436,6 +444,7 @@ export const useConferenceMetrics = (
         contestants: con.length,
         byType: contestantsByType,
         fees: contestantRevenue,
+        pendingRefundFees: cancelledPendingRefundContestantRevenue,
         teams: (teams ?? []).length,
         tasteTest: (tasteTest ?? []).length,
       },

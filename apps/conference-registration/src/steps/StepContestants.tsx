@@ -16,6 +16,7 @@ import { hasSelectedId } from "../helpers/hasSelectedId";
 import { resolveCartAttachIndex } from "../helpers/isContestantLinkedToCart";
 import { availableContestantSports } from "../helpers/contestantSport";
 import {
+  countsAgainstGolfCapacity,
   golfersInCart,
   remainingGolfCapacity,
 } from "../helpers/golfCapacity";
@@ -44,7 +45,7 @@ const StepContestants = () => {
   );
   const contestantCount = contestantTickets.length;
   const golferCount = contestantTickets.filter(
-    (ticket: ITicketPayload) => ticket.ticket_type?.name === "Golfer"
+    (ticket: ITicketPayload) => countsAgainstGolfCapacity(ticket.ticket_type)
   ).length;
   const needsTeamName = golferCount >= 2;
 

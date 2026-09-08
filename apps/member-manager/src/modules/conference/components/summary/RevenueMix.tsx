@@ -28,6 +28,11 @@ const RevenueMix: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) => {
             { name: "Booths", y: revenue.booths, color: T.deepWater },
             { name: "Sponsorships", y: revenue.sponsorships, color: T.committed },
             { name: "Contest Fees", y: revenue.contestants, color: T.violet },
+            {
+              name: "Contest Fees Pending Refund",
+              y: revenue.cancelledPendingRefundContestants ?? 0,
+              color: T.exit,
+            },
           ].filter((p) => p.y > 0)
         : paymentMix
             .filter((p) => p.amount > 0)
