@@ -47,6 +47,7 @@ import { updateRecord } from '../../_helpers/updateRecord';
 import { customDatagridStyle, positionStickyComponent } from '../../../css';
 import { ISharedMeta } from '../types/IConference';
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
+import { contestantCreateDefaults } from '../helpers/contestantFormDefaults';
 import { groupItemsByExtra } from '../helpers/contestantExtras';
 import ContestantExtrasEditor from './ContestantExtrasEditor';
 import ContestantCancellationActions from './ContestantCancellationActions';
@@ -59,6 +60,10 @@ import { useCan } from '../../rbac-manager/useCan';
 const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) => {
   const { filterValues } = useListContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
+  const createDefaults = contestantCreateDefaults({
+    conference: filterConferenceId,
+    year: filterValues.year,
+  });
 
   return (
     <Grid item xs={12} md={12} sx={{ p: 2, overflow: 'hidden' }}>
@@ -74,7 +79,7 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
           <AutocompleteInput
             optionText="name"
             fullWidth
-            defaultValue={{ conference: filterConferenceId }}
+            defaultValue={createDefaults.conference}
             helperText={false}
             disabled={isEditing}
           />
@@ -84,7 +89,7 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
         <NumberInput
           source="year"
           label="Year"
-          defaultValue={filterValues.year}
+          defaultValue={createDefaults.year}
           fullWidth
           helperText={false}
         />

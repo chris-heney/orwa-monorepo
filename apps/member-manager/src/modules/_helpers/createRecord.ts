@@ -36,7 +36,11 @@ export const createRecord = (
       },
       onError: (error: unknown) => {
         console.error(`Error creating ${resource}:`, error);
-        notify(`Error creating ${title}`, { type: 'error' });
+        const backendMessage =
+          typeof (error as { message?: unknown })?.message === 'string'
+            ? (error as { message: string }).message
+            : null;
+        notify(backendMessage || `Error creating ${title}`, { type: 'error' });
       },
     }
   );
