@@ -57,6 +57,9 @@ const mapContestantActionError = (ctx: any, error: unknown) => {
   }
 
   if (lowerMessage.includes("sold out") || lowerMessage.includes("capacity")) {
+    if ((error as { name?: string })?.name === "ContestantCapacityError") {
+      return ctx.conflict(message);
+    }
     return ctx.conflict("Conference contestant capacity is unavailable.");
   }
 
@@ -116,8 +119,10 @@ export default factories.createCoreController(
 
     async create(ctx) {
       try {
+        const inputData = ctx.request?.body?.data ?? ctx.request?.body ?? {};
+        const sanitizedInput = await this.sanitizeInput(inputData, ctx);
         const entity = await createContestant(strapi, {
-          data: ctx.request?.body?.data ?? ctx.request?.body ?? {},
+          data: sanitizedInput,
         });
         const sanitized = await this.sanitizeOutput(entity, ctx);
         return this.transformResponse(sanitized);
@@ -128,9 +133,11 @@ export default factories.createCoreController(
 
     async update(ctx) {
       try {
+        const inputData = ctx.request?.body?.data ?? ctx.request?.body ?? {};
+        const sanitizedInput = await this.sanitizeInput(inputData, ctx);
         const entity = await updateContestant(strapi, {
           documentId: ctx.params?.documentId ?? ctx.params?.id,
-          data: ctx.request?.body?.data ?? ctx.request?.body ?? {},
+          data: sanitizedInput,
         });
         const sanitized = await this.sanitizeOutput(entity, ctx);
         return this.transformResponse(sanitized);

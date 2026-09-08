@@ -2,6 +2,7 @@ import {
   assertGolfCapacity,
   countsAgainstGolfCapacity,
 } from "../../conference-webhook/helpers/contestant-capacity";
+import { withContestantLifecycleTransition } from "./contestant-lifecycle-context";
 
 const CONTESTANT_UID = "api::conference-contestant.conference-contestant";
 const CONTESTANT_TABLE = "conference_contestants";
@@ -150,16 +151,18 @@ export const cancelContestant = async (
         .transacting(trx);
     }
 
-    return strapi.documents(CONTESTANT_UID).update({
-      documentId: input.documentId,
-      data: {
-        status: "cancelled",
-        cancelled_at: new Date().toISOString(),
-        cancelled_reason: reason,
-        cancelled_by: actor,
-      },
-      populate: CONTESTANT_POPULATE,
-    });
+    return withContestantLifecycleTransition(() =>
+      strapi.documents(CONTESTANT_UID).update({
+        documentId: input.documentId,
+        data: {
+          status: "cancelled",
+          cancelled_at: new Date().toISOString(),
+          cancelled_reason: reason,
+          cancelled_by: actor,
+        },
+        populate: CONTESTANT_POPULATE,
+      })
+    );
   });
 };
 
@@ -186,15 +189,17 @@ export const restoreContestant = async (
         .transacting(trx);
     }
 
-    return strapi.documents(CONTESTANT_UID).update({
-      documentId: input.documentId,
-      data: {
-        status: "active",
-        cancelled_at: null,
-        cancelled_reason: null,
-        cancelled_by: null,
-      },
-      populate: CONTESTANT_POPULATE,
-    });
+    return withContestantLifecycleTransition(() =>
+      strapi.documents(CONTESTANT_UID).update({
+        documentId: input.documentId,
+        data: {
+          status: "active",
+          cancelled_at: null,
+          cancelled_reason: null,
+          cancelled_by: null,
+        },
+        populate: CONTESTANT_POPULATE,
+      })
+    );
   });
 };

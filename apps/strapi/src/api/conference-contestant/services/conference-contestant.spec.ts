@@ -11,12 +11,15 @@ import { createContestant, updateContestant } from "./conference-contestant";
 type ConferenceRecord = {
   documentId: string;
   available_contestants: number | null;
+  registration_start?: string;
+  registration_end?: string;
 };
 
 type TicketRecord = {
   documentId: string;
   name: string;
   context?: string | null;
+  conferences?: Array<{ documentId: string }>;
 };
 
 describe("conference contestant REST write service", () => {
@@ -31,17 +34,44 @@ describe("conference contestant REST write service", () => {
 
   beforeEach(() => {
     conferences = {
-      "conf-1": { documentId: "conf-1", available_contestants: 2 },
-      "sold-out-conf": { documentId: "sold-out-conf", available_contestants: 0 },
+      "conf-1": {
+        documentId: "conf-1",
+        available_contestants: 2,
+        registration_start: "2026-01-01",
+        registration_end: "2026-12-31",
+      },
+      "conf-2": {
+        documentId: "conf-2",
+        available_contestants: 4,
+        registration_start: "2026-01-01",
+        registration_end: "2026-12-31",
+      },
+      "sold-out-conf": {
+        documentId: "sold-out-conf",
+        available_contestants: 0,
+        registration_start: "2026-01-01",
+        registration_end: "2026-12-31",
+      },
     };
     tickets = {
-      golfer: { documentId: "golfer", name: "Golfer", context: "Contestant" },
+      golfer: {
+        documentId: "golfer",
+        name: "Golfer",
+        context: "Contestant",
+        conferences: [{ documentId: "conf-1" }, { documentId: "sold-out-conf" }],
+      },
       standalone: {
         documentId: "standalone",
         name: "Golfer - Contestant Only",
         context: null,
+        conferences: [{ documentId: "conf-1" }],
       },
-      fisher: { documentId: "fisher", name: "Fisher", context: "Contestant" },
+      fisher: {
+        documentId: "fisher",
+        name: "Fisher",
+        context: "Contestant",
+        conferences: [{ documentId: "conf-1" }],
+      },
     };
     contestants = {
       "active-1": { documentId: "active-1", status: "active" },
@@ -168,16 +198,42 @@ describe("conference contestant REST write service", () => {
   it("rejects sold-out golfer creates before persistence", async () => {
     await expect(
       createContestant(strapi, {
-        data: { conference: "sold-out-conf", conference_ticket: "golfer" },
+        data: { conference: "sold-out-conf", conference_ticket: "golfer", year: 2026 },
       })
     ).rejects.toThrow("sold out");
     expect(created).toHaveLength(0);
     expect(decrements).toBe(0);
   });
 
+  it("rejects golfer creates when the selected ticket is not on the selected conference", async () => {
+    await expect(
+      createContestant(strapi, {
+        data: { conference: "conf-2", conference_ticket: "golfer", year: 2026 },
+      })
+    ).rejects.toThrow("ticket does not belong to the selected conference");
+    expect(created).toHaveLength(0);
+    expect(decrements).toBe(0);
+  });
+
+  it("rejects missing or wrong create year before persistence", async () => {
+    await expect(
+      createContestant(strapi, {
+        data: { conference: "conf-1", conference_ticket: "golfer" },
+      })
+    ).rejects.toThrow("year is required");
+
+    await expect(
+      createContestant(strapi, {
+        data: { conference: "conf-1", conference_ticket: "golfer", year: 2025 },
+      })
+    ).rejects.toThrow("year must match conference cycle 2026");
+    expect(created).toHaveLength(0);
+    expect(decrements).toBe(0);
+  });
+
   it("creates a golfer and decrements capacity once", async () => {
     await createContestant(strapi, {
-      data: { conference: "conf-1", conference_ticket: "golfer", first: "Ada" },
+      data: { conference: "conf-1", conference_ticket: "golfer", year: 2026, first: "Ada" },
     });
 
     expect(created).toHaveLength(1);
@@ -188,7 +244,7 @@ describe("conference contestant REST write service", () => {
 
   it("creates contextless Golfer - Contestant Only and decrements capacity once", async () => {
     await createContestant(strapi, {
-      data: { conference: "conf-1", conference_ticket: "standalone" },
+      data: { conference: "conf-1", conference_ticket: "standalone", year: 2026 },
     });
 
     expect(created).toHaveLength(1);
@@ -197,7 +253,7 @@ describe("conference contestant REST write service", () => {
 
   it("creates non-golf contestants without adjusting golf capacity", async () => {
     await createContestant(strapi, {
-      data: { conference: "conf-1", conference_ticket: "fisher" },
+      data: { conference: "conf-1", conference_ticket: "fisher", year: 2026 },
     });
 
     expect(created).toHaveLength(1);

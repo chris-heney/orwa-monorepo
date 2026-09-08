@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const testState = vi.hoisted(() => ({
   strapi: {},
   sanitizeOutput: vi.fn(),
+  sanitizeInput: vi.fn(),
   transformResponse: vi.fn(),
 }));
 
@@ -11,6 +12,7 @@ vi.mock("@strapi/strapi", () => ({
     createCoreController: vi.fn((_uid: string, extension?: (args: { strapi: unknown }) => any) => {
       const controller: Record<string, unknown> = {
         sanitizeOutput: testState.sanitizeOutput,
+        sanitizeInput: testState.sanitizeInput,
         transformResponse: testState.transformResponse,
       };
       const extensionMethods = extension?.({ strapi: testState.strapi }) ?? {};
@@ -84,6 +86,7 @@ describe("conference contestant controller", () => {
     testState.sanitizeOutput.mockImplementation(async (entity) => ({
       sanitized: entity,
     }));
+    testState.sanitizeInput.mockImplementation(async (data) => data);
     testState.transformResponse.mockImplementation((sanitized) => ({
       data: sanitized,
     }));
@@ -202,6 +205,33 @@ describe("conference contestant controller", () => {
     });
   });
 
+  it("sanitizes custom create and update input before service calls", async () => {
+    testState.sanitizeInput
+      .mockResolvedValueOnce({ first: "Sanitized Create" })
+      .mockResolvedValueOnce({ first: "Sanitized Update" });
+
+    await (controller as any).create(ctx({ data: { first: "Raw Create" } }));
+    await (controller as any).update(ctx({ data: { first: "Raw Update" } }));
+
+    expect(testState.sanitizeInput).toHaveBeenNthCalledWith(
+      1,
+      { first: "Raw Create" },
+      expect.anything()
+    );
+    expect(testState.sanitizeInput).toHaveBeenNthCalledWith(
+      2,
+      { first: "Raw Update" },
+      expect.anything()
+    );
+    expect(createContestant).toHaveBeenCalledWith(testState.strapi, {
+      data: { first: "Sanitized Create" },
+    });
+    expect(updateContestant).toHaveBeenCalledWith(testState.strapi, {
+      documentId: "contestant-1",
+      data: { first: "Sanitized Update" },
+    });
+  });
+
   it("updates contestants through the lifecycle service", async () => {
     const request = ctx({ data: { first: "Grace" } });
 
@@ -235,6 +265,28 @@ describe("conference contestant controller", () => {
     expect(updateRequest.badRequest).toHaveBeenCalledWith(
       "Unable to update conference contestant."
     );
+  });
+
+  it("returns the plain-language capacity message for direct create/restore", async () => {
+    const message =
+      "The golf tournament is sold out — no golfer spots remain. Please remove the golfer entries and try again.";
+    const createRequest = ctx({ data: { conference_ticket: "golfer" } });
+    vi.mocked(createContestant).mockRejectedValueOnce(Object.assign(new Error(message), {
+      name: "ContestantCapacityError",
+    }));
+
+    await (controller as any).create(createRequest);
+
+    expect(createRequest.conflict).toHaveBeenCalledWith(message);
+
+    const restoreRequest = ctx({ reason: "Restore slot" });
+    vi.mocked(restoreContestant).mockRejectedValueOnce(Object.assign(new Error(message), {
+      name: "ContestantCapacityError",
+    }));
+
+    await (controller as any).restore(restoreRequest);
+
+    expect(restoreRequest.conflict).toHaveBeenCalledWith(message);
   });
 
   it("sanitizes and transforms the cancelled contestant response", async () => {

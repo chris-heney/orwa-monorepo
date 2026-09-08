@@ -7,6 +7,7 @@ import {
   assertGolfCapacity,
   countsAgainstGolfCapacity,
 } from "../../conference-webhook/helpers/contestant-capacity";
+import { withContestantRestCreate } from "./contestant-lifecycle-context";
 
 const CONTESTANT_UID = "api::conference-contestant.conference-contestant";
 const CONFERENCE_UID = "api::conference.conference";
@@ -73,10 +74,11 @@ const relationDocumentId = (value: unknown): string | null => {
 const loadRelation = async <T>(
   strapi: any,
   uid: string,
-  documentId: string | null
+  documentId: string | null,
+  populate?: unknown
 ): Promise<T | null> => {
   if (!documentId) return null;
-  return strapi.documents(uid).findOne({ documentId });
+  return strapi.documents(uid).findOne({ documentId, ...(populate ? { populate } : {}) });
 };
 
 const ticketConsumesGolfCapacity = (ticket: {
@@ -89,6 +91,32 @@ const ticketConsumesGolfCapacity = (ticket: {
       context: ticket?.context,
     },
   } as never);
+
+const requireIntegerYear = (value: unknown): number => {
+  const year = typeof value === "string" && value.trim() ? Number(value) : value;
+  if (!Number.isInteger(year)) {
+    throw new Error("Conference contestant year is required and must be an integer.");
+  }
+  return year as number;
+};
+
+const conferenceCycleYear = (conference: Record<string, unknown>): number | null => {
+  const date =
+    conference.registration_start ??
+    conference.registration_end ??
+    conference.start_date ??
+    conference.end_date;
+  if (typeof date !== "string" || !date) return null;
+  const year = new Date(`${date}T00:00:00Z`).getUTCFullYear();
+  return Number.isFinite(year) ? year : null;
+};
+
+const ticketBelongsToConference = (
+  ticket: { conferences?: Array<{ documentId?: string | null }> } | null,
+  conferenceDocumentId: string
+): boolean =>
+  Array.isArray(ticket?.conferences) &&
+  ticket.conferences.some((conference) => conference.documentId === conferenceDocumentId);
 
 const lockConference = async (strapi: any, trx: unknown, documentId: string) => {
   const row = await strapi.db
@@ -114,11 +142,35 @@ export const createContestant = async (
 
   const conferenceDocumentId = relationDocumentId(data.conference);
   const ticketDocumentId = relationDocumentId(data.conference_ticket);
-  const ticket = await loadRelation<{ name?: string | null; context?: string | null }>(
+  const year = requireIntegerYear(data.year);
+  const conference = await loadRelation<Record<string, unknown>>(
+    strapi,
+    CONFERENCE_UID,
+    conferenceDocumentId
+  );
+  if (!conference) {
+    throw new Error("Selected conference was not found.");
+  }
+  const expectedYear = conferenceCycleYear(conference);
+  if (expectedYear != null && year !== expectedYear) {
+    throw new Error(`Conference contestant year must match conference cycle ${expectedYear}.`);
+  }
+  const ticket = await loadRelation<{
+    name?: string | null;
+    context?: string | null;
+    conferences?: Array<{ documentId?: string | null }>;
+  }>(
     strapi,
     TICKET_UID,
-    ticketDocumentId
+    ticketDocumentId,
+    { conferences: true }
   );
+  if (!ticket) {
+    throw new Error("Selected conference ticket was not found.");
+  }
+  if (!ticketBelongsToConference(ticket, conferenceDocumentId!)) {
+    throw new Error("Selected ticket does not belong to the selected conference.");
+  }
   const countsAgainstGolf = ticketConsumesGolfCapacity(ticket);
 
   return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
@@ -131,10 +183,12 @@ export const createContestant = async (
       assertGolfCapacity(conference.available_contestants, 1);
     }
 
-    const created = await strapi.documents(CONTESTANT_UID).create({
-      data,
-      populate: "*",
-    });
+    const created = await withContestantRestCreate(() =>
+      strapi.documents(CONTESTANT_UID).create({
+        data,
+        populate: "*",
+      })
+    );
 
     if (countsAgainstGolf) {
       await strapi.db
