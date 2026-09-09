@@ -14,7 +14,7 @@ import type {
   ReactNode,
 } from 'react';
 import type { SvgIconProps } from '@mui/material';
-import type { Identifier, RaRecord, SortPayload } from 'react-admin';
+import type { DataProvider, Identifier, RaRecord, SortPayload } from 'react-admin';
 import type { QueryClient } from 'react-query';
 import type { ModuleKey } from '../config/modules';
 import type { CrudAction } from '../modules/rbac-manager/useCan';
@@ -117,7 +117,16 @@ export interface ListManifest {
   meta?: Record<string, unknown>;
   /** RaStore key for list params/selection. Default `${pageId}.${tabKey}`. */
   storeKey?: string;
-  exporter?: (records: RaRecord[], ctx: PageCtx) => void | Promise<void>;
+  /** RA exporter with the page ctx + RA's extra args (fetchRelatedRecords, dataProvider, resource). */
+  exporter?: (
+    records: RaRecord[],
+    ctx: PageCtx,
+    tools: {
+      fetchRelatedRecords: (data: any, field: string, resource: string) => Promise<any>;
+      dataProvider: DataProvider;
+      resource: string;
+    }
+  ) => void | Promise<void>;
   /** RA filter *elements* (TextInput, ReferenceInput …) → Filters drawer via FilterForm. */
   filters?: ReactElement[];
   /** Custom Filters drawer body (FilterList-style sidebars). Wins over `filters`. */

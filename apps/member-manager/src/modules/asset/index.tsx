@@ -1,15 +1,5 @@
-import GradingIcon from '@mui/icons-material/Grading'
-import AssetCreate from './AssetCreate'
-import AssetEdit from './AssetEdit'
-import AssetList from './AssetList'
-import AssetShow from './AssetShow'
+import { assetsModule } from './manifest'
 
-
-export default {
-  list: AssetList,
-  create: AssetCreate,
-  edit: AssetEdit,
-  show: AssetShow,
-  icon: GradingIcon,
-  recordRepresentation: 'name',
-}
+/** Resource definition (list is the framework `assets.list` page). */
+export default assetsModule.resources!.assets
+export { assetsModule }

@@ -1,182 +1,151 @@
-import React from 'react'
-import { Box, useMediaQuery } from '@mui/material'
-import { Theme } from '@mui/material/styles'
+import React from 'react';
+import { Box, useMediaQuery } from '@mui/material';
+import { SxProps, Theme } from '@mui/material/styles';
 import {
-  List,
+  ListView,
   TextField,
   SimpleList,
   BooleanField,
   NumberField,
   ConfigurableDatagridColumn,
-  useStore,
   ReferenceField,
   RaRecord,
   ReferenceArrayField,
   ChipField,
-  Title,
-  useListContext,
-  useDataProvider,
-} from 'react-admin'
-import { DatagridConfigurable } from '@orwa/entity-id'
-import CustomExportFunction from '../../helpers/custom-export-function'
-import { CurrencyOptions } from '../../config/Settings'
-import PageHeadingBar from '../_components/PageHeadingBar'
-import RecordCount from '../_components/RecordCount'
-import {
-  ColumnsAction,
-  CreateAction,
-  ExportAction,
-} from '../_components/heading/HeadingActions'
+} from 'react-admin';
+import { DatagridConfigurable } from '@orwa/entity-id';
+import CustomExportFunction from '../../helpers/custom-export-function';
+import { CurrencyOptions } from '../../config/Settings';
+import type { ListManifest } from '../../framework/manifest';
 
-const AssetListHeader = () => {
-  const { total } = useListContext()
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+export const ASSET_PREFERENCE_KEY = 'assets.datagrid';
 
-  return (
-    <PageHeadingBar
-      title="Asset Manager"
-      info="Track tangible and intangible assets, assignments, and fair market value."
-      actions={
-        <>
-          {total != null && total > 0 && <RecordCount />}
-          <CreateAction label="Add Asset" />
-          {!isSmall && <ColumnsAction />}
-          <ExportAction />
-        </>
-      }
-    />
-  )
-}
+/**
+ * Assets export: the configurable-datagrid columns live in RaStore
+ * (`preferences.assets.datagrid.*`); read them through the page ctx.
+ */
+export const exportAssets: NonNullable<ListManifest['exporter']> = (
+  records,
+  ctx,
+  { dataProvider }
+) => {
+  const availableColumns = ctx.store<ConfigurableDatagridColumn[]>(
+    `preferences.${ASSET_PREFERENCE_KEY}.availableColumns`,
+    []
+  );
+  const columnIds = ctx.store<string[]>(
+    `preferences.${ASSET_PREFERENCE_KEY}.columns`,
+    []
+  );
+  CustomExportFunction(
+    records,
+    availableColumns,
+    columnIds,
+    'Assets',
+    dataProvider
+  );
+};
 
+const assetListSx: SxProps<Theme> = {
+  '& .RaList-main': { marginTop: 0 },
+  '& .RaList-content': {
+    boxShadow: 'none',
+    bgcolor: 'background.paper',
+  },
+  '& .RaDatagrid-headerCell': {
+    bgcolor: (theme: Theme) =>
+      theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
+    color: 'text.primary',
+  },
+  '& .RaDatagrid-rowCell': {
+    color: 'text.primary',
+  },
+};
+
+/** Body of the `assets.list` page — renders inside the page's ListScope. */
 const AssetList = () => {
-  const preferenceKey = 'assets.datagrid'
-
-  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
-    `preferences.${preferenceKey}.availableColumns`,
-    []
-  )
-
-  const [columnIds] = useStore<string[]>(
-    `preferences.${preferenceKey}.columns`,
-    []
-  )
-
-  const dataProvider = useDataProvider()
-  const exporter = (records: ConfigurableDatagridColumn[]) => {
-    CustomExportFunction(
-      records,
-      availableColumns,
-      columnIds,
-      'Assets',
-      dataProvider
-    )
-  }
-
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'))
+  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
-      <Title title="Asset Manager" />
-      <List
-        title=" "
-        exporter={exporter}
-        actions={false}
-        sx={{
-          '& .RaList-main': { marginTop: 0 },
-          '& .RaList-content': {
-            boxShadow: 'none',
-            bgcolor: 'background.paper',
-          },
-          '& .RaDatagrid-headerCell': {
-            bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'grey.900' : 'grey.100',
-            color: 'text.primary',
-          },
-          '& .RaDatagrid-rowCell': {
-            color: 'text.primary',
-          },
-        }}
-      >
-        <AssetListHeader />
-        {isSmall ? (
-          <SimpleList
-            primaryText={(record) => record.name + ' | ' + record.make}
-            secondaryText={(record) => record.description}
-            tertiaryText={(record) => '$' + record.fair_market_value}
+    <ListView title=" " actions={false} sx={assetListSx}>
+      {isSmall ? (
+        <SimpleList
+          primaryText={(record) => record.name + ' | ' + record.make}
+          secondaryText={(record) => record.description}
+          tertiaryText={(record) => '$' + record.fair_market_value}
+        />
+      ) : (
+        <DatagridConfigurable bulkActionButtons={false} rowClick="show">
+          <TextField source="id" label="Asset ID" noWrap />
+          <TextField source="name" label="Name" noWrap />
+          <TextField source="category" label="Category" noWrap />
+          <ReferenceField
+            label="Assigned To"
+            source="assigned_to"
+            reference="staff"
+            link="show"
+            sx={{ whiteSpace: 'nowrap' }}
+          >
+            <>
+              <ReferenceField
+                reference="contacts"
+                source="contact"
+                label="First Name"
+                link={false}
+              >
+                <TextField source="first" label="First Name" noWrap />
+              </ReferenceField>{' '}
+              <ReferenceField
+                reference="contacts"
+                source="contact"
+                label="Last Name"
+                link={false}
+              >
+                <TextField source="last" label="Last Name" noWrap />
+              </ReferenceField>
+            </>
+          </ReferenceField>
+          <BooleanField source="tangible" label="Tangible" noWrap />
+          <TextField source="make" label="Make" noWrap />
+          <TextField source="model" label="Model" noWrap />
+          <TextField source="organization" label="Organization" noWrap />
+          <TextField source="location" label="Location" noWrap />
+          <TextField source="serial_number" label="Serial Number" noWrap />
+          <NumberField
+            source="fair_market_value"
+            label="Market Value"
+            options={CurrencyOptions}
+            noWrap
           />
-        ) : (
-          <DatagridConfigurable bulkActionButtons={false} rowClick="show">
-            <TextField source="id" label="Asset ID" noWrap />
-            <TextField source="name" label="Name" noWrap />
-            <TextField source="category" label="Category" noWrap />
-            <ReferenceField
-              label="Assigned To"
-              source="assigned_to"
-              reference="staff"
-              link="show"
-              sx={{ whiteSpace: 'nowrap' }}
-            >
-              <>
-                <ReferenceField
-                  reference="contacts"
-                  source="contact"
-                  label="First Name"
-                  link={false}
-                >
-                  <TextField source="first" label="First Name" noWrap />
-                </ReferenceField>{' '}
-                <ReferenceField
-                  reference="contacts"
-                  source="contact"
-                  label="Last Name"
-                  link={false}
-                >
-                  <TextField source="last" label="Last Name" noWrap />
-                </ReferenceField>
-              </>
-            </ReferenceField>
-            <BooleanField source="tangible" label="Tangible" noWrap />
-            <TextField source="make" label="Make" noWrap />
-            <TextField source="model" label="Model" noWrap />
-            <TextField source="organization" label="Organization" noWrap />
-            <TextField source="location" label="Location" noWrap />
-            <TextField source="serial_number" label="Serial Number" noWrap />
-            <NumberField
-              source="fair_market_value"
-              label="Market Value"
-              options={CurrencyOptions}
-              noWrap
-            />
-            <TextField
-              source="description"
-              label="Description"
-              noWrap
-              sx={{
-                maxWidth: '200px',
-                textOverflow: 'ellipsis',
-                display: 'block',
-              }}
-            />
-            <ReferenceArrayField
-              source="sub_assets"
-              label="Sub Assets"
-              reference="assets"
-            >
-              <Box>
-                <ReferenceField
-                  source="id"
-                  link={(record: RaRecord) => `/assets/${record.id}/show`}
-                  reference="assets"
-                >
-                  <ChipField source="name" />
-                </ReferenceField>
-              </Box>
-            </ReferenceArrayField>
-          </DatagridConfigurable>
-        )}
-      </List>
-    </Box>
-  )
-}
+          <TextField
+            source="description"
+            label="Description"
+            noWrap
+            sx={{
+              maxWidth: '200px',
+              textOverflow: 'ellipsis',
+              display: 'block',
+            }}
+          />
+          <ReferenceArrayField
+            source="sub_assets"
+            label="Sub Assets"
+            reference="assets"
+          >
+            <Box>
+              <ReferenceField
+                source="id"
+                link={(record: RaRecord) => `/assets/${record.id}/show`}
+                reference="assets"
+              >
+                <ChipField source="name" />
+              </ReferenceField>
+            </Box>
+          </ReferenceArrayField>
+        </DatagridConfigurable>
+      )}
+    </ListView>
+  );
+};
 
-export default AssetList
+export default AssetList;

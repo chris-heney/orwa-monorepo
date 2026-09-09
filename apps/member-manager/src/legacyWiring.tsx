@@ -1,7 +1,6 @@
 import React, { ReactElement } from 'react';
 import type { ModuleKey } from './config/modules';
 import {
-  Asset,
   Associate,
   TrainingEvent,
   TrainingHistory,
@@ -74,10 +73,7 @@ export interface LegacyResource {
 const LEGACY_RESOURCES: LegacyResource[] = [
   // SHARED
   { name: 'upload/files', props: { recordRepresentation: 'url' } },
-  { name: 'shared.field-metas' },
-  { name: 'components_shared_field_metas' },
   // MANAGEMENT
-  { name: 'assets', def: Asset },
   { name: 'staff', def: Staff },
   { name: 'contacts', def: Contacts },
   { name: 'users', def: Users },

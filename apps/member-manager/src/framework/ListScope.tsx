@@ -1,6 +1,7 @@
 import React, { ReactNode, useMemo } from 'react';
 import { Box } from '@mui/material';
 import {
+  Exporter,
   FilterContext,
   FilterForm,
   ListBase,
@@ -26,19 +27,35 @@ interface ListScopeProps {
  * replaces the duplicated header `ListBase`s legacy dashboards mounted just
  * to read `total`.
  */
-export const ListScope = ({ list, storeKey, filterCtx, children }: ListScopeProps) => {
+export const ListScope = ({
+  list,
+  storeKey,
+  filterCtx,
+  children,
+}: ListScopeProps) => {
   const filter = useMemo(
     () =>
-      (typeof list.filter === 'function' ? list.filter(filterCtx) : list.filter) ??
-      {},
+      (typeof list.filter === 'function'
+        ? list.filter(filterCtx)
+        : list.filter) ?? {},
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [list, filterCtx]
   );
 
-  const exporter = useMemo(
+  const exporter = useMemo<Exporter | undefined>(
     () =>
       list.exporter
-        ? (records: RaRecord[]) => list.exporter!(records, filterCtx)
+        ? (
+            records: RaRecord[],
+            fetchRelatedRecords: Parameters<Exporter>[1],
+            dataProvider: Parameters<Exporter>[2],
+            resource?: string
+          ) =>
+            list.exporter!(records, filterCtx, {
+              fetchRelatedRecords,
+              dataProvider,
+              resource: resource ?? list.resource,
+            }) as void | Promise<void>
         : undefined,
     [list, filterCtx]
   );
@@ -79,7 +96,10 @@ export const DefaultFiltersBody = () => {
     <Box
       sx={{
         p: 2,
-        '& .RaFilterForm-form': { flexDirection: 'column', alignItems: 'stretch' },
+        '& .RaFilterForm-form': {
+          flexDirection: 'column',
+          alignItems: 'stretch',
+        },
         '& .RaFilterFormInput-body, & .filter-field': { width: '100%' },
       }}
       data-filter-count={Object.keys(filterValues ?? {}).length}
