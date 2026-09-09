@@ -474,3 +474,212 @@ All under `tmp/task8/` (gitignored):
 - `pre-rehearsal-tables.sql`, `post-rehearsal-tables.sql` — zero-write proof
 - `cleanup.sql` — teardown
 - `screenshots/` — 11 browser captures
+
+---
+
+# Addendum — pre-deployment durability fixes
+
+Requested after the Task 8 verification passed: five non-blocking durability
+items, plus confirmation of the conference-hub deploy mapping. No production
+contact; all verification against local Strapi on `:13370` and the local
+migration-copy database.
+
+## Commits
+
+| Commit | Scope |
+|---|---|
+| `eabe751c` | `member-manager: serialize nested $and/$or filter groups` |
+| `ec62e77c` | `member-manager: make the contestant All view a stable sentinel` |
+| `91121237` | `member-manager: guard the post-cancel repaint from reporting failure` |
+| `3b223ae6` | `strapi: declare the contestant lifecycle grant as testable data` |
+
+## Requirement → implementation → verification
+
+### 1. `invalidateResourceCache` consumer type is `Promise<void>`
+
+`ContestantCancellationActions.tsx` declared the provider method as returning
+`void` while awaiting it; the provider had already been corrected to return a
+Promise. The consumer type now matches the awaited contract, with a comment
+recording why (react-admin's `useDataProvider` proxy calls `.then()` on every
+provider return value).
+
+Verified by `ContestantCancellationActions.spec.tsx` and the existing
+`DataProviderFactory.spec.ts` thenable test.
+
+### 2. All is an explicit, stable sentinel end-to-end
+
+The defect: All was encoded as *the absence of a status key*, which is exactly
+how a freshly seeded list looks. `normalizeFiltersForListQuery` therefore read
+it back as Active and re-applied the active clause, so the choice was lost on
+the next normalization pass — the tab-change sync in `ConferenceFilters`, or any
+rebuild of the list store key (which is derived from the tab filters, so it
+changes whenever conference or year changes).
+
+Now:
+
+- `applyContestantStatusFilter` always writes `status: 'active' | 'cancelled' | 'all'`.
+- `normalizeFiltersForListQuery` preserves that sentinel (and upgrades a legacy
+  `$or` status clause to it) instead of stripping it.
+- `expandContestantStatusForApi` — called from `getList` in `DataProviderFactory`,
+  i.e. only when the API query is built — drops `all`, keeps `cancelled`, and
+  expands `active` into `$or: [{status: active}, {status: null}]`.
+- `preserveContestantStatusFilter` carries the view onto filters rebuilt from
+  tab filters, which never carry contestant status.
+- The chosen view persists in the react-admin store under
+  `conference.contestantStatusView`, and seeds `filterDefaultValues`, so a
+  store-key rebuild restores it without a second round trip.
+
+Two things fell out of this that were wrong in their own right:
+
+- **Active silently discarded an unrelated `$or`.** The active clause overwrote
+  `filters.$or` wholesale, so a search clause would have been dropped and the
+  result set quietly widened. It is now ANDed alongside via
+  `$and: [{ $or: <unrelated> }, { $or: <status> }]`.
+- **Nested boolean groups did not serialize.** `$and: [{ $or: [...] }]` fell
+  through to the array-leaf branch of `appendFilterQuery` and emitted
+  `[$in][]=[object Object]`, which Strapi matches nothing for. Fixed in
+  `serializeStrapiFilters.ts` (`eabe751c`).
+
+**Important correction found during this work:** an earlier draft defaulted an
+absent status to Active at the provider boundary. That would have broken the
+conference metrics dashboard, which deliberately fetches *every* contestant and
+partitions active/cancelled client-side — cancelled fees would have vanished
+from the revenue breakdown. `expandContestantStatusForApi` now expands only an
+explicit sentinel and leaves status-free requests untouched, with a test naming
+that caller.
+
+### 3. Permission bootstrap is exported and asserted Admin-only
+
+`CONTESTANT_LIFECYCLE_ROLE_GRANTS` and `configureContestantLifecyclePermissions`
+are exported from `apps/strapi/src/index.ts`. `index.spec.ts` drives the real
+configure function against a fake Strapi query engine and asserts that the only
+role ever looked up is `{type:'admin'}`, that `public`/`authenticated` are never
+targeted, that one permission row is created per action, and that a failing role
+lookup warns instead of throwing.
+
+### 4. Consumer-level regression test for the post-cancel repaint
+
+`ContestantCancellationActions.spec.tsx` (5 tests) drives the real dialog and
+asserts that a successful cancel followed by a rejected `invalidateResourceCache`
+**or** a throwing `refresh` still shows exactly one success toast, zero error
+toasts, issues exactly one write, and closes the dialog — and that a genuine
+write failure still reports an error and leaves the dialog open for a retry.
+`refresh()` is now guarded for the same reason the cache call already was.
+
+Rendered with this app's own React 18 via `react-dom/client` rather than
+`@testing-library/react`, which resolves from the workspace root's React 19 and
+cannot render these elements. Fast Refresh is disabled under Vitest
+(`vite.config.ts`) because its runtime expects a browser preamble jsdom never
+injects.
+
+### 5. Dead status-all paths
+
+The unreachable `status === 'all'` strip branch in `normalizeFiltersForListQuery`
+is gone; its test was repurposed to assert the opposite — that the sentinel
+survives a normalization round trip. The "clears the status constraint entirely
+for the all view" test became "records the all view as an explicit sentinel".
+
+## Additional defect found and fixed: the toggle was off screen
+
+Browser verification showed the Active/Cancelled/All control rendering at
+x≈2651 — outside the viewport at any normal width. The control sits inside the
+contestant table's horizontal scroll canvas (~2419px wide), so
+`justifyContent: 'flex-end'` pushed it to the right edge of the *scroll width*.
+The feature was effectively undiscoverable. The control is now pinned to the
+visible left edge (`flex-start` + `position: sticky; left: 0`).
+
+## Verification
+
+Local Strapi `:13370`, local migration-copy DB (`strapi_prod`), member-manager
+dev server `:4205`.
+
+### Tests
+
+| Suite | Result |
+|---|---|
+| `apps/strapi` full `vitest run` | **171/171 passed** (was 166; +5 bootstrap tests) |
+| `apps/member-manager` conference + provider suites | **132/132 passed** |
+| `apps/member-manager` full `vitest run` | 239 passed, 6 failed |
+| `apps/strapi` `tsc --noEmit` | clean |
+| `apps/member-manager` `tsc --noEmit` | 163 errors, **none in any touched file** |
+
+The 6 member-manager failures are all `src/fields/ensureEntityIdColumn.spec.tsx`
+failing with `(0 , jsxDEV) is not a function` — pre-existing and unrelated
+(confirmed failing at baseline `4c6f9faf` during the original Task 8 run).
+Passing tests went 216 → 239; failures went 7 → 6.
+
+### Lint
+
+`npx eslint` is **broken repo-wide** in member-manager, independent of these
+changes: the app pins eslint 8.57.1 locally while `@typescript-eslint` 8.65 is
+resolved from the root against eslint 9, producing
+`Error while loading rule '@typescript-eslint/no-unused-expressions'` on every
+file, including untouched ones. IDE diagnostics were used instead and report no
+problems in any changed file. Flagged, not fixed — out of scope.
+
+### API-level proof (local Strapi, real data)
+
+Conference 3 / year 2024, 88 contestants. The three query strings were generated
+by the real `applyContestantStatusFilter` → `expandContestantStatusForApi` →
+`convertRaParamsToStrapiParams` chain and run against `:13370`:
+
+| View | Query | Before cancel | After cancelling one |
+|---|---|---|---|
+| Active | `filters[$or][0][status][$eq]=active&filters[$or][1][status][$null]=true` | 88 | 87 |
+| Cancelled | `filters[status]=cancelled` | 0 | 1 |
+| All | *(no status constraint)* | 88 | 88 |
+
+Nested-group proof: searching `first $contains Todd` **within the Active view**
+(`filters[$and][0][$or][0][first][$contains]=Todd&filters[$and][1][$or][...]`)
+returned 0 once Todd was cancelled, while the same search in the All view
+returned 1 — the search clause and the status clause both applied, neither
+overwrote the other.
+
+### Browser (Playwright, member-manager dev server)
+
+Screenshots in `tmp/task8b/screenshots/` (gitignored).
+
+| Check | Result |
+|---|---|
+| Active view | 87 rows, "87 Records", Active pressed |
+| Cancelled view | 1 row — Todd Ray, Cancelled chip, reason shown |
+| All view | 88 rows = 87 Active + 1 Cancelled chips |
+| Tab round trip (Contestants → Attendees → Contestants) | still All, 88 rows |
+| Full page reload | still All, 88 rows, `RaStore.conference.contestantStatusView` = `"all"` |
+| Dark mode | toggle and status chips legible, cancelled row keeps its warning tint |
+| Restore via the UI | dialog closed, Cancelled view emptied, `POST .../restore` → 200 |
+| Console errors | 0 |
+| Failed requests | 0 (all API calls 200, including the restore) |
+| Query sent for All | no `status` parameter — sentinel never reaches Strapi |
+
+### Data left clean
+
+The one contestant cancelled during verification (id 3, Todd Ray) was restored
+through the UI. Final state: 92 active, 0 cancelled, `cancelled_at` /
+`cancelled_reason` / `cancelled_by` all NULL — identical to the starting state.
+The temporary admin user (`zztask8b@task8.invalid`) was deleted along with its
+role link; 0 rows matching `task8` remain in `up_users` or
+`conference_contestants`. No API tokens or `.env` files were touched.
+
+## conference-hub deploy mapping (from the tracked script, not the docs)
+
+Read from `apps/conference-hub/deploy.sh` — tracked, unmodified, last changed in
+`edab3f94` (2026-07-29):
+
+- **Remote:** `orwa@orwa.ssh.wpengine.net:sites/orwa/conference-hub/`
+- **Public URL:** `https://orwa.org/conference-hub/`
+- **SSH key:** `~/.ssh/id_ed25519`, `IdentitiesOnly=yes`
+- **Build:** `npx vite build --mode production` from the app dir (not `nx build`),
+  output `dist/apps/conference-hub`, `base: './'` set correctly
+- **Guards:** aborts if `localhost:1337` or `localhost:13370` appears in the
+  bundle; rsync excludes `.DS_Store`, `package.json`, `README.md`; no `--delete`
+
+Two documentation/script gaps worth noting (not changed here):
+
+1. Neither `.cursor/rules/orwa-ship-deploy.mdc` nor `AGENTS.md` lists
+   conference-hub in the frontend deploy table — the docs are incomplete, so the
+   script is the only source of truth for this app.
+2. `deploy.sh` does **not** run `wp page-cache flush && wp cdn-cache flush`,
+   which the ship rule requires after every frontend rsync. It only curls the
+   live page for the bundle hash, which will report the stale hash until the WP
+   Engine page cache expires.
