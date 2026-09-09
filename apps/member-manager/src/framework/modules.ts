@@ -1,4 +1,5 @@
 import type { ModuleManifest } from './manifest';
+import { emailsModule } from '../modules/emails-magement/manifest';
 import { finalizeRegistry } from './registry';
 
 /**
@@ -10,6 +11,6 @@ import { finalizeRegistry } from './registry';
  * it to the array. Its `<Resource>`s, routes and menu entry replace the
  * legacy hand-written blocks automatically (see `legacyWiring.tsx`).
  */
-export const MODULES: ModuleManifest[] = [];
+export const MODULES: ModuleManifest[] = [emailsModule];
 
 export const REGISTRY = finalizeRegistry(MODULES);

@@ -1,6 +1,6 @@
 import { Box, Card, Grid } from "@mui/material";
 import React from "react";
-import EmailInterface from "../emails-magement/emails-templates/EmailInterface";
+import { EmailInterface } from "../emails-magement/emails-templates/EmailInterface";
 import GrantStatusesInterface from "../grant-manager/_components/StatusesInterface";
 
 const SoonerwarnManagementSettings = () => {

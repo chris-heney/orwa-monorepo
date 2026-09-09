@@ -2,6 +2,7 @@ import React from 'react';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import { RightDrawer } from '../modules/_components/drawer';
+import { DrawerLocalStateProvider } from '../modules/_components/drawer/DrawerLocalState';
 import type {
   ActionManifest,
   DrawerManifest,
@@ -98,19 +99,20 @@ export const Drawers = () => {
               ? ctx.focus
               : undefined;
           return (
-            <RightDrawer
-              key={d.id}
-              open={api.isDrawerOpen(d.id)}
-              onClose={api.closeDrawers}
-              title={d.title}
-              icon={<Icon fontSize="small" />}
-              width={d.width}
-              context={context}
-              headerActions={Header ? <Header /> : undefined}
-              closeLabel={d.id === FILTERS_DRAWER_ID ? 'Collapse filters' : undefined}
-            >
-              <Body />
-            </RightDrawer>
+            <DrawerLocalStateProvider key={d.id}>
+              <RightDrawer
+                open={api.isDrawerOpen(d.id)}
+                onClose={api.closeDrawers}
+                title={d.title}
+                icon={<Icon fontSize="small" />}
+                width={d.width}
+                context={context}
+                headerActions={Header ? <Header /> : undefined}
+                closeLabel={d.id === FILTERS_DRAWER_ID ? 'Collapse filters' : undefined}
+              >
+                <Body />
+              </RightDrawer>
+            </DrawerLocalStateProvider>
           );
         })}
     </>

@@ -19,6 +19,7 @@ export type {
   ListDrawerContext,
 } from './DrawerContext';
 export { useDrawerGroup } from './useDrawerGroup';
+export { DrawerLocalStateProvider, useDrawerFlag } from './DrawerLocalState';
 export {
   DrawerInsetProvider,
   useDrawerInset,

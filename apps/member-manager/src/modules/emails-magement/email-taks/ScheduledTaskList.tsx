@@ -2,31 +2,23 @@ import React from 'react';
 import {
   FunctionField,
   List,
+  ListView,
   RaRecord,
   TextField,
   CloneButton,
 } from 'react-admin';
-import { DatagridConfigurable } from "@orwa/entity-id";
+import { DatagridConfigurable } from '@orwa/entity-id';
 import { useTheme } from '@mui/material/styles';
-import { useEmailManagementContext } from '../EmailManagementContextProvider';
 import { emailDatagridStyle } from '../emailDatagridStyle';
 import { useEditRowClick } from '../../rbac-manager/useCan';
 
-const ScheduledTaskList = () => {
-  const { emailTaskFilters } = useEmailManagementContext();
+/** The scheduled-tasks grid — shared by the framework panel and the resource list. */
+export const ScheduledTasksGrid = () => {
   const theme = useTheme();
   // Rendered outside a resource route, so name the api explicitly.
   const rowClick = useEditRowClick('scheduled-email-task');
 
   return (
-    <List
-      disableSyncWithLocation
-      title={' '}
-      resource="scheduled-email-tasks"
-      actions={false}
-      exporter={false}
-      filter={emailTaskFilters}
-    >
       <DatagridConfigurable
         bulkActionButtons={false}
         rowClick={rowClick}
@@ -54,21 +46,38 @@ const ScheduledTaskList = () => {
         {/* IS Active green check else red x */}
         <FunctionField
           label="Active"
-          render={(record: RaRecord) => {
-            return record.active ? '✅' : '❌';
-          }}
+          render={(record: RaRecord) => (record.active ? '✅' : '❌')}
           noWrap
         />
         <FunctionField
           label="Duplicate"
-          render={(record: RaRecord) => {
-            return <CloneButton label="" size="small" record={record} />;
-          }}
+          render={(record: RaRecord) => (
+            <CloneButton label="" size="small" record={record} />
+          )}
           noWrap
         />
       </DatagridConfigurable>
-    </List>
   );
 };
 
+/** Framework tab panel — renders inside the tab's ListScope. */
+const ScheduledTaskList = () => (
+  <ListView actions={false} title=" ">
+    <ScheduledTasksGrid />
+  </ListView>
+);
+
 export default ScheduledTaskList;
+
+/** Standalone `/scheduled-email-tasks` resource list. */
+export const ScheduledTasksStandaloneList = () => (
+  <List
+    disableSyncWithLocation
+    title=" "
+    resource="scheduled-email-tasks"
+    actions={false}
+    exporter={false}
+  >
+    <ScheduledTasksGrid />
+  </List>
+);

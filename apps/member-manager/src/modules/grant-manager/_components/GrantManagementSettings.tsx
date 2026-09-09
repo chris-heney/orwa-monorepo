@@ -1,6 +1,6 @@
 import { Box, Card, Grid } from '@mui/material'
 import React from 'react'
-import EmailInterface from '../../emails-magement/emails-templates/EmailInterface'
+import { EmailInterface } from '../../emails-magement/emails-templates/EmailInterface'
 import GrantStatusesInterface from './StatusesInterface'
 import CustomInterface from '../../training/settings/program-billed/CustomInterface'
 import ProjectTypeFields from './ProjectTypeFields'

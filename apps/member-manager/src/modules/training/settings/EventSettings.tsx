@@ -1,7 +1,7 @@
 import { Box, Card, Grid } from '@mui/material'
 import React from 'react'
 import PageHeadingBar from '../../_components/PageHeadingBar'
-import EmailInterface from '../../emails-magement/emails-templates/EmailInterface'
+import { EmailInterface } from '../../emails-magement/emails-templates/EmailInterface'
 import OfficeDetails from './OfficeDetails'
 import { Title } from 'react-admin'
 import CustomInterface from './program-billed/CustomInterface'

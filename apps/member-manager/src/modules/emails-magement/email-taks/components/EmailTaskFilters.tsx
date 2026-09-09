@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Card, CardContent } from "@mui/material";
+import React from "react";
+import { Box } from "@mui/material";
 import {
   FilterList,
   FilterListItem,
@@ -8,17 +8,11 @@ import {
   useListFilterContext,
 } from "react-admin";
 import { Group } from "@mui/icons-material";
-import { useEmailManagementContext } from "../../EmailManagementContextProvider";
-import SavedFilters from "../../../_components/SavedFilters";
+import { SavedFiltersSection } from "../../../_components/SavedFiltersSection";
 
+/** Filters drawer body for the Email Tasks tab. */
 const EmailTaskFilters = () => {
-  const { setEmailTaskFilters, selectedTab, savingQuery, setSavingQuery } =
-    useEmailManagementContext();
   const { filterValues } = useListFilterContext();
-
-  useEffect(() => {
-    if (filterValues) setEmailTaskFilters(filterValues);
-  }, [filterValues]);
 
   const entityOptions = [
     // Membership resources
@@ -79,21 +73,8 @@ const EmailTaskFilters = () => {
   return !filterValues ? (
     <Loading />
   ) : (
-    <Card
-      component={"div"}
-      sx={{
-        minWidth: 200,
-        maxHeight: "70vh",
-        overflow: "auto",
-        position: "sticky",
-      }}
-    >
-      <CardContent>
-        <SavedFilters
-          resource={selectedTab}
-          savingQuery={savingQuery}
-          setSavingQuery={setSavingQuery}
-        />
+    <Box sx={{ p: 2 }}>
+        <SavedFiltersSection />
         <FilterLiveSearch />
         <FilterList label="Entity" icon={<Group />}>
           {entityOptions.map((entity: any) => {
@@ -106,8 +87,7 @@ const EmailTaskFilters = () => {
             );
           })}
         </FilterList>
-      </CardContent>
-    </Card>
+    </Box>
   );
 };
 export default  EmailTaskFilters;

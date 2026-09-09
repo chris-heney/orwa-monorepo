@@ -26,7 +26,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { Schedule, Email, Group, CheckCircle, Cancel, People } from "@mui/icons-material";
 import CustomShowHeader from "../../memberships_v2/componenets/CustomShowHeader";
-import EmailLogsList from "../email-logs/EmailLogList";
+import { EmailLogsList } from "../email-logs/EmailLogList";
 import DynamicRecipientList from "./components/DynamicRecipientList";
 
 const cronOptions = [

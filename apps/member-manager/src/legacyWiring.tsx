@@ -42,7 +42,6 @@ import {
   MembershipManagement,
   SoonerwarnManagement,
   Conferences,
-  EmailManagement,
   SettingsDashboard,
   MediaLibraryPage,
   RbacDashboard,
@@ -172,7 +171,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
     element: <SoonerwarnManagement />,
     module: 'memberships',
   },
-  { path: 'email-management', element: <EmailManagement />, module: 'emails' },
   { path: 'media-library', element: <MediaLibraryPage />, module: 'media-library' },
   {
     path: 'financial-audits/dashboard',

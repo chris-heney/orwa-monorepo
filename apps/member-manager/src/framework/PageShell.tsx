@@ -344,6 +344,7 @@ const PageShellInner = ({ page, module }: ShellProps & { module: ModuleManifest 
       <Box sx={{ width: '100%', minWidth: 0, m: 0, p: 0 }}>
         {/* THE sticky wrapper — pages never add their own. */}
         <Box
+          data-framework="sticky"
           sx={{
             position: 'sticky',
             top: STICKY_BAR_TOP,

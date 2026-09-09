@@ -6,7 +6,6 @@ export { default as FinancialAuditDashboard } from './memberships_v2/FinancialAu
 export { default as MembershipManagement } from './memberships_v2/MembershipsManagement';
 export { default as SoonerwarnManagement } from './soonerwarn/SoonerwarnManagement';
 export { default as Conferences } from './conference/Conference';
-export { default as EmailManagement } from './emails-magement/EmailManagement';
 export { default as SettingsDashboard } from './setting/SettingsDashboard';
 export { default as ConferenceDashboard } from './conference/ConferenceDashboard';
 export { default as MediaLibraryPage } from './media-library/MediaLibraryPage';

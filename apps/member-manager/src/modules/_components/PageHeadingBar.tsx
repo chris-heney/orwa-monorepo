@@ -67,6 +67,7 @@ const PageHeadingBar = ({
 
   return (
     <Box
+      className="page-heading-bar"
       sx={[
         {
           // NOTE: `top: 0`, not the app-bar height — many pages render the bar
