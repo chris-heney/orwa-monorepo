@@ -7,8 +7,9 @@ import ProfilePreferences from './ProfilePreferences';
 
 /**
  * "My Profile" — reachable from the app-bar avatar menu (not module-gated, so
- * every signed-in user can edit their own contact + preferences). Renders the
- * user's linked contact editor followed by personal UI preferences.
+ * every signed-in user can edit their own contact + preferences). Body of the
+ * `dashboard.profile` framework page; renders the user's linked contact editor
+ * followed by personal UI preferences.
  */
 const ProfilePage = () => (
   <UserContextProvider>

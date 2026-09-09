@@ -44,7 +44,6 @@ import {
   AwardManagement,
 } from './modules/dashboards';
 import EventSettings from './modules/training/settings/EventSettings';
-import ProfilePage from './modules/profile/ProfilePage';
 import {
   isRegisteredModule,
   isRegisteredResource,
@@ -131,7 +130,6 @@ export interface LegacyRoute {
 }
 
 const LEGACY_ROUTES: LegacyRoute[] = [
-  { path: 'profile', element: <ProfilePage /> },
   { path: 'admin/settings', element: <SettingsDashboard />, module: 'settings' },
   { path: 'event/settings', element: <EventSettings />, module: 'settings' },
   { path: 'training/dashboard', element: <TrainingDashboard />, module: 'training' },
