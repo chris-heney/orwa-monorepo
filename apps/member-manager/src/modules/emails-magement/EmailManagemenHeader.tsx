@@ -1,14 +1,21 @@
 import React from 'react';
-import { Box } from '@mui/material';
-import { Button, ListBase, SelectColumnsButton } from 'react-admin';
-import CreateButton from '../_components/CustomCreateButton';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
+import { ListBase } from 'react-admin';
 import { useEmailManagementContext } from './EmailManagementContextProvider';
 import RecordCount from '../_components/RecordCount';
 import PageHeadingBar from '../_components/PageHeadingBar';
+import {
+  ColumnsAction,
+  CreateAction,
+  FilterAction,
+} from '../_components/heading/HeadingActions';
 
+/**
+ * Email Management heading bar — the reference implementation for every
+ * module heading: PageHeadingBar + 32px HeadingAction presets, no ad-hoc
+ * margins, Filters as the right-most icon (under the app bar account icon).
+ */
 const EmailManagemenHeader = () => {
-  const { selectedTab, setIsFilterSidebarOpen, isSettingsOpen } =
+  const { selectedTab, setIsFilterSidebarOpen, isFilterSidebarOpen, isSettingsOpen } =
     useEmailManagementContext();
 
   const resource = selectedTab;
@@ -26,35 +33,13 @@ const EmailManagemenHeader = () => {
             exporter={undefined}
             resource={resource}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: 2,
-                alignItems: 'center',
-              }}
-            >
-              <RecordCount />
-
-              {selectedTab !== 'email-logs' && (
-                <CreateButton size="small" sx={{ color: 'white' }} />
-              )}
-
-              <SelectColumnsButton style={{ color: 'white' }} />
-
-              <Button
-                label="Filter"
-                sx={{ color: 'white', mr: 2 }}
-                onClick={() => {
-                  setIsFilterSidebarOpen((prev) => !prev);
-                  setTimeout(() => {
-                    window.scrollTo(document.body.scrollWidth, 0);
-                  }, 150);
-                }}
-              >
-                <FilterAltIcon />
-              </Button>
-            </Box>
+            <RecordCount />
+            {selectedTab !== 'email-logs' && <CreateAction />}
+            <ColumnsAction />
+            <FilterAction
+              active={isFilterSidebarOpen}
+              onClick={() => setIsFilterSidebarOpen((prev) => !prev)}
+            />
           </ListBase>
         ) : undefined
       }

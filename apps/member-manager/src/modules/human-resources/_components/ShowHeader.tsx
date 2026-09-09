@@ -1,14 +1,13 @@
 import React from 'react';
-import CustomHeader from '../../_components/CustomHeader';
-import { Box, IconButton, Tooltip } from '@mui/material';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useNavigate } from 'react-router-dom';
-import { Edit } from '@mui/icons-material';
 import { useResourceContext, useShowContext } from 'react-admin';
+import PageHeadingBar from '../../_components/PageHeadingBar';
+import { EditAction } from '../../_components/heading/HeadingActions';
 import { formatTitle } from '../../../helpers/formatResourceTitle';
 import useCurrentUser from '../../_helpers/useCurrentUser';
 import { useCan } from '../../rbac-manager/useCan';
 
+/** Contact / Staff show heading: Edit, then Back (right-most). */
 const ShowHeader = ({ first, last }: { first: string; last: string }) => {
   const navigate = useNavigate();
   const { record } = useShowContext();
@@ -16,39 +15,23 @@ const ShowHeader = ({ first, last }: { first: string; last: string }) => {
   const { user } = useCurrentUser();
   const { canOnResource } = useCan();
 
+  const isSelf = record?.email && user?.email && record.email === user.email;
+
   return (
-    <CustomHeader
-      title={first + ' ' + last}
-      Component={() => (
-        <Box sx={{ display: 'flex', alignItems: 'center', mr: 2, gap: 1 }}>
-          {canOnResource('update', resource) && (
-            <Tooltip title={`Edit ${formatTitle(resource)}`}>
-              <IconButton
-                onClick={() => navigate(`/${resource}/${record.id}/edit`)}
-                sx={{ color: 'white' }}
-              >
-                <Edit sx={{ color: 'white' }} />
-              </IconButton>
-            </Tooltip>
-          )}
-          <Tooltip
-            title={`${record.email === user.email ? 'Profile' : 'Dashboard'}`}
-          >
-            <IconButton
-              sx={{ mr: 1 }}
-              onClick={() =>
-                navigate(
-                  record.email === user.email
-                    ? '/profile'
-                    : '/human-resources/dashboard'
-                )
-              }
-            >
-              <ArrowBackIcon sx={{ color: 'white' }} />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
+    <PageHeadingBar
+      title={`${first} ${last}`.trim()}
+      actions={
+        canOnResource('update', resource) && record?.id != null ? (
+          <EditAction
+            label={`Edit ${formatTitle(resource)}`}
+            onClick={() => navigate(`/${resource}/${record.id}/edit`)}
+          />
+        ) : undefined
+      }
+      onBack={() =>
+        navigate(isSelf ? '/profile' : '/human-resources/dashboard')
+      }
+      backLabel={isSelf ? 'Profile' : 'Dashboard'}
     />
   );
 };

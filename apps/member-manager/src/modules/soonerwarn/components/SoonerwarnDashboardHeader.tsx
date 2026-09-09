@@ -1,19 +1,20 @@
 import React from "react";
-import { IconButton, Tooltip } from "@mui/material";
-import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import SettingsIcon from "@mui/icons-material/Settings";
-import EmailIcon from "@mui/icons-material/Email";
-import AddIcon from "@mui/icons-material/Add";
 import {
   ConfigurableDatagridColumn,
-  ExportButton,
   ListBase,
   RaRecord,
-  SelectColumnsButton,
   useStore,
   useDataProvider,
 } from "react-admin";
+import {
+  ActivityAction,
+  AddAction,
+  ColumnsAction,
+  ExportAction,
+  FilterAction,
+  NotificationsAction,
+  SettingsAction,
+} from "../../_components/heading/HeadingActions";
 import { useSoonerwarnContext } from "../SoonerwarnContextProvider";
 import CustomExportFunction from "../../../helpers/custom-export-function";
 import RecordCount from "../../_components/RecordCount";
@@ -75,95 +76,44 @@ const SoonerwarnDashboardHeader = () => {
               filter={undefined}
             >
               <RecordCount />
-              <ExportButton sx={{ color: "white" }} />
-              <SelectColumnsButton style={{ color: "white" }} />
+              <ExportAction />
+              <ColumnsAction />
             </ListBase>
           )}
 
-          <Tooltip title="Add New">
-            <IconButton
-              onClick={() => setIsCreating((prev) => !prev)}
-              size="small"
-              color="primary"
-            >
-              <AddIcon
-                fontSize="small"
-                sx={{ "&:hover": { color: "white" } }}
-                style={!isCreating ? { stroke: "white" } : { fill: "white" }}
-              />
-            </IconButton>
-          </Tooltip>
+          <AddAction
+            label="Add New"
+            active={isCreating}
+            onClick={() => setIsCreating((prev) => !prev)}
+          />
 
           {selectedTab !== "summary" && (
-            <Tooltip title="Filter">
-              <IconButton
-                onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
-                size="small"
-                color="primary"
-              >
-                <FilterAltIcon
-                  fontSize="small"
-                  sx={{ "&:hover": { color: "white" } }}
-                  style={
-                    !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                  }
-                />
-              </IconButton>
-            </Tooltip>
+            <FilterAction
+              active={isFilterSidebarOpen}
+              onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+            />
           )}
 
           {selectedTab === "summary" && (
-            <Tooltip title="Activity">
-              <IconButton
-                onClick={() => setIsActivitySidebarOpen(!isActivitySidebarOpen)}
-                size="small"
-                color="primary"
-              >
-                <MarkunreadMailboxIcon
-                  fontSize="small"
-                  style={
-                    !isActivitySidebarOpen
-                      ? { stroke: "white" }
-                      : { fill: "white" }
-                  }
-                  sx={{ "&:hover": { color: "white" } }}
-                />
-              </IconButton>
-            </Tooltip>
+            <ActivityAction
+              label="Activity"
+              active={isActivitySidebarOpen}
+              onClick={() => setIsActivitySidebarOpen(!isActivitySidebarOpen)}
+            />
           )}
 
           {selectedTab === "soonerwarn applications" && !isSettingsOpen && (
-            <Tooltip title="Email">
-              <IconButton
-                onClick={() => setIsEmailSidebarOpen(!isEmailSidebarOpen)}
-                size="small"
-                color="primary"
-              >
-                <EmailIcon
-                  fontSize="small"
-                  sx={{ "&:hover": { color: "white" } }}
-                  style={
-                    !isEmailSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                  }
-                />
-              </IconButton>
-            </Tooltip>
+            <NotificationsAction
+              label="Email"
+              active={isEmailSidebarOpen}
+              onClick={() => setIsEmailSidebarOpen(!isEmailSidebarOpen)}
+            />
           )}
 
-          <Tooltip title="Settings">
-            <IconButton
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              sx={{ p: 0.5 }}
-              size="small"
-              color="primary"
-            >
-              <SettingsIcon
-                fontSize="small"
-                sx={{ "&:hover": { color: "white" } }}
-                style={!isSettingsOpen ? { stroke: "white" } : { fill: "white" }}
-              />
-            </IconButton>
-          </Tooltip>
+          <SettingsAction
+            active={isSettingsOpen}
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+          />
         </>
       }
     />

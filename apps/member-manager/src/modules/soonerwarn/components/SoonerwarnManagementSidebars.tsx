@@ -5,6 +5,9 @@ import { useSoonerwarnContext } from "../SoonerwarnContextProvider";
 import SoonerwarnStatusFilter from "./SoonerwarnStatusFilter";
 import SoonerwarnEmailSideBar from "../../emails-magement/SoonerwarnEmailSidebar";
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
+import { RightDrawer, listDrawerContext } from "../../_components/drawer";
+import EmailIcon from "@mui/icons-material/Email";
+import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
 
 const SoonerwarnManagementSidebars = () => {
   const {
@@ -79,6 +82,12 @@ const SoonerwarnManagementSidebars = () => {
         open={isFilterSidebarOpen}
         onClose={() => setIsFilterSidebarOpen(false)}
         title="Filter"
+        context={listDrawerContext({
+          resource:
+            selectedTab === "needs assistance"
+              ? "request-statuses"
+              : "soonerwarn-applications",
+        })}
       >
         <Box sx={{ p: 2 }}>
           {selectedTab === "soonerwarn applications" && (
@@ -98,33 +107,25 @@ const SoonerwarnManagementSidebars = () => {
         </Box>
       </FilterSidebarShell>
 
-      {isActivitySidebarOpen && (
-        <ActivityFeed
-          title=" "
-          entity="soonerwarn-application"
-          sx={{
-            maxWidth: 350,
-            height: 500,
-            mt: 3,
-            ml: 2,
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-          listSx={{ maxHeight: "100vh" }}
-        />
-      )}
+      <RightDrawer
+        open={isActivitySidebarOpen}
+        onClose={() => setIsActivitySidebarOpen(false)}
+        title="Activity Feed"
+        icon={<MarkunreadMailboxIcon fontSize="small" />}
+        context={listDrawerContext({ resource: "soonerwarn-applications" })}
+      >
+        <ActivityFeed title=" " entity="soonerwarn-application" frame="plain" />
+      </RightDrawer>
 
-      {isEmailSidebarOpen && selectedTab === "soonerwarn applications" && (
-        <Box
-          sx={{
-            flexGrow: 1,
-            position: "relative",
-          }}
-        >
-          <SoonerwarnEmailSideBar module={"Soonerwarn Managment"} />
-        </Box>
-      )}
+      <RightDrawer
+        open={isEmailSidebarOpen && selectedTab === "soonerwarn applications"}
+        onClose={() => setIsEmailSidebarOpen(false)}
+        title="Notifications"
+        icon={<EmailIcon fontSize="small" />}
+        context={listDrawerContext({ resource: "soonerwarn-applications" })}
+      >
+        <SoonerwarnEmailSideBar module={"Soonerwarn Managment"} />
+      </RightDrawer>
     </>
   );
 };

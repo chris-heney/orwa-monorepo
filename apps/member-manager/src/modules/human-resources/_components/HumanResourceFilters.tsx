@@ -18,6 +18,7 @@ import RolesContextProvider, {
 } from "../../../context/RolesContextProvider";
 import SavedFilters from "../../_components/SavedFilters";
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
+import { listDrawerContext } from "../../_components/drawer";
 
 const ContactFilters = () => {
   const { setContactFilters, selectedTab, isSavingQuery, setSavingQuery } =
@@ -269,6 +270,17 @@ const HumanResourcesFilters = () => {
     <FilterSidebarShell
       open={isFilterSidebarOpen}
       onClose={() => setIsFilterSidebarOpen(false)}
+      context={listDrawerContext({
+        resource: selectedTab,
+        filter:
+          selectedTab === "contacts"
+            ? contactFilters
+            : selectedTab === "staff"
+            ? staffFilters
+            : selectedTab === "training-instructors"
+            ? instructorFilters
+            : userFilters,
+      })}
       headerActions={
         <Tooltip title="Save Current Filter">
           <IconButton

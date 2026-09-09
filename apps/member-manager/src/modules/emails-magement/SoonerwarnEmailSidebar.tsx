@@ -1,6 +1,5 @@
-import { Box, Button, Divider, FormControl, FormControlLabel, Paper, Radio, RadioGroup } from '@mui/material';
+import { Box, Button, Divider, FormControl, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 import React from 'react';
-import CustomHeader from '../_components/CustomHeader';
 import { useGetList, useNotify } from 'react-admin';
 import CustomTextInput from '../_components/CustomTextInput';
 import authProvider from '../../authProvider';
@@ -76,21 +75,9 @@ const SoonerwarnEmailSideBar = ({module} : {
   };
 
   return (
-    <Paper
-      component={'aside'}
-      sx={{
-        mt: 3,
-        ml: 2,
-        position: 'sticky',
-        top: 0,
-        zIndex: 10,
-        minWidth: 300,
-      }}
-    >
-      <CustomHeader
-        title="Notifications"
-      />
-      <Box sx={{ p: 2, overflowY: 'scroll', maxHeight: '70vh' }}>
+    // Drawer body: rendered inside a RightDrawer titled "Notifications".
+    <Box component="section" aria-label="Notifications">
+      <Box sx={{ p: 2 }}>
         <FormControl>
           <RadioGroup value={emailIndex} onClick={(e) => {
             const target = e.target as HTMLInputElement;
@@ -126,7 +113,7 @@ const SoonerwarnEmailSideBar = ({module} : {
           Resend
         </Button>
       </Box>
-    </Paper >
+    </Box>
   );
 };
 

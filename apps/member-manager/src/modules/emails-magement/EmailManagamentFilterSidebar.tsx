@@ -7,6 +7,7 @@ import EmailFilters from "./emails-templates/EmailFilters";
 import EmailLogFilters from "./email-logs/EmailLogFilters";
 import EmailTaskFilters from "./email-taks/components/EmailTaskFilters";
 import FilterSidebarShell from "../_components/FilterSidebarShell";
+import { listDrawerContext } from "../_components/drawer";
 
 const EmailManagementFilterSidebar = () => {
   const {
@@ -28,6 +29,7 @@ const EmailManagementFilterSidebar = () => {
     <FilterSidebarShell
       open={isFilterSidebarOpen}
       onClose={() => setIsFilterSidebarOpen(false)}
+      context={listDrawerContext({ resource: selectedTab })}
       headerActions={
         <Tooltip title="Save Current Filter">
           <IconButton

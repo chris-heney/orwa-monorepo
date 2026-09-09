@@ -83,8 +83,12 @@ const StaffShow = () => {
 
   return (
     <Show actions={false} title="Staff" component="div">
-      <Grid justifyContent={'center'} mt={2} container spacing={2}>
-      <ShowHeader first={""} last={""} />
+      {/* Heading first and flush; the grid below carries the gutter. */}
+      <ShowHeader
+        first={record.contact?.first ?? 'Staff'}
+        last={record.contact?.last ?? ''}
+      />
+      <Grid justifyContent={'center'} container spacing={2} sx={{ mt: 0 }}>
 
         <Grid item xs={12} lg={3}>
           {/* Staff Information Card */}

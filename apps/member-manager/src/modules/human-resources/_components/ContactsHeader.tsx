@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box } from '@mui/material';
 import {
   ConfigurableDatagridColumn,
   ListBase,
@@ -25,7 +24,8 @@ import { useCan } from '../../rbac-manager/useCan';
  * count/export context for the toolbar; the grid renders its own List below.
  */
 const ContactsHeader = () => {
-  const { setIsFilterSidebarOpen, contactFilters } = useHumanResourcesContext();
+  const { setIsFilterSidebarOpen, isFilterSidebarOpen, contactFilters } =
+    useHumanResourcesContext();
   const { canOnResource } = useCan();
   const dataProvider = useDataProvider();
   const redirect = useRedirect();
@@ -48,10 +48,7 @@ const ContactsHeader = () => {
       `Contacts-${new Date().toLocaleDateString()}`
     );
 
-  const openFilters = () => {
-    setIsFilterSidebarOpen((prev) => !prev);
-    setTimeout(() => window.scrollTo(document.body.scrollWidth, 0), 150);
-  };
+  const openFilters = () => setIsFilterSidebarOpen((prev) => !prev);
 
   return (
     <ListBase
@@ -65,15 +62,7 @@ const ContactsHeader = () => {
         title="Contacts"
         sx={{ mb: 0 }}
         actions={
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.75,
-              flexWrap: 'wrap',
-              justifyContent: 'flex-end',
-            }}
-          >
+          <>
             <RecordCount />
             <ColumnsAction />
             <ExportAction />
@@ -83,8 +72,8 @@ const ContactsHeader = () => {
                 onClick={() => redirect('/contacts/create')}
               />
             )}
-            <FilterAction onClick={openFilters} />
-          </Box>
+            <FilterAction active={isFilterSidebarOpen} onClick={openFilters} />
+          </>
         }
       />
     </ListBase>
