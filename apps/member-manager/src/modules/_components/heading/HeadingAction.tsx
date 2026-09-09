@@ -16,9 +16,18 @@ export interface HeadingActionProps {
   color?: 'inherit' | 'primary' | 'secondary' | 'warning' | 'error';
   /** Contained variant for primary emphasis when the label is visible */
   emphasis?: boolean;
+  /**
+   * Toggle state for actions that open a panel (Filters, Activity, …).
+   * Renders a subtle highlighted background and sets aria-pressed.
+   */
+  active?: boolean;
   sx?: SxProps<Theme>;
   'data-testid'?: string;
 }
+
+/** Icon-only heading action footprint: 20px glyph + 6px padding = 32px. */
+export const HEADING_ACTION_SIZE = 32;
+export const HEADING_ACTION_ACTIVE_BG = 'rgba(255,255,255,0.22)';
 
 /**
  * THE standard action button for black page heading bars.
@@ -35,6 +44,7 @@ const HeadingAction = ({
   forceLabel,
   color = 'inherit',
   emphasis,
+  active,
   sx,
   ...rest
 }: HeadingActionProps) => {
@@ -50,6 +60,7 @@ const HeadingAction = ({
         color={color === 'inherit' ? 'inherit' : color}
         variant={emphasis ? 'contained' : 'text'}
         startIcon={icon}
+        aria-pressed={active}
         sx={[
           {
             color: emphasis ? undefined : 'white',
@@ -58,6 +69,7 @@ const HeadingAction = ({
             py: 0.5,
             lineHeight: 1.2,
             whiteSpace: 'nowrap',
+            backgroundColor: active ? HEADING_ACTION_ACTIVE_BG : undefined,
             '&.Mui-disabled': { color: 'grey.500' },
           },
           ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
@@ -78,6 +90,7 @@ const HeadingAction = ({
           onClick={onClick}
           disabled={disabled}
           aria-label={label}
+          aria-pressed={active}
           sx={[
             {
               color:
@@ -85,9 +98,13 @@ const HeadingAction = ({
                   ? 'white'
                   : (theme: Theme) => theme.palette[color].light,
               p: 0.75,
+              width: HEADING_ACTION_SIZE,
+              height: HEADING_ACTION_SIZE,
               borderRadius: 1,
+              backgroundColor: active ? HEADING_ACTION_ACTIVE_BG : undefined,
               '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' },
               '&.Mui-disabled': { color: 'grey.600' },
+              '& .MuiSvgIcon-root': { fontSize: '1.25rem' },
             },
             ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
           ]}

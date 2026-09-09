@@ -46,6 +46,10 @@ import {
   firstAllowedPath,
 } from '../config/modules';
 import { useActionLabels } from '../helpers/useActionLabels';
+import {
+  DrawerInsetProvider,
+  useDrawerInset,
+} from '../modules/_components/drawer/DrawerInsetContext';
 
 // Auth pages + the user's own profile are reachable regardless of module
 // access — every signed-in user must be able to land somewhere safe.
@@ -303,6 +307,31 @@ const MyMenu = () => {
   );
 };
 
+/**
+ * Content column. Open right drawers (`RightDrawer`) register their width in
+ * DrawerInsetContext; reserving it here keeps heading-bar actions reachable
+ * instead of hidden under the drawer paper.
+ */
+const MainContent = ({ children }: { children: ReactNode }) => {
+  const inset = useDrawerInset();
+  return (
+    <Box
+      id="main-content"
+      className={LayoutClasses.content}
+      sx={{
+        paddingRight: `${inset}px !important`,
+        transition: (theme) =>
+          theme.transitions.create('padding-right', {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen,
+          }),
+      }}
+    >
+      {children}
+    </Box>
+  );
+};
+
 const DashBoard = (props: LayoutProps) => {
   // `error` and `title` are pulled out only to keep them off the DOM element
   // that receives {...rest}; the error UI itself is ErrorRecoveryFallback.
@@ -341,20 +370,22 @@ const DashBoard = (props: LayoutProps) => {
             <Sidebar>
               <Menu hasDashboard={!!dashboard} />
             </Sidebar>
-            <Box id="main-content" className={LayoutClasses.content}>
-              <ErrorBoundary
-                onError={handleError}
-                fallbackRender={({ error, resetErrorBoundary }) => (
-                  <ErrorRecoveryFallback
-                    error={error}
-                    errorInfo={errorInfo}
-                    resetErrorBoundary={resetErrorBoundary}
-                  />
-                )}
-              >
-                <ModuleRouteGuard>{children}</ModuleRouteGuard>
-              </ErrorBoundary>
-            </Box>
+            <DrawerInsetProvider>
+              <MainContent>
+                <ErrorBoundary
+                  onError={handleError}
+                  fallbackRender={({ error, resetErrorBoundary }) => (
+                    <ErrorRecoveryFallback
+                      error={error}
+                      errorInfo={errorInfo}
+                      resetErrorBoundary={resetErrorBoundary}
+                    />
+                  )}
+                >
+                  <ModuleRouteGuard>{children}</ModuleRouteGuard>
+                </ErrorBoundary>
+              </MainContent>
+            </DrawerInsetProvider>
           </main>
           <Inspector />
         </Box>
@@ -450,11 +481,15 @@ const StyledLayout = styled('div', {
   // Record counts are Typography, not Button, so they stay visible.
   '&[data-action-labels="off"] [class*="RaTopToolbar-root"] .MuiButton-root, &[data-action-labels="off"] .heading-actions .MuiButton-root':
     {
+      // Same 32px footprint as HeadingAction so the right-most heading icon
+      // always lands under the app bar's account icon.
       fontSize: 0,
       minWidth: 0,
+      width: 32,
+      height: 32,
       lineHeight: 1,
-      paddingLeft: 8,
-      paddingRight: 8,
+      paddingLeft: 6,
+      paddingRight: 6,
       '& .MuiButton-startIcon, & .MuiButton-endIcon': {
         margin: 0,
       },

@@ -12,7 +12,14 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SettingsIcon from '@mui/icons-material/Settings';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-import HeadingAction, { HeadingActionProps } from './HeadingAction';
+import EditIcon from '@mui/icons-material/Edit';
+import SearchIcon from '@mui/icons-material/Search';
+import EmailIcon from '@mui/icons-material/Email';
+import MarkunreadMailboxIcon from '@mui/icons-material/MarkunreadMailbox';
+import HeadingAction, {
+  HeadingActionProps,
+  HEADING_ACTION_SIZE,
+} from './HeadingAction';
 import { useActionLabels } from '../../../helpers/useActionLabels';
 
 type PresetProps = Omit<HeadingActionProps, 'icon' | 'label'> & {
@@ -21,19 +28,54 @@ type PresetProps = Omit<HeadingActionProps, 'icon' | 'label'> & {
 
 /** Standard heading-bar actions — identical look across every module. */
 
-export const RefreshAction = (props: PresetProps) => (
+export const EditAction = ({ label, ...rest }: PresetProps) => (
   <HeadingAction
-    icon={<RefreshIcon fontSize="small" />}
-    label={props.label ?? 'Refresh'}
-    {...props}
+    icon={<EditIcon fontSize="small" />}
+    label={label ?? 'Edit'}
+    {...rest}
   />
 );
 
-export const FilterAction = (props: PresetProps) => (
+/** Toggles a collapsible search row under the bar (pass `active`). */
+export const SearchAction = ({ label, ...rest }: PresetProps) => (
+  <HeadingAction
+    icon={<SearchIcon fontSize="small" />}
+    label={label ?? 'Search'}
+    {...rest}
+  />
+);
+
+/** Opens the Notifications (email templates) right drawer. */
+export const NotificationsAction = ({ label, ...rest }: PresetProps) => (
+  <HeadingAction
+    icon={<EmailIcon fontSize="small" />}
+    label={label ?? 'Notifications'}
+    {...rest}
+  />
+);
+
+/** Opens the Activity Feed right drawer. */
+export const ActivityAction = ({ label, ...rest }: PresetProps) => (
+  <HeadingAction
+    icon={<MarkunreadMailboxIcon fontSize="small" />}
+    label={label ?? 'Activity Feed'}
+    {...rest}
+  />
+);
+
+export const RefreshAction = ({ label, ...rest }: PresetProps) => (
+  <HeadingAction
+    icon={<RefreshIcon fontSize="small" />}
+    label={label ?? 'Refresh'}
+    {...rest}
+  />
+);
+
+export const FilterAction = ({ label, ...rest }: PresetProps) => (
   <HeadingAction
     icon={<FilterAltIcon fontSize="small" />}
-    label={props.label ?? 'Filters'}
-    {...props}
+    label={label ?? 'Filters'}
+    {...rest}
   />
 );
 
@@ -45,27 +87,27 @@ export const AddAction = ({ label, ...rest }: PresetProps) => (
   />
 );
 
-export const BackAction = (props: PresetProps) => (
+export const BackAction = ({ label, ...rest }: PresetProps) => (
   <HeadingAction
     icon={<ArrowBackIcon fontSize="small" />}
-    label={props.label ?? 'Back'}
-    {...props}
+    label={label ?? 'Back'}
+    {...rest}
   />
 );
 
-export const ShowAction = (props: PresetProps) => (
+export const ShowAction = ({ label, ...rest }: PresetProps) => (
   <HeadingAction
     icon={<VisibilityIcon fontSize="small" />}
-    label={props.label ?? 'Show'}
-    {...props}
+    label={label ?? 'Show'}
+    {...rest}
   />
 );
 
-export const SettingsAction = (props: PresetProps) => (
+export const SettingsAction = ({ label, ...rest }: PresetProps) => (
   <HeadingAction
     icon={<SettingsIcon fontSize="small" />}
-    label={props.label ?? 'Settings'}
-    {...props}
+    label={label ?? 'Settings'}
+    {...rest}
   />
 );
 
@@ -92,7 +134,12 @@ export const ColumnsAction = ({
           px: 0.75,
           ...(showLabels
             ? {}
-            : { fontSize: 0, '& .MuiButton-startIcon': { mr: 0, ml: 0 } }),
+            : {
+                fontSize: 0,
+                width: HEADING_ACTION_SIZE,
+                height: HEADING_ACTION_SIZE,
+                '& .MuiButton-startIcon': { mr: 0, ml: 0 },
+              }),
         },
         '& .MuiSvgIcon-root': { fontSize: '1.25rem' },
       }}
@@ -108,7 +155,15 @@ export const ExportAction = (props: ExportButtonProps) => {
     <ExportButton
       size="small"
       label={showLabels ? undefined : ' '}
-      sx={{ color: 'white', minWidth: 0, px: showLabels ? 1 : 0.75 }}
+      sx={{
+        color: 'white',
+        minWidth: 0,
+        px: showLabels ? 1 : 0.75,
+        ...(showLabels
+          ? {}
+          : { width: HEADING_ACTION_SIZE, height: HEADING_ACTION_SIZE }),
+        '& .MuiSvgIcon-root': { fontSize: '1.25rem' },
+      }}
       {...props}
     />
   );
