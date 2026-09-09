@@ -256,13 +256,20 @@ export const CONTESTANT_LIFECYCLE_ACTIONS = [
   'api::conference-contestant.conference-contestant.restore',
 ];
 
-const configureContestantLifecyclePermissions = async (strapi) => {
+/**
+ * Every role these routes are granted to. Cancel and restore move golf capacity
+ * and rewrite audit fields, so the grant must stay Admin-only — declaring it as
+ * data keeps that reviewable and lets a test assert no other role creeps in.
+ */
+export const CONTESTANT_LIFECYCLE_ROLE_GRANTS = [
+  { roleWhere: { type: 'admin' }, actions: CONTESTANT_LIFECYCLE_ACTIONS },
+];
+
+export const configureContestantLifecyclePermissions = async (strapi) => {
   try {
-    await ensureRolePermissions(
-      strapi,
-      { type: 'admin' },
-      CONTESTANT_LIFECYCLE_ACTIONS,
-    );
+    for (const { roleWhere, actions } of CONTESTANT_LIFECYCLE_ROLE_GRANTS) {
+      await ensureRolePermissions(strapi, roleWhere, actions);
+    }
   } catch (error) {
     strapi.log.warn(
       `Unable to configure contestant lifecycle permissions: ${error.message}`,
