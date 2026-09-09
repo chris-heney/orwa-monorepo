@@ -21,12 +21,29 @@ import HeadingAction, {
   HEADING_ACTION_SIZE,
 } from './HeadingAction';
 import { useActionLabels } from '../../../helpers/useActionLabels';
+import CreateButton, { CreateButtonProps } from '../CustomCreateButton';
 
 type PresetProps = Omit<HeadingActionProps, 'icon' | 'label'> & {
   label?: string;
 };
 
 /** Standard heading-bar actions — identical look across every module. */
+
+/**
+ * RBAC-gated "create" link for list headings (react-admin CreateButton).
+ * Icon-only 32px when labels are off (layout CSS), icon + text when on.
+ */
+export const CreateAction = ({
+  label = 'Add New',
+  ...rest
+}: Omit<CreateButtonProps, 'label'> & { label?: string }) => (
+  <CreateButton
+    size="small"
+    label={label}
+    {...rest}
+    sx={{ color: 'white', minWidth: 0, ...(rest.sx as object) }}
+  />
+);
 
 export const EditAction = ({ label, ...rest }: PresetProps) => (
   <HeadingAction

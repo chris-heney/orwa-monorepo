@@ -6,7 +6,7 @@ import {
   useResourceContext,
 } from "react-admin";
 import { SxProps } from "@mui/material";
-import { BackAction, ShowAction } from "./heading/HeadingActions";
+import { ShowAction } from "./heading/HeadingActions";
 
 interface CustomFormHeaderProps {
   redirectTo?: string;
@@ -38,13 +38,14 @@ const CustomFormHeader: React.FC<CustomFormHeaderProps> = ({
     ? `${record[displayField]}`
     : `New ${resourceLabel(resource)}`;
 
+  // Back is always the right-most action (PageHeadingBar owns its placement).
   return (
     <PageHeadingBar
       title={title}
       sx={sx}
+      onBack={() => redirect(redirectTo)}
       actions={
         <>
-          <BackAction onClick={() => redirect(redirectTo)} />
           {hasShow && record?.id != null && (
             <ShowAction
               onClick={() => redirect("show", resource, record.id)}
