@@ -1,9 +1,42 @@
 import path from 'path'
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
+/**
+ * member-manager's VITE_API_ENDPOINT is the Strapi HOST ROOT; the code appends
+ * `/api` itself (~60 call sites). Other apps (conference-registration,
+ * terms-gate) expect the value to already end in `/api`, and a shell that has
+ * exported theirs silently overrides this app's `.env.production` — Vite gives
+ * OS env precedence over .env files. That shipped a bundle full of
+ * `admin.orwa.org/api/api/...` (405 on login) on 2026-09-09, and localhost
+ * bundles on 2026-07-16. Refuse to build anything that would repeat either.
+ */
+function assertApiEndpoint(mode: string) {
+  const fileEnv = loadEnv(mode, __dirname, 'VITE_')
+  const endpoint = process.env.VITE_API_ENDPOINT ?? fileEnv.VITE_API_ENDPOINT ?? ''
+  const source = process.env.VITE_API_ENDPOINT !== undefined ? 'shell environment' : `.env / .env.${mode}`
+  const hint = `Resolved VITE_API_ENDPOINT="${endpoint}" from the ${source}. ` +
+    'Build with a clean shell: `env -u VITE_API_ENDPOINT -u VITE_API_KEY npx vite build --mode production`.'
+
+  if (!endpoint) {
+    throw new Error(`[member-manager] VITE_API_ENDPOINT is not set. ${hint}`)
+  }
+  if (/\/api\/?$/i.test(endpoint)) {
+    throw new Error(
+      `[member-manager] VITE_API_ENDPOINT must be the host root WITHOUT a trailing /api ` +
+      `(the app appends /api itself; this value would produce /api/api URLs). ${hint}`
+    )
+  }
+  if (mode === 'production' && /localhost|127\.0\.0\.1/i.test(endpoint)) {
+    throw new Error(`[member-manager] production build must not point at localhost. ${hint}`)
+  }
+}
+
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command, mode }) => {
+  if (command === 'build') assertApiEndpoint(mode)
+
+  return {
   plugins: [react({
     // Add this to improve Fast Refresh reliability. Off under Vitest: the
     // refresh runtime expects a browser preamble that jsdom never injects, so
@@ -64,4 +97,5 @@ export default defineConfig({
     }
   },
   base: './',
+  }
 })

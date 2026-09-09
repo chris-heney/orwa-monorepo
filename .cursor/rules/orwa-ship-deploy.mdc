@@ -44,10 +44,21 @@ Apps under `sites/orwa/` on `orwa@orwa.ssh.wpengine.net`:
 
 ```bash
 cd apps/<app>
-npx vite build --mode production   # or: npx vite build
-grep -c 'localhost:1337' dist/assets/*.js    # must be 0
-grep -c 'localhost:13370' dist/assets/*.js   # must be 0
+# ALWAYS unset VITE_* first: OS env beats .env.production, and a shell that
+# sourced another app's env (e.g. conference-registration's `…/api` endpoint)
+# silently poisons this build.
+env -u VITE_API_ENDPOINT -u VITE_API_KEY npx vite build --mode production
+cat dist/assets/*.js | grep -c 'localhost:1337'              # must be 0
+cat dist/assets/*.js | grep -c 'localhost:13370'             # must be 0
+cat dist/assets/*.js | grep -o 'orwa.org/api/api' | wc -l    # must be 0 (doubled /api)
 ```
+
+Endpoint convention differs per app — **member-manager** wants the host root
+(`https://admin.orwa.org`, code appends `/api`); **conference-registration**,
+**conference-hub**, `@orwa/terms-gate` want `https://admin.orwa.org/api`.
+Mixing them up produces `/api/api/...` URLs (405 on login, 404 on `users/me`) —
+shipped 2026-09-09. member-manager's `vite.config.ts` now refuses to build a
+wrong endpoint; the grep above catches the other apps.
 
 `nx build` can bake localhost from tracked `.env`. Vite `base: './'` required for subdirectory apps.
 
@@ -83,6 +94,15 @@ curl -sSI https://orwa.org/<app>/ | grep -iE 'x-cache|age:|last-modified'
 If `x-cache: HIT` still shows the **old** hash after flush, re-run both flushes and re-check. Do not tell the user to “wait 10 minutes” or blame Cloudflare.
 
 Also smoke in a headless browser (hard-reload / cache-disabled) — typecheck alone is not enough.
+
+## Failure pattern (2026-09-09)
+
+A deploy subagent built member-manager from a shell that had exported
+conference-registration's `VITE_API_ENDPOINT=https://admin.orwa.org/api`.
+The tracked `.env.production` was correct, but OS env won; the bundle carried
+18 `admin.orwa.org/api/api/...` URLs and production login broke (405). The
+review grep (`grep -oE 'https?://[^ ]+(/api)?'`) could not distinguish `/api`
+from `/api/api`, so it passed. Grep for the literal `orwa.org/api/api`.
 
 ## Failure pattern (2026-08-12)
 
