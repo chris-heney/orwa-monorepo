@@ -64,6 +64,79 @@
         "Administrative",
         "Reimbursement"
       ]
+    },
+    "source": {
+      "type": "enumeration",
+      "enum": [
+        "Admin",
+        "Applicant Portal"
+      ],
+      "default": "Admin"
+    },
+    "invoices": {
+      "type": "component",
+      "repeatable": true,
+      "component": "grant.reimbursement-invoice"
+    },
+    "invoice_total": {
+      "type": "decimal"
+    },
+    "requester_name": {
+      "type": "string"
+    },
+    "requester_title": {
+      "type": "string"
+    },
+    "requester_email": {
+      "type": "email"
+    },
+    "requester_phone": {
+      "type": "string"
+    },
+    "requester_signature": {
+      "type": "text"
+    },
+    "certified": {
+      "type": "boolean",
+      "default": false
+    },
+    "applicant_notes": {
+      "type": "text"
+    },
+    "paid_invoices": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "proof_of_payment": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "project_photos": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "photos_not_applicable": {
+      "type": "boolean",
+      "default": false
+    },
+    "portal_submission_id": {
+      "type": "string",
+      "private": true
     }
   }
 }

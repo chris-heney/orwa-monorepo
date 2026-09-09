@@ -132,6 +132,20 @@ export interface GrantProjectCost extends Struct.ComponentSchema {
   };
 }
 
+export interface GrantReimbursementInvoice extends Struct.ComponentSchema {
+  collectionName: 'components_grant_reimbursement_invoices';
+  info: {
+    description: 'One paid vendor invoice / pay application line on a reimbursement request';
+    displayName: 'Reimbursement Invoice';
+  };
+  attributes: {
+    amount: Schema.Attribute.Decimal & Schema.Attribute.Required;
+    description: Schema.Attribute.String;
+    invoice_number: Schema.Attribute.String & Schema.Attribute.Required;
+    vendor: Schema.Attribute.String & Schema.Attribute.Required;
+  };
+}
+
 export interface LocationCoordinates extends Struct.ComponentSchema {
   collectionName: 'components_location_coordinates';
   info: {
@@ -408,6 +422,7 @@ declare module '@strapi/strapi' {
       'conference.sponsorships': ConferenceSponsorships;
       'conference.tickets-purchased': ConferenceTicketsPurchased;
       'grant.project-cost': GrantProjectCost;
+      'grant.reimbursement-invoice': GrantReimbursementInvoice;
       'location.coordinates': LocationCoordinates;
       'renewal.membership-renewal': RenewalMembershipRenewal;
       'scholarship.address': ScholarshipAddress;

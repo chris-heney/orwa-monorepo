@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_grant_reimbursement_invoices",
+  "info": {
+    "displayName": "Reimbursement Invoice",
+    "description": "One paid vendor invoice / pay application line on a reimbursement request"
+  },
+  "options": {},
+  "attributes": {
+    "vendor": {
+      "type": "string",
+      "required": true
+    },
+    "invoice_number": {
+      "type": "string",
+      "required": true
+    },
+    "amount": {
+      "type": "decimal",
+      "required": true
+    },
+    "description": {
+      "type": "string"
+    }
+  }
+}

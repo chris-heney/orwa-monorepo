@@ -2621,31 +2621,48 @@ export interface ApiGrantPayoutGrantPayout extends Struct.CollectionTypeSchema {
   };
   attributes: {
     amount: Schema.Attribute.Decimal;
+    applicant_notes: Schema.Attribute.Text;
     application: Schema.Attribute.Relation<
       'manyToOne',
       'api::grant-application-final.grant-application-final'
     >;
+    certified: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>;
     comments: Schema.Attribute.Text;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     date_approved: Schema.Attribute.Date;
     grant: Schema.Attribute.Relation<'oneToOne', 'api::grant.grant'>;
+    invoice_total: Schema.Attribute.Decimal;
+    invoices: Schema.Attribute.Component<'grant.reimbursement-invoice', true>;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
       'oneToMany',
       'api::grant-payout.grant-payout'
     > &
       Schema.Attribute.Private;
+    paid_invoices: Schema.Attribute.Media<'images' | 'files', true>;
     payout_status: Schema.Attribute.Relation<
       'oneToOne',
       'api::payout-status.payout-status'
     >;
+    photos_not_applicable: Schema.Attribute.Boolean &
+      Schema.Attribute.DefaultTo<false>;
+    portal_submission_id: Schema.Attribute.String & Schema.Attribute.Private;
+    project_photos: Schema.Attribute.Media<'images' | 'files', true>;
     project_type: Schema.Attribute.Relation<
       'oneToOne',
       'api::project-type.project-type'
     >;
+    proof_of_payment: Schema.Attribute.Media<'images' | 'files', true>;
     publishedAt: Schema.Attribute.DateTime;
+    requester_email: Schema.Attribute.Email;
+    requester_name: Schema.Attribute.String;
+    requester_phone: Schema.Attribute.String;
+    requester_signature: Schema.Attribute.Text;
+    requester_title: Schema.Attribute.String;
+    source: Schema.Attribute.Enumeration<['Admin', 'Applicant Portal']> &
+      Schema.Attribute.DefaultTo<'Admin'>;
     status: Schema.Attribute.Enumeration<
       ['Requested', 'Approved', 'Denied', 'Paid', 'Paid in Full']
     >;
