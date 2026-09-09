@@ -683,3 +683,143 @@ Two documentation/script gaps worth noting (not changed here):
    which the ship rule requires after every frontend rsync. It only curls the
    live page for the bundle hash, which will report the stale hash until the WP
    Engine page cache expires.
+
+---
+
+# Addendum 2 — final pre-deployment findings
+
+The two non-blocking findings raised after the durability pass. Verified against
+local Strapi on `:13370` and the local migration-copy database; no production
+contact.
+
+## Commits
+
+| Commit | Scope |
+|---|---|
+| `21d4c8cc` | `member-manager: keep the contestant view when filtering on a phone` |
+| `1701211b` | `member-manager: stop doubling the documentId path when filtering by it` |
+| `e7523826` | `member-manager: keep cancelled contestants out of the assignment pickers` |
+| `34f8772c` | `member-manager: drop the inert sticky on the contestant view toggle` |
+
+## 1. Narrow viewport preserved the status sentinel
+
+Below the `sm` breakpoint the dashboard swaps `ConferenceFilters` for
+`ConferenceAccordionFilter`, and that component applied the incoming tab's
+shared filters with `omitYearForListQuery` alone. Tab filters carry no
+contestant status, so a phone user switching tabs kept a toggle reading
+Cancelled over a list showing every contestant — label and query disagreeing,
+which is exactly the failure the sentinel work was meant to end.
+
+It now performs the same `preserveContestantStatusFilter` →
+`normalizeFiltersForListQuery` the wide sidebar does, which also supplies the
+default Active view.
+
+`ConferenceAccordionFilter.spec.tsx` (4 tests) drives the component with
+react-admin stubbed: an explicit Cancelled sentinel survives applying tab
+filters, All survives a Contestants → Attendees → Contestants round trip, a
+contestant list with no sentinel defaults to Active, and a non-contestant list
+never acquires a status key.
+
+### Browser evidence (480×900, local dev server)
+
+| Check | Result |
+|---|---|
+| Accordion filter present, sidebar absent | yes (narrow layout confirmed) |
+| Contestants tab, stored view Cancelled | Cancelled pressed, 1 row (the seeded cancelled contestant) |
+| Contestants → Attendees → Contestants | still Cancelled, still 1 row |
+| Toggle reachable at 480px | yes, at x=78 with the page unscrolled |
+| Console errors | 0 |
+
+Screenshot: `tmp/task9/screenshots/narrow-cancelled-after-round-trip.png`.
+
+### Related correction
+
+The previous pass added `position: sticky; left: 0` to the view toggle. It never
+did anything: the toggle's nearest scroll container is a non-scrolling
+`overflow: auto` ancestor, while the dashboard as a whole scrolls sideways on
+the page. Left alignment is the part that actually keeps the control on screen
+(measured at 480px), so the inert declarations and the comment claiming they
+pinned it are gone.
+
+## 2. Cancelled contestants excluded from the assignment pickers
+
+`ConferenceTeams` and `ConferenceRegistrations` each expose a picker that
+attaches a contestant, and both offered every contestant regardless of status —
+a cancelled contestant could be attached to a new team or registration.
+
+Both now pass `contestantChoicesFilter(record?.contestants)`:
+
+- Nothing linked → the `status: "active"` sentinel, which the provider expands
+  into the same active-or-legacy-null clause the Active list view uses.
+- Something linked → `$or: [active, null, documentId $in <linked>]`, so the
+  record's own contestants stay visible.
+
+The union is required rather than decorative. React-admin normally re-fetches
+selected rows with `getMany`, but this provider returns relations populated as
+whole records, and `getMany` discards non-id values — so the only thing
+rendering a chip is the row's presence in the choices. A plain active filter
+would have made a registration's own cancelled contestant vanish from its form.
+
+The display-only `ReferenceArrayField` on the team list is untouched; cancelled
+members still show there.
+
+### A latent serializer bug this exposed
+
+Filtering on `documentId` directly emitted
+`filters[$or][2][documentId][documentId][$in][]=…` — the documentId rewrite
+appended another `[documentId]` to a key that already was one. Strapi answers
+**500 Internal Server Error** to that shape (verified live). Nothing filtered on
+documentId directly before, so it had never surfaced. `isIdKey` now treats
+`documentId` like `id` in all three rewrite paths.
+
+### Query verification (live local Strapi, one contestant temporarily cancelled)
+
+| Query | Total | Cancelled row present |
+|---|---|---|
+| `filters[$or][0][status][$eq]=active&filters[$or][1][status][$null]=true` | 91 | no |
+| …`&filters[$or][2][documentId][$in][]=<linked>` | 92 | yes |
+| …`&filters[$or][2][id][$in][]=3` | 92 | yes |
+| pre-fix doubled `[documentId][documentId]` path | — | HTTP 500 |
+
+### Tests
+
+`listQueryFilters.spec.ts` gains 8 cases for `contestantChoicesFilter` (empty,
+records, plain ids, numeric fallback, mixed shapes, blanks/duplicates, and both
+directions through the API boundary). `serializeStrapiFilters.spec.ts` gains the
+emitted-query test and `documentIdFilterPath` coverage.
+`contestantRelationPickers.spec.tsx` (4 tests) renders both forms with
+react-admin stubbed and asserts the filter each picker receives, including that
+the other relation pickers on those forms stay unconstrained.
+
+### Browser evidence (1600×1000)
+
+| Check | Result |
+|---|---|
+| Team edit, cancelled member linked | chips "Kyle Engel" and "Brett Rymer" (cancelled) both render |
+| Team picker, search a cancelled unlinked contestant | "No options" — cannot be assigned |
+| Team picker, search an active contestant | offered |
+| Registration edit, cancelled contestant linked | chips "G One" (cancelled) and "G Two" render |
+| Registration picker, search a cancelled unlinked contestant | "No options" |
+| Choices request issued | `$or` active/null + `documentId $in` the linked pair, HTTP 200 |
+
+Screenshot: `tmp/task9/screenshots/registration-picker-cancelled-not-offered.png`.
+
+Two console errors appeared on the registration receipt — `Invalid prop
+children of type array supplied to ReferenceFieldView` from
+`RegistrationReceipt.tsx:256`. Pre-existing and unrelated; not touched.
+
+## Test and lint summary
+
+| Suite | Result |
+|---|---|
+| `apps/member-manager` conference + provider suites | **151/151 passed** (was 132; +19) |
+| `apps/member-manager` `tsc --noEmit` | 163 errors, unchanged, none in any touched file |
+| `npx eslint` | still broken repo-wide (eslint 8 locally vs @typescript-eslint 8.65 from the root); IDE diagnostics clean on every changed file |
+
+## Data left clean
+
+The three contestants cancelled during verification (ids 3, 18, 100) were
+restored: 92 active, 0 cancelled, no `cancelled_at` / `cancelled_reason` /
+`cancelled_by` anywhere — identical to the starting state. The temporary admin
+user and its role link were deleted; 0 rows matching `task8` or `task9` remain
+in `up_users`. No API tokens or `.env` files were touched.
