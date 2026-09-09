@@ -105,6 +105,8 @@ const EditPayout = ({ type }: { type: "Administrative" | "Reimbursement" }) => {
           format={formatRelationId}
         />
       </ReferenceInput>
+      {/* Placeholder for the read-only Source chip column in PayoutsList. */}
+      <TextField source="source" label="Source" emptyText="" />
       <TextField source="application.application_id" label="ID" noWrap />
       <TextField
         source="application.legal_entity_name"

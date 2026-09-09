@@ -1,6 +1,14 @@
 import React, { useCallback, useEffect } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { Link as MuiLink, Modal, useMediaQuery, useTheme } from "@mui/material";
+import {
+  Chip,
+  Link as MuiLink,
+  Modal,
+  Tooltip,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import LanguageIcon from "@mui/icons-material/Language";
 import { Theme } from "@mui/material/styles";
 import {
   List,
@@ -137,6 +145,25 @@ const ReimbursementPayoutsList = () => {
                 setIsModalOpen={setIsModalOpen}
               />
             )}
+          />
+          {/* Column order must stay in sync with EditPayoutRowForm (Reimbursement). */}
+          <FunctionField
+            label="Source"
+            sortBy="source"
+            render={(record: RaRecord) =>
+              record?.source === "Applicant Portal" ? (
+                <Tooltip title="Submitted by the applicant through the grant portal — expand the row for invoices, documents and signature">
+                  <Chip
+                    size="small"
+                    color="info"
+                    variant="outlined"
+                    icon={<LanguageIcon />}
+                    label="Portal"
+                    sx={{ height: 22, "& .MuiChip-label": { px: 0.75, fontSize: 12 } }}
+                  />
+                </Tooltip>
+              ) : null
+            }
           />
 
           {/* Application is already populated on the payout; avoid ReferenceField
