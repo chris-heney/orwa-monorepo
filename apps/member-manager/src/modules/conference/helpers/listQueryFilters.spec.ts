@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { normalizeFiltersForListQuery } from "./listQueryFilters";
+import {
+  applyContestantStatusFilter,
+  contestantStatusFromFilters,
+  normalizeFiltersForListQuery,
+} from "./listQueryFilters";
 import { ensureConferenceInFilters } from "./mergeConferenceAcrossTabFilters";
 
 describe("ensureConferenceInFilters", () => {
@@ -69,5 +73,79 @@ describe("normalizeFiltersForListQuery", () => {
         "contestants"
       )
     ).toEqual({ conference: 3, year: 2026 });
+  });
+});
+
+describe("contestant status view control", () => {
+  // What the list actually starts with: `normalizeFiltersForListQuery` output
+  // seeded into react-admin `filterValues`.
+  const listDefaults = normalizeFiltersForListQuery(
+    "conference-contestants",
+    { conference: 3, year: 2026 },
+    "contestants"
+  );
+
+  it("reports the default list filters as the active view", () => {
+    expect(contestantStatusFromFilters(listDefaults)).toBe("active");
+  });
+
+  it("reads back every view it writes", () => {
+    for (const status of ["active", "cancelled", "all"] as const) {
+      expect(
+        contestantStatusFromFilters(
+          applyContestantStatusFilter(listDefaults, status)
+        )
+      ).toBe(status);
+    }
+  });
+
+  it("replaces the default active clause instead of ANDing cancelled onto it", () => {
+    const cancelled = applyContestantStatusFilter(listDefaults, "cancelled");
+
+    expect(cancelled).toEqual({
+      conference: 3,
+      year: 2026,
+      status: "cancelled",
+    });
+    expect(cancelled.$or).toBeUndefined();
+  });
+
+  it("clears the status constraint entirely for the all view", () => {
+    expect(applyContestantStatusFilter(listDefaults, "all")).toEqual({
+      conference: 3,
+      year: 2026,
+    });
+  });
+
+  it("restores the active clause when switching back from cancelled", () => {
+    const cancelled = applyContestantStatusFilter(listDefaults, "cancelled");
+
+    expect(applyContestantStatusFilter(cancelled, "active")).toEqual(
+      listDefaults
+    );
+  });
+
+  it("never stacks status constraints across repeated toggling", () => {
+    const filters = (["cancelled", "all", "active", "cancelled"] as const).reduce<
+      Record<string, any>
+    >(
+      (acc, status) => applyContestantStatusFilter(acc, status),
+      listDefaults
+    );
+
+    expect(filters).toEqual({ conference: 3, year: 2026, status: "cancelled" });
+  });
+
+  it("preserves unrelated $or branches such as a search clause", () => {
+    const searched = {
+      conference: 3,
+      $or: [{ first_name: { $contains: "ann" } }],
+    };
+
+    expect(applyContestantStatusFilter(searched, "cancelled")).toEqual({
+      conference: 3,
+      status: "cancelled",
+      $or: [{ first_name: { $contains: "ann" } }],
+    });
   });
 });

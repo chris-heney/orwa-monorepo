@@ -48,6 +48,11 @@ import { customDatagridStyle, positionStickyComponent } from '../../../css';
 import { ISharedMeta } from '../types/IConference';
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
 import {
+  applyContestantStatusFilter,
+  contestantStatusFromFilters,
+} from '../helpers/listQueryFilters';
+import type { ContestantStatusFilter } from '../helpers/listQueryFilters';
+import {
   contestantCreateDefaults,
   contestantUpdatePayload,
 } from '../helpers/contestantFormDefaults';
@@ -176,16 +181,9 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
   );
 };
 
-type ContestantStatusFilter = 'active' | 'cancelled' | 'all';
-
 const ContestantStatusFilterControl = () => {
   const { filterValues, setFilters } = useListContext();
-  const statusValue: ContestantStatusFilter =
-    filterValues.status === 'cancelled'
-      ? 'cancelled'
-      : filterValues.status == null
-        ? 'all'
-        : 'active';
+  const statusValue = contestantStatusFromFilters(filterValues);
 
   const handleStatusChange = (
     _event: React.MouseEvent<HTMLElement>,
@@ -193,14 +191,11 @@ const ContestantStatusFilterControl = () => {
   ) => {
     if (!nextStatus) return;
 
-    const nextFilters = { ...filterValues };
-    if (nextStatus === 'all') {
-      delete nextFilters.status;
-    } else {
-      nextFilters.status = nextStatus;
-    }
-
-    setFilters(nextFilters, undefined, false);
+    setFilters(
+      applyContestantStatusFilter(filterValues, nextStatus),
+      undefined,
+      false
+    );
   };
 
   return (
