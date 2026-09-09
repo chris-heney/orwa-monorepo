@@ -5,6 +5,7 @@ import {
   documentIdFilterPath,
   isDocumentId,
 } from "./serializeStrapiFilters";
+import { contestantChoicesFilter } from "../../../modules/conference/helpers/listQueryFilters";
 
 const DOC = "w3wzeuycgq136zyx3pzp9vnu";
 const DOC2 = "b2dssimoi6cw2ttcf7zj43da";
@@ -210,5 +211,42 @@ describe("convertRaParamsToStrapiParams", () => {
     appendFilterQuery(out, "$or", [{ status: { $eq: "active" } }], "filters[$and][0]");
 
     expect(out).toEqual(["filters[$and][0][$or][0][status][$eq]=active"]);
+  });
+  // The contestant pickers offer active-or-legacy contestants plus whatever is
+  // already linked, so a cancelled contestant stays visible where it is used
+  // without becoming assignable anywhere new.
+  it("serializes the contestant picker's active-or-linked choice filter", () => {
+    const qs = convertRaParamsToStrapiParams({
+      filter: contestantChoicesFilter([{ documentId: DOC }, { id: 99 }]),
+      pagination: page,
+    });
+
+    expect(qs).not.toContain("object Object");
+    expect(qs).toContain("filters[$or][0][status][$eq]=active");
+    expect(qs).toContain("filters[$or][1][status][$null]=true");
+    expect(qs).toContain(`filters[$or][2][documentId][$in][]=${DOC}`);
+    expect(qs).toContain("filters[$or][3][id][$in][]=99");
+    expect(qs).not.toContain("cancelled");
+  });
+});
+
+describe("documentIdFilterPath", () => {
+  // `documentId` already addresses the row, so looking through it for another
+  // documentId asks Strapi for a field that does not exist.
+  it("does not look through a key that is already documentId", () => {
+    expect(documentIdFilterPath("filters", "documentId")).toBe(
+      "filters[documentId]"
+    );
+    expect(documentIdFilterPath("filters", "id")).toBe("filters[documentId]");
+    expect(documentIdFilterPath("filters", "team")).toBe(
+      "filters[team][documentId]"
+    );
+  });
+
+  it("keeps a documentId equality on the documentId field itself", () => {
+    const out: string[] = [];
+    appendFilterQuery(out, "documentId", { $eq: DOC });
+
+    expect(out).toEqual([`filters[documentId][$eq]=${DOC}`]);
   });
 });

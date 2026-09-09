@@ -14,9 +14,17 @@
 export const isDocumentId = (id: unknown): id is string =>
   typeof id === "string" && /^[a-z0-9]{16,64}$/.test(id);
 
+/**
+ * Keys that already address the row itself. A documentId under one of these is
+ * the row's own identifier, not a relation to look through — appending another
+ * `[documentId]` would emit `filters[documentId][documentId]`, which is a field
+ * Strapi does not have.
+ */
+const isIdKey = (key: string): boolean => key === "id" || key === "documentId";
+
 /** Path segment for a filter key when the leaf value is a documentId. */
 export const documentIdFilterPath = (prefix: string, key: string): string =>
-  key === "id" ? `${prefix}[documentId]` : `${prefix}[${key}][documentId]`;
+  isIdKey(key) ? `${prefix}[documentId]` : `${prefix}[${key}][documentId]`;
 
 /** Path segment for a filter key when the leaf value is numeric / other. */
 export const bareFilterPath = (prefix: string, key: string): string =>
@@ -109,10 +117,9 @@ export const appendFilterQuery = (
               // Mix of documentIds in $in: filter via documentId field.
               // For relation keys this becomes filters[rel][documentId][$in][]=
               // For id key: filters[documentId][$in][]=
-              const path =
-                key === "id"
-                  ? `${prefix}[documentId][${operator}][]`
-                  : `${prefix}[${key}][documentId][${operator}][]`;
+              const path = isIdKey(key)
+                ? `${prefix}[documentId][${operator}][]`
+                : `${prefix}[${key}][documentId][${operator}][]`;
               out.push(`${path}=${encodeLeaf(v)}`);
             } else {
               out.push(
@@ -151,7 +158,7 @@ export const appendFilterQuery = (
 
         // Operators like $eq / $ne / $contains whose value may be a documentId
         if (isDocumentId(opValue)) {
-          if (key === "id") {
+          if (isIdKey(key)) {
             out.push(
               `${prefix}[documentId][${operator}]=${encodeLeaf(opValue)}`
             );
