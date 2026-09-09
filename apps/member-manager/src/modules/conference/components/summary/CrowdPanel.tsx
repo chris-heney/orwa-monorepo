@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../_components/charts/ResponsiveHighchart";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useStore } from "react-admin";
 import { display, useSummaryTokens } from "./tokens";
@@ -120,7 +120,7 @@ const CrowdPanel: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) => {
       </Box>
 
       {hasRows ? (
-        <HighchartsReact highcharts={Highcharts} options={options} />
+        <ResponsiveHighchart highcharts={Highcharts} options={options} />
       ) : (
         <Typography
           sx={{ fontSize: 13, color: T.textFaint, fontStyle: "italic", py: 6, textAlign: "center" }}

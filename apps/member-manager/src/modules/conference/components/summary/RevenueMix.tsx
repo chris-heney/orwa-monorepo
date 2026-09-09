@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../_components/charts/ResponsiveHighchart";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import { useStore } from "react-admin";
 import { display, money, useSummaryTokens } from "./tokens";
@@ -130,7 +130,7 @@ const RevenueMix: React.FC<{ metrics: ConferenceMetrics }> = ({ metrics }) => {
       </Box>
 
       {revenue.total > 0 ? (
-        <HighchartsReact highcharts={Highcharts} options={options} />
+        <ResponsiveHighchart highcharts={Highcharts} options={options} />
       ) : (
         <Typography
           sx={{ fontSize: 13, color: T.textFaint, fontStyle: "italic", py: 6, textAlign: "center" }}

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../../_components/charts/ResponsiveHighchart";
 import { Box, Typography } from "@mui/material";
 import dayjs from "dayjs";
 import { useSummaryTokens, display, money } from "./tokens";
@@ -126,7 +126,7 @@ const DisbursementTimeline: React.FC<{ payouts: IGrantPayout[] }> = ({
       <Typography sx={{ fontSize: 11, color: T.textFaint, mb: 1 }}>
         Plotted by the date each payment was made
       </Typography>
-      <HighchartsReact highcharts={Highcharts} options={options} />
+      <ResponsiveHighchart highcharts={Highcharts} options={options} />
     </Box>
   );
 };

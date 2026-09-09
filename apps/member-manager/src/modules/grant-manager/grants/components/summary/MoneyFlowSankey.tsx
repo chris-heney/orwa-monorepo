@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../../_components/charts/ResponsiveHighchart";
 // Highcharts v12 modules self-register on import
 import "highcharts/modules/sankey";
 import { Box, Typography } from "@mui/material";
@@ -115,7 +115,7 @@ const MoneyFlowSankey: React.FC<{ pool: Pool }> = ({ pool }) => {
       >
         How this year&apos;s money flows
       </Typography>
-      <HighchartsReact highcharts={Highcharts} options={options} />
+      <ResponsiveHighchart highcharts={Highcharts} options={options} />
     </Box>
   );
 };

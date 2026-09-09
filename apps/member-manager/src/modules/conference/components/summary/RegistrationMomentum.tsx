@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../_components/charts/ResponsiveHighchart";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { RaRecord, useStore } from "react-admin";
 import dayjs from "dayjs";
@@ -255,7 +255,7 @@ const RegistrationMomentum: React.FC<{
           </ToggleButtonGroup>
         </Box>
       </Box>
-      <HighchartsReact highcharts={Highcharts} options={options} />
+      <ResponsiveHighchart highcharts={Highcharts} options={options} />
     </Panel>
   );
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../_components/charts/ResponsiveHighchart";
 import "highcharts/modules/sunburst";
 import SectionLabel from "./SectionLabel";
 import { MetricChip, RosterCard } from "./MetricChip";
@@ -349,7 +350,7 @@ const RosterPanel: React.FC<Props> = ({
               py: 1,
             }}
           >
-            <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+            <ResponsiveHighchart highcharts={Highcharts} options={chartOptions} />
           </Box>
 
           <Box

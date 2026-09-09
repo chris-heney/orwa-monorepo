@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../../_components/charts/ResponsiveHighchart";
 // Highcharts v12 modules self-register on import
 import "highcharts/modules/treemap";
 import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
@@ -336,7 +336,7 @@ const FundsExplorer: React.FC<{
           </ToggleButtonGroup>
         </Box>
       </Box>
-      <HighchartsReact highcharts={Highcharts} options={options} />
+      <ResponsiveHighchart highcharts={Highcharts} options={options} />
     </Box>
   );
 };

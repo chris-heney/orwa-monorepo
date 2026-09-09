@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
+import ResponsiveHighchart from "../../../_components/charts/ResponsiveHighchart";
 // Highcharts v12 modules self-register on import
 import "highcharts/modules/sunburst";
 import "highcharts/modules/drilldown";
@@ -314,7 +314,7 @@ const WidgetFundAllocation: React.FC<IWidgetFundAllocationProps> = ({
       >
         {/* Sunburst gets the lion's share of the width */}
         <Box sx={{ flex: { md: "1 1 64%" }, minWidth: 0, width: "100%" }}>
-          <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+          <ResponsiveHighchart highcharts={Highcharts} options={chartOptions} />
         </Box>
 
         {/* Legend: single stacked column on the right (below on small screens) */}
