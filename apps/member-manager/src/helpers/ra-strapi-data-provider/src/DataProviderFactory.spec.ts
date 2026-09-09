@@ -118,4 +118,33 @@ describe("StrapiRestDataProviderFactory cache invalidation", () => {
       `https://admin.test/api/conference-contestants?populate[conference_ticket]=true&populate[team]=true&populate[items][populate][item]=true&filters[documentId][$in][0]=${CONTESTANT_DOC_ID}`
     );
   });
+
+  it("serializes null-safe active contestant filters", async () => {
+    const mockedHttpClient = vi.mocked(httpClient);
+    mockedHttpClient.mockResolvedValueOnce(listResponse("active") as unknown as IStrapiRestResponse);
+
+    const provider = new StrapiRestDataProviderFactory({
+      endpoint: "https://admin.test/api",
+      type: "rest",
+      cacheTTL: 0,
+    }).init();
+
+    await provider.getList("conference-contestants", {
+      pagination: { page: 1, perPage: 25 },
+      sort: { field: "id", order: "ASC" },
+      filter: {
+        conference: 3,
+        $or: [{ status: { $eq: "active" } }, { status: { $null: true } }],
+      },
+    });
+
+    expect(mockedHttpClient).toHaveBeenLastCalledWith(
+      expect.stringContaining("filters[$or][0][status][$eq]=active"),
+      expect.anything()
+    );
+    expect(mockedHttpClient).toHaveBeenLastCalledWith(
+      expect.stringContaining("filters[$or][1][status][$null]=true"),
+      expect.anything()
+    );
+  });
 });

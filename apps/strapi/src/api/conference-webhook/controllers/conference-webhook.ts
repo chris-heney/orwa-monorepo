@@ -69,6 +69,24 @@ const noGolfReservation = (): GolfReservation => ({
   release: async () => undefined,
 });
 
+const safeRegistrationErrorResponse = (
+  error: unknown,
+  paymentCompleted: boolean
+) => {
+  const controlledMessage =
+    error instanceof ContestantCapacityError
+      ? error.message
+      : paymentCompleted
+        ? "Registration did not complete, but payment may have succeeded. Please contact ORWA before trying again."
+        : "Registration could not be completed. Please review the form and try again, or contact ORWA for help.";
+
+  return {
+    result: "error",
+    message: controlledMessage,
+    ...(paymentCompleted ? { paymentMayHaveSucceeded: true } : {}),
+  };
+};
+
 export default ({ strapi }) => {
   const service = strapi.service("api::conference-webhook.conference-webhook");
   const  currentYear  = new Date().getFullYear();
@@ -83,6 +101,7 @@ export default ({ strapi }) => {
     registration: async (ctx, next) => {
       ctx.body = "ok";
       let golfReservation = noGolfReservation();
+      let paymentCompleted = false;
 
       console.log("↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ Starting Registration ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓");
 
@@ -151,7 +170,7 @@ export default ({ strapi }) => {
                 { populate: "*" }
               ),
               conference,
-              currentYear
+              eventYear
             );
             for (const line of lines) {
               // Legacy attach without source_ticket_id still allowed until UI ships.
@@ -299,6 +318,7 @@ export default ({ strapi }) => {
               };
               return;
             }
+            paymentCompleted = true;
 
             // Create transaction record
             await strapi.documents("api::conference-transaction.conference-transaction").create({
@@ -670,7 +690,7 @@ export default ({ strapi }) => {
           // Continue reporting the original registration failure too.
         }
         await reportFailure(ctx.request.body, err, "registration");
-        ctx.body = err;
+        ctx.body = safeRegistrationErrorResponse(err, paymentCompleted);
       }
     },
   };

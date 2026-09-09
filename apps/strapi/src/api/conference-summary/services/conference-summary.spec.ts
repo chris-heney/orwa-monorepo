@@ -28,7 +28,7 @@ describe("conference-summary service", () => {
         filters: {
           conference: "3",
           year: "2026",
-          status: { $ne: "cancelled" },
+          $or: [{ status: { $eq: "active" } }, { status: { $null: true } }],
         },
       })
     );

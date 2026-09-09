@@ -16,6 +16,9 @@ const currentYear = new Date().getFullYear();
 const conferenceId =
   new URLSearchParams(window.location.search).get("conference_id") ?? "3";
 
+export const contestantQuery = (year = currentYear, id = conferenceId) =>
+  `/conference-contestants?filters[year]=${year}&filters[conference]=${id}&filters[$or][0][status][$eq]=active&filters[$or][1][status][$null]=true&sort=team.name:ASC&populate=*&pagination[limit]=1000`;
+
 const _get = async (query: string, method = "GET") => {
   return await (
     await fetch(`${API_ENDPOINT}${query}`, {
@@ -52,9 +55,7 @@ const getVendors = async () => {
 };
 
 const getContestants = async () => {
-  return await _get(
-    `/conference-contestants?filters[year]=${currentYear}&filters[conference]=${conferenceId}&filters[status][$eq]=active&sort=team.name:ASC&populate=*&pagination[limit]=1000`
-  );
+  return await _get(contestantQuery());
 };
 
 const getBooths = async () => {

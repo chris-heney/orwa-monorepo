@@ -205,7 +205,10 @@ export default ({ strapi}) => ({
       populate: {
         conference_ticket: true,
       },
-      filters: { ...filter, status: { $ne: "cancelled" } },
+      filters: {
+        ...filter,
+        $or: [{ status: { $eq: "active" } }, { status: { $null: true } }],
+      },
     });
 
     // Count attendees by type

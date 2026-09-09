@@ -44,7 +44,11 @@ describe("normalizeFiltersForListQuery", () => {
         { conference: 3, year: 2026 },
         "contestants"
       )
-    ).toEqual({ conference: 3, year: 2026, status: { $ne: "cancelled" } });
+    ).toEqual({
+      conference: 3,
+      year: 2026,
+      $or: [{ status: { $eq: "active" } }, { status: { $null: true } }],
+    });
   });
 
   it("keeps an explicit cancelled status", () => {

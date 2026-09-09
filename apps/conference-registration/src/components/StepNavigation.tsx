@@ -38,8 +38,13 @@ import {
   remainingGolfCapacity,
 } from "../helpers/golfCapacity";
 import { isStandaloneContestantTicket } from "../helpers/contestantTicketTiers";
+import {
+  PAYMENT_RISK_MESSAGE,
+  shouldLockRegistrationSubmit,
+} from "../helpers/paymentRisk";
 
 const StepNavigation = () => {
+  const [paymentRiskLocked, setPaymentRiskLocked] = useState(false);
   const { steps, stepIndex, setStepIndex } = useStepContext();
   const {
     ConferenceOptions,
@@ -554,6 +559,11 @@ const StepNavigation = () => {
       setSubmitted(true);
       notify(submitResponse.message, "success");
     } else {
+      if (shouldLockRegistrationSubmit(submitResponse)) {
+        setPaymentRiskLocked(true);
+        notify(PAYMENT_RISK_MESSAGE, "error");
+        return;
+      }
       notify(
         submitResponse.message || "An error occurred during submission",
         "error"
@@ -588,9 +598,10 @@ const StepNavigation = () => {
           <button
             type="button"
             onClick={isBillingStep ? handleSubmitPayload : handleNext}
+            disabled={isBillingStep && paymentRiskLocked}
             className="cursor-pointer rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:min-w-[9rem]"
           >
-            {isBillingStep ? "Submit Form" : "Next »"}
+            {isBillingStep && paymentRiskLocked ? "Contact ORWA" : isBillingStep ? "Submit Form" : "Next »"}
           </button>
         )}
       </div>

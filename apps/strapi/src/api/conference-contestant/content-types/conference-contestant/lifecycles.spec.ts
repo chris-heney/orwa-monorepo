@@ -145,6 +145,18 @@ describe("conference contestant lifecycle guard", () => {
         event({ conference_ticket: { set: [] } }, { documentId: "contestant-1" }) as never
       )
     ).rejects.toThrow("Cancel and create");
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ conference: [] }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("Cancel and create");
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ conference_ticket: { set: null } }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("Cancel and create");
   });
 
   it("does not treat empty disconnect as a clear when unchanged connect/set is present", async () => {

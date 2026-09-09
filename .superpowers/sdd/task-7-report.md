@@ -529,3 +529,39 @@
   - Full related suite: 17 files, 174 tests passed.
   - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
   - Diagnostics: no linter errors on touched files.
+
+## Final Static Findings Before Task 8 RED
+
+- Event year previous-registration validation:
+  - Added webhook matrix coverage where Fall event dates are in 2027 while registration opens in 2026.
+  - Observed failure: linked contestant validation used wall-clock `currentYear`, not the computed `eventYear`.
+- Explicit NULL-safe active reads:
+  - Updated Member Manager filter helper tests and data-provider serialization tests to require `$or: [{ status: { $eq: "active" } }, { status: { $null: true } }]`.
+  - Updated server summary tests to require the same null-safe active filter.
+  - Added conference-hub query test proving the public hub does not use `filters[status][$eq]=active`.
+- Relation clear shapes:
+  - Added lifecycle and REST service tests for bare `[]` and `{ set: null }` clear shapes.
+  - Existing absent-key and unchanged relation tests remain covered.
+- Safe post-payment error response:
+  - Added webhook matrix expectations that post-payment critical failures return `{ result: "error", paymentMayHaveSucceeded: true }`, a safe ORWA contact message, and no internal error text.
+  - Added conference-registration payment-risk helper tests so the UI locks blind resubmit only when the backend flag is present.
+- Live read-only date discovery:
+  - Read-only GET for production Fall Conference returned id `3`, documentId `s55n2bz60qx2c2cxg7mb6jx5`, name `Fall Conference`, start `2026-09-30`, end `2026-10-02`, registration start `2026-07-29`, registration end `2026-10-02`, derived `conferenceCycleYear=2026`.
+
+## Final Static Findings Before Task 8 GREEN
+
+- Event year:
+  - `assertEligiblePreviousRegistration` now receives the computed `eventYear`.
+- NULL-safe active reads:
+  - Server summary and Member Manager default Active filters now use explicit `$or` active-or-null filters; explicit Cancelled remains equality.
+  - conference-hub contestant reads now use the same explicit active-or-null query shape.
+- Relation clear shapes:
+  - Lifecycle and REST relation normalization now reject bare `[]` and `{ set: null }` as explicit clears while preserving absent-key no-op behavior.
+- Safe post-payment response/UI:
+  - Webhook outer catch now returns safe `result:error` bodies and sets `paymentMayHaveSucceeded` only after successful card payment processing.
+  - conference-registration disables the final submit button and shows a contact-ORWA duplicate-charge warning when the flag is present.
+- Verification:
+  - Targeted static suite: 8 files, 69 tests passed.
+  - Full covering suite: 20 files, 180 tests passed.
+  - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
+  - Diagnostics: no linter errors on touched files.

@@ -89,8 +89,10 @@ const sameRelation = (requested: unknown, current: unknown): boolean => {
 
 const isExplicitRelationClear = (value: unknown): boolean => {
   if (value === null || value === "") return true;
+  if (Array.isArray(value)) return value.length === 0;
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
+  if (record.set === null) return true;
   if (Array.isArray(record.set) && record.set.length === 0) return true;
   if (Array.isArray(record.connect) && record.connect.length === 0) return true;
   const hasReattach =

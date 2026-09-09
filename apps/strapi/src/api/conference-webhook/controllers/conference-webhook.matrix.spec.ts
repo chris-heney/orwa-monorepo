@@ -76,6 +76,7 @@ describe("conference registration matrix", () => {
   let failTeamCreate: boolean;
   let forceReservationFailureAvailability: number | null;
   let failReleaseOnce: boolean;
+  let previousRegistrationYear: number;
 
   beforeEach(() => {
     created = {};
@@ -89,6 +90,7 @@ describe("conference registration matrix", () => {
     failTeamCreate = false;
     forceReservationFailureAvailability = null;
     failReleaseOnce = false;
+    previousRegistrationYear = year;
     findOneById.mockReset();
     findOneById.mockImplementation(async (uid: string, id: number | string) => {
       if (uid === "api::conference.conference")
@@ -102,7 +104,7 @@ describe("conference registration matrix", () => {
           id: 500,
           documentId: "existing-vendor",
           conference: { id: 3 },
-          year,
+          year: previousRegistrationYear,
           type: "Vendor",
           organization: "ORWA Matrix Vendor",
           total: "400.00",
@@ -126,7 +128,7 @@ describe("conference registration matrix", () => {
           id: 501,
           documentId: "existing-attendee",
           conference: { id: 3 },
-          year,
+          year: previousRegistrationYear,
           type: "Attendee",
           organization: "ORWA Matrix Attendee Org",
           total: "200.00",
@@ -439,6 +441,46 @@ describe("conference registration matrix", () => {
     );
   });
 
+  it("validates linked contestants against eventYear instead of wall-clock currentYear", async () => {
+    previousRegistrationYear = 2027;
+    (conference as any).start_date = "2027-09-14";
+    (conference as any).registration_start = "2026-11-01";
+
+    await submit({
+      ...basePayload("LinkedEventYear"),
+      registration_type: "Contestant",
+      contestant_already_registered: "Yes",
+      previous_registration_id: 500,
+      tickets: [
+        {
+          first: "Linked",
+          last: "Fisher",
+          email: "linked-fisher@example.invalid",
+          phone: "4055550104",
+          type: "Contestant",
+          price: 75,
+          extras: [],
+          previous_registration_id: 500,
+          source_ticket_id: 901,
+          ticket_type: {
+            id: 24,
+            name: "Fishing Tournament",
+            context: "Contestant",
+          },
+        },
+      ],
+      paymentData: {
+        ...basePayload("LinkedEventYear").paymentData,
+        amount: 75,
+      },
+    });
+
+    expect(created["api::conference-contestant.conference-contestant"][0].year).toBe(2027);
+
+    delete (conference as any).start_date;
+    delete (conference as any).registration_start;
+  });
+
   it("fans out a mixed cart across two orgs plus a standalone contestant", async () => {
     await submit({
       ...basePayload("Mixed"),
@@ -555,7 +597,12 @@ describe("conference registration matrix", () => {
     await controller.registration(request, vi.fn());
 
     expect(service.processPayment).toHaveBeenCalled();
-    expect(request.body).not.toMatchObject({ result: "success" });
+    expect(request.body).toMatchObject({
+      result: "error",
+      paymentMayHaveSucceeded: true,
+    });
+    expect(String(request.body.message)).toMatch(/contact ORWA/i);
+    expect(String(request.body.message)).not.toMatch(/lifecycle create failed/i);
     expect(service.reportWebhookFailure).toHaveBeenCalledWith(
       body,
       expect.any(Error),
@@ -635,6 +682,7 @@ describe("conference registration matrix", () => {
     const body = await submitRaw({
       ...basePayload("PartialPersist"),
       registration_type: "Contestant",
+      paymentType: "Card",
       tickets: [
         golferLine("PersistOne"),
         golferLine("PersistTwo"),
@@ -644,7 +692,7 @@ describe("conference registration matrix", () => {
       paymentData: { ...basePayload("PartialPersist").paymentData, amount: 500 },
     });
 
-    expect(body).not.toMatchObject({ result: "success" });
+    expect(body).toMatchObject({ result: "error", paymentMayHaveSucceeded: true });
     expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(3);
     expect(dbIncrement).toHaveBeenCalledWith("available_contestants", 1);
     expect(availableContestants).toBe(1);
@@ -667,7 +715,8 @@ describe("conference registration matrix", () => {
       paymentData: { ...basePayload("TeamFail").paymentData, amount: 500 },
     });
 
-    expect(body).not.toMatchObject({ result: "success" });
+    expect(body).toMatchObject({ result: "error" });
+    expect(body.paymentMayHaveSucceeded).toBeUndefined();
     expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(4);
     expect(dbIncrement).not.toHaveBeenCalled();
     expect(availableContestants).toBe(0);

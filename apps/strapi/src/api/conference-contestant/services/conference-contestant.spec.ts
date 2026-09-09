@@ -291,6 +291,18 @@ describe("conference contestant REST write service", () => {
         data: { conference_ticket: { set: [] } },
       })
     ).rejects.toThrow("Cancel and create");
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference: [] },
+      })
+    ).rejects.toThrow("Cancel and create");
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference_ticket: { set: null } },
+      })
+    ).rejects.toThrow("Cancel and create");
     expect(updated).toHaveLength(0);
   });
 
