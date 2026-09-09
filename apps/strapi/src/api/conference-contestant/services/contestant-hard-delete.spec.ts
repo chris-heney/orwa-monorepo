@@ -13,8 +13,9 @@ describe("contestant hard delete for registration removal", () => {
   let strapi: any;
   let contestants: Record<string, ContestantRow>;
   let deleted: string[];
-  let capacityDelta: number;
+  let capacity: number;
   let failIncrement: boolean;
+  let failDelete: boolean;
 
   beforeEach(() => {
     contestants = {
@@ -38,8 +39,9 @@ describe("contestant hard delete for registration removal", () => {
       },
     };
     deleted = [];
-    capacityDelta = 0;
+    capacity = 0;
     failIncrement = false;
+    failDelete = false;
 
     const makeBuilder = () => {
       let criteria: Record<string, unknown> = {};
@@ -53,7 +55,7 @@ describe("contestant hard delete for registration removal", () => {
         first: vi.fn(async () => ({ document_id: criteria.document_id })),
         increment: vi.fn(async (_column: string, amount = 1) => {
           if (failIncrement) throw new Error("increment failed");
-          capacityDelta += amount;
+          capacity += amount;
           return builder;
         }),
       };
@@ -62,9 +64,15 @@ describe("contestant hard delete for registration removal", () => {
 
     strapi = {
       db: {
-        transaction: vi.fn(async (callback: (args: { trx: unknown }) => unknown) =>
-          callback({ trx: { id: "trx" } })
-        ),
+        transaction: vi.fn(async (callback: (args: { trx: unknown }) => unknown) => {
+          const before = capacity;
+          try {
+            return await callback({ trx: { id: "trx" } });
+          } catch (error) {
+            capacity = before;
+            throw error;
+          }
+        }),
         connection: vi.fn(() => makeBuilder()),
       },
       documents: vi.fn((uid: string) => {
@@ -74,6 +82,7 @@ describe("contestant hard delete for registration removal", () => {
             contestants[documentId] ? structuredClone(contestants[documentId]) : null
           ),
           delete: vi.fn(async ({ documentId }: { documentId: string }) => {
+            if (failDelete) throw new Error("delete failed");
             deleted.push(documentId);
             return { documentId };
           }),
@@ -85,7 +94,7 @@ describe("contestant hard delete for registration removal", () => {
   it("restores one slot before deleting an active golfer", async () => {
     await hardDeleteContestantForRegistrationRemoval(strapi, "golfer");
 
-    expect(capacityDelta).toBe(1);
+    expect(capacity).toBe(1);
     expect(deleted).toEqual(["golfer"]);
   });
 
@@ -93,7 +102,7 @@ describe("contestant hard delete for registration removal", () => {
     await hardDeleteContestantForRegistrationRemoval(strapi, "fisher");
     await hardDeleteContestantForRegistrationRemoval(strapi, "cancelled");
 
-    expect(capacityDelta).toBe(0);
+    expect(capacity).toBe(0);
     expect(deleted).toEqual(["fisher", "cancelled"]);
   });
 
@@ -105,5 +114,22 @@ describe("contestant hard delete for registration removal", () => {
     ).rejects.toThrow("increment failed");
 
     expect(deleted).toEqual([]);
+  });
+
+  it("rolls back capacity when delete fails after increment and retries cleanly", async () => {
+    failDelete = true;
+
+    await expect(
+      hardDeleteContestantForRegistrationRemoval(strapi, "golfer")
+    ).rejects.toThrow("delete failed");
+
+    expect(capacity).toBe(0);
+    expect(deleted).toEqual([]);
+
+    failDelete = false;
+    await hardDeleteContestantForRegistrationRemoval(strapi, "golfer");
+
+    expect(capacity).toBe(1);
+    expect(deleted).toEqual(["golfer"]);
   });
 });

@@ -14,6 +14,8 @@ type ConferenceRecord = {
   available_contestants: number | null;
   registration_start?: string;
   registration_end?: string;
+  start_date?: string;
+  end_date?: string;
 };
 
 type TicketRecord = {
@@ -28,7 +30,15 @@ describe("conference contestant REST write service", () => {
   let strapi: any;
   let conferences: Record<string, ConferenceRecord>;
   let tickets: Record<string, TicketRecord>;
-  let contestants: Record<string, { documentId: string; status: string }>;
+  let contestants: Record<string, {
+    documentId: string;
+    status: string;
+    cancelled_at?: string | null;
+    cancelled_reason?: string | null;
+    cancelled_by?: string | null;
+    conference?: { id?: number; documentId?: string };
+    conference_ticket?: { id?: number; documentId?: string };
+  }>;
   let created: any[];
   let updated: any[];
   let decrements: number;
@@ -54,6 +64,15 @@ describe("conference contestant REST write service", () => {
         registration_start: "2026-01-01",
         registration_end: "2026-12-31",
       },
+      "conf-event-year": {
+        id: 5,
+        documentId: "conf-event-year",
+        available_contestants: 2,
+        start_date: "2026-09-14",
+        end_date: "2026-09-16",
+        registration_start: "2025-11-01",
+        registration_end: "2026-09-01",
+      },
       "sold-out-conf": {
         documentId: "sold-out-conf",
         available_contestants: 0,
@@ -71,6 +90,7 @@ describe("conference contestant REST write service", () => {
           { id: 3, documentId: "conf-1" },
           { documentId: "sold-out-conf" },
           { id: 4, documentId: "conf-no-dates" },
+          { id: 5, documentId: "conf-event-year" },
         ],
       },
       standalone: {
@@ -87,7 +107,15 @@ describe("conference contestant REST write service", () => {
       },
     };
     contestants = {
-      "active-1": { documentId: "active-1", status: "active" },
+      "active-1": {
+        documentId: "active-1",
+        status: "active",
+        cancelled_at: null,
+        cancelled_reason: null,
+        cancelled_by: null,
+        conference: { id: 3, documentId: "conf-1" },
+        conference_ticket: { id: 37, documentId: "golfer" },
+      },
       "cancelled-1": { documentId: "cancelled-1", status: "cancelled" },
     };
     created = [];
@@ -181,7 +209,7 @@ describe("conference contestant REST write service", () => {
 
     await expect(
       updateContestant(strapi, {
-        documentId: "contestant-1",
+        documentId: "active-1",
         data: { cancelled_reason: "manual write" },
       })
     ).rejects.toThrow("cancel/restore actions");
@@ -192,8 +220,58 @@ describe("conference contestant REST write service", () => {
   it("rejects relation changes on update with a cancel-and-create instruction", async () => {
     await expect(
       updateContestant(strapi, {
-        documentId: "contestant-1",
+        documentId: "active-1",
         data: { conference_ticket: "fisher" },
+      })
+    ).rejects.toThrow("Cancel and create");
+    expect(updated).toHaveLength(0);
+  });
+
+  it("allows unchanged lifecycle and relation fields from a react-admin full-record update", async () => {
+    await updateContestant(strapi, {
+      documentId: "active-1",
+      data: {
+        status: "active",
+        cancelled_at: null,
+        cancelled_reason: null,
+        cancelled_by: null,
+        conference: { set: [{ id: 3 }] },
+        conference_ticket: { set: [{ documentId: "golfer" }] },
+        first: "Grace",
+      },
+    });
+
+    expect(updated).toEqual([
+      expect.objectContaining({
+        documentId: "active-1",
+        status: "active",
+        cancelled_at: null,
+        cancelled_reason: null,
+        cancelled_by: null,
+        first: "Grace",
+      }),
+    ]);
+  });
+
+  it("rejects actual lifecycle transitions and relation repoints on update", async () => {
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { status: "cancelled" },
+      })
+    ).rejects.toThrow("cancel/restore actions");
+
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference: { set: [{ documentId: "conf-2" }] } },
+      })
+    ).rejects.toThrow("Cancel and create");
+
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference_ticket: 999 },
       })
     ).rejects.toThrow("Cancel and create");
     expect(updated).toHaveLength(0);
@@ -283,6 +361,20 @@ describe("conference contestant REST write service", () => {
     ).rejects.toThrow("Conference cycle year is required");
     expect(created).toHaveLength(0);
     expect(decrements).toBe(0);
+  });
+
+  it("uses event start/end dates before registration window dates for create year validation", async () => {
+    await createContestant(strapi, {
+      data: { conference: "conf-event-year", conference_ticket: "golfer", year: 2026 },
+    });
+
+    await expect(
+      createContestant(strapi, {
+        data: { conference: "conf-event-year", conference_ticket: "golfer", year: 2025 },
+      })
+    ).rejects.toThrow("year must match conference cycle 2026");
+
+    expect(created).toHaveLength(1);
   });
 
   it("creates contextless Golfer - Contestant Only and decrements capacity once", async () => {

@@ -17,16 +17,39 @@ const dataFromEvent = (event: { params?: { data?: Record<string, unknown> } }) =
   event.params?.data ?? {};
 
 const assertNoLifecycleBypass = (
-  event: { params?: { data?: Record<string, unknown> } }
+  event: { params?: { data?: Record<string, unknown>; where?: Record<string, unknown> } },
+  current?: Record<string, unknown> | null
 ) => {
   const data = dataFromEvent(event);
   const context = contestantLifecycleContext();
-  const lifecycleAttempted = LIFECYCLE_FIELDS.some((field) => hasOwn(data, field));
-  if (lifecycleAttempted && !context.allowLifecycleTransition) {
-    throw new Error(
-      "Conference contestant lifecycle fields must be changed through cancel/restore actions."
-    );
+  const attempted = LIFECYCLE_FIELDS.filter((field) => hasOwn(data, field));
+  if (attempted.length === 0 || context.allowLifecycleTransition) return;
+
+  const permitted =
+    context.allowRestCreate
+      ? attempted.every((field) => sameLifecycleValue(field, data[field], undefined))
+      : current != null &&
+        attempted.every((field) => sameLifecycleValue(field, data[field], current[field]));
+
+  if (permitted) return;
+
+  throw new Error(
+    "Conference contestant lifecycle fields must be changed through cancel/restore actions."
+  );
+};
+
+const normalizedStatus = (value: unknown): string =>
+  value == null || value === "" ? "active" : String(value);
+
+const sameLifecycleValue = (
+  field: string,
+  requested: unknown,
+  current: unknown
+): boolean => {
+  if (field === "status") {
+    return normalizedStatus(requested) === normalizedStatus(current);
   }
+  return requested == null && current == null ? true : requested === current;
 };
 
 const normalizeRelationValue = (value: unknown): string | number | null => {
@@ -71,13 +94,14 @@ const loadCurrentContestant = async (
 };
 
 const assertNoRelationRepoint = async (
-  event: { params?: { data?: Record<string, unknown>; where?: Record<string, unknown> } }
+  event: { params?: { data?: Record<string, unknown>; where?: Record<string, unknown> } },
+  currentOverride?: Record<string, unknown> | null
 ) => {
   const data = dataFromEvent(event);
   const attempted = RELATION_FIELDS.filter((field) => hasOwn(data, field));
   if (attempted.length === 0) return;
 
-  const current = await loadCurrentContestant(event);
+  const current = currentOverride ?? await loadCurrentContestant(event);
   if (!current) {
     throw new Error("Current conference contestant is required before changing relations.");
   }
@@ -91,9 +115,9 @@ const assertNoRelationRepoint = async (
 
 export default {
   async beforeCreate(event: { params?: { data?: Record<string, unknown> } }) {
-    assertNoLifecycleBypass(event);
     const data = dataFromEvent(event);
     const context = contestantLifecycleContext();
+    assertNoLifecycleBypass(event);
     const directContestantCreate = RELATION_FIELDS.some((field) => hasOwn(data, field));
     if (directContestantCreate && !context.allowRestCreate) {
       throw new Error(
@@ -102,10 +126,27 @@ export default {
     }
   },
 
-  async beforeUpdate(event: { params?: { data?: Record<string, unknown> } }) {
-    assertNoLifecycleBypass(event);
-    if (!contestantLifecycleContext().allowRelationRepoint) {
-      await assertNoRelationRepoint(event);
+  async beforeUpdate(event: { params?: { data?: Record<string, unknown>; where?: Record<string, unknown> } }) {
+    const data = dataFromEvent(event);
+    const context = contestantLifecycleContext();
+    const lifecycleAttempted = LIFECYCLE_FIELDS.some((field) => hasOwn(data, field));
+    const relationAttempted = RELATION_FIELDS.some((field) => hasOwn(data, field));
+    const where = event.params?.where ?? {};
+    if (
+      lifecycleAttempted &&
+      !relationAttempted &&
+      !context.allowLifecycleTransition &&
+      where.documentId == null &&
+      where.id == null
+    ) {
+      assertNoLifecycleBypass(event, null);
+    }
+    const needsCurrent =
+      relationAttempted || (lifecycleAttempted && !context.allowLifecycleTransition);
+    const current = needsCurrent ? await loadCurrentContestant(event) : null;
+    assertNoLifecycleBypass(event, current);
+    if (!context.allowRelationRepoint) {
+      await assertNoRelationRepoint(event, current);
     }
   },
 

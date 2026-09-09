@@ -10,25 +10,26 @@ export const hardDeleteContestantForRegistrationRemoval = async (
   strapi: any,
   documentId: string
 ) => {
-  const contestant = await strapi.documents(CONTESTANT_UID).findOne({
-    documentId,
-    populate: { conference: true, conference_ticket: true },
-  });
-  if (!contestant) return null;
+  return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
+    const contestant = await strapi.documents(CONTESTANT_UID).findOne({
+      documentId,
+      populate: { conference: true, conference_ticket: true },
+      transacting: trx,
+    });
+    if (!contestant) return null;
 
-  const shouldRestoreGolfSlot =
-    isActive(contestant.status) &&
-    countsAgainstGolfCapacity({
-      ticket_type: contestant.conference_ticket ?? null,
-    } as never);
+    const shouldRestoreGolfSlot =
+      isActive(contestant.status) &&
+      countsAgainstGolfCapacity({
+        ticket_type: contestant.conference_ticket ?? null,
+      } as never);
 
-  if (shouldRestoreGolfSlot) {
-    const conferenceDocumentId = contestant.conference?.documentId;
-    if (!conferenceDocumentId) {
-      throw new Error("Conference is required before deleting an active golfer.");
-    }
+    if (shouldRestoreGolfSlot) {
+      const conferenceDocumentId = contestant.conference?.documentId;
+      if (!conferenceDocumentId) {
+        throw new Error("Conference is required before deleting an active golfer.");
+      }
 
-    await strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
       const row = await strapi.db
         .connection("conferences")
         .where({ document_id: conferenceDocumentId })
@@ -42,10 +43,10 @@ export const hardDeleteContestantForRegistrationRemoval = async (
         .where({ document_id: conferenceDocumentId })
         .transacting(trx)
         .increment("available_contestants", 1);
-    });
-  }
+    }
 
-  return withContestantHardDelete(() =>
-    strapi.documents(CONTESTANT_UID).delete({ documentId })
-  );
+    return withContestantHardDelete(() =>
+      strapi.documents(CONTESTANT_UID).delete({ documentId, transacting: trx })
+    );
+  });
 };

@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 const { findOneById } = vi.hoisted(() => ({
   findOneById: vi.fn(),
@@ -38,6 +37,37 @@ describe("conference contestant lifecycle guard", () => {
 
     await expect(
       lifecycles.beforeCreate(event({ cancelled_at: "2026-09-08T00:00:00Z" }) as never)
+    ).rejects.toThrow("cancel/restore actions");
+  });
+
+  it("allows Strapi schema defaults on guarded create and rejects real cancellation metadata", async () => {
+    const schemaDefaultedCreate = {
+      conference: "conf-1",
+      conference_ticket: "golfer",
+      status: "active",
+      cancelled_at: null,
+      cancelled_reason: null,
+      cancelled_by: null,
+    };
+
+    await expect(
+      withContestantRestCreate(() =>
+        lifecycles.beforeCreate(event(schemaDefaultedCreate) as never)
+      )
+    ).resolves.toBeUndefined();
+
+    await expect(
+      withContestantRestCreate(() =>
+        lifecycles.beforeCreate(event({ ...schemaDefaultedCreate, status: "cancelled" }) as never)
+      )
+    ).rejects.toThrow("cancel/restore actions");
+
+    await expect(
+      withContestantRestCreate(() =>
+        lifecycles.beforeCreate(
+          event({ ...schemaDefaultedCreate, cancelled_reason: "manual write" }) as never
+        )
+      )
     ).rejects.toThrow("cancel/restore actions");
   });
 
@@ -95,6 +125,45 @@ describe("conference contestant lifecycle guard", () => {
         event({ conference_ticket: { set: [{ documentId: "other-ticket" }] } }, { documentId: "contestant-1" }) as never
       )
     ).rejects.toThrow("Cancel and create");
+  });
+
+  it("allows unchanged lifecycle full-record values while blocking actual transitions", async () => {
+    findOneById.mockResolvedValue({
+      documentId: "contestant-1",
+      status: "active",
+      cancelled_at: null,
+      cancelled_reason: null,
+      cancelled_by: null,
+      conference: { id: 3, documentId: "conf-doc" },
+      conference_ticket: { id: 37, documentId: "ticket-doc" },
+    });
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event(
+          {
+            status: "active",
+            cancelled_at: null,
+            cancelled_reason: null,
+            cancelled_by: null,
+            first: "Ada",
+          },
+          { documentId: "contestant-1" }
+        ) as never
+      )
+    ).resolves.toBeUndefined();
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ status: "cancelled" }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("cancel/restore actions");
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ cancelled_at: "2026-09-08T00:00:00Z" }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("cancel/restore actions");
   });
 
   it("blocks Content Manager hard deletes but allows whole-registration cleanup context", async () => {

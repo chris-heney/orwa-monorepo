@@ -47,7 +47,10 @@ import { updateRecord } from '../../_helpers/updateRecord';
 import { customDatagridStyle, positionStickyComponent } from '../../../css';
 import { ISharedMeta } from '../types/IConference';
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
-import { contestantCreateDefaults } from '../helpers/contestantFormDefaults';
+import {
+  contestantCreateDefaults,
+  contestantUpdatePayload,
+} from '../helpers/contestantFormDefaults';
 import { groupItemsByExtra } from '../helpers/contestantExtras';
 import ContestantExtrasEditor from './ContestantExtrasEditor';
 import ContestantCancellationActions from './ContestantCancellationActions';
@@ -400,11 +403,6 @@ const contestantRowSx = (record: RaRecord, _index: number): SxProps =>
     ? cancelledContestantRowSx
     : {};
 
-const omitLockedContestantRelations = (formData: RaRecord): RaRecord => {
-  const { conference, conference_ticket, ...editable } = formData;
-  return editable;
-};
-
 const ConferenceContestants = () => {
   const { isCreating, setIsCreating } = useContext(ConferenceContext);
 
@@ -473,7 +471,7 @@ const ConferenceContestants = () => {
               <SimpleForm
                 onSubmit={(formData) =>
                   updateRecord(
-                    omitLockedContestantRelations(formData),
+                    contestantUpdatePayload(formData),
                     record,
                     update,
                     notify,

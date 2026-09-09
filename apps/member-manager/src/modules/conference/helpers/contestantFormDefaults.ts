@@ -6,3 +6,12 @@ export const contestantCreateDefaults = (
   if (filterValues.year != null) defaults.year = filterValues.year;
   return defaults;
 };
+
+export const contestantUpdatePayload = <T extends Record<string, unknown>>(
+  formData: T
+): Omit<T, "conference" | "conference_ticket"> => {
+  const { conference, conference_ticket, ...editable } = formData;
+  void conference;
+  void conference_ticket;
+  return editable;
+};

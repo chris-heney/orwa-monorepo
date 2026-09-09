@@ -393,3 +393,52 @@
   - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
 - Commit:
   - `c48ff591` — `strapi: harden contestant lifecycle writes`
+
+## NO-SHIP A/B and Important C-E RED
+
+- A create defaults:
+  - Added lifecycle tests that run realistic Strapi schema-defaulted create data through `beforeCreate`: `status: active` plus null cancellation metadata.
+  - Observed failure: guarded REST/webhook creates were rejected as lifecycle bypasses when schema defaults were injected.
+  - Added negative coverage for `status: cancelled` and non-null cancellation metadata during guarded create.
+- B edits:
+  - Added lifecycle and REST service tests for react-admin-style full-record updates carrying unchanged `status: active` and null cancellation audit fields.
+  - Added negative coverage for active-to-cancelled and cancellation metadata edits outside cancel/restore actions.
+  - Observed failure: both layers rejected any lifecycle field presence, even unchanged values.
+- C atomic hard delete:
+  - Added hard-delete tests proving active golfer capacity restore and Document Service delete happen in one transaction.
+  - Added delete-fails-after-increment rollback and retry coverage.
+  - Observed failure: delete occurred after the transaction, so a delete failure left the restored slot committed.
+- D relations:
+  - Added REST service tests for full-record relation round-trips using numeric IDs, documentIds, object, and `{ set: [...] }` shapes.
+  - Added negative coverage for true conference/ticket repoints.
+  - Observed failure: REST update rejected any submitted `conference` or `conference_ticket`, even unchanged values.
+- E year:
+  - Added direct-create test where registration opens in the prior calendar year but event `start_date`/`end_date` are in the current event year.
+  - Observed failure: cycle-year validation picked `registration_start` first and rejected the valid event year.
+- Member Manager full-record helper:
+  - Added helper coverage proving edit payload shaping strips locked relation fields but preserves unchanged lifecycle defaults for backend comparison.
+
+## NO-SHIP A/B and Important C-E GREEN
+
+- A create defaults:
+  - `beforeCreate` now permits only safe Strapi defaults in legitimate `withContestantRestCreate` context: `status` normalized to active and null/absent cancellation metadata.
+  - Guarded creates still reject cancelled status and non-null `cancelled_at`, `cancelled_reason`, or `cancelled_by`.
+- B edits:
+  - Lifecycle and REST service update paths now load the current contestant and reject only actual lifecycle transitions/metadata modifications.
+  - React-admin full-record round-trips with unchanged active/null lifecycle fields are allowed.
+- C atomic hard delete:
+  - Whole-registration contestant hard delete now lock-loads the contestant, restores active golfer capacity, and performs the Document Service delete under `withContestantHardDelete` inside one `strapi.db.transaction`.
+  - Delete failure rolls back the capacity increment in test and retries cleanly.
+- D relations:
+  - REST update compares submitted `conference` and `conference_ticket` against the current row and accepts unchanged numeric/documentId/object/set shapes.
+  - Actual repoints still fail with the cancel-and-create instruction.
+- E year:
+  - Cycle-year derivation now prefers event `start_date`/`end_date`; registration window dates are fallback only.
+  - Direct staff create and webhook current-year behavior now agree for events whose registration opens in the prior year.
+- Verification:
+  - New blocker suite: 4 files, 30 tests passed.
+  - Full related suite: 13 files, 147 tests passed.
+  - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
+  - Diagnostics: no linter errors on touched files.
+- Remaining concern:
+  - Local unit lifecycle export assertion remains in place, but real Strapi boot verification is still deferred to Task 8 as requested.
