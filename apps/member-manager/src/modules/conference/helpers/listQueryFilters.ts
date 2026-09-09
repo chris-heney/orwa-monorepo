@@ -182,6 +182,70 @@ export function expandContestantStatusForApi(
   return withStatusOrClause(base, CONTESTANT_ACTIVE_OR_NULL_CLAUSE);
 }
 
+const isBlank = (value: unknown): boolean =>
+  value == null || value === "";
+
+/**
+ * Choice filter for the pickers that assign contestants to a team or a
+ * registration.
+ *
+ * A cancelled contestant is a historical record: it must not be assignable to
+ * anything new, but a team or registration that already points at one has to
+ * keep displaying it. React-admin normally re-fetches selected records with
+ * `getMany`, but our relations arrive populated as whole records rather than
+ * ids, so that lookup finds nothing and the only thing that renders a chip is
+ * the record's presence in the choices. Whatever is currently linked is
+ * therefore unioned back in.
+ *
+ * With nothing linked this is the plain view sentinel, so the picker inherits
+ * exactly the clause the Active list view uses instead of a second copy of it.
+ */
+export function contestantChoicesFilter(
+  linked?: unknown
+): Record<string, any> {
+  const entries = Array.isArray(linked) ? linked : [];
+
+  const documentIds: string[] = [];
+  const numericIds: number[] = [];
+
+  for (const entry of entries) {
+    if (isBlank(entry)) continue;
+
+    const candidate =
+      typeof entry === "object"
+        ? (entry as Record<string, unknown>).documentId ??
+          (entry as Record<string, unknown>).id
+        : entry;
+
+    if (isBlank(candidate)) continue;
+
+    if (typeof candidate === "number") {
+      if (!numericIds.includes(candidate)) numericIds.push(candidate);
+      continue;
+    }
+    if (typeof candidate !== "string") continue;
+
+    if (/^\d+$/.test(candidate)) {
+      const asNumber = Number(candidate);
+      if (!numericIds.includes(asNumber)) numericIds.push(asNumber);
+      continue;
+    }
+    if (!documentIds.includes(candidate)) documentIds.push(candidate);
+  }
+
+  if (documentIds.length === 0 && numericIds.length === 0) {
+    return { status: DEFAULT_CONTESTANT_STATUS_FILTER };
+  }
+
+  return {
+    $or: [
+      ...CONTESTANT_ACTIVE_OR_NULL_CLAUSE,
+      ...(documentIds.length > 0 ? [{ documentId: { $in: documentIds } }] : []),
+      ...(numericIds.length > 0 ? [{ id: { $in: numericIds } }] : []),
+    ],
+  };
+}
+
 /**
  * Normalize conference filter shape for a Strapi list query.
  * Singular-relation resources reject `filters[conferences]` (400 Invalid key).

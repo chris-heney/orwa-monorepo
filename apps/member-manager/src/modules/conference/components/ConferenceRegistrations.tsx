@@ -21,6 +21,7 @@ import {
   useUpdate,
   useCreate,
   useListContext,
+  useRecordContext,
   FunctionField,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
@@ -43,6 +44,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import { ISharedMeta } from '../types/IConference';
 import { useCan } from '../../rbac-manager/useCan';
 import { buildRegistrationReceiptShowQueryOptions } from '../helpers/registrationReceiptContestants';
+import { contestantChoicesFilter } from '../helpers/listQueryFilters';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 
 interface RegistrationProps {
@@ -50,8 +52,17 @@ interface RegistrationProps {
   ticketType?: string;
 }
 
-const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
+export const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
   const { filterValues } = useListContext();
+  const record = useRecordContext();
+
+  // Cancelled contestants stay off the menu, except the ones this registration
+  // already has — those must keep rendering without becoming assignable
+  // elsewhere.
+  const contestantChoices = React.useMemo(
+    () => contestantChoicesFilter(record?.contestants),
+    [record?.contestants]
+  );
 
   return (
     <Grid item xs={12} md={12} sx={{ p: 2, overflow: 'hidden' }}>
@@ -170,6 +181,7 @@ const RegistrationFormFields = ({ ticketType }: RegistrationProps) => {
             source="contestants"
             reference="conference-contestants"
             label="Contestants"
+            filter={contestantChoices}
           >
             <AutocompleteArrayInput
               optionText={(record) => record.first + ' ' + record.last}

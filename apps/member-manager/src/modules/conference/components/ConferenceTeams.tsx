@@ -20,6 +20,7 @@ import {
   DateField,
   ReferenceField,
   useListFilterContext,
+  useRecordContext,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
 import { Button, Chip, Grid } from '@mui/material';
@@ -32,10 +33,19 @@ import { customDatagridStyle, positionStickyComponent } from '../../../css';
 import CustomPagination from '../../_components/CustomPagination';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
+import { contestantChoicesFilter } from '../helpers/listQueryFilters';
 
-const TeamFormFields = () => {
+export const TeamFormFields = () => {
   const { filterValues } = useListFilterContext();
   const filterConferenceId = getPrimaryConferenceId(filterValues);
+  const record = useRecordContext();
+
+  // Cancelled contestants stay off the menu, except the ones this team already
+  // has — those must keep rendering without becoming assignable elsewhere.
+  const contestantChoices = React.useMemo(
+    () => contestantChoicesFilter(record?.contestants),
+    [record?.contestants]
+  );
 
   return (
     <Grid container spacing={2}>
@@ -52,6 +62,7 @@ const TeamFormFields = () => {
           reference="conference-contestants"
           source="contestants"
           label="Contestants"
+          filter={contestantChoices}
           fullWidth
         >
           <AutocompleteArrayInput

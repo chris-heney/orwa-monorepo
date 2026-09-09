@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   applyContestantStatusFilter,
+  contestantChoicesFilter,
   contestantStatusFromFilters,
   expandContestantStatusForApi,
   normalizeFiltersForListQuery,
@@ -323,6 +324,83 @@ describe("expandContestantStatusForApi", () => {
 
     expect(expandContestantStatusForApi("conference-attendees", attendees)).toEqual(
       attendees
+    );
+  });
+});
+
+describe("contestantChoicesFilter", () => {
+  const ACTIVE_OR_NULL = [
+    { status: { $eq: "active" } },
+    { status: { $null: true } },
+  ];
+
+  it("offers only active and legacy contestants when nothing is linked yet", () => {
+    expect(contestantChoicesFilter(undefined)).toEqual({ status: "active" });
+    expect(contestantChoicesFilter([])).toEqual({ status: "active" });
+  });
+
+  // The sentinel is what the provider expands, so the picker inherits exactly
+  // the clause the Active list view uses rather than a second copy of it.
+  it("resolves to the active-or-legacy-null clause at the API boundary", () => {
+    expect(
+      expandContestantStatusForApi(
+        "conference-contestants",
+        contestantChoicesFilter([])
+      )
+    ).toEqual({ $or: ACTIVE_OR_NULL });
+  });
+
+  // A registration or team that already points at a cancelled contestant has to
+  // keep showing it. Only new selections are restricted.
+  it("keeps already-linked contestants selectable alongside active ones", () => {
+    expect(
+      contestantChoicesFilter([
+        { documentId: "twcof4vtkhmchlceahrwqcds", status: "cancelled" },
+      ])
+    ).toEqual({
+      $or: [...ACTIVE_OR_NULL, { documentId: { $in: ["twcof4vtkhmchlceahrwqcds"] } }],
+    });
+  });
+
+  it("accepts plain ids as well as whole records", () => {
+    expect(contestantChoicesFilter(["twcof4vtkhmchlceahrwqcds"])).toEqual({
+      $or: [...ACTIVE_OR_NULL, { documentId: { $in: ["twcof4vtkhmchlceahrwqcds"] } }],
+    });
+  });
+
+  it("falls back to the numeric key for records that predate documentIds", () => {
+    expect(contestantChoicesFilter([{ id: 99 }, 100])).toEqual({
+      $or: [...ACTIVE_OR_NULL, { id: { $in: [99, 100] } }],
+    });
+  });
+
+  it("carries both id shapes when a record mixes them", () => {
+    expect(
+      contestantChoicesFilter([{ documentId: "abc1234567890xyz" }, 99])
+    ).toEqual({
+      $or: [
+        ...ACTIVE_OR_NULL,
+        { documentId: { $in: ["abc1234567890xyz"] } },
+        { id: { $in: [99] } },
+      ],
+    });
+  });
+
+  it("ignores blanks and duplicates rather than querying for them", () => {
+    expect(
+      contestantChoicesFilter([null, undefined, "", { id: 99 }, { id: 99 }])
+    ).toEqual({
+      $or: [...ACTIVE_OR_NULL, { id: { $in: [99] } }],
+    });
+  });
+
+  // A linked contestant is expressed as a plain clause, not the sentinel, so
+  // the provider must pass it through untouched.
+  it("survives the API boundary unchanged once ids are unioned in", () => {
+    const filter = contestantChoicesFilter([{ id: 99 }]);
+
+    expect(expandContestantStatusForApi("conference-contestants", filter)).toEqual(
+      filter
     );
   });
 });
