@@ -79,7 +79,10 @@ const PageHeadingBar = ({
           gap: 1,
           backgroundColor: HEADING_BAR_BG,
           pl: `${HEADING_BAR_LEFT_GUTTER}px`,
-          pr: `${HEADING_BAR_RIGHT_GUTTER}px`,
+          // Right gutter is carried by `.heading-actions` (see below) so it
+          // holds when the sticky toolbar pins to the viewport edge on
+          // pages wider than the window (large datagrids).
+          pr: 0,
           py: 1,
           minHeight: HEADING_BAR_MIN_HEIGHT,
           boxSizing: 'border-box',
@@ -137,6 +140,7 @@ const PageHeadingBar = ({
               gap: 0.75,
               flexWrap: 'wrap',
               justifyContent: 'flex-end',
+              mr: `${HEADING_BAR_RIGHT_GUTTER}px`,
               // Anything a module drops in here (RA buttons, counts) sits on
               // the same vertical centre as the 32px HeadingActions.
               '& > *': { display: 'inline-flex', alignItems: 'center' },

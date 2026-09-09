@@ -469,13 +469,20 @@ const StyledLayout = styled('div', {
   // Add / Columns / Export stay visible when a wide list scrolls.
   '& [class*="RaTopToolbar-root"], & .heading-actions': {
     padding: '0 !important',
-    margin: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    marginLeft: 0,
     position: 'sticky',
     right: 0,
     top: 0,
     zIndex: 11,
     minHeight: 'unset',
     backgroundColor: 'inherit',
+  },
+  // The right gutter lives on the toolbar (not the bar) so it survives the
+  // sticky `right: 0` pin on pages whose content is wider than the viewport.
+  '& [class*="RaTopToolbar-root"]': {
+    marginRight: 0,
   },
   // "Show button labels" off → icon-only RA buttons in heading toolbars.
   // Record counts are Typography, not Button, so they stay visible. Buttons
