@@ -2,23 +2,24 @@ import React, { useState } from 'react';
 import { useMembershipContext } from '../MembershipsContextProvider';
 import {
   Box,
-  Theme,
   Typography,
-  useMediaQuery,
   MenuItem,
-  IconButton,
-  Tooltip,
   Popover,
   Switch,
   Divider,
 } from '@mui/material';
-import { HeadingSelect } from '../../_components/heading/HeadingActions';
+import PageHeadingBar from '../../_components/PageHeadingBar';
+import HeadingAction from '../../_components/heading/HeadingAction';
+import {
+  CreateAction,
+  FilterAction,
+  HeadingSelect,
+} from '../../_components/heading/HeadingActions';
 import {
   Button,
   ConfigurableDatagridColumn,
   FieldTitle,
   ListBase,
-  TopToolbar,
   useStore,
   useDataProvider,
   useResourceContext,
@@ -27,8 +28,6 @@ import {
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import CustomCreateButton from '../../_components/CustomCreateButton';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import RecordCount from '../../_components/RecordCount';
@@ -56,10 +55,12 @@ const FieldToggleItem = styled('li')(({ theme }) => ({
   },
 }));
 
-const CustomSelectColumnsButton = (props: {
-  preferenceKey?: string;
-  style?: React.CSSProperties;
-}) => {
+/**
+ * Columns picker with Select All / Unselect All and drag re-ordering (react-admin's
+ * SelectColumnsButton lacks the bulk toggles). Trigger is the standard 32px
+ * heading action so it lines up with the other presets.
+ */
+const CustomSelectColumnsButton = (props: { preferenceKey?: string }) => {
   const { preferenceKey: prefKey } = props;
   const resource = useResourceContext();
   const finalPreferenceKey = prefKey || `${resource}.datagrid`;
@@ -79,9 +80,6 @@ const CustomSelectColumnsButton = (props: {
       .map((column) => column.index)
   );
   const translate = useTranslate();
-  const isXSmall = useMediaQuery<Theme>((theme) =>
-    theme.breakpoints.down('sm')
-  );
 
   const title = translate('ra.action.select_columns', { _: 'Columns' });
 
@@ -152,28 +150,12 @@ const CustomSelectColumnsButton = (props: {
 
   return (
     <>
-      {isXSmall ? (
-        <Tooltip title={title}>
-          <IconButton
-            aria-label={title}
-            color="primary"
-            onClick={handleClick}
-            size="large"
-            style={props.style}
-          >
-            <ViewWeekIcon />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Button
-          size="small"
-          onClick={handleClick}
-          label={title}
-          style={props.style}
-        >
-          <ViewWeekIcon />
-        </Button>
-      )}
+      <HeadingAction
+        icon={<ViewWeekIcon fontSize="small" />}
+        label={title}
+        onClick={handleClick}
+        active={Boolean(anchorEl)}
+      />
       <Popover
         open={Boolean(anchorEl)}
         anchorEl={anchorEl}
@@ -343,6 +325,7 @@ const FieldToggleRow = (props: {
 const Membershipheader = () => {
   const {
     selectedTab,
+    isFilterSidebarOpen,
     setIsFilterSidebarOpen,
     watersystemFilters,
     associateFilters,
@@ -434,46 +417,15 @@ const Membershipheader = () => {
     setExportType('');
   };
 
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
-
   const handleViewToggle = () => {
     setIsGridView(!isGridView);
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#262626',
-        px: 1,
-      }}
-    >
-      <Typography
-        variant="h6"
-        sx={{
-          fontSize: isSmall ? '10px' : null,
-          alignItems: 'center',
-          color: 'white',
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-          textAlign: 'left',
-          ml: 1,
-        }}
-      >
-        {isSettingsOpen ? 'Settings' : title}
-      </Typography>
-      <TopToolbar
-        sx={{
-          p: 0,
-          m: 0,
-          position: 'sticky',
-          right: 0,
-          minHeight: 'unset',
-        }}
-      >
-        {resource !== null && !isSettingsOpen && (
+    <PageHeadingBar
+      title={isSettingsOpen ? 'Settings' : title}
+      actions={
+        resource !== null && !isSettingsOpen ? (
           <ListBase
             disableSyncWithLocation
             exporter={undefined}
@@ -486,84 +438,58 @@ const Membershipheader = () => {
             }
             resource={resource}
           >
-            <Box
-              className="heading-actions"
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                gap: 1,
-                alignItems: 'center',
+            <RecordCount />
+            {canOnResource('create', resource) && (
+              <CreateAction label={`Add ${title.slice(0, title.length - 1)}`} />
+            )}
+
+            <CustomSelectColumnsButton />
+
+            <HeadingSelect
+              emptyLabel="EXPORT"
+              value={exportType}
+              onChange={(e) => {
+                setExportType(e.target.value as string);
+                handleExport(e.target.value as string);
               }}
             >
-              <RecordCount />
-              {canOnResource('create', resource) && (
-                <CustomCreateButton
-                  sx={{
-                    color: 'white',
-                  }}
-                  label={`Add ${title.slice(0, title.length - 1)}`}
-                />
-              )}
+              <MenuItem value="" disabled>
+                EXPORT
+              </MenuItem>
+              <MenuItem value="default">Default Export</MenuItem>
+              <MenuItem value="naylor">Naylor Export</MenuItem>
+            </HeadingSelect>
 
-              <CustomSelectColumnsButton
-                style={{
-                  color: 'white',
-                }}
+            {/* Grid View Toggle Button - Only show for associates */}
+            {resource === 'associates' && (
+              <HeadingAction
+                icon={
+                  isGridView ? (
+                    <ViewListIcon fontSize="small" />
+                  ) : (
+                    <GridViewIcon fontSize="small" />
+                  )
+                }
+                label={
+                  isGridView ? 'Switch to List View' : 'Switch to Grid View'
+                }
+                onClick={handleViewToggle}
               />
+            )}
 
-              <HeadingSelect
-                emptyLabel="EXPORT"
-                value={exportType}
-                onChange={(e) => {
-                  setExportType(e.target.value as string);
-                  handleExport(e.target.value as string);
-                }}
-              >
-                <MenuItem value="" disabled>
-                  EXPORT
-                </MenuItem>
-                <MenuItem value="default">Default Export</MenuItem>
-                <MenuItem value="naylor">Naylor Export</MenuItem>
-              </HeadingSelect>
-
-              {/* Grid View Toggle Button - Only show for associates */}
-              {resource === 'associates' && (
-                <Tooltip
-                  title={
-                    isGridView ? 'Switch to List View' : 'Switch to Grid View'
-                  }
-                >
-                  <IconButton
-                    onClick={handleViewToggle}
-                    sx={{
-                      color: 'white',
-                    }}
-                  >
-                    {isGridView ? <ViewListIcon /> : <GridViewIcon />}
-                  </IconButton>
-                </Tooltip>
-              )}
-
-              <Button
-                label="Filter"
-                sx={{
-                  color: 'white',
-                  mr: 2,
-                }}
-                onClick={() => {
-                  setIsFilterSidebarOpen((prev) => !prev);
-                  setTimeout(() => {
-                    window.scrollTo(document.body.scrollWidth, 0);
-                  }, 150);
-                }}
-              >
-                <FilterAltIcon />
-              </Button>
-            </Box>
+            <FilterAction
+              active={isFilterSidebarOpen}
+              onClick={() => {
+                setIsFilterSidebarOpen((prev) => !prev);
+                setTimeout(() => {
+                  window.scrollTo(document.body.scrollWidth, 0);
+                }, 150);
+              }}
+            />
           </ListBase>
-        )}
-      </TopToolbar>
-    </Box>
+        ) : undefined
+      }
+    />
   );
 };
 

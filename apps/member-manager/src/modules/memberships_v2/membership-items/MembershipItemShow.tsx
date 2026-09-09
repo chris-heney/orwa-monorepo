@@ -10,11 +10,14 @@ import {
 } from 'react-admin'
 import { CurrencyOptions } from '../../../config/Settings'
 import CustomShowHeader from '../componenets/CustomShowHeader'
+import { formResourceShellSx } from '../../../css/formLayout'
 
+// Heading bar sits outside SimpleShowLayout so its padding never pushes the
+// bar off the app bar; the layout keeps its own gutter for the fields.
 const MembershipItemShow = () => (
-  <Show actions={false}>
+  <Show actions={false} component="div" sx={formResourceShellSx}>
+    <CustomShowHeader />
     <SimpleShowLayout>
-      <CustomShowHeader />
       <TextField source="name" label="Name" />
       <TextField source="description" label="Description" />
       <NumberField source="price" label="Price" options={CurrencyOptions} />

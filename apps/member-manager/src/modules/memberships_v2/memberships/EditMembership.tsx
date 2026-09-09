@@ -1,17 +1,14 @@
 import React from "react";
 import { EditBase, Title } from "react-admin";
 import MembershipForm from "./components/MembershipForm";
-import { Box, Card } from "@mui/material";
 
+// No padded Box / Card wrapper: the form's heading bar must sit flush under
+// the app bar, and MembershipForm already paints its own section card.
 const MembershipEdit = () => {
   return (
     <EditBase hasShow={false} redirect={false} mutationMode="pessimistic">
       <Title title="Memberships" />
-      <Box py={2}>
-        <Card>
-          <MembershipForm />
-        </Card>
-      </Box>
+      <MembershipForm />
     </EditBase>
   );
 };

@@ -84,10 +84,12 @@ const AssociateShow: React.FC = () => {
 
   return (
     <ShowBase>
-      <SimpleShowLayout>
+      <>
         <Title title="Memberships" />
+        {/* Heading bar outside SimpleShowLayout: its 8px top padding would
+            otherwise open a gap between the app bar and the heading. */}
         <CustomShowHeader />
-
+        <SimpleShowLayout>
         <Grid container spacing={2}>
           <Grid item xs={12} md={5}>
             <Card sx={{ marginBottom: 2, padding: 3, borderRadius: 2 }}>
@@ -264,7 +266,8 @@ const AssociateShow: React.FC = () => {
             </Grid>
           )}
         </Grid>
-      </SimpleShowLayout>
+        </SimpleShowLayout>
+      </>
     </ShowBase>
   );
 };

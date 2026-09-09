@@ -3,10 +3,12 @@ import { useMembershipContext } from "../MembershipsContextProvider";
 import { ListBase } from "react-admin";
 import WaterSystemFilter from "../watersystem/components/WatersystemFilter";
 import AssociateListFilterSidebar from "../associate/components/AssociateListFilterSidebar";
-import { Box, IconButton, Tooltip } from "@mui/material";
+import { Box } from "@mui/material";
 import InvoicesFilters from "./InvoicesFilters";
 import { Favorite } from "@mui/icons-material";
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
+import { listDrawerContext } from "../../_components/drawer";
+import HeadingAction from "../../_components/heading/HeadingAction";
 import { useCan } from "../../rbac-manager/useCan";
 
 const MembershipFilters = () => {
@@ -28,22 +30,34 @@ const MembershipFilters = () => {
     return null;
   }
 
+  const activeFilter =
+    selectedTab === "watersystems"
+      ? watersystemFilters
+      : selectedTab === "associates"
+      ? associateFilters
+      : selectedTab === "invoices"
+      ? invoicesFilters
+      : selectedTab === "memberships"
+      ? membershipFilters
+      : selectedTab === "membership-items"
+      ? membershipExtraFilters
+      : undefined;
+
   return (
     <FilterSidebarShell
       open={isFilterSidebarOpen}
       onClose={() => setIsFilterSidebarOpen(false)}
+      context={listDrawerContext({
+        resource: selectedTab,
+        filter: activeFilter ?? undefined,
+      })}
       headerActions={
         !can("create", "saved-query") ? undefined : (
-          <Tooltip title="Save Current Filter">
-            <IconButton
-              onClick={() => setSavingQuery((prev) => !prev)}
-              size="small"
-              sx={{ color: "common.white" }}
-              aria-label="Save current filter"
-            >
-              <Favorite fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          <HeadingAction
+            icon={<Favorite fontSize="small" />}
+            label="Save Current Filter"
+            onClick={() => setSavingQuery((prev) => !prev)}
+          />
         )
       }
     >

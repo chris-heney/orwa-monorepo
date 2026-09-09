@@ -1,17 +1,14 @@
 import React from 'react';
 import { Theme, useMediaQuery } from '@mui/material';
-import {
-  Button,
-  ExportButton,
-  Loading,
-  SelectColumnsButton,
-  useListContext,
-  useRedirect,
-} from 'react-admin';
-import FilterAltIcon from '@mui/icons-material/FilterAlt';
-import AddIcon from '@mui/icons-material/Add';
+import { Loading, useListContext, useRedirect } from 'react-admin';
 import RecordCount from '../_components/RecordCount';
 import PageHeadingBar from '../_components/PageHeadingBar';
+import {
+  AddAction,
+  ColumnsAction,
+  ExportAction,
+  FilterAction,
+} from '../_components/heading/HeadingActions';
 import { useCan } from '../rbac-manager/useCan';
 import { useConferenceContext } from './ConferenceContext';
 import VendorAttendeeExportButton from './components/VendorAttendeeExportButton';
@@ -23,6 +20,7 @@ import {
 const ConferenceHeader = () => {
   const {
     selectedTab,
+    isFilterSidebarOpen,
     setIsFilterSidebarOpen,
     conferences,
     resource,
@@ -48,6 +46,12 @@ const ConferenceHeader = () => {
         )?.name
       : 'All Conferences';
 
+  const addLabel = `Add ${
+    title.endsWith('s')
+      ? title.slice(0, -1).split('-').join(' ')
+      : title.split('-').join(' ')
+  }`;
+
   return conferences.length === 0 ? (
     <Loading />
   ) : (
@@ -60,7 +64,8 @@ const ConferenceHeader = () => {
               <>
                 <RecordCount />
                 {canCreate && (
-                  <Button
+                  <AddAction
+                    label={addLabel}
                     onClick={() => {
                       if (selectedTab === 'sponsors') {
                         redirect('/conference-sponsors/create');
@@ -68,36 +73,25 @@ const ConferenceHeader = () => {
                         setIsCreating((prev) => !prev);
                       }
                     }}
-                    sx={{ color: 'white' }}
-                    label={`Add ${
-                      title.endsWith('s')
-                        ? title.slice(0, -1).split('-').join(' ')
-                        : title.split('-').join(' ')
-                    }`}
-                  >
-                    <AddIcon />
-                  </Button>
+                  />
                 )}
 
-                <SelectColumnsButton style={{ color: 'white' }} />
+                <ColumnsAction />
 
-                <ExportButton sx={{ color: 'white' }} />
+                <ExportAction />
                 <VendorAttendeeExportButton />
               </>
             )}
 
-            <Button
-              label="Filter"
-              sx={{ color: 'white' }}
+            <FilterAction
+              active={isFilterSidebarOpen}
               onClick={() => {
                 setIsFilterSidebarOpen((prev) => !prev);
                 setTimeout(() => {
                   window.scrollTo(document.body.scrollWidth, 0);
                 }, 150);
               }}
-            >
-              <FilterAltIcon />
-            </Button>
+            />
           </>
         ) : undefined
       }

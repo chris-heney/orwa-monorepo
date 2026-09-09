@@ -10,10 +10,10 @@ import {
 } from "react-admin";
 import { RecordContextProvider } from "ra-core";
 import MembershipsContextProvider from "../../memberships_v2/MembershipsContextProvider";
-import { Grid, Button, Tooltip } from "@mui/material";
+import { Grid } from "@mui/material";
 import WaterSystemFields from "./components/WaterSystemFields";
 import CustomFormHeader from "../../_components/CustomFormHeader";
-import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
+import { NotificationsAction } from "../../_components/heading/HeadingActions";
 import { EmailSideBar } from "../../emails-magement";
 
 /** ReferenceArrayInput expects `contacts` as id[]; Strapi `raw`+populate returns full objects. */
@@ -100,13 +100,10 @@ const WaterSystemEdit = () => {
               <SimpleForm sx={{ p: 0, m: 0 }}>
                 <CustomFormHeader
                   customActions={
-                    <Tooltip title="Open Notifications" placement="top">
-                      <Button
-                        onClick={toggleSidebar}
-                        sx={{ color: "white", mr: 2 }}
-                        startIcon={<MarkunreadMailboxIcon />}
-                      ></Button>
-                    </Tooltip>
+                    <NotificationsAction
+                      active={showSidebar}
+                      onClick={toggleSidebar}
+                    />
                   }
                 />
                 <WaterSystemFields />

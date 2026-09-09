@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { Button, useDataProvider, useListContext, useNotify } from "react-admin";
+import React, { useState } from "react";
+import { useDataProvider, useListContext, useNotify } from "react-admin";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import HeadingAction from "../../_components/heading/HeadingAction";
 import { useConferenceContext } from "../ConferenceContext";
 import exportVendorAttendeeRoster from "../helpers/exportVendorAttendeeRoster";
 import {
@@ -60,11 +62,11 @@ const VendorAttendeeExportButton = () => {
   };
 
   return (
-    <Button
+    <HeadingAction
+      icon={<FileDownloadIcon fontSize="small" />}
       label="Export vendors"
       onClick={handleClick}
       disabled={loading}
-      sx={{ color: "white" }}
     />
   );
 };

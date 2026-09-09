@@ -25,11 +25,10 @@ import {
   useMediaQuery,
   Theme,
   Button as MUIButton,
-  IconButton,
 } from '@mui/material';
 import MapPinIcon from '@mui/icons-material/FmdGood';
 import ContactsIcon from '@mui/icons-material/Contacts';
-import AddIcon from '@mui/icons-material/Add';
+import { AddAction } from '../../_components/heading/HeadingActions';
 import MembershipExpiration from '../../_components/MembershipExpiration';
 import CustomShowHeader from '../../memberships_v2/componenets/CustomShowHeader';
 import SimpleInvoicesList from '../../invoices/SimpleInvoiceList';
@@ -183,9 +182,9 @@ const WatersystemShow = () => {
 
   return (
     <ShowContextProvider value={controllerProps}>
+      <Title title="Memberships" />
+      <CustomShowHeader />
       <SimpleShowLayout sx={{ p: 0 }}>
-        <Title title="Memberships" />
-        <CustomShowHeader />
         <Stack
           direction={isSmall ? 'column' : 'row'}
           columnGap={2}
@@ -430,8 +429,8 @@ const WatersystemShow = () => {
                 Component={
                   canUpdateWatersystem
                     ? () => (
-                        <IconButton
-                          aria-label="Add contact"
+                        <AddAction
+                          label="Add contact"
                           onClick={() => {
                             setContactCreateDefaultValues({
                               contact_type: 'watersystem',
@@ -439,11 +438,7 @@ const WatersystemShow = () => {
                             setLinkNewContactToWatersystemId(record.id);
                             setIsContactModalOpen(true);
                           }}
-                          sx={{ color: 'white', mr: 0.5 }}
-                          size="small"
-                        >
-                          <AddIcon />
-                        </IconButton>
+                        />
                       )
                     : undefined
                 }
