@@ -27,6 +27,11 @@ export interface HeadingActionProps {
 
 /** Icon-only heading action footprint: 20px glyph + 6px padding = 32px. */
 export const HEADING_ACTION_SIZE = 32;
+/**
+ * Class that exempts a heading-bar MUI Button from the layout's icon-only
+ * collapse (see layouts/Admin.tsx). Use for buttons whose text must stay.
+ */
+export const HEADING_ACTION_LABELED_CLASS = 'heading-action-labeled';
 export const HEADING_ACTION_ACTIVE_BG = 'rgba(255,255,255,0.22)';
 
 /**
@@ -55,6 +60,7 @@ const HeadingAction = ({
     return (
       <Button
         size="small"
+        className={forceLabel ? HEADING_ACTION_LABELED_CLASS : undefined}
         onClick={onClick}
         disabled={disabled}
         color={color === 'inherit' ? 'inherit' : color}

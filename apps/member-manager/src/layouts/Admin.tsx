@@ -478,8 +478,10 @@ const StyledLayout = styled('div', {
     backgroundColor: 'inherit',
   },
   // "Show button labels" off → icon-only RA buttons in heading toolbars.
-  // Record counts are Typography, not Button, so they stay visible.
-  '&[data-action-labels="off"] [class*="RaTopToolbar-root"] .MuiButton-root, &[data-action-labels="off"] .heading-actions .MuiButton-root':
+  // Record counts are Typography, not Button, so they stay visible. Buttons
+  // that must keep their text (primary "next step" actions) opt out with
+  // `HEADING_ACTION_LABELED_CLASS` (HeadingAction forceLabel sets it).
+  '&[data-action-labels="off"] [class*="RaTopToolbar-root"] .MuiButton-root:not(.heading-action-labeled), &[data-action-labels="off"] .heading-actions .MuiButton-root:not(.heading-action-labeled)':
     {
       // Same 32px footprint as HeadingAction so the right-most heading icon
       // always lands under the app bar's account icon.
