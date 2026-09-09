@@ -4,18 +4,22 @@ import {
   Divider,
   FormControl,
   FormControlLabel,
-  Paper,
   Radio,
   RadioGroup,
 } from "@mui/material";
 import React from "react";
-import CustomHeader from "../_components/CustomHeader";
 import { RaRecord, useGetList, useNotify, useRecordContext } from "react-admin";
 import CustomTextInput from "../_components/CustomTextInput";
 import authProvider from "../../authProvider";
 import { formatNumber } from "../../helpers/Formators";
 import { createPayloadVariables, extractFieldsFromHTML } from "./Helper";
+import { useRecordDrawerContext } from "../_components/drawer/DrawerContext";
 
+/**
+ * Notifications drawer body: pick one of the module's email templates and
+ * send it for the current record. Render inside a `RightDrawer`; the record
+ * comes from the drawer's record context (falls back to RecordContext).
+ */
 const EmailSidebar = ({ module }: { module: string }) => {
   const [overrideTo, setOverrideTo] = React.useState("");
   const { data: emails } = useGetList("email-templates", {
@@ -25,7 +29,9 @@ const EmailSidebar = ({ module }: { module: string }) => {
   });
 
   const [emailIndex, setEmailIndex] = React.useState(0);
-  const application = useRecordContext<RaRecord>();
+  const drawer = useRecordDrawerContext();
+  const recordFromContext = useRecordContext<RaRecord>();
+  const application = (drawer?.record as RaRecord | undefined) ?? recordFromContext;
   const notify = useNotify();
 
   // 🔄 Replace placeholders dynamically from template fields
@@ -247,17 +253,8 @@ const EmailSidebar = ({ module }: { module: string }) => {
   };
 
   return (
-    <Paper
-      component={"aside"}
-      sx={{
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-        minWidth: 300,
-      }}
-    >
-      <CustomHeader title="Notifications" />
-      <Box sx={{ p: 2, overflowY: "scroll", maxHeight: "70vh" }}>
+    <Box component="section" aria-label="Notifications">
+      <Box sx={{ p: 2 }}>
         <FormControl>
           <RadioGroup
             value={emailIndex}
@@ -291,7 +288,7 @@ const EmailSidebar = ({ module }: { module: string }) => {
           Send Email
         </Button>
       </Box>
-    </Paper>
+    </Box>
   );
 };
 

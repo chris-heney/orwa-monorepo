@@ -1,90 +1,90 @@
-import React, { useState } from "react";
+import React from "react";
 import { ShowBase, Title } from "react-admin";
-import GrantApplicationDetails from "./components/GrantApplicationDetails";
-import CustomShowHeader from "../../memberships_v2/componenets/CustomShowHeader";
-import { Box, Card, Grid, IconButton, Tooltip } from "@mui/material";
-import ActivityFeed from "../../activity/ActivityFeed";
+import { Box, Card } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
+import GrantApplicationDetails from "./components/GrantApplicationDetails";
+import CustomShowHeader from "../../memberships_v2/componenets/CustomShowHeader";
+import ActivityFeed from "../../activity/ActivityFeed";
 import EmailSidebar from "../../emails-magement/EmailSidebar";
+import {
+  RightDrawer,
+  useCurrentRecordDrawerContext,
+  useDrawerGroup,
+} from "../../_components/drawer";
+import {
+  ActivityAction,
+  NotificationsAction,
+} from "../../_components/heading/HeadingActions";
 
-const GrantApplicationShow = () => {
-  const [viewMode, setViewMode] = useState<"email" | "activity" | "">("");
+type ShowDrawer = "notifications" | "activity";
+
+/** Heading + drawers need the loaded record, so they live inside ShowBase. */
+const GrantApplicationShowContent = () => {
+  const drawers = useDrawerGroup<ShowDrawer>("grant-application-show-drawer");
+  const context = useCurrentRecordDrawerContext();
 
   return (
-    <Box
-      sx={{
-        py: 2,
-      }}
-    >
-      <ShowBase
-        queryOptions={{ meta: { raw: true, populate: true } }}
+    <>
+      <Card sx={{ borderRadius: 0, boxShadow: "none" }}>
+        <Title title="Grant Application Details" />
+        <CustomShowHeader
+          displayField="legal_entity_name"
+          redirectTo="/grant/dashboard"
+          customActions={
+            <>
+              <NotificationsAction
+                active={drawers.isOpen("notifications")}
+                onClick={() => drawers.toggle("notifications")}
+              />
+              <ActivityAction
+                active={drawers.isOpen("activity")}
+                onClick={() => drawers.toggle("activity")}
+              />
+            </>
+          }
+        />
+        <GrantApplicationDetails />
+      </Card>
+
+      <RightDrawer
+        open={drawers.isOpen("notifications")}
+        onClose={drawers.close}
+        title="Notifications"
+        icon={<EmailIcon fontSize="small" />}
+        context={context}
       >
-        <Grid container spacing={2}>
-          <Grid item xs={12} md={viewMode === "" ? 12 : 9}>
-            <Card
-              sx={{
-                borderRadius: 0,
-              }}
-            >
-              <Title title="Grant Application Details" />
-              <CustomShowHeader
-                displayField="legal_entity_name"
-                
-                redirectTo="/grant/dashboard"
-                customActions={
-                  <>
-                    <Tooltip title="Open Notifications" placement="top">
-                      <IconButton
-                        onClick={() =>
-                          viewMode === "email"
-                            ? setViewMode("")
-                            : setViewMode("email")
-                        }
-                        sx={{
-                          color:
-                            viewMode === "email" ? "white" : "primary.main",
-                          mr: 1,
-                        }}
-                      >
-                        <EmailIcon />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Open Activity Feed" placement="top">
-                      <IconButton
-                        onClick={() =>
-                          viewMode === "activity"
-                            ? setViewMode("")
-                            : setViewMode("activity")
-                        }
-                        sx={{
-                          color:
-                            viewMode === "activity" ? "white" : "primary.main",
-                        }}
-                      >
-                        <MarkunreadMailboxIcon />
-                      </IconButton>
-                    </Tooltip>
-                  </>
-                }
-              />
-              <GrantApplicationDetails />
-            </Card>
-          </Grid>
-          <Grid item xs={12} md={3}>
-            {viewMode === "email" && <EmailSidebar module="Grant Management" />}
-            {viewMode === "activity" && (
-              <ActivityFeed
-                entity="grant-application"
-                title=" "
-                entity_id={5846}
-              />
-            )}
-          </Grid>
-        </Grid>
-      </ShowBase>
-    </Box>
+        <EmailSidebar module="Grant Management" />
+      </RightDrawer>
+
+      <RightDrawer
+        open={drawers.isOpen("activity")}
+        onClose={drawers.close}
+        title="Activity Feed"
+        icon={<MarkunreadMailboxIcon fontSize="small" />}
+        context={context}
+      >
+        {/* Wait for the record: without its numeric id the feed would widen
+            to every grant application's activity. */}
+        {context ? (
+          <ActivityFeed
+            entity="grant-application"
+            entityId={context.entityId}
+            title=" "
+            frame="plain"
+          />
+        ) : null}
+      </RightDrawer>
+    </>
   );
 };
+
+const GrantApplicationShow = () => (
+  <Box sx={{ m: 0, p: 0 }}>
+    <ShowBase queryOptions={{ meta: { raw: true, populate: true } }}>
+      <GrantApplicationShowContent />
+    </ShowBase>
+  </Box>
+);
 
 export default GrantApplicationShow;

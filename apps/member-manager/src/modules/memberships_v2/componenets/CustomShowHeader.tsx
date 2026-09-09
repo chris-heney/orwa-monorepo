@@ -1,22 +1,26 @@
 import React, { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import CustomHeader from '../../_components/CustomHeader';
 import {
-  EditButton,
   useRecordContext,
   useRedirect,
   useResourceContext,
 } from 'react-admin';
+import PageHeadingBar from '../../_components/PageHeadingBar';
+import { EditAction } from '../../_components/heading/HeadingActions';
 import { useCan } from '../../rbac-manager/useCan';
-import { BackAction } from '../../_components/heading/HeadingActions';
 
 interface CustomShowHeaderProps {
   redirectTo?: string;
   displayField?: string;
   hasEdit?: boolean;
-  customActions?: ReactNode; // Allow custom buttons to be injected
+  /** Extra heading actions, rendered between Edit and Back. */
+  customActions?: ReactNode;
 }
 
+/**
+ * Show-page heading bar: title from `displayField`, Edit (RBAC-gated),
+ * module actions, and Back as the right-most icon (PageHeadingBar `onBack`).
+ */
 const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
   redirectTo = '/membership-management',
   displayField = 'name',
@@ -42,23 +46,17 @@ const CustomShowHeader: React.FC<CustomShowHeaderProps> = ({
   };
 
   return (
-    <CustomHeader
+    <PageHeadingBar
       title={title}
-      Component={() => (
-        <div>
-          <BackAction onClick={handleBack} />
-          {hasEdit && canOnResource('update', resource) && (
-            <EditButton
-              sx={{
-                color: 'white',
-                mr: 2,
-              }}
-              resource={resource}
-            />
+      onBack={handleBack}
+      actions={
+        <>
+          {hasEdit && record?.id != null && canOnResource('update', resource) && (
+            <EditAction onClick={() => redirect('edit', resource, record.id)} />
           )}
           {customActions}
-        </div>
-      )}
+        </>
+      }
     />
   );
 };
