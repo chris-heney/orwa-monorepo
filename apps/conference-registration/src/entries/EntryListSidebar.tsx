@@ -1,4 +1,5 @@
 // components/Sidebar.js
+import { useRef, useState } from "react";
 import { useNotify } from "mj-react-form-builder";
 import { useSubmitRegistration2 } from "../data/API";
 import { IRegistrationPayload } from "../types/types";
@@ -14,6 +15,11 @@ import {
 import { useEntryList } from "../providers/EntryListProvider";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { useFormContext } from "react-hook-form";
+import {
+  PAYMENT_RISK_MESSAGE,
+  paymentRiskEntryKey,
+  shouldLockRegistrationSubmit,
+} from "../helpers/paymentRisk";
 
 const EntryListSidebar = () => {
   const formContext = (() => {
@@ -40,11 +46,28 @@ const EntryListSidebar = () => {
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
 
   const { notify } = useNotify();
+  const [paymentRiskLocks, setPaymentRiskLocks] = useState<Record<string, true>>({});
+  const inFlightSubmitKeys = useRef(new Set<string>());
+
+  const selectedEntry = selectedSubmission as
+    | { resource: string; data: IRegistrationPayload }
+    | null
+    | undefined;
+  const selectedEntryKey = paymentRiskEntryKey(selectedEntry);
+  const selectedEntryLocked =
+    selectedEntryKey != null && paymentRiskLocks[selectedEntryKey] === true;
 
   const onSubmitFunction = async (entry: {
     resource: string;
     data: IRegistrationPayload;
   }) => {
+    const entryKey = paymentRiskEntryKey(entry);
+    if (!entryKey) return;
+    if (paymentRiskLocks[entryKey] || inFlightSubmitKeys.current.has(entryKey)) {
+      notify(PAYMENT_RISK_MESSAGE, "error");
+      return;
+    }
+    inFlightSubmitKeys.current.add(entryKey);
     const payload: IRegistrationPayload = { ...entry.data, ...getValues() };
 
     try {
@@ -108,6 +131,11 @@ const EntryListSidebar = () => {
         notify(submitResponse.message, "success");
         setViewingEntries(true);
       } else {
+        if (shouldLockRegistrationSubmit(submitResponse)) {
+          setPaymentRiskLocks((locks) => ({ ...locks, [entryKey]: true }));
+          notify(PAYMENT_RISK_MESSAGE, "error");
+          return;
+        }
         notify(
           submitResponse.message || "An error occurred during submission",
           "error"
@@ -125,6 +153,8 @@ const EntryListSidebar = () => {
         `Error submitting application. Please try again later. ${errorMessage}`,
         "error"
       );
+    } finally {
+      inFlightSubmitKeys.current.delete(entryKey);
     }
   };
 
@@ -229,20 +259,20 @@ const EntryListSidebar = () => {
       </div>
 
       {/* Resubmit Button */}
+      {selectedEntryLocked && (
+        <p className="rounded-md border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+          {PAYMENT_RISK_MESSAGE}
+        </p>
+      )}
       <button
         type="button"
         className="w-full bg-green-600 text-white font-semibold text-sm px-4 py-3 rounded-lg shadow-md hover:bg-green-700 transition-transform duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={() =>
-          onSubmitFunction(
-            selectedSubmission as {
-              resource: string;
-              data: IRegistrationPayload;
-            }
-          )
+          selectedEntry ? onSubmitFunction(selectedEntry) : undefined
         }
-        disabled={!selectedSubmission}
+        disabled={!selectedSubmission || selectedEntryLocked}
       >
-        Submit
+        {selectedEntryLocked ? "Contact ORWA" : "Submit"}
       </button>
     </div>
   );

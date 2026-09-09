@@ -565,3 +565,19 @@
   - Full covering suite: 20 files, 180 tests passed.
   - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
   - Diagnostics: no linter errors on touched files.
+
+## Final Static Resubmit Blocker Follow-Up
+
+- EntryListSidebar admin resubmit:
+  - Added a per-entry `paymentRiskEntryKey` shared helper so the same `paymentMayHaveSucceeded` semantics apply to final checkout submit and admin resubmit paths.
+  - `EntryListSidebar` now stores a local payment-risk lock for the selected entry, disables the resubmit button, changes the button label to `Contact ORWA`, and displays the explicit contact-ORWA duplicate-charge warning.
+  - Added an in-flight key guard so repeated clicks before React state updates cannot re-enter the webhook submission handler for the same entry.
+- Tests:
+  - Added `EntryListSidebar.spec.tsx`, covering a payment-risk webhook response and proving a second click does not issue a second submit call.
+  - Extended `paymentRisk.spec.ts` for the stable per-entry lock key.
+  - Fixed `app.spec.tsx` Vitest harness imports/jsdom pragma so the conference-registration suite runs under this repo's current Vitest config.
+- Verification:
+  - Focused resubmit/static suite: 4 files, 33 tests passed.
+  - Full conference-registration suite: 29 files, 181 tests passed.
+  - Diagnostics: no linter errors on touched files.
+  - Production writes: none.
