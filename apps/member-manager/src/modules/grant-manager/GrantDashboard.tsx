@@ -43,7 +43,7 @@ const GrantDashboard = () => {
     dashboardContext,
     isSettingsOpen,
     setIsEmailSidebarOpen,
-    isEmailSidebarOpen,
+    setIsActivitySidebarOpen,
     setResource,
     isCreatePayoutModalOpen,
     closeCreatePayoutModal,
@@ -117,12 +117,15 @@ const GrantDashboard = () => {
       sx={{
         display: "flex",
         flexDirection: isSmall ? "column" : "row",
-        // The Activity drawer is a RightDrawer now (it pushes content via the
-        // layout inset), so only the legacy email well narrows the page.
-        maxWidth: isEmailSidebarOpen ? "90vw" : "96vw",
+        // Fill the layout content column (which already reserves room for an
+        // open RightDrawer) instead of a viewport-based width that would run
+        // under the drawer and hide the heading actions.
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
       }}
     >
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
           {isSmall && <GrantsAccordionFilter />}
           <GrantDashboardHeader />
@@ -137,7 +140,12 @@ const GrantDashboard = () => {
                   setResource(
                     tabs.find((tab) => tab.value === tv)?.resource || null
                   );
-                  tv !== "summary" && setIsEmailSidebarOpen(false);
+                  if (tv !== "summary") {
+                    // Both toggles only exist on Summary; leaving the tab
+                    // must not strand an open drawer with no way to reopen.
+                    setIsEmailSidebarOpen(false);
+                    setIsActivitySidebarOpen(false);
+                  }
                 }}
               >
                 {tabs
@@ -182,7 +190,7 @@ const GrantDashboard = () => {
               ) : (
                 <Box
                   sx={{
-                    maxWidth: isEmailSidebarOpen ? "90vw" : "96vw",
+                    maxWidth: "100%",
                     overflow: "auto",
                   }}
                 >
