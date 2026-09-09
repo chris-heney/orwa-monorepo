@@ -277,6 +277,23 @@ describe("conference contestant REST write service", () => {
     expect(updated).toHaveLength(0);
   });
 
+  it("rejects explicit relation clears and empty set payloads on update", async () => {
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference: null },
+      })
+    ).rejects.toThrow("Cancel and create");
+
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference_ticket: { set: [] } },
+      })
+    ).rejects.toThrow("Cancel and create");
+    expect(updated).toHaveLength(0);
+  });
+
   it("allows personal edits on active contestants but keeps cancelled contestants read-only", async () => {
     await updateContestant(strapi, {
       documentId: "active-1",
@@ -353,14 +370,13 @@ describe("conference contestant REST write service", () => {
     expect(decrements).toBe(2);
   });
 
-  it("rejects direct create when conference dates cannot establish a cycle year", async () => {
-    await expect(
-      createContestant(strapi, {
-        data: { conference: "conf-no-dates", conference_ticket: "golfer", year: 2026 },
-      })
-    ).rejects.toThrow("Conference cycle year is required");
-    expect(created).toHaveLength(0);
-    expect(decrements).toBe(0);
+  it("uses the current year when conference dates cannot establish a cycle year", async () => {
+    await createContestant(strapi, {
+      data: { conference: "conf-no-dates", conference_ticket: "golfer", year: new Date().getFullYear() },
+    });
+
+    expect(created).toHaveLength(1);
+    expect(decrements).toBe(1);
   });
 
   it("uses event start/end dates before registration window dates for create year validation", async () => {

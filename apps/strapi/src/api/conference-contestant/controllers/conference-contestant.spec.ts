@@ -317,6 +317,19 @@ describe("conference contestant controller", () => {
     expect(restoreRequest.conflict).toHaveBeenCalledWith(message);
   });
 
+  it("maps limited-remaining capacity messages as controlled conflicts", async () => {
+    const message =
+      "Only 1 golfer spot remains for the golf tournament, but this registration includes 2 golfers. Please remove 1 golfer entry and try again.";
+    const createRequest = ctx({ data: { conference_ticket: "golfer" } });
+    vi.mocked(createContestant).mockRejectedValueOnce(Object.assign(new Error(message), {
+      name: "ContestantCapacityError",
+    }));
+
+    await (controller as any).create(createRequest);
+
+    expect(createRequest.conflict).toHaveBeenCalledWith(message);
+  });
+
   it("sanitizes and transforms the cancelled contestant response", async () => {
     const request = ctx({ reason: "Golf overage" });
     const entity = {

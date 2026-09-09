@@ -68,6 +68,7 @@ describe("conference registration matrix", () => {
   let emailSend: ReturnType<typeof vi.fn>;
   let controller: ReturnType<typeof createController>;
   let dbDecrement: ReturnType<typeof vi.fn>;
+  let dbIncrement: ReturnType<typeof vi.fn>;
   let availableContestants: number | null;
   let failContestantCreate: boolean;
 
@@ -168,17 +169,30 @@ describe("conference registration matrix", () => {
       generateEmailHTML: vi.fn(async () => "<p>matrix</p>"),
     };
 
-    dbDecrement = vi.fn(async () => 1);
+    dbDecrement = vi.fn(async (_column: string, amount = 1) => {
+      if (availableContestants == null) return 0;
+      if (availableContestants < amount) return 0;
+      availableContestants -= amount;
+      return 1;
+    });
+    dbIncrement = vi.fn(async (_column: string, amount = 1) => {
+      if (availableContestants == null) return 0;
+      availableContestants += amount;
+      return 1;
+    });
 
     const strapi = {
       config: { environment: "test" },
       service: () => service,
       db: {
-        connection: (_table: string) => ({
-          where: (_criteria: Record<string, unknown>) => ({
+        connection: (_table: string) => {
+          const builder = {
+            where: vi.fn(() => builder),
             decrement: dbDecrement,
-          }),
-        }),
+            increment: dbIncrement,
+          };
+          return builder;
+        },
       },
       documents: (uid: string) => ({
         create: vi.fn(async ({ data }: { data: any }) => {
@@ -470,9 +484,23 @@ describe("conference registration matrix", () => {
     failContestantCreate = true;
     const body = {
       ...basePayload("MixedFail"),
-      registration_type: "Contestant",
+      registration_type: "Attendee",
       paymentType: "Card",
       tickets: [
+        {
+          first: "Attendee",
+          last: "Person",
+          email: "attendee-person@example.invalid",
+          phone: "4055550102",
+          type: "Attendee",
+          price: 100,
+          extras: [],
+          ticket_type: {
+            id: 22,
+            name: "Attendee",
+            context: "Attendee",
+          },
+        },
         {
           first: "Solo",
           last: "Golfer",
@@ -504,6 +532,86 @@ describe("conference registration matrix", () => {
       expect.any(Error),
       expect.stringMatching(/registration/i)
     );
+  });
+
+  it("reserves golf capacity atomically before payment so concurrent requests cannot oversell", async () => {
+    availableContestants = 1;
+    const one = submitRaw({
+      ...basePayload("RaceOne"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [golferLine("RaceOne")],
+      paymentData: { ...basePayload("RaceOne").paymentData, amount: 125 },
+    });
+    const two = submitRaw({
+      ...basePayload("RaceTwo"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [golferLine("RaceTwo")],
+      paymentData: { ...basePayload("RaceTwo").paymentData, amount: 125 },
+    });
+
+    const results = await Promise.all([one, two]);
+
+    expect(results.filter((body) => body?.result === "success")).toHaveLength(1);
+    expect(results.filter((body) => body?.result === "error")).toHaveLength(1);
+    expect(service.processPayment).toHaveBeenCalledTimes(1);
+    expect(dbDecrement).toHaveBeenCalledTimes(2);
+    expect(availableContestants).toBe(0);
+  });
+
+  it("releases a reserved golf slot exactly once when payment fails", async () => {
+    availableContestants = 1;
+    service.processPayment = vi.fn(async () => ({
+      messages: { resultCode: "Error", message: [{ text: "Card declined" }] },
+    }));
+
+    const body = await submitRaw({
+      ...basePayload("PaymentFail"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [golferLine("PaymentFail")],
+      paymentData: { ...basePayload("PaymentFail").paymentData, amount: 125 },
+    });
+
+    expect(body).toMatchObject({ result: "error" });
+    expect(dbDecrement).toHaveBeenCalledTimes(1);
+    expect(dbIncrement).toHaveBeenCalledTimes(1);
+    expect(availableContestants).toBe(1);
+    expect(created["api::conference-contestant.conference-contestant"]).toBeUndefined();
+  });
+
+  it("releases a reserved golf slot exactly once when contestant creation fails", async () => {
+    availableContestants = 1;
+    failContestantCreate = true;
+
+    const body = await submitRaw({
+      ...basePayload("CreateFail"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [golferLine("CreateFail")],
+      paymentData: { ...basePayload("CreateFail").paymentData, amount: 125 },
+    });
+
+    expect(body).not.toMatchObject({ result: "success" });
+    expect(dbDecrement).toHaveBeenCalledTimes(1);
+    expect(dbIncrement).toHaveBeenCalledTimes(1);
+    expect(availableContestants).toBe(1);
+  });
+
+  it("consumes reserved golf capacity only once on success", async () => {
+    availableContestants = 2;
+
+    await submit({
+      ...basePayload("ReserveSuccess"),
+      registration_type: "Contestant",
+      tickets: [golferLine("ReserveSuccess")],
+      paymentData: { ...basePayload("ReserveSuccess").paymentData, amount: 125 },
+    });
+
+    expect(dbDecrement).toHaveBeenCalledTimes(1);
+    expect(dbIncrement).not.toHaveBeenCalled();
+    expect(availableContestants).toBe(1);
   });
 
   it.each([

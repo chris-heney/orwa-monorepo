@@ -127,6 +127,26 @@ describe("conference contestant lifecycle guard", () => {
     ).rejects.toThrow("Cancel and create");
   });
 
+  it("rejects explicit relation clears and empty set payloads", async () => {
+    findOneById.mockResolvedValue({
+      documentId: "contestant-1",
+      conference: { id: 3, documentId: "conf-doc" },
+      conference_ticket: { id: 37, documentId: "ticket-doc" },
+    });
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ conference: null }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("Cancel and create");
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event({ conference_ticket: { set: [] } }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("Cancel and create");
+  });
+
   it("allows unchanged lifecycle full-record values while blocking actual transitions", async () => {
     findOneById.mockResolvedValue({
       documentId: "contestant-1",

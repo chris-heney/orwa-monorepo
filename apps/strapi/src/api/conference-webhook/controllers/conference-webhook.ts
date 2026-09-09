@@ -34,8 +34,10 @@ import {
   ContestantCapacityError,
   countsAgainstGolfCapacity,
   golferCount,
+  golfCapacityMessage,
   isContestantTicket,
 } from "../helpers/contestant-capacity";
+import { conferenceCycleYear } from "../helpers/conference-cycle-year";
 
 /**
  * Conference webhook controller
@@ -53,6 +55,16 @@ const selectionFor = (
   return typeof raw === "string" && raw.trim() !== "" ? raw.trim() : null;
 };
 
+type GolfReservation = {
+  reserved: number;
+  release: () => Promise<void>;
+};
+
+const noGolfReservation = (): GolfReservation => ({
+  reserved: 0,
+  release: async () => undefined,
+});
+
 export default ({ strapi }) => {
   const service = strapi.service("api::conference-webhook.conference-webhook");
   const  currentYear  = new Date().getFullYear();
@@ -66,6 +78,7 @@ export default ({ strapi }) => {
      */
     registration: async (ctx, next) => {
       ctx.body = "ok";
+      let golfReservation = noGolfReservation();
 
       console.log("↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ Starting Registration ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓");
 
@@ -100,6 +113,7 @@ export default ({ strapi }) => {
         const conferenceData = await findOneById("api::conference.conference", conference, {
           populate: "*"
         });
+        const eventYear = conferenceCycleYear(conferenceData, currentYear);
 
         const isContestantOnlyCheckout = registration_type === "Contestant";
         const contestantTickets: ITicketPayload[] = (tickets ?? []).filter(
@@ -217,18 +231,14 @@ export default ({ strapi }) => {
 
         // Only proceed with new registration if not a resubmission or no admin options
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
-          // Authoritative golf-capacity gate. Client checks alone oversold the
-          // 2026 Fall golf tournament (available_contestants went to -20), so
-          // re-count against the fresh conference row at write time — BEFORE
-          // charging the card or creating anything. Applies to every source
-          // (online, kiosk, admin view, resubmit) and both checkout branches.
+          // Authoritative golf-capacity reservation. Client checks alone
+          // oversold the 2026 Fall golf tournament; reserve atomically BEFORE
+          // charging the card or creating records, then release on critical
+          // failure. Null capacity remains uncapped.
           const requestedGolfers = golferCount(tickets);
           if (requestedGolfers > 0) {
             try {
-              assertGolfCapacity(
-                conferenceData?.available_contestants,
-                requestedGolfers
-              );
+              golfReservation = await reserveGolfCapacity(conferenceData, requestedGolfers);
             } catch (err) {
               if (err instanceof ContestantCapacityError) {
                 console.warn(
@@ -266,6 +276,7 @@ export default ({ strapi }) => {
             );
 
             if (authorizeNetResponse.messages.resultCode !== "Ok") {
+              await golfReservation.release();
               await reportFailure(
                 ctx.request.body,
                 authorizeNetResponse.messages.message?.[0]?.text ??
@@ -411,7 +422,7 @@ export default ({ strapi }) => {
                     "api::conference-registration.conference-registration",
                     {
                       conference,
-                      year: currentYear,
+                      year: eventYear,
                       registration_date: new Date(),
                       registrant: registrantContact.id,
                       total: sharePaymentAmount(standaloneContestants),
@@ -476,7 +487,7 @@ export default ({ strapi }) => {
                     "api::conference-registration.conference-registration",
                     {
                       conference,
-                      year: currentYear,
+                      year: eventYear,
                       registration_date: new Date(),
                       registrant: registrantContact.id,
                       total: paymentData.amount,
@@ -569,19 +580,13 @@ export default ({ strapi }) => {
             ctx.request.body
           );
 
-          await runSafely(
-            "contestants",
-            async () => {
-              contestantIds = await handleContestants(
-                tickets,
-                conference,
-                registrationId,
-                registrationSource,
-                organization,
-                conferenceData
-              );
-            },
-            ctx.request.body
+          contestantIds = await handleContestants(
+            tickets,
+            conference,
+            registrationId,
+            registrationSource,
+            organization,
+            conferenceData
           );
 
           if (team && contestantIds.length > 0) {
@@ -631,6 +636,7 @@ export default ({ strapi }) => {
       } catch (err) {
         console.log("Error:", err);
         console.log("Error: Details", err?.details?.errors);
+        await golfReservation.release();
         await reportFailure(ctx.request.body, err, "registration");
         ctx.body = err;
       }
@@ -695,6 +701,45 @@ export default ({ strapi }) => {
         reportErr
       );
     }
+  }
+
+  function affectedRows(result: unknown): number {
+    if (typeof result === "number") return result;
+    if (Array.isArray(result) && typeof result[0] === "number") return result[0];
+    return result ? 1 : 0;
+  }
+
+  async function reserveGolfCapacity(
+    conferenceData: Record<string, any> | null | undefined,
+    requestedGolfers: number
+  ): Promise<GolfReservation> {
+    if (requestedGolfers <= 0 || conferenceData?.available_contestants == null) {
+      return noGolfReservation();
+    }
+    assertGolfCapacity(conferenceData.available_contestants, requestedGolfers);
+
+    const result = await strapi.db
+      .connection("conferences")
+      .where({ id: conferenceData.id })
+      .where("available_contestants", ">=", requestedGolfers)
+      .decrement("available_contestants", requestedGolfers);
+
+    if (affectedRows(result) !== 1) {
+      throw new ContestantCapacityError(golfCapacityMessage(0, requestedGolfers));
+    }
+
+    let released = false;
+    return {
+      reserved: requestedGolfers,
+      release: async () => {
+        if (released) return;
+        released = true;
+        await strapi.db
+          .connection("conferences")
+          .where({ id: conferenceData.id })
+          .increment("available_contestants", requestedGolfers);
+      },
+    };
   }
 
   async function createConferenceInvoice({
@@ -998,7 +1043,7 @@ export default ({ strapi }) => {
 
       const newContestant = {
         conference,
-        year: currentYear,
+        year: conferenceCycleYear(conferenceData, currentYear),
         registration: registrationId,
         first: contestant.first,
         last: contestant.last,
@@ -1026,19 +1071,6 @@ export default ({ strapi }) => {
     });
 
     await Promise.all(contestantPromises);
-
-    // Update available contestants count. Must be an atomic SQL decrement:
-    // the old read-modify-write from the request-start conferenceData lost
-    // concurrent decrements (and mixed carts calling handleContestants more
-    // than once per request overwrote each other), which drifted the counter.
-    const soldGolfers = contestants.filter(countsAgainstGolfCapacity).length;
-
-    if (soldGolfers > 0 && conferenceData?.available_contestants != null) {
-      await strapi.db
-        .connection("conferences")
-        .where({ id: conferenceData.id })
-        .decrement("available_contestants", soldGolfers);
-    }
 
     return contestantIds;
   }

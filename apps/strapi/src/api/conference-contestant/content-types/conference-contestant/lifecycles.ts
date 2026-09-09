@@ -71,13 +71,30 @@ const normalizeRelationValue = (value: unknown): string | number | null => {
 const sameRelation = (requested: unknown, current: unknown): boolean => {
   const requestedId = normalizeRelationValue(requested);
   const currentId = normalizeRelationValue(current);
-  const currentDocId =
-    typeof current === "object" && current
-      ? (current as Record<string, unknown>).documentId
-      : null;
+  const currentRecord =
+    typeof current === "object" && current ? (current as Record<string, unknown>) : {};
+  const currentDocId = currentRecord.documentId;
+  const currentEntityId = currentRecord.id;
 
+  if (isExplicitRelationClear(requested)) {
+    return currentId == null && currentDocId == null && currentEntityId == null;
+  }
   if (requestedId == null) return true;
-  return requestedId === currentId || requestedId === currentDocId;
+  return (
+    requestedId === currentId ||
+    requestedId === currentDocId ||
+    String(requestedId) === String(currentEntityId)
+  );
+};
+
+const isExplicitRelationClear = (value: unknown): boolean => {
+  if (value === null || value === "") return true;
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record.set) && record.set.length === 0) return true;
+  if (Array.isArray(record.connect) && record.connect.length === 0) return true;
+  if (Array.isArray(record.disconnect)) return true;
+  return false;
 };
 
 const loadCurrentContestant = async (

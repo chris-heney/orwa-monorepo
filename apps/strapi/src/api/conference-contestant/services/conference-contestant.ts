@@ -7,6 +7,7 @@ import {
   assertGolfCapacity,
   countsAgainstGolfCapacity,
 } from "../../conference-webhook/helpers/contestant-capacity";
+import { conferenceCycleYear } from "../../conference-webhook/helpers/conference-cycle-year";
 import { findOneById } from "../../../utils/document-compat";
 import { withContestantRestCreate } from "./contestant-lifecycle-context";
 import {
@@ -122,12 +123,25 @@ const sameRelation = (requested: unknown, current: unknown): boolean => {
   const currentDocId = currentRecord.documentId;
   const currentEntityId = currentRecord.id;
 
+  if (isExplicitRelationClear(requested)) {
+    return currentId == null && currentDocId == null && currentEntityId == null;
+  }
   if (requestedId == null) return true;
   return (
     requestedId === currentId ||
     requestedId === currentDocId ||
     String(requestedId) === String(currentEntityId)
   );
+};
+
+const isExplicitRelationClear = (value: unknown): boolean => {
+  if (value === null || value === "") return true;
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record.set) && record.set.length === 0) return true;
+  if (Array.isArray(record.connect) && record.connect.length === 0) return true;
+  if (Array.isArray(record.disconnect)) return true;
+  return false;
 };
 
 const isNumericId = (value: string | number): boolean =>
@@ -164,17 +178,6 @@ const requireIntegerYear = (value: unknown): number => {
     throw badRequest("Conference contestant year is required and must be an integer.");
   }
   return year as number;
-};
-
-const conferenceCycleYear = (conference: Record<string, unknown>): number | null => {
-  const date =
-    conference.start_date ??
-    conference.end_date ??
-    conference.registration_start ??
-    conference.registration_end;
-  if (typeof date !== "string" || !date) return null;
-  const year = new Date(`${date}T00:00:00Z`).getUTCFullYear();
-  return Number.isFinite(year) ? year : null;
 };
 
 const ticketBelongsToConference = (
@@ -222,10 +225,7 @@ export const createContestant = async (
     throw notFound("Selected conference was not found.");
   }
   const expectedYear = conferenceCycleYear(conference);
-  if (expectedYear == null) {
-    throw badRequest("Conference cycle year is required for contestant creation.");
-  }
-  if (expectedYear != null && year !== expectedYear) {
+  if (year !== expectedYear) {
     throw badRequest(`Conference contestant year must match conference cycle ${expectedYear}.`);
   }
   const selectedConferenceDocumentId =

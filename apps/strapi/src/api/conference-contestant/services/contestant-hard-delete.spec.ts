@@ -16,6 +16,7 @@ describe("contestant hard delete for registration removal", () => {
   let capacity: number;
   let failIncrement: boolean;
   let failDelete: boolean;
+  let contestantRowsPresent: Set<string>;
 
   beforeEach(() => {
     contestants = {
@@ -42,8 +43,9 @@ describe("contestant hard delete for registration removal", () => {
     capacity = 0;
     failIncrement = false;
     failDelete = false;
+    contestantRowsPresent = new Set(["golfer", "fisher", "cancelled"]);
 
-    const makeBuilder = () => {
+    const makeBuilder = (table: string) => {
       let criteria: Record<string, unknown> = {};
       const builder = {
         where: vi.fn((next: Record<string, unknown>) => {
@@ -52,7 +54,14 @@ describe("contestant hard delete for registration removal", () => {
         }),
         forUpdate: vi.fn(() => builder),
         transacting: vi.fn(() => builder),
-        first: vi.fn(async () => ({ document_id: criteria.document_id })),
+        first: vi.fn(async () => {
+          if (table === "conference_contestants") {
+            return contestantRowsPresent.has(String(criteria.document_id))
+              ? { document_id: criteria.document_id }
+              : null;
+          }
+          return { document_id: criteria.document_id };
+        }),
         increment: vi.fn(async (_column: string, amount = 1) => {
           if (failIncrement) throw new Error("increment failed");
           capacity += amount;
@@ -73,7 +82,7 @@ describe("contestant hard delete for registration removal", () => {
             throw error;
           }
         }),
-        connection: vi.fn(() => makeBuilder()),
+        connection: vi.fn((table: string) => makeBuilder(table)),
       },
       documents: vi.fn((uid: string) => {
         expect(uid).toBe("api::conference-contestant.conference-contestant");
@@ -84,6 +93,7 @@ describe("contestant hard delete for registration removal", () => {
           delete: vi.fn(async ({ documentId }: { documentId: string }) => {
             if (failDelete) throw new Error("delete failed");
             deleted.push(documentId);
+            contestantRowsPresent.delete(documentId);
             return { documentId };
           }),
         };
@@ -131,5 +141,14 @@ describe("contestant hard delete for registration removal", () => {
 
     expect(capacity).toBe(1);
     expect(deleted).toEqual(["golfer"]);
+  });
+
+  it("locks the contestant row before active-state checks so duplicate deletes restore once", async () => {
+    await hardDeleteContestantForRegistrationRemoval(strapi, "golfer");
+    await hardDeleteContestantForRegistrationRemoval(strapi, "golfer");
+
+    expect(capacity).toBe(1);
+    expect(deleted).toEqual(["golfer"]);
+    expect(strapi.db.connection).toHaveBeenCalledWith("conference_contestants");
   });
 });

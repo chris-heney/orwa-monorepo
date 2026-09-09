@@ -442,3 +442,50 @@
   - Diagnostics: no linter errors on touched files.
 - Remaining concern:
   - Local unit lifecycle export assertion remains in place, but real Strapi boot verification is still deferred to Task 8 as requested.
+
+## Webhook Race NO-SHIP Follow-Up RED
+
+- Mixed-cart contestant failure:
+  - Fixed the regression test to use an Attendee/Vendor-style mixed cart (`registration_type: Attendee`) with an attendee line plus a golfer contestant line.
+  - Observed failure: `handleContestants` was wrapped in `runSafely`, so post-charge contestant create failure still returned success.
+- Atomic capacity reservation:
+  - Added race coverage for two simultaneous card requests with one remaining golfer slot.
+  - Added payment-failure and contestant-create-failure tests proving reserved slots release exactly once and the response is not success.
+  - Added success coverage proving one golfer success decrements capacity once, not again in `handleContestants`.
+  - Observed failure: both concurrent requests reached payment/success because capacity was checked from stale request-start data and decremented later.
+- Relation clears:
+  - Added lifecycle and REST service tests proving explicit `null`, empty `{ set: [] }`, and disconnect-like relation clears are rejected while absent keys remain no-op and unchanged values are allowed.
+  - Observed failure: explicit clears normalized to `null` and were treated as unchanged.
+- Hard delete duplicate/concurrency:
+  - Added hard-delete coverage requiring a contestant-row lock before active-state checks and proving duplicate whole-registration delete attempts return exactly one slot.
+  - Observed failure: the service could active-check the same contestant twice and increment capacity twice.
+- Year alignment:
+  - Added shared helper tests for event `start_date`/`end_date` precedence, registration-window fallback, and current-year fallback when dates are absent.
+  - Direct create tests cover registration opening in the prior year while the event year is current.
+- Capacity error mapping:
+  - Added controller coverage for `ContestantCapacityError` messages that start with `Only N golfer...`, proving they map to 409 instead of keyword/generic fallback.
+
+## Webhook Race NO-SHIP Follow-Up GREEN
+
+- Mixed-cart failures:
+  - Attendee/Vendor branch no longer wraps `handleContestants` in `runSafely`; contestant creation/capacity failures are critical and return non-success.
+- Atomic reservation:
+  - Webhook now reserves golfer slots before card/invoice processing and before registration writes using one conditional SQL decrement when capacity is configured.
+  - Null `available_contestants` remains uncapped.
+  - Reservation is tracked per request and released exactly once on payment failure or critical post-reservation write failure.
+  - The old decrement at the end of `handleContestants` was removed, so successful requests consume capacity once.
+  - No DB transaction is held open around external payment.
+- Relation clears:
+  - Lifecycle and REST service relation comparison now distinguishes absent relation keys from explicit clear/disconnect payloads.
+  - Numeric, string, documentId, object, and `{ set: [...] }` unchanged relation shapes remain accepted.
+- Hard delete:
+  - Whole-registration hard delete locks the contestant row and conference row in the same transaction before active golfer slot restoration and Document Service delete.
+  - Delete failure rolls back the capacity increment in tests; retry restores exactly once.
+- Year alignment:
+  - Added shared `conferenceCycleYear` helper and used it in direct staff create and webhook contestant year writes.
+  - Event dates are authoritative; registration dates are fallback; no-date conferences use current year consistently.
+- Verification:
+  - Targeted race/lifecycle suite: 6 files, 71 tests passed.
+  - Full requested suite: 14 files, 157 tests passed.
+  - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
+  - Diagnostics: no linter errors on touched files.

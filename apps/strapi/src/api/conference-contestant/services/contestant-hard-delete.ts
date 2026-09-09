@@ -11,6 +11,14 @@ export const hardDeleteContestantForRegistrationRemoval = async (
   documentId: string
 ) => {
   return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
+    const contestantRow = await strapi.db
+      .connection("conference_contestants")
+      .where({ document_id: documentId })
+      .forUpdate()
+      .transacting(trx)
+      .first();
+    if (!contestantRow) return null;
+
     const contestant = await strapi.documents(CONTESTANT_UID).findOne({
       documentId,
       populate: { conference: true, conference_ticket: true },

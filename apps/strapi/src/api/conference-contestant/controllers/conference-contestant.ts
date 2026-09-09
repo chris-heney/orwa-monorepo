@@ -56,6 +56,9 @@ const mapContestantActionError = (ctx: any, error: unknown) => {
     if (error.statusCode === 409) return ctx.conflict(error.publicMessage);
     return ctx.badRequest(error.publicMessage);
   }
+  if ((error as { name?: string })?.name === "ContestantCapacityError") {
+    return ctx.conflict(message);
+  }
 
   const lowerMessage = message.toLowerCase();
 
@@ -64,9 +67,6 @@ const mapContestantActionError = (ctx: any, error: unknown) => {
   }
 
   if (lowerMessage.includes("sold out") || lowerMessage.includes("capacity")) {
-    if ((error as { name?: string })?.name === "ContestantCapacityError") {
-      return ctx.conflict(message);
-    }
     return ctx.conflict("Conference contestant capacity is unavailable.");
   }
 
