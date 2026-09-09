@@ -215,30 +215,23 @@ const ConferenceDashboard = () => {
         disableSyncWithLocation
         exporter={getCurrentExporter()}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: isSmall ? "column" : "row",
-            flexGrow: 1,
-            alignItems: "flex-start",
-            gap: 2,
-          }}
-        >
-          <Box sx={{ flexGrow: 1, minWidth: 0, width: "100%" }}>
-            <TabContext value={selectedTab.toString()}>
-              <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
-                {isSmall && (
-                  <ConferenceAccordionFilter conferenceYears={conferenceYears} />
-                )}
-                <ConferenceHeader />
-                <ConferenceTabList />
-              </Box>
-              <ConferenceTabPanels />
-            </TabContext>
-          </Box>
-
-          {!isSmall && <ConferenceFilters />}
+        {/* No flex row / `gap` around the filters: the RightDrawer is out of
+            flow (fixed paper + DrawerInsetProvider padding), so a gap here only
+            produced a permanent 16px right gutter on the content column. */}
+        <Box sx={{ width: "100%", minWidth: 0 }}>
+          <TabContext value={selectedTab.toString()}>
+            <Box sx={{ position: "sticky", top: 0, zIndex: 10, mt: 0 }}>
+              {isSmall && (
+                <ConferenceAccordionFilter conferenceYears={conferenceYears} />
+              )}
+              <ConferenceHeader />
+              <ConferenceTabList />
+            </Box>
+            <ConferenceTabPanels />
+          </TabContext>
         </Box>
+
+        {!isSmall && <ConferenceFilters />}
       </ListBase>
     </Box>
   );

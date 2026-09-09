@@ -258,7 +258,7 @@ export const ConferenceTabPanels = () => {
   return (
     <Box
       sx={{
-        mb: 2,
+        mb: 0,
         backgroundColor:
           selectedTab === "summary" ? "transparent" : "background.paper",
         width: "100%",
@@ -267,11 +267,12 @@ export const ConferenceTabPanels = () => {
       }}
     >
       {tabs.map((value, index) => (
+        // `a11yTabPanelProps` already carries `sx: { p: 0 }` — every panel is
+        // flush; do not pass a per-panel `sx` here (it would replace it).
         <TabPanel
           key={`panel-${index}`}
           value={value}
           {...a11yTabPanelProps(index)}
-          sx={value === "summary" ? { p: 0 } : undefined}
         >
           {getTabComponent(value)}
         </TabPanel>

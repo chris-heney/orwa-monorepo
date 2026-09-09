@@ -29,6 +29,13 @@ export const dashboardTabListSx = {
       ? theme.palette.grey[900]
       : theme.palette.grey[100],
   overflow: 'clip',
+  // react-admin's layout root is `min-width: fit-content`, so a long scrollable
+  // tab strip (Conference: 15 tabs) would otherwise report its full
+  // max-content width and stretch the whole page past the viewport. A definite
+  // `width: 0` zeroes that intrinsic contribution; `minWidth: 100%` still lets
+  // the strip fill its column.
+  width: 0,
+  minWidth: '100%',
 } as const
 
 /** RA Create / Edit / Show shell — no 1em top gutter, no rounded paper. */
