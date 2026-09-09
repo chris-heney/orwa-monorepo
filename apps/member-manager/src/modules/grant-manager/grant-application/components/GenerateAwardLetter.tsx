@@ -1,5 +1,8 @@
 import React from "react";
-import { generateAwardLetter } from "../helpers/generateAwardLetterPdf";
+import {
+  AwardLetterDataError,
+  generateAwardLetter,
+} from "../helpers/generateAwardLetterPdf";
 import uploadService from "../../../../services/uploadService/uploadService";
 import { IGrantApplication } from "../GrantApplicationTypes";
 import { Box, Button, Tooltip } from "@mui/material";
@@ -44,17 +47,27 @@ export const GenerateAwardLetter: React.FC<GenerateAwardLetterProps> = ({
   };
 
   const handleUpload = async () => {
-
-    if (!application.chairman) {
-      notify("Error Generating Letter: Chairman not found", {
-        type: "error",
-      });
+    let pdfBytes: Uint8Array;
+    try {
+      pdfBytes = await generateAwardLetter({ ...application });
+    } catch (error) {
+      // Every merge tag in the agreement must resolve; a signed agreement
+      // with a blank dollar amount or chairman is worse than no agreement.
+      const message =
+        error instanceof AwardLetterDataError
+          ? `Cannot generate RIG Agreement — fill in: ${error.missing.join(", ")}`
+          : "Error generating the RIG Agreement PDF";
+      notify(message, { type: "error" });
       return;
     }
-  
-    const pdfBytes = await generateAwardLetter({...application});
 
-    const generatedFile = new File([pdfBytes], `${application.legal_entity_name}-AwardLetter.pdf`, {
+    // Copy into a plain ArrayBuffer: TS 5.7 types pdf-lib's output as
+    // Uint8Array<ArrayBufferLike>, which is not assignable to BlobPart.
+    const pdfBuffer = pdfBytes.buffer.slice(
+      pdfBytes.byteOffset,
+      pdfBytes.byteOffset + pdfBytes.byteLength
+    ) as ArrayBuffer;
+    const generatedFile = new File([pdfBuffer], `${application.legal_entity_name}-AwardLetter.pdf`, {
       type: "application/pdf",
     });
 
