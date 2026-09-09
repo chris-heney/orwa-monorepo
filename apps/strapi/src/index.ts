@@ -247,6 +247,29 @@ const configureAdminRbacPermissions = async (strapi) => {
   }
 };
 
+// Conference Manager replaced contestant hard-delete with the custom
+// cancel/restore routes. Custom routes ship with no role permission, so
+// without this the Cancel/Restore buttons 403 for every user. Mirrors the
+// Admin-only scope the rest of the contestant CRUD already uses.
+export const CONTESTANT_LIFECYCLE_ACTIONS = [
+  'api::conference-contestant.conference-contestant.cancel',
+  'api::conference-contestant.conference-contestant.restore',
+];
+
+const configureContestantLifecyclePermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(
+      strapi,
+      { type: 'admin' },
+      CONTESTANT_LIFECYCLE_ACTIONS,
+    );
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure contestant lifecycle permissions: ${error.message}`,
+    );
+  }
+};
+
 // User impersonation ("test as user") is Admin-only. Never grant to
 // public/authenticated/staff — it mints a session token for any target user.
 const ADMIN_IMPERSONATION_ACTIONS = [
@@ -447,6 +470,7 @@ export default {
     await configureUserPreferencesPermissions(strapi);
     await configureAdminRbacPermissions(strapi);
     await configureAdminImpersonationPermissions(strapi);
+    await configureContestantLifecyclePermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
     await configureAwardTypeApiTokenFind(strapi);
     await seedAwardTypeCatalog(strapi);
