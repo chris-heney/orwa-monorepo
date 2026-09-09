@@ -1,30 +1,16 @@
-import { useEffect, useRef } from "react";
-import { userPreferencesStore } from "../helpers/userPreferencesStore";
-import CookieStore from "../helpers/ra-strapi-data-provider/src/CookieStore";
-
 /**
- * Hydrates RaStore from server user_preferences on authenticated boot,
- * and flushes pending writes on page unload.
+ * @deprecated No-op kept only so the existing `<UserPreferencesSync />` line
+ * in App.tsx keeps compiling. Delete that line (and this file) at the next
+ * App.tsx touch.
+ *
+ * Why it is a no-op: react-admin 4 only accepts `<Resource>` / `<CustomRoutes>`
+ * children of `<Admin>` (`getRoutesAndResourceFromNodes` silently drops
+ * anything else), so this component NEVER mounted — the boot hydrate it was
+ * supposed to run never fired, and every re-login lost the saved view
+ * settings. Those responsibilities now live where they are guaranteed to run:
+ * - hydrate: `authProvider.checkAuth` / `login` → `userPreferencesStore.ensureHydrated`
+ * - unload flush: `userPreferencesStore.setup()` (pagehide/beforeunload, keepalive)
  */
-const UserPreferencesSync = () => {
-  const ranForToken = useRef<string | null>(null);
-
-  useEffect(() => {
-    const token = CookieStore.getCookie("token");
-    if (!token || ranForToken.current === token) return;
-    ranForToken.current = token;
-    void userPreferencesStore.fetchAndSync();
-  }, []);
-
-  useEffect(() => {
-    const onUnload = () => {
-      void userPreferencesStore.flush();
-    };
-    window.addEventListener("beforeunload", onUnload);
-    return () => window.removeEventListener("beforeunload", onUnload);
-  }, []);
-
-  return null;
-};
+const UserPreferencesSync = () => null;
 
 export default UserPreferencesSync;

@@ -1,6 +1,9 @@
 import CookieStore from './CookieStore';
 import { AuthProvider, UserIdentity } from 'react-admin';
-import { userPreferencesStore } from '../../userPreferencesStore';
+import {
+  HYDRATE_GATE_TIMEOUT_MS,
+  userPreferencesStore,
+} from '../../userPreferencesStore';
 export interface IUserIdentity extends UserIdentity {
   role: string;
   token: string;
@@ -27,6 +30,18 @@ const fetchUserWithRole = async (userId: string | number, token: string) => {
 
   return response.json();
 };
+
+/**
+ * Boot gate for saved view settings. Resolves once the server prefs for the
+ * current token are applied locally, or after HYDRATE_GATE_TIMEOUT_MS, or on
+ * error — it never rejects, so a slow/failed prefs API cannot block login.
+ */
+const hydratePreferencesSafely = (): Promise<void> =>
+  userPreferencesStore
+    .ensureHydrated(HYDRATE_GATE_TIMEOUT_MS)
+    .catch((err) => {
+      console.warn('[authProvider] preferences hydrate failed', err);
+    });
 
 const authProvider: AuthProvider = {
   getIdentity: async (): Promise<IUserIdentity> => {
@@ -102,6 +117,10 @@ const authProvider: AuthProvider = {
     if (userId != null) {
       CookieStore.setCookie('id', String(userId), 1);
     }
+    // Apply this user's saved view settings BEFORE react-admin navigates into
+    // the app, so no list mounts with defaults and pushes them back over the
+    // server copy. Bounded and non-fatal: prefs must never block a login.
+    await hydratePreferencesSafely();
     return { success: true, user: userWithRole };
   },
 
@@ -135,9 +154,14 @@ const authProvider: AuthProvider = {
     return;
   },
 
+  // react-admin awaits this before rendering any authenticated route
+  // (`requireAuth`), which makes it the one reliable "authenticated boot"
+  // hook: hydrate RaStore from the server here so lists mount with the saved
+  // prefs already in place. Memoised per token, so the many checkAuth calls
+  // after the first are free.
   checkAuth: () => {
     return CookieStore.getCookie('token')
-      ? Promise.resolve()
+      ? hydratePreferencesSafely()
       : Promise.reject();
   },
 

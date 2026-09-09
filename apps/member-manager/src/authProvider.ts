@@ -33,6 +33,22 @@ const fetchUserWithRole = async (
   return response.json();
 };
 
+/**
+ * Boot gate for saved view settings (server `user_preferences` → RaStore).
+ * Resolves once applied, on timeout, or on error — never rejects, so a
+ * slow/failed prefs API cannot block a login.
+ */
+const hydratePreferencesSafely = async (): Promise<void> => {
+  try {
+    const { userPreferencesStore, HYDRATE_GATE_TIMEOUT_MS } = await import(
+      './helpers/userPreferencesStore'
+    );
+    await userPreferencesStore.ensureHydrated(HYDRATE_GATE_TIMEOUT_MS);
+  } catch (err) {
+    console.warn('[authProvider] preferences hydrate failed', err);
+  }
+};
+
 const authProvider: AuthProvider = {
   getIdentity: async (): Promise<IUserIdentity> => {
     try {
@@ -115,6 +131,11 @@ const authProvider: AuthProvider = {
       Cookies.setCookie('email', userData.user.email, 1);
       Cookies.setCookie('id', userData.user.id, 1);
 
+      // Apply this user's saved view settings before the app renders (the
+      // login page hard-reloads next, where checkAuth gates again — this is
+      // memoised per token). Bounded + non-fatal: never blocks a login.
+      await hydratePreferencesSafely();
+
       return { success: true, user: userWithRole };
     } catch (error: any) {
       return { success: false, error: error.message };
@@ -154,8 +175,12 @@ const authProvider: AuthProvider = {
     Cookies.deleteCookie('id');
   },
 
+  // Same boot gate as the react-admin AuthProvider: hydrate saved view
+  // settings before any authenticated screen mounts (memoised per token).
   checkAuth: () => {
-    return Cookies.getCookie('token') ? Promise.resolve() : Promise.reject();
+    return Cookies.getCookie('token')
+      ? hydratePreferencesSafely()
+      : Promise.reject();
   },
 
   // Required by react-admin's AuthProvider contract, but unused: capability
