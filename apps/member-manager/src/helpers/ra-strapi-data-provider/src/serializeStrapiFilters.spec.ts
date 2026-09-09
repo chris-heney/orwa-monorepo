@@ -88,6 +88,21 @@ describe("appendFilterQuery", () => {
     appendFilterQuery(out, "conference_ticket", "NaN");
     expect(out).toEqual([]);
   });
+
+  it("never treats a text-search term as a documentId (Settings tab search)", () => {
+    const out: string[] = [];
+    // 18 lowercase alphanumerics — shaped like a documentId, but it is a name.
+    appendFilterQuery(out, "contact", {
+      first: { $containsi: "christopherjohnson" },
+    });
+    appendFilterQuery(out, "instructor", {
+      email: { $startsWithi: "sustainabilityspec" },
+    });
+    expect(out).toEqual([
+      "filters[contact][first][$containsi]=christopherjohnson",
+      "filters[instructor][email][$startsWithi]=sustainabilityspec",
+    ]);
+  });
 });
 
 describe("convertRaParamsToStrapiParams", () => {

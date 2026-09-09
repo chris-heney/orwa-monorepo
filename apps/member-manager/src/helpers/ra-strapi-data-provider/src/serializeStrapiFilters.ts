@@ -22,6 +22,18 @@ export const isDocumentId = (id: unknown): id is string =>
  */
 const isIdKey = (key: string): boolean => key === "id" || key === "documentId";
 
+/** Operators whose value is free text and must never be treated as a documentId. */
+const TEXT_SEARCH_OPERATORS = new Set([
+  "$contains",
+  "$containsi",
+  "$notContains",
+  "$notContainsi",
+  "$startsWith",
+  "$startsWithi",
+  "$endsWith",
+  "$endsWithi",
+]);
+
 /** Path segment for a filter key when the leaf value is a documentId. */
 export const documentIdFilterPath = (prefix: string, key: string): string =>
   isIdKey(key) ? `${prefix}[documentId]` : `${prefix}[${key}][documentId]`;
@@ -156,8 +168,10 @@ export const appendFilterQuery = (
           return;
         }
 
-        // Operators like $eq / $ne / $contains whose value may be a documentId
-        if (isDocumentId(opValue)) {
+        // Operators like $eq / $ne whose value may be a documentId. Text-search
+        // operators are exempt: a lowercase alphanumeric search term such as
+        // "christopherjohnson" is user text, never a relation documentId.
+        if (!TEXT_SEARCH_OPERATORS.has(operator) && isDocumentId(opValue)) {
           if (isIdKey(key)) {
             out.push(
               `${prefix}[documentId][${operator}]=${encodeLeaf(opValue)}`

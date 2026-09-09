@@ -74,6 +74,12 @@ const UserList: React.FC = () => {
       });
   }, [dataProvider, sortField, sortOrder, userFilters, userListVersion]);
 
+  // A new search / filter yields a different result set; jump back to the
+  // first page so a narrowed result is never hidden behind a stale page index.
+  useEffect(() => {
+    setPage(0);
+  }, [userFilters]);
+
   // Update displayed users based on pagination and search filter
   useEffect(() => {
     const start = page * rowsPerPage;
