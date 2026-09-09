@@ -23,7 +23,12 @@ import {
   getPrimaryConferenceId,
   mergeConferenceYearIntoAllTabs,
 } from "../helpers/mergeConferenceAcrossTabFilters";
-import { omitYearForListQuery, shouldOmitYearFromListQuery } from "../helpers/listQueryFilters";
+import {
+  normalizeFiltersForListQuery,
+  omitYearForListQuery,
+  preserveContestantStatusFilter,
+  shouldOmitYearFromListQuery,
+} from "../helpers/listQueryFilters";
 import { getFilterRelationValue } from "../../../helpers/strapiIds";
 
 const ConferenceAccordionFilter = ({
@@ -58,8 +63,19 @@ const ConferenceAccordionFilter = ({
       }
     }
 
-    // Apply these filters (omit `year` for resources Strapi does not support)
-    setFilters(omitYearForListQuery(resource, filtersForTab), filterValues, false);
+    // Same normalization the wide-viewport sidebar performs: tab filters are
+    // shared across tabs and carry no contestant status, so rebuilding from
+    // them would leave the toggle reading Cancelled while the list quietly
+    // showed every contestant.
+    setFilters(
+      normalizeFiltersForListQuery(
+        resource,
+        preserveContestantStatusFilter(resource, filterValues, filtersForTab),
+        selectedTab
+      ),
+      filterValues,
+      false
+    );
   }, [selectedTab, resource, setFilters]);
 
   // Conference radio: restore default if list filters ever lose the selection.
