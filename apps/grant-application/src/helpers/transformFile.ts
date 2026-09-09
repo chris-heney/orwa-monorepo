@@ -9,7 +9,9 @@ export const transformFile = (file: File, name: string, cacheId?: string): Strap
   const transformedFile: StrapiFormattedFile = {
     rawFile: file,
     src: preview,
-    title: `${file.name}${name}`,
+    // `name` is the facility id on the application form; forms without one
+    // (reimbursement requests) must not render "filename.pdfundefined".
+    title: `${file.name}${name ?? ""}`,
     ...(cacheId && { cacheId })
   };
   return transformedFile;

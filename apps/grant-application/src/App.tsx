@@ -8,6 +8,8 @@ import EntryList from "./entries/EntryList";
 import LoginModal from "./components/LoginModal";
 import LandingView from "./components/LandingView";
 import EmailVerificationView from "./components/EmailVerificationView";
+import ReimbursementVerifyView from "./components/reimbursement/ReimbursementVerifyView";
+import ReimbursementRequestView from "./components/reimbursement/ReimbursementRequestView";
 import { useEditSession } from "./providers/EditSessionProvider";
 
 // Admins arriving with ?admin skip the landing/verify flow entirely.
@@ -31,6 +33,12 @@ function App() {
         </EntryListProvider>
       ) : view === "verify" ? (
         <EmailVerificationView />
+      ) : view === "reimburse-verify" ? (
+        <ReimbursementVerifyView />
+      ) : view === "reimburse" ? (
+        <NotifyProvider>
+          <ReimbursementRequestView />
+        </NotifyProvider>
       ) : (
         <LandingView />
       )}

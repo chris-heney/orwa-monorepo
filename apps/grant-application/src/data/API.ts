@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { EmailPayload, IGrantApplicationFormPayload } from '../types/types'
+import { IReimbursementSession, IReimbursementSubmitResponse } from '../types/reimbursement'
 
 
 interface IStrapiResponse {
@@ -76,6 +77,48 @@ export const updateApplication = async (token: string, data: IGrantApplicationFo
         'Accept': 'application/json',
         'Authorization': `Bearer ${API_KEY}`
     }
+  }).then(httpResponse => httpResponse.json())
+}
+
+
+// ---------------------------------------------------------------------------
+// Reimbursement requests (approved applications only)
+// ---------------------------------------------------------------------------
+
+const jsonHeaders = {
+  'Content-Type': 'application/json',
+  'Accept': 'application/json',
+  'Authorization': `Bearer ${API_KEY}`,
+}
+
+/** Ask the backend to email a signed reimbursement link for the given address. */
+export const requestReimbursementLink = async (email: string): Promise<{ code: string }> => {
+  return fetch(`${API_ENDPOINT}/grant-reimbursement/request-link`, {
+    method: 'POST',
+    body: JSON.stringify({ email }),
+    headers: jsonHeaders,
+  }).then(httpResponse => httpResponse.json())
+}
+
+/** Validate a reimbursement token and list the applications it may draw against. */
+export const fetchReimbursementSession = async (
+  token: string
+): Promise<{ code: string } & Partial<IReimbursementSession>> => {
+  return fetch(`${API_ENDPOINT}/grant-reimbursement/session?token=${encodeURIComponent(token)}`, {
+    method: 'GET',
+    headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${API_KEY}` },
+  }).then(httpResponse => httpResponse.json())
+}
+
+/** Submit a reimbursement request (files already uploaded → ids). */
+export const submitReimbursementRequest = async (
+  token: string,
+  data: Record<string, unknown>
+): Promise<IReimbursementSubmitResponse> => {
+  return fetch(`${API_ENDPOINT}/grant-reimbursement/submit`, {
+    method: 'POST',
+    body: JSON.stringify({ ...data, token }),
+    headers: jsonHeaders,
   }).then(httpResponse => httpResponse.json())
 }
 

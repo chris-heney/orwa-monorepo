@@ -14,7 +14,13 @@ import {
 } from "../helpers/editTokenStorage";
 import { IGrantApplicationFormPayload } from "../types/types";
 
-export type AppView = "landing" | "verify" | "form";
+export type AppView =
+  | "landing"
+  | "verify"
+  | "form"
+  // Reimbursement requests for approved applications (ReimbursementSessionProvider)
+  | "reimburse-verify"
+  | "reimburse";
 
 interface EditSessionContext {
   view: AppView;
