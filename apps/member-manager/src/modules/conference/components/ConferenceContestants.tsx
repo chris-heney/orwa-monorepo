@@ -213,9 +213,10 @@ const ContestantStatusFilterControl = () => {
     <Box
       sx={{
         display: 'flex',
-        // The contestant table is far wider than the viewport and scrolls
-        // horizontally, so aligning right put this control ~2600px out and the
-        // operator never saw it. Stay pinned to the visible left edge instead.
+        // The contestant table is wider than the viewport and the dashboard
+        // scrolls sideways as a whole, so aligning right put this control
+        // ~2600px out and the operator never saw it. The left edge is where an
+        // unscrolled page starts, on a phone as much as on a desktop.
         justifyContent: 'flex-start',
         mb: 1,
       }}
@@ -227,9 +228,6 @@ const ContestantStatusFilterControl = () => {
         onChange={handleStatusChange}
         aria-label="Contestant status filter"
         sx={{
-          position: 'sticky',
-          left: 0,
-          zIndex: 2,
           bgcolor: 'background.paper',
           '& .MuiToggleButton-root': {
             color: 'text.primary',
