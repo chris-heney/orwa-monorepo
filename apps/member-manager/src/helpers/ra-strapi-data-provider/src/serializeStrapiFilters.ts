@@ -51,6 +51,28 @@ export const appendFilterQuery = (
     return;
   }
 
+  // Boolean group nested inside another group, e.g. $and: [{ $or: [...] }].
+  // Without this it falls through to the array-leaf branch below and emits
+  // `[$in][]=[object Object]`, which matches nothing.
+  if ((key === "$or" || key === "$and") && Array.isArray(value)) {
+    value.forEach((condition, index) => {
+      if (!condition || typeof condition !== "object" || Array.isArray(condition)) {
+        return;
+      }
+      Object.entries(condition as Record<string, unknown>).forEach(
+        ([nestedKey, nestedValue]) => {
+          appendFilterQuery(
+            out,
+            nestedKey,
+            nestedValue,
+            `${prefix}[${key}][${index}]`
+          );
+        }
+      );
+    });
+    return;
+  }
+
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     Object.entries(value as Record<string, unknown>).forEach(
       ([operator, opValue]) => {

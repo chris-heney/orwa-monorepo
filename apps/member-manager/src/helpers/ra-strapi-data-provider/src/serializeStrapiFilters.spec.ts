@@ -182,4 +182,33 @@ describe("convertRaParamsToStrapiParams", () => {
     expect(qs).toContain(`filters[documentId][$in][]=${DOC}`);
     expect(qs).toContain(`filters[documentId][$in][]=${DOC2}`);
   });
+
+  // A boolean group nested inside another one used to fall through to the
+  // array-leaf branch and serialize as `[$in][]=[object Object]`, which Strapi
+  // silently matches nothing for.
+  it("serializes an $or group nested inside $and", () => {
+    const qs = convertRaParamsToStrapiParams({
+      filter: {
+        conference: 3,
+        $and: [
+          { $or: [{ first: { $contains: "ann" } }] },
+          { $or: [{ status: { $eq: "active" } }, { status: { $null: true } }] },
+        ],
+      },
+      pagination: page,
+    });
+
+    expect(qs).not.toContain("object Object");
+    expect(qs).toContain("filters[$and][0][$or][0][first][$contains]=ann");
+    expect(qs).toContain("filters[$and][1][$or][0][status][$eq]=active");
+    expect(qs).toContain("filters[$and][1][$or][1][status][$null]=true");
+    expect(qs).toContain("filters[conference]=3");
+  });
+
+  it("serializes a nested group reached through appendFilterQuery directly", () => {
+    const out: string[] = [];
+    appendFilterQuery(out, "$or", [{ status: { $eq: "active" } }], "filters[$and][0]");
+
+    expect(out).toEqual(["filters[$and][0][$or][0][status][$eq]=active"]);
+  });
 });
