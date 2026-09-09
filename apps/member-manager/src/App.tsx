@@ -10,58 +10,9 @@ import { userPreferencesStore } from './helpers/userPreferencesStore';
 import UserPreferencesSync from './components/UserPreferencesSync';
 import { queryClient } from './helpers/queryClient';
 import { darkTheme, lightTheme } from './theme';
-import {
-  Asset,
-  Associate,
-  TrainingEvent,
-  TrainingHistory,
-  Watersystem,
-  Contacts,
-  Grants,
-  Applicants,
-  Topics,
-  ActivityFeed,
-  TrainingSettings,
-  Conference,
-  Instructors,
-  EventRegistration,
-  TrainingInstructorCertification,
-  Staff,
-  Payouts,
-  Memberships,
-  MembershipItems,
-  Users,
-  Transactions,
-  Sponsors,
-  Extras,
-  Attendees,
-  EmailsTemplates,
-  EmailTasks,
-  Terms,
-  ScholarshipApplications,
-  AwardNominations,
-  AwardWinners,
-  AwardTypes,
-} from './modules';
-import {
-  AdminDashboard,
-  HumanResources,
-  TrainingDashboard,
-  FinancialAuditDashboard,
-  GrantManagement,
-  MembershipManagement,
-  SoonerwarnManagement,
-  Conferences,
-  EmailManagement,
-  SettingsDashboard,
-  MediaLibraryPage,
-  RbacDashboard,
-  OrwefManagement,
-  AwardManagement,
-} from './modules/dashboards';
+import { AdminDashboard } from './modules/dashboards';
 import { guardResource } from './modules/rbac-manager/guardResource';
 import { LoginPage } from './pages';
-import EventSettings from './modules/training/settings/EventSettings';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -69,14 +20,21 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import ResetPasswordPage from './pages/ResetPassword';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ProfilePage from './modules/profile/ProfilePage';
+// Registers every ModuleManifest (framework/modules.ts) before render.
+import './framework/modules';
+import {
+  customRoutes,
+  noLayoutRoutes,
+  resourceElements,
+} from './framework/registry';
+import { legacyResources, legacyRoutes } from './legacyWiring';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 // Create/edit pages are capability-guarded from server truth (the role's
 // Strapi permissions), so every role — Staff included — is gated by what the
-// RBAC Manager grants it.
+// RBAC Manager grants it. The registry applies the same guard.
 const resourceProps = guardResource;
 
 export const App = () => {
@@ -84,6 +42,14 @@ export const App = () => {
     endpoint: `${import.meta.env.VITE_API_ENDPOINT}/api`,
     type: 'rest',
   }).init();
+
+  // Registry output comes first so it wins over any legacy duplicate; the
+  // legacy lists are already filtered against the registry (legacyWiring.tsx).
+  const registryResources = resourceElements();
+  const registryRoutes = customRoutes();
+  const registryNoLayoutRoutes = noLayoutRoutes();
+  const legacyResourceList = legacyResources();
+  const legacyRouteList = legacyRoutes();
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="EN/en-us">
@@ -105,167 +71,41 @@ export const App = () => {
       >
         <>
           <UserPreferencesSync />
-          {/* --- Main Entities --- */}
           <Route path="/login" />
-          {/* Reset Password */}
-
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* SHARED */}
-          <Resource name="upload/files" recordRepresentation="url" />
-          <Resource name="shared.field-metas" />
-          <Resource name="components_shared_field_metas" />
+          {/* --- Module registry: <Resource>s --- */}
+          {registryResources.map(({ name, def }) => (
+            <Resource key={name} name={name} {...def} />
+          ))}
 
-          {/* MANAGEMENT */}
-          <Resource name="assets" {...resourceProps(Asset)} />
-          <Resource name="staff" {...resourceProps(Staff)} />
-          <Resource name="contacts" {...resourceProps(Contacts)} />
-          <Resource name="users" {...resourceProps(Users)} />
+          {/* --- Legacy <Resource>s (shadowed as modules migrate) --- */}
+          {legacyResourceList.map(({ name, def, props }) => (
+            <Resource
+              key={name}
+              name={name}
+              {...(def ? resourceProps(def) : {})}
+              {...(props ?? {})}
+            />
+          ))}
 
-          {/* MEMBERSHIP */}
-          <Resource name="associates" {...resourceProps(Associate)} />
-          <Resource name="watersystems" {...resourceProps(Watersystem)} />
-          <Resource
-            name="membership-items"
-            {...resourceProps(MembershipItems)}
-          />
-          <Resource name="memberships" {...resourceProps(Memberships)} />
-          <Resource name="invoices" {...resourceProps(Transactions)} />
-
-          {/* TRAINING */}
-          <Resource name="training-events" {...resourceProps(TrainingEvent)} />
-          <Resource
-            name="training-event-logs"
-            {...resourceProps(TrainingHistory)}
-          />
-          <Resource
-            name="training-event-registrations"
-            {...resourceProps(EventRegistration)}
-          />
-          <Resource name="training-schedule-blocks" />
-          <Resource
-            name="training-instructors"
-            {...resourceProps(Instructors)}
-          />
-          <Resource name="training-topics" {...resourceProps(Topics)} />
-          <Resource
-            name="training-settings"
-            {...resourceProps(TrainingSettings)}
-          />
-          <Resource
-            name="training-instructor-certifications"
-            {...resourceProps(TrainingInstructorCertification)}
-          />
-
-          {/* NEW CONFERENCE */}
-
-          <Resource name="conference-attendees" {...resourceProps(Attendees)} />
-          <Resource name="conference-extras" {...resourceProps(Extras)} />
-          <Resource
-            name="conference-sponsorships"
-            recordRepresentation="name"
-          />
-          <Resource name="conference-sponsors" {...resourceProps(Sponsors)} />
-          <Resource name="conference-tickets" recordRepresentation="name" />
-          <Resource name="conference-booths" />
-          <Resource name="conference-contestants" />
-          <Resource name="conference-registrations" />
-          <Resource
-            name="conference-schedules"
-            hasCreate={false}
-            recordRepresentation="name"
-          />
-          <Resource name="conferences" {...resourceProps(Conference)} />
-          {/* <Resource name="corporate-sponsors" {...CorporateSponsors} /> */}
-
-          {/* GRANT */}
-          <Resource name="grants" {...resourceProps(Grants)} />
-          <Resource
-            name="grant-application-finals"
-            {...resourceProps(Applicants)}
-          />
-          <Resource name="grant-payouts" {...resourceProps(Payouts)} />
-          <Resource name="grant-statuses" />
-          <Resource name="grant-sub-statuses" />
-
-          {/* SOONERWARN */}
-
-          {/* SHARED */}
-          <Resource name="activities" {...resourceProps(ActivityFeed)} />
-          <Resource name="activity-relations" />
-
-          {/* EMAILS */}
-          <Resource
-            name="email-templates"
-            {...resourceProps(EmailsTemplates)}
-          />
-          <Resource
-            name="scheduled-email-tasks"
-            {...resourceProps(EmailTasks)}
-          />
-          <Resource name="terms" {...resourceProps(Terms)} />
-          <Resource
-            name="scholarship-applications"
-            {...resourceProps(ScholarshipApplications)}
-          />
-          <Resource
-            name="award-nominations"
-            {...resourceProps(AwardNominations)}
-          />
-          <Resource name="award-winners" {...resourceProps(AwardWinners)} />
-          <Resource name="award-types" {...resourceProps(AwardTypes)} />
-
-          {/* --- MUI Pages--- */}
+          {/* --- Pages (registry PageShells first, then legacy dashboards) --- */}
           <CustomRoutes>
-            {/* --- Profile + Settings Pages --- */}
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="admin/settings" element={<SettingsDashboard />} />
-            <Route path="event/settings" element={<EventSettings />} />
-            {/* @TODO: */}
-            {/* <Route path="conference/settings" element={<ConferenceSettings/>}  />
-        <Route path="training/settings" element={<TrainingSettings/>}  /> */}
-
-            {/* --- Dashboard Pages --- */}
-            <Route path="admin/dashboard" element={<AdminDashboard />} />
-            <Route path="training/dashboard" element={<TrainingDashboard />} />
-            <Route path="conference/dashboard" element={<Conferences />} />
-            <Route
-              path="human-resources/dashboard"
-              element={<HumanResources />}
-            />
-            <Route path="grant/dashboard" element={<GrantManagement />} />
-            <Route path="rbac/dashboard" element={<RbacDashboard />} />
-            <Route
-              path="orwef-scholarships/dashboard"
-              element={<OrwefManagement />}
-            />
-            <Route path="orwa-awards/dashboard" element={<AwardManagement />} />
-            <Route
-              path="membership-management"
-              element={<MembershipManagement />}
-            />
-            <Route
-              path="soonerwarn/dashboard"
-              element={<SoonerwarnManagement />}
-            />
-
-            <Route path="email-management" element={<EmailManagement />} />
-            <Route path="media-library" element={<MediaLibraryPage />} />
-
-            {/* --- Other Pages --- */}
-            <Route
-              path="financial-audits/dashboard"
-              element={<FinancialAuditDashboard />}
-            />
+            {registryRoutes.map(({ path, element }) => (
+              <Route key={path} path={path} element={element} />
+            ))}
+            {legacyRouteList.map(({ path, element }) => (
+              <Route key={path} path={path} element={element} />
+            ))}
           </CustomRoutes>
 
-          {/* Custom Routes No Layout */}
           <CustomRoutes noLayout>
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            {registryNoLayoutRoutes.map(({ path, element }) => (
+              <Route key={path} path={path} element={element} />
+            ))}
           </CustomRoutes>
-
-          <Resource name="upload" />
         </>
       </Admin>
     </LocalizationProvider>

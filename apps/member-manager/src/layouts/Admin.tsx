@@ -50,6 +50,8 @@ import {
   DrawerInsetProvider,
   useDrawerInset,
 } from '../modules/_components/drawer/DrawerInsetContext';
+import { getModule, isRegisteredModule } from '../framework/registry';
+import type { ModuleManifest } from '../framework/manifest';
 
 // Auth pages + the user's own profile are reachable regardless of module
 // access — every signed-in user must be able to land somewhere safe.
@@ -142,6 +144,36 @@ const ModuleRouteGuard = ({ children }: { children: ReactNode }) => {
   return redirectAway();
 };
 
+/** Sidebar entry for a registry module (`ModuleManifest.menu`). */
+const RegistryMenuItem = ({ module }: { module: ModuleManifest }) => {
+  if (!module.menu) return null;
+  const Icon = module.icon;
+  const { label, to, children } = module.menu;
+  if (children?.length) {
+    return (
+      <MultiLevelMenu.Item name={module.id} label={label} icon={<Icon />}>
+        {children.map((child) => (
+          <MultiLevelMenu.Item
+            key={child.to}
+            name={child.name ?? child.to.replace(/^\//, '').replace(/\//g, '-')}
+            to={child.to}
+            label={child.label}
+          />
+        ))}
+      </MultiLevelMenu.Item>
+    );
+  }
+  return (
+    <MultiLevelMenu.Item
+      name={module.id}
+      to={to}
+      label={label}
+      title={label}
+      icon={<Icon />}
+    />
+  );
+};
+
 const MyMenu = () => {
   const { user } = useCurrentUser();
   const { modules, isLoading } = useModuleAccess();
@@ -152,10 +184,20 @@ const MyMenu = () => {
     return null;
   }
 
-  const has = (key: ModuleKey) => modules.includes(key);
+  // Registered modules render from their manifest; the hand-written blocks
+  // below only survive for modules that have not migrated yet. Menu order is
+  // the APP_MODULES order either way.
+  const has = (key: ModuleKey) =>
+    modules.includes(key) && !isRegisteredModule(key);
+  const registry = (key: ModuleKey) => {
+    if (!modules.includes(key) || !isRegisteredModule(key)) return null;
+    const module = getModule(key);
+    return module ? <RegistryMenuItem key={key} module={module} /> : null;
+  };
 
   return (
     <MultiLevelMenu>
+      {registry('dashboard')}
       {has('dashboard') && (
         <MultiLevelMenu.Item
           name="dashboard"
@@ -164,6 +206,7 @@ const MyMenu = () => {
           icon={<DashboardIcon />}
         />
       )}
+      {registry('emails')}
       {has('emails') && (
         <MultiLevelMenu.Item
           name="email-management"
@@ -172,6 +215,7 @@ const MyMenu = () => {
           icon={<Email />}
         />
       )}
+      {registry('memberships')}
       {has('memberships') && (
         <MultiLevelMenu.Item
           name="membership-management"
@@ -180,6 +224,7 @@ const MyMenu = () => {
           icon={<MembersIcon />}
         />
       )}
+      {registry('contacts')}
       {has('contacts') && (
         <MultiLevelMenu.Item
           name="human-resources-dashboard"
@@ -189,6 +234,7 @@ const MyMenu = () => {
           icon={<PeopleIcon />}
         />
       )}
+      {registry('assets')}
       {has('assets') && (
         <MultiLevelMenu.Item
           name="assets"
@@ -197,6 +243,7 @@ const MyMenu = () => {
           icon={<InventoryIcon />}
         />
       )}
+      {registry('media-library')}
       {has('media-library') && (
         <MultiLevelMenu.Item
           name="media-library"
@@ -206,6 +253,7 @@ const MyMenu = () => {
           icon={<PermMediaIcon />}
         />
       )}
+      {registry('training')}
       {has('training') && (
         <MultiLevelMenu.Item
           name="table"
@@ -234,6 +282,7 @@ const MyMenu = () => {
           />
         </MultiLevelMenu.Item>
       )}
+      {registry('conference')}
       {has('conference') && (
         <MultiLevelMenu.Item
           name="conference-dashboard"
@@ -243,6 +292,7 @@ const MyMenu = () => {
           icon={<EventsIcon />}
         />
       )}
+      {registry('terms')}
       {has('terms') && (
         <MultiLevelMenu.Item
           name="terms"
@@ -252,6 +302,7 @@ const MyMenu = () => {
           icon={<Gavel />}
         />
       )}
+      {registry('grants')}
       {has('grants') && (
         <MultiLevelMenu.Item
           name="grant-dashboard"
@@ -261,6 +312,7 @@ const MyMenu = () => {
           icon={<RequestPageIcon />}
         />
       )}
+      {registry('scholarships')}
       {has('scholarships') && (
         <MultiLevelMenu.Item
           name="orwef-scholarships"
@@ -270,6 +322,7 @@ const MyMenu = () => {
           icon={<School />}
         />
       )}
+      {registry('awards')}
       {has('awards') && (
         <MultiLevelMenu.Item
           name="orwa-awards"
@@ -279,6 +332,7 @@ const MyMenu = () => {
           icon={<EmojiEvents />}
         />
       )}
+      {registry('rbac')}
       {has('rbac') && (
         <MultiLevelMenu.Item
           name="rbac-dashboard"
@@ -295,6 +349,7 @@ const MyMenu = () => {
         title="SoonerWARN Manager"
         icon={<FavoriteIcon />}
       /> */}
+      {registry('settings')}
       {has('settings') && (
         <MultiLevelMenu.Item
           name="settings"

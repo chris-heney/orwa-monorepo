@@ -2,6 +2,10 @@ import { alpha, createTheme, ThemeOptions } from '@mui/material'
 import { deepmerge } from '@mui/utils'
 import { defaultDarkTheme, defaultLightTheme, RaThemeOptions } from 'react-admin'
 import { formLayoutThemeOverrides } from './css/formLayout'
+import {
+  headingBarPaletteOptions,
+  tabPanelComponentOverrides,
+} from './framework/themeTokens'
 
 /**
  * Shared dark/light theme overrides for member-manager.
@@ -150,9 +154,14 @@ const sharedComponentOverrides: ThemeOptions['components'] = {
   },
   // Create / edit / show: flush under the heading bar, square, no gutter.
   ...formLayoutThemeOverrides,
+  // Legacy @mui/lab TabPanels: p: 0 everywhere (framework panels never pad).
+  ...tabPanelComponentOverrides,
 }
 
 const lightExtras: RaThemeOptions = {
+  palette: {
+    ...headingBarPaletteOptions,
+  },
   components: {
     ...sharedComponentOverrides,
     MuiFilledInput: {
@@ -170,6 +179,7 @@ const lightExtras: RaThemeOptions = {
 
 const darkExtras: RaThemeOptions = {
   palette: {
+    ...headingBarPaletteOptions,
     mode: 'dark',
     primary: {
       main: '#90caf9',

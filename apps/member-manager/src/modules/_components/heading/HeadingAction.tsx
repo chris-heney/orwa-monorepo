@@ -2,6 +2,8 @@ import React, { MouseEventHandler, ReactNode } from 'react';
 import { Button, IconButton, Tooltip } from '@mui/material';
 import { SxProps, Theme } from '@mui/material/styles';
 import { useActionLabels } from '../../../helpers/useActionLabels';
+import { HEADING_ACTION_SIZE } from '../../../framework/layoutTokens';
+import { HEADING_BAR_PALETTE } from '../../../framework/themeTokens';
 
 export interface HeadingActionProps {
   /** Icon element, e.g. <FilterAltIcon fontSize="small" /> */
@@ -25,14 +27,15 @@ export interface HeadingActionProps {
   'data-testid'?: string;
 }
 
-/** Icon-only heading action footprint: 20px glyph + 6px padding = 32px. */
-export const HEADING_ACTION_SIZE = 32;
+/** Icon-only heading action footprint: 20px glyph + 6px padding = 32px (framework/layoutTokens). */
+export { HEADING_ACTION_SIZE };
 /**
  * Class that exempts a heading-bar MUI Button from the layout's icon-only
  * collapse (see layouts/Admin.tsx). Use for buttons whose text must stay.
  */
 export const HEADING_ACTION_LABELED_CLASS = 'heading-action-labeled';
-export const HEADING_ACTION_ACTIVE_BG = 'rgba(255,255,255,0.22)';
+/** @deprecated read `theme.palette.headingBar.activeBg` */
+export const HEADING_ACTION_ACTIVE_BG = HEADING_BAR_PALETTE.activeBg;
 
 /**
  * THE standard action button for black page heading bars.
@@ -69,13 +72,17 @@ const HeadingAction = ({
         aria-pressed={active}
         sx={[
           {
-            color: emphasis ? undefined : 'white',
+            color: emphasis
+              ? undefined
+              : (theme: Theme) => theme.palette.headingBar.fg,
             minWidth: 0,
             px: 1,
             py: 0.5,
             lineHeight: 1.2,
             whiteSpace: 'nowrap',
-            backgroundColor: active ? HEADING_ACTION_ACTIVE_BG : undefined,
+            backgroundColor: active
+              ? (theme: Theme) => theme.palette.headingBar.activeBg
+              : undefined,
             '&.Mui-disabled': { color: 'grey.500' },
           },
           ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
@@ -99,16 +106,21 @@ const HeadingAction = ({
           aria-pressed={active}
           sx={[
             {
-              color:
+              color: (theme: Theme) =>
                 color === 'inherit'
-                  ? 'white'
-                  : (theme: Theme) => theme.palette[color].light,
+                  ? theme.palette.headingBar.fg
+                  : theme.palette[color].light,
               p: 0.75,
               width: HEADING_ACTION_SIZE,
               height: HEADING_ACTION_SIZE,
               borderRadius: 1,
-              backgroundColor: active ? HEADING_ACTION_ACTIVE_BG : undefined,
-              '&:hover': { backgroundColor: 'rgba(255,255,255,0.12)' },
+              backgroundColor: active
+                ? (theme: Theme) => theme.palette.headingBar.activeBg
+                : undefined,
+              '&:hover': {
+                backgroundColor: (theme: Theme) =>
+                  theme.palette.headingBar.hoverBg,
+              },
               '&.Mui-disabled': { color: 'grey.600' },
               '& .MuiSvgIcon-root': { fontSize: '1.25rem' },
             },

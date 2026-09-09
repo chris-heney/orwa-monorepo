@@ -6,6 +6,7 @@ import logo from '../../assets/ORWA-white-300.webp';
 import RolePreviewChip from '../../modules/rbac-manager/RolePreviewChip';
 import ImpersonationChip from '../../components/ImpersonationChip';
 import ProfileMenu from './ProfileMenu';
+import { APP_BAR_TOOLBAR_PX } from '../../framework/layoutTokens';
 
 const DefaultAppBar = memo((props) => {
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down('sm'));
@@ -26,6 +27,9 @@ const DefaultAppBar = memo((props) => {
         backgroundPosition: 'center center',
         backgroundRepeat: 'no-repeat',
         backgroundSize: 'contain',
+        // Pin the toolbar gutter the heading-bar right-gutter arithmetic
+        // assumes (framework/layoutTokens: HEADING_BAR_RIGHT_GUTTER).
+        '& .MuiToolbar-root': { px: `${APP_BAR_TOOLBAR_PX}px` },
       }}
       userMenu={<ProfileMenu />}
       {...props}

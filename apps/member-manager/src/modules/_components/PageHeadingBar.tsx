@@ -10,19 +10,22 @@ import { SxProps, Theme } from '@mui/material/styles';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import TopToolbar from './CustomToptoolBar';
 import { BackAction } from './heading/HeadingActions';
+import {
+  HEADING_BAR_LEFT_GUTTER,
+  HEADING_BAR_MIN_HEIGHT,
+  HEADING_BAR_PY,
+  HEADING_BAR_RIGHT_GUTTER,
+} from '../../framework/layoutTokens';
+import { HEADING_BAR_PALETTE } from '../../framework/themeTokens';
 
-/**
- * Right gutter (px) of every heading bar.
- *
- * The black app bar pads its toolbar 8px and renders 40px icon buttons, so the
- * account icon's centre sits 28px from the viewport edge. Heading actions are
- * 32px (`HEADING_ACTION_SIZE`), centre 16px from their right edge → a 12px
- * gutter puts the right-most heading icon exactly under the account icon.
- */
-export const HEADING_BAR_RIGHT_GUTTER = 12;
-export const HEADING_BAR_LEFT_GUTTER = 12;
-export const HEADING_BAR_MIN_HEIGHT = 48;
-export const HEADING_BAR_BG = '#262626';
+// Re-exported for legacy call sites; the numbers live in framework/layoutTokens.
+export {
+  HEADING_BAR_LEFT_GUTTER,
+  HEADING_BAR_MIN_HEIGHT,
+  HEADING_BAR_RIGHT_GUTTER,
+};
+/** @deprecated read `theme.palette.headingBar.bg` */
+export const HEADING_BAR_BG = HEADING_BAR_PALETTE.bg;
 
 type PageHeadingBarProps = {
   title: ReactNode;
@@ -77,13 +80,14 @@ const PageHeadingBar = ({
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: 1,
-          backgroundColor: HEADING_BAR_BG,
+          backgroundColor: (theme) => theme.palette.headingBar.bg,
+          color: (theme) => theme.palette.headingBar.fg,
           pl: `${HEADING_BAR_LEFT_GUTTER}px`,
           // Right gutter is carried by `.heading-actions` (see below) so it
           // holds when the sticky toolbar pins to the viewport edge on
           // pages wider than the window (large datagrids).
           pr: 0,
-          py: 1,
+          py: `${HEADING_BAR_PY}px`,
           minHeight: HEADING_BAR_MIN_HEIGHT,
           boxSizing: 'border-box',
           m: 0,
@@ -104,7 +108,7 @@ const PageHeadingBar = ({
           onClick={onTitleClick}
           sx={{
             fontSize: isSmall ? '0.75rem' : undefined,
-            color: 'white',
+            color: 'inherit',
             fontWeight: 'bold',
             textTransform: 'uppercase',
             letterSpacing: '0.02em',
@@ -120,9 +124,9 @@ const PageHeadingBar = ({
               size="small"
               aria-label="About this page"
               sx={{
-                color: 'grey.400',
+                color: (theme) => theme.palette.headingBar.muted,
                 p: 0.5,
-                '&:hover': { color: 'common.white' },
+                '&:hover': { color: (theme) => theme.palette.headingBar.fg },
               }}
             >
               <InfoOutlinedIcon fontSize="small" />

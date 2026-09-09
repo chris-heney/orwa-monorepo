@@ -12,10 +12,13 @@ import { SxProps } from '@mui/material/styles';
 import KeyboardDoubleArrowRightRoundedIcon from '@mui/icons-material/KeyboardDoubleArrowRightRounded';
 import { DrawerContextProvider, DrawerContextValue } from './DrawerContext';
 import { useRegisterDrawerInset } from './DrawerInsetContext';
+import {
+  RIGHT_DRAWER_TOP_OFFSET,
+  RIGHT_DRAWER_WIDTH,
+} from '../../../framework/layoutTokens';
 
-/** Height of the fixed black app bar — drawers start directly under it. */
-export const RIGHT_DRAWER_TOP_OFFSET = 48;
-export const RIGHT_DRAWER_WIDTH = 320;
+// Numbers live in framework/layoutTokens; re-exported for existing imports.
+export { RIGHT_DRAWER_TOP_OFFSET, RIGHT_DRAWER_WIDTH };
 
 export type RightDrawerProps = {
   open: boolean;
@@ -104,8 +107,8 @@ const RightDrawer = ({
           px: 2,
           py: 1,
           minHeight: 48,
-          bgcolor: 'common.black',
-          color: 'common.white',
+          bgcolor: (theme) => theme.palette.headingBar.bg,
+          color: (theme) => theme.palette.headingBar.fg,
           flexShrink: 0,
         }}
       >
@@ -120,7 +123,7 @@ const RightDrawer = ({
           <Tooltip title={closeLabel}>
             <IconButton
               size="small"
-              sx={{ color: 'common.white' }}
+              sx={{ color: 'inherit' }}
               onClick={onClose}
               aria-label={closeLabel}
             >
