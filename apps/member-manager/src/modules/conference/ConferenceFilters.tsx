@@ -22,6 +22,7 @@ import {
 import {
   normalizeFiltersForListQuery,
   omitYearForListQuery,
+  preserveContestantStatusFilter,
   shouldOmitYearFromListQuery,
 } from "./helpers/listQueryFilters";
 
@@ -117,9 +118,11 @@ const ConferenceFilters = () => {
         }
       }
 
+      // Tab filters are shared across tabs and carry no contestant status, so
+      // rebuilding from them would reset a Cancelled/All view back to Active.
       const listFilters = normalizeFiltersForListQuery(
         resource,
-        filtersToApply,
+        preserveContestantStatusFilter(resource, filterValues, filtersToApply),
         selectedTab
       );
 

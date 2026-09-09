@@ -41,6 +41,7 @@ import {
   isDocumentId as isStrapiDocumentId,
 } from "./serializeStrapiFilters";
 import { sanitizeStrapiWritePayload } from "./sanitizeStrapiWritePayload";
+import { expandContestantStatusForApi } from "../../../modules/conference/helpers/listQueryFilters";
 
 /**
  * Data FLow:
@@ -747,8 +748,14 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
           raw: false,
         };
 
-        // Build URL & Query String
-        const queryString = this.convertRaParamsToStrapiParams(params);
+        // Build URL & Query String. The contestant list stores its
+        // Active/Cancelled/All choice as a view sentinel; expand it here, on
+        // the way out, so the store keeps a value it can round-trip while
+        // Strapi only ever sees real status constraints.
+        const queryString = this.convertRaParamsToStrapiParams({
+          ...params,
+          filter: expandContestantStatusForApi(resource, params.filter),
+        });
         const populateString = this.buildPopulationQueryString(populate);
         const url = `${this.endpoint}/${resource}?${populateString}&${queryString}`;
         

@@ -22,6 +22,7 @@ import {
   SaveButton,
   useListContext,
   useResourceContext,
+  useStore,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
 import {
@@ -50,6 +51,8 @@ import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilte
 import {
   applyContestantStatusFilter,
   contestantStatusFromFilters,
+  CONTESTANT_STATUS_VIEW_STORE_KEY,
+  DEFAULT_CONTESTANT_STATUS_FILTER,
 } from '../helpers/listQueryFilters';
 import type { ContestantStatusFilter } from '../helpers/listQueryFilters';
 import {
@@ -183,6 +186,13 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
 
 const ContestantStatusFilterControl = () => {
   const { filterValues, setFilters } = useListContext();
+  // The list store is keyed on the current tab filters, so it is rebuilt
+  // whenever the conference or year changes. Persisting the view separately
+  // keeps the operator's choice through those remounts.
+  const [, setStoredStatus] = useStore<ContestantStatusFilter>(
+    CONTESTANT_STATUS_VIEW_STORE_KEY,
+    DEFAULT_CONTESTANT_STATUS_FILTER
+  );
   const statusValue = contestantStatusFromFilters(filterValues);
 
   const handleStatusChange = (
@@ -191,6 +201,7 @@ const ContestantStatusFilterControl = () => {
   ) => {
     if (!nextStatus) return;
 
+    setStoredStatus(nextStatus);
     setFilters(
       applyContestantStatusFilter(filterValues, nextStatus),
       undefined,
@@ -202,7 +213,10 @@ const ContestantStatusFilterControl = () => {
     <Box
       sx={{
         display: 'flex',
-        justifyContent: 'flex-end',
+        // The contestant table is far wider than the viewport and scrolls
+        // horizontally, so aligning right put this control ~2600px out and the
+        // operator never saw it. Stay pinned to the visible left edge instead.
+        justifyContent: 'flex-start',
         mb: 1,
       }}
     >
@@ -213,6 +227,9 @@ const ContestantStatusFilterControl = () => {
         onChange={handleStatusChange}
         aria-label="Contestant status filter"
         sx={{
+          position: 'sticky',
+          left: 0,
+          zIndex: 2,
           bgcolor: 'background.paper',
           '& .MuiToggleButton-root': {
             color: 'text.primary',

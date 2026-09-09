@@ -147,10 +147,7 @@ describe("StrapiRestDataProviderFactory cache invalidation", () => {
     await provider.getList("conference-contestants", {
       pagination: { page: 1, perPage: 25 },
       sort: { field: "id", order: "ASC" },
-      filter: {
-        conference: 3,
-        $or: [{ status: { $eq: "active" } }, { status: { $null: true } }],
-      },
+      filter: { conference: 3, status: "active" },
     });
 
     expect(mockedHttpClient).toHaveBeenLastCalledWith(
@@ -161,5 +158,57 @@ describe("StrapiRestDataProviderFactory cache invalidation", () => {
       expect.stringContaining("filters[$or][1][status][$null]=true"),
       expect.anything()
     );
+  });
+
+  // "all" is a view sentinel, not a Strapi status value. If it ever reaches the
+  // API the All tab returns nothing at all.
+  it("drops the all view sentinel before querying contestants", async () => {
+    const mockedHttpClient = vi.mocked(httpClient);
+    mockedHttpClient.mockResolvedValueOnce(listResponse("active") as unknown as IStrapiRestResponse);
+
+    const provider = new StrapiRestDataProviderFactory({
+      endpoint: "https://admin.test/api",
+      type: "rest",
+      cacheTTL: 0,
+    }).init();
+
+    await provider.getList("conference-contestants", {
+      pagination: { page: 1, perPage: 25 },
+      sort: { field: "id", order: "ASC" },
+      filter: { conference: 3, status: "all" },
+    });
+
+    const [url] = mockedHttpClient.mock.calls.at(-1) as [string];
+
+    expect(url).not.toContain("status");
+    expect(url).toContain("filters[conference]=3");
+  });
+
+  it("caches the active and all contestant views separately", async () => {
+    const mockedHttpClient = vi.mocked(httpClient);
+    mockedHttpClient.mockResolvedValue(listResponse("active") as unknown as IStrapiRestResponse);
+
+    const provider = new StrapiRestDataProviderFactory({
+      endpoint: "https://admin.test/api",
+      type: "rest",
+      cacheTTL: 60,
+    }).init();
+
+    const base = {
+      pagination: { page: 1, perPage: 25 },
+      sort: { field: "id", order: "ASC" as const },
+    };
+
+    mockedHttpClient.mockClear();
+    await provider.getList("conference-contestants", {
+      ...base,
+      filter: { conference: 3, status: "active" },
+    });
+    await provider.getList("conference-contestants", {
+      ...base,
+      filter: { conference: 3, status: "all" },
+    });
+
+    expect(mockedHttpClient).toHaveBeenCalledTimes(2);
   });
 });

@@ -32,7 +32,13 @@ import {
   getConferenceFilterId,
   getPrimaryConferenceId,
 } from "./helpers/mergeConferenceAcrossTabFilters";
-import { normalizeFiltersForListQuery } from "./helpers/listQueryFilters";
+import {
+  CONTESTANT_STATUS_VIEW_STORE_KEY,
+  DEFAULT_CONTESTANT_STATUS_FILTER,
+  normalizeFiltersForListQuery,
+  preserveContestantStatusFilter,
+} from "./helpers/listQueryFilters";
+import type { ContestantStatusFilter } from "./helpers/listQueryFilters";
 
 const ConferenceDashboard = () => {
   const {
@@ -41,6 +47,11 @@ const ConferenceDashboard = () => {
     resource,
     tabFilters,
   } = useConferenceContext();
+
+  const [contestantStatusView] = useStore<ContestantStatusFilter>(
+    CONTESTANT_STATUS_VIEW_STORE_KEY,
+    DEFAULT_CONTESTANT_STATUS_FILTER
+  );
 
   const conferenceYears: number[] = [];
 
@@ -148,10 +159,17 @@ const ConferenceDashboard = () => {
   const listResource =
     resource.length > 0 ? resource : "conference-attendees";
   // Applies resource-specific query defaults, including active contestants.
-  const listFilterDefaults = normalizeFiltersForListQuery(
+  // Seeding the persisted contestant view here (rather than correcting it after
+  // the list mounts) keeps the chosen view across the store-key changes that a
+  // conference or year switch causes, without a second round trip.
+  const listFilterDefaults = preserveContestantStatusFilter(
     listResource,
-    tabFilters[selectedTab],
-    selectedTab
+    { status: contestantStatusView },
+    normalizeFiltersForListQuery(
+      listResource,
+      tabFilters[selectedTab],
+      selectedTab
+    )
   );
 
   // Determine which exporter to use based on the current resource
