@@ -1,6 +1,5 @@
 import React from "react";
 import { Box } from "@mui/material";
-import { Title } from "react-admin";
 import NextConferencsCard from "./_components/ConferencesCard";
 import PeopleCard from "./_components/PeopleCard";
 import AssetsCard from "./_components/AssetsCard";
@@ -17,11 +16,11 @@ const COL_H = { xs: "auto", md: 820 };
 /**
  * Home dashboard — 25% | 50% | 25%:
  * People + Assets | Memberships | Conference + Activity.
+ * Body of the `dashboard.home` page (heading bar comes from the framework).
  */
 const Dashboard = () => {
   return (
-    <Box>
-      <Title title="Dashboard" />
+    <Box sx={{ px: 2, pb: 2 }}>
       <Box
       sx={{
         mt: 0,

@@ -32,7 +32,6 @@ import {
   AwardTypes,
 } from './modules';
 import {
-  AdminDashboard,
   HumanResources,
   TrainingDashboard,
   FinancialAuditDashboard,
@@ -135,7 +134,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
   { path: 'profile', element: <ProfilePage /> },
   { path: 'admin/settings', element: <SettingsDashboard />, module: 'settings' },
   { path: 'event/settings', element: <EventSettings />, module: 'settings' },
-  { path: 'admin/dashboard', element: <AdminDashboard />, module: 'dashboard' },
   { path: 'training/dashboard', element: <TrainingDashboard />, module: 'training' },
   { path: 'conference/dashboard', element: <Conferences />, module: 'conference' },
   {
