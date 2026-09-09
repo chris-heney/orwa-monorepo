@@ -120,8 +120,7 @@ const ContactShow = () => {
           <ActivityFeed
             sx={{ width: "100%", height: 465, mt: 0.3 }}
             title={" "}
-            entity="contacts"
-            entity_id={record.id}
+            entity="contact"
           />
         </Grid>
       </Grid>
