@@ -5,8 +5,10 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react({
-    // Add this to improve Fast Refresh reliability
-    fastRefresh: true,
+    // Add this to improve Fast Refresh reliability. Off under Vitest: the
+    // refresh runtime expects a browser preamble that jsdom never injects, so
+    // leaving it on makes every component test fail to collect.
+    fastRefresh: !process.env.VITEST,
   })],
   resolve: {
     alias: {

@@ -22,8 +22,13 @@ interface ContestantCancellationActionsProps {
   record?: RaRecord;
 }
 
+/**
+ * react-admin's `useDataProvider` proxy calls `.then()` on whatever a provider
+ * method returns, so this has to be awaited as a Promise — typing it `void` is
+ * what let a `TypeError` here surface as a failed cancellation.
+ */
 type CacheInvalidatingDataProvider = {
-  invalidateResourceCache?: (resource: string) => void;
+  invalidateResourceCache?: (resource: string) => Promise<void>;
 };
 
 const actionCopy: Record<
@@ -141,14 +146,19 @@ const ContestantCancellationActions = ({
     setReason('');
     setReasonError(false);
 
-    // The write already landed. Reload the list on a best-effort basis so a
-    // refresh problem can never be reported as a failed cancellation.
+    // The write already landed, so nothing below may report failure. Repainting
+    // is best-effort: a stale row costs a manual reload, but surfacing a cache
+    // or refresh problem as a failed cancellation invites a duplicate action.
     try {
       await dataProvider.invalidateResourceCache?.('conference-contestants');
     } catch {
       // Cached rows will age out on their own.
     }
-    refresh();
+    try {
+      refresh();
+    } catch {
+      // The operator's next navigation refetches the list.
+    }
   };
 
   return (
