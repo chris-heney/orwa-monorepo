@@ -297,6 +297,7 @@ const PageShellInner = ({ page, module }: ShellProps & { module: ModuleManifest 
 
   const Body = page.body;
   const showSearch = Boolean(page.titleBar.search) && hasList;
+  const SubBar = page.titleBar.subBar;
 
   const panels = (
     <Box
@@ -354,6 +355,7 @@ const PageShellInner = ({ page, module }: ShellProps & { module: ModuleManifest 
           }}
         >
           <TitleBar searchOpen={searchOpen} hasList={hasList} />
+          {SubBar ? <SubBar /> : null}
           {showSearch ? (
             <SearchRow open={searchOpen} onClose={() => setSearchOpen(false)} />
           ) : null}

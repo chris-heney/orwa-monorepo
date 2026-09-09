@@ -172,6 +172,12 @@ export interface TitleBarManifest {
   infoTooltip?: string;
   /** Collapsible search row under the bar → list filter `source` (default `q`). */
   search?: { placeholder?: string; source?: string };
+  /**
+   * Optional strip rendered directly under the bar, inside the sticky wrapper
+   * (e.g. the Training event-pipeline stepper). Receives no props; read
+   * `usePageCtx()` / `useListContext()`.
+   */
+  subBar?: ComponentType;
   tabs?: TabManifest[];
   defaultTab?: string;
   /** RaStore key for the active tab. Default `${pageId}.tab`. */

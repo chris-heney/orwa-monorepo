@@ -93,6 +93,11 @@ extends: [{ pageId: 'grants.applicationShow',
 ```
 Applied by `finalizeRegistry` after `dependencies` — the host file is never edited.
 
+### Sub-bar (stepper under the bar)
+
+`titleBar.subBar: StepperComponent` renders directly under the bar inside the
+sticky wrapper (Training's event-pipeline stepper). It receives no props.
+
 ## RaStore keys the framework writes
 
 | key | value |
