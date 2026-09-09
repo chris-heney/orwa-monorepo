@@ -146,9 +146,9 @@ export interface IStrapiDataProviderFactory {
 
   init(): DataProvider
   restProvider(): DataProvider & {
-    invalidateResourceCache: (resource: string) => void
+    invalidateResourceCache: (resource: string) => Promise<void>
   }
-  invalidateResourceCache: (resource: string) => void
+  invalidateResourceCache: (resource: string) => Promise<void>
   // @TODO: Implement this:
   // graphProvider(): DataProvider
 

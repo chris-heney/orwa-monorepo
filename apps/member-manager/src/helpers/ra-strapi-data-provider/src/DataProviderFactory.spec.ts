@@ -70,6 +70,21 @@ describe("StrapiRestDataProviderFactory cache invalidation", () => {
     expect(mockedHttpClient).toHaveBeenCalledTimes(2);
   });
 
+  it("resolves a promise so react-admin's dataProvider proxy can chain it", async () => {
+    const provider = new StrapiRestDataProviderFactory({
+      endpoint: "https://admin.test/api",
+      type: "rest",
+    }).init();
+
+    // `useDataProvider` wraps every method and unconditionally calls `.then()`
+    // on the result; returning void made it throw "The dataProvider threw an
+    // error" and swallowed the caller's refresh.
+    const result = provider.invalidateResourceCache("conference-contestants");
+
+    expect(typeof (result as Promise<void>)?.then).toBe("function");
+    await expect(result).resolves.toBeUndefined();
+  });
+
   it("fetches contestant history by documentId with explicit nested populate meta", async () => {
     const mockedHttpClient = vi.mocked(httpClient);
     mockedHttpClient.mockResolvedValueOnce({

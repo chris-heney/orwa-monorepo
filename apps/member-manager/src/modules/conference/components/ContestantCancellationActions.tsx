@@ -128,19 +128,27 @@ const ContestantCancellationActions = ({
           body: JSON.stringify({ reason: trimmedReason }),
         }
       );
-
-      notify(copy.successMessage, { type: 'success' });
-      setDialogOpen(false);
-      setReason('');
-      setReasonError(false);
-      dataProvider.invalidateResourceCache?.('conference-contestants');
-      refresh();
     } catch (error) {
       notify(getErrorMessage(error, copy.errorMessage), { type: 'error' });
+      return;
     } finally {
       inFlightRef.current = false;
       setIsSaving(false);
     }
+
+    notify(copy.successMessage, { type: 'success' });
+    setDialogOpen(false);
+    setReason('');
+    setReasonError(false);
+
+    // The write already landed. Reload the list on a best-effort basis so a
+    // refresh problem can never be reported as a failed cancellation.
+    try {
+      await dataProvider.invalidateResourceCache?.('conference-contestants');
+    } catch {
+      // Cached rows will age out on their own.
+    }
+    refresh();
   };
 
   return (

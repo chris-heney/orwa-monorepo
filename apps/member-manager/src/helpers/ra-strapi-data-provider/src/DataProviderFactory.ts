@@ -717,17 +717,27 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
     }
   }
 
-  invalidateResourceCache = (resource: string): void => {
+  /**
+   * Drop cached reads for a resource so the next fetch reaches the API.
+   *
+   * Resolves a Promise rather than returning void: react-admin's
+   * `useDataProvider` proxy calls `.then()` on whatever a provider method
+   * returns, so a void return threw "The dataProvider threw an error" and
+   * skipped the caller's follow-up refresh.
+   */
+  invalidateResourceCache = (resource: string): Promise<void> => {
     const escapedResource = escapeRegExp(resource);
     this.cache.invalidate(
       new RegExp(
         `^(getOne|getList|getMany|getManyReference):.*\\/${escapedResource}(?:[/?]|$)`
       )
     );
+
+    return Promise.resolve();
   };
 
   restProvider(): DataProvider & {
-    invalidateResourceCache: (resource: string) => void;
+    invalidateResourceCache: (resource: string) => Promise<void>;
   } {
     return {
       invalidateResourceCache: this.invalidateResourceCache,
@@ -1115,7 +1125,7 @@ class StrapiDataProviderFactory implements IStrapiDataProviderFactory {
         return { data: results };
       },
     } as DataProvider & {
-      invalidateResourceCache: (resource: string) => void;
+      invalidateResourceCache: (resource: string) => Promise<void>;
     };
   }
 }
