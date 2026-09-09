@@ -127,7 +127,10 @@ export default factories.createCoreController(
     async create(ctx) {
       try {
         const inputData = ctx.request?.body?.data ?? ctx.request?.body ?? {};
-        const sanitizedInput = await this.sanitizeInput(inputData, ctx);
+        const sanitizedInput = (await this.sanitizeInput(
+          inputData,
+          ctx
+        )) as Record<string, unknown>;
         const entity = await createContestant(strapi, {
           data: sanitizedInput,
         });
@@ -141,7 +144,10 @@ export default factories.createCoreController(
     async update(ctx) {
       try {
         const inputData = ctx.request?.body?.data ?? ctx.request?.body ?? {};
-        const sanitizedInput = await this.sanitizeInput(inputData, ctx);
+        const sanitizedInput = (await this.sanitizeInput(
+          inputData,
+          ctx
+        )) as Record<string, unknown>;
         const entity = await updateContestant(strapi, {
           documentId: ctx.params?.documentId ?? ctx.params?.id,
           data: sanitizedInput,

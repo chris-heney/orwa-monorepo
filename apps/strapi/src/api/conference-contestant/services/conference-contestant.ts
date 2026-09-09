@@ -238,6 +238,7 @@ export const createContestant = async (
       ? conference.documentId
       : conferenceDocumentId;
   const ticket = await loadRelation<{
+    documentId?: string | null;
     name?: string | null;
     context?: string | null;
     conferences?: Array<{ id?: string | number | null; documentId?: string | null }>;
