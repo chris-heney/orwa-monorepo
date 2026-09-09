@@ -59,3 +59,4 @@ export {
 } from './prefetch';
 export { lazyPanel } from './lazyPanel';
 export * from './actions';
+export * from './PageLocalState';

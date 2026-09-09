@@ -1,3 +1,4 @@
+import { useParams } from 'react-router-dom';
 import React, {
   createContext,
   ReactNode,
@@ -141,6 +142,7 @@ export const PageCtxProvider = ({
   const { canOnResource } = useCan();
   const store = useStoreContext();
   const version = useStoreVersion(page.watchStoreKeys);
+  const params = useParams();
 
   // Both hooks are safe without providers (react-admin returns empty defaults).
   const list = useListContext();
@@ -176,6 +178,7 @@ export const PageCtxProvider = ({
       total,
       can: canOnResource,
       store: (key, fallback) => store.getItem(key, fallback),
+      params,
       isSmall,
     };
     // `version` is a dependency on purpose: store writes rebuild the ctx.
@@ -195,6 +198,7 @@ export const PageCtxProvider = ({
     total,
     canOnResource,
     store,
+    params,
     isSmall,
     version,
   ]);

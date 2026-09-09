@@ -42,7 +42,6 @@ import {
   Conferences,
   SettingsDashboard,
   MediaLibraryPage,
-  RbacDashboard,
   OrwefManagement,
   AwardManagement,
 } from './modules/dashboards';
@@ -148,7 +147,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
     module: 'contacts',
   },
   { path: 'grant/dashboard', element: <GrantManagement />, module: 'grants' },
-  { path: 'rbac/dashboard', element: <RbacDashboard />, module: 'rbac' },
   {
     path: 'orwef-scholarships/dashboard',
     element: <OrwefManagement />,

@@ -2,6 +2,7 @@ import type { ModuleManifest } from './manifest';
 import { emailsModule } from '../modules/emails-magement/manifest';
 import { termsModule } from '../modules/terms/manifest';
 import { assetsModule } from '../modules/asset/manifest';
+import { rbacModule } from '../modules/rbac-manager/manifest';
 import { finalizeRegistry } from './registry';
 
 /**
@@ -13,6 +14,6 @@ import { finalizeRegistry } from './registry';
  * it to the array. Its `<Resource>`s, routes and menu entry replace the
  * legacy hand-written blocks automatically (see `legacyWiring.tsx`).
  */
-export const MODULES: ModuleManifest[] = [emailsModule, termsModule, assetsModule];
+export const MODULES: ModuleManifest[] = [emailsModule, termsModule, assetsModule, rbacModule];
 
 export const REGISTRY = finalizeRegistry(MODULES);

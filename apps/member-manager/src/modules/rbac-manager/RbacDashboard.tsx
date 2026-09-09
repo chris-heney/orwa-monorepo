@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { Title, useNotify } from 'react-admin';
+import { useNotify } from 'react-admin';
 import { useNavigate } from 'react-router-dom';
 import {
   Alert,
@@ -25,18 +25,13 @@ import { Theme } from '@mui/material/styles';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
-import PageHeadingBar from '../_components/PageHeadingBar';
-import {
-  AddAction,
-  RefreshAction,
-} from '../_components/heading/HeadingActions';
+import { usePublishPageValue } from '../../framework/PageLocalState';
 import {
   ALL_MODULE_KEYS,
   APP_MODULES,
   firstAllowedPath,
 } from '../../config/modules';
 import { deleteRole, getRoles, RoleSummary } from './api';
-import RoleEditor from './RoleEditor';
 import { useMeQuery } from './useModuleAccess';
 import { previewModulesForRole, setRolePreview } from './rolePreview';
 
@@ -90,8 +85,8 @@ const ModulesCell = ({ role }: { role: RoleSummary }) => {
 
 /**
  * RBAC Manager — list of users-permissions roles with module access and
- * per-endpoint API permissions. Conditionally renders the full-page
- * RoleEditor for create/edit (no extra router entries needed).
+ * per-endpoint API permissions. Body of the `rbac.dashboard` page; create /
+ * edit open the `rbac.roleEditor` page (`/rbac/roles/new|:id`).
  */
 const RbacDashboard = () => {
   const notify = useNotify();
@@ -99,13 +94,15 @@ const RbacDashboard = () => {
   const queryClient = useQueryClient();
   const { data: me } = useMeQuery();
 
-  const [editorRole, setEditorRole] = useState<number | 'new' | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<RoleSummary | null>(null);
   const [confirmPreview, setConfirmPreview] = useState<RoleSummary | null>(
     null
   );
 
   const rolesQuery = useQuery<RoleSummary[], Error>('rbac-roles', getRoles);
+  // The bar's Refresh action (manifest) reads these.
+  usePublishPageValue('rbac.refresh', rolesQuery.refetch);
+  usePublishPageValue('rbac.refreshing', rolesQuery.isFetching);
 
   const realRole = me?.role;
   const isRealAdmin =
@@ -127,14 +124,6 @@ const RbacDashboard = () => {
     }
   );
 
-  const closeEditor = (saved: boolean) => {
-    setEditorRole(null);
-    if (saved) {
-      notify('Role saved', { type: 'success' });
-      queryClient.invalidateQueries('rbac-roles');
-    }
-  };
-
   const startPreview = async (role: RoleSummary) => {
     const modules = previewModulesForRole(role);
     setRolePreview({ roleId: role.id, roleName: role.name, modules });
@@ -150,39 +139,10 @@ const RbacDashboard = () => {
     notify(`Testing as ${role.name}`, { type: 'info' });
   };
 
-  if (editorRole !== null) {
-    return (
-      <RoleEditor
-        roleId={editorRole}
-        onSaved={() => closeEditor(true)}
-        onCancel={() => closeEditor(false)}
-      />
-    );
-  }
-
   const roles = rolesQuery.data ?? [];
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
-      <Title title="RBAC Manager" />
-      <PageHeadingBar
-        title="RBAC Manager"
-        info="Create roles, choose which modules each role can see in the admin, and grant per-endpoint API permissions. Module access is UX-only; the API permissions are enforced by the server. Use Test as role to preview UI and API grants."
-        sx={{ top: { xs: 56, sm: 48 } }}
-        actions={
-          <>
-            <AddAction
-              label="Create Role"
-              onClick={() => setEditorRole('new')}
-            />
-            <RefreshAction
-              label="Refresh roles"
-              disabled={rolesQuery.isFetching}
-              onClick={() => rolesQuery.refetch()}
-            />
-          </>
-        }
-      />
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: 2 }}>
       {rolesQuery.error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {rolesQuery.error.message}
@@ -230,7 +190,7 @@ const RbacDashboard = () => {
                       <Tooltip title="Edit">
                         <IconButton
                           size="small"
-                          onClick={() => setEditorRole(role.id)}
+                          onClick={() => navigate(`/rbac/roles/${role.id}`)}
                         >
                           <EditIcon color="primary" />
                         </IconButton>

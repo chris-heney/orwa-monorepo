@@ -72,6 +72,7 @@ const ctx: PageCtx = {
   selectedIds: [],
   can: () => true,
   store: (_k, fb) => fb,
+  params: {},
   isSmall: false,
 };
 

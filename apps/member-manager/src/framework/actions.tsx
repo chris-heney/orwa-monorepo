@@ -48,6 +48,7 @@ export const exportAction: ActionManifest = {
   label: 'Export',
   icon: FileDownloadIcon,
   scope: 'list',
+  requiresList: true,
   component: ExportActionComponent,
   order: 70,
 };
@@ -58,6 +59,7 @@ export const columnsAction: ActionManifest = {
   label: 'Columns',
   icon: ViewWeekIcon,
   scope: 'list',
+  requiresList: true,
   component: ColumnsActionComponent,
   order: 80,
 };
@@ -83,6 +85,7 @@ export const searchAction: ActionManifest = {
   label: 'Search',
   icon: SearchIcon,
   scope: 'list',
+  requiresList: true,
   togglesSearch: true,
   order: 50,
 };

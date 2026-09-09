@@ -41,6 +41,8 @@ export interface PageCtx {
   can: (action: CrudAction, resource: string) => boolean;
   /** RaStore read (subscribe via `PageManifest.watchStoreKeys`). */
   store: <T>(key: string, fallback: T) => T;
+  /** Route params of the page's `route` (e.g. `rbac/roles/:roleId`). */
+  params: Record<string, string | undefined>;
   isSmall: boolean;
 }
 
@@ -73,6 +75,8 @@ export interface ActionManifest {
   visible?: (ctx: PageCtx) => boolean;
   /** Custom renderer (existing presets such as ExportAction / ColumnsAction). */
   component?: ComponentType<{ ctx: PageCtx; api: TitleBarApi }>;
+  /** `component` needs a ListContext → hidden on pages/tabs without a `list`. */
+  requiresList?: boolean;
   /** Plain handler — the framework renders a 32px HeadingAction. */
   onClick?: (ctx: PageCtx, api: TitleBarApi) => void;
   /** Toggle actions: mirror this drawer's open state as `active`, click toggles it. */

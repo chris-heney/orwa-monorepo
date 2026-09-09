@@ -36,7 +36,7 @@ export const visibleActions = (
     .filter((a) => (a.visible ? a.visible(ctx) : true))
     .filter((a) => a.scope !== 'selection' || ctx.selectedIds.length > 0)
     .filter((a) => a.scope !== 'record' || ctx.focus?.kind === 'record')
-    .filter((a) => a.scope !== 'list' || hasList || !a.component)
+    .filter((a) => hasList || !a.requiresList)
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100));
 
 const ActionButton = ({

@@ -42,6 +42,7 @@ import { ListScope } from './ListScope';
 import { TitleBar } from './TitleBar';
 import { TabStrip, panelId, tabId } from './TabStrip';
 import { Drawers } from './Drawers';
+import { PageLocalStateProvider } from './PageLocalState';
 import { listStoreKey, prefetchList, prefetchTools } from './prefetch';
 import { STICKY_BAR_TOP, STICKY_BAR_Z_INDEX } from './layoutTokens';
 import { useDrawerGroup } from '../modules/_components/drawer';
@@ -75,6 +76,7 @@ const useStaticCtx = (
   const { canOnResource } = useCan();
   const store = useStoreContext();
   const version = useStoreVersion(page.watchStoreKeys);
+  const params = useParams();
   return useMemo<PageCtx>(
     () => ({
       moduleId: module.id,
@@ -83,10 +85,11 @@ const useStaticCtx = (
       selectedIds: [],
       can: canOnResource,
       store: (key, fallback) => store.getItem(key, fallback),
+      params,
       isSmall,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [module.id, page.id, tabKey, canOnResource, store, isSmall, version]
+    [module.id, page.id, tabKey, canOnResource, store, params, isSmall, version]
   );
 };
 
@@ -393,7 +396,9 @@ const PageShellInner = ({ page, module }: ShellProps & { module: ModuleManifest 
 
   return (
     <PageManifestProvider value={{ module, page, tabs, tab }}>
-      <TitleBarApiProvider value={api}>{withRecord}</TitleBarApiProvider>
+      <TitleBarApiProvider value={api}>
+        <PageLocalStateProvider>{withRecord}</PageLocalStateProvider>
+      </TitleBarApiProvider>
     </PageManifestProvider>
   );
 };

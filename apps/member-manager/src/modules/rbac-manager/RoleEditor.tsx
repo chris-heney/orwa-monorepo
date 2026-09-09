@@ -12,10 +12,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { Title } from 'react-admin';
-import SaveIcon from '@mui/icons-material/Save';
-import PageHeadingBar from '../_components/PageHeadingBar';
-import HeadingAction from '../_components/heading/HeadingAction';
+import { usePublishPageValue } from '../../framework/PageLocalState';
 import { APP_MODULES, ModuleKey } from '../../config/modules';
 import {
   createRole,
@@ -45,7 +42,6 @@ const toRoleType = (name: string) =>
 interface RoleEditorProps {
   roleId: number | 'new';
   onSaved: () => void;
-  onCancel: () => void;
 }
 
 /**
@@ -53,7 +49,7 @@ interface RoleEditorProps {
  * permission matrix — the server replaces the whole permission set on PUT, so
  * a partial matrix would delete every omitted permission.
  */
-const RoleEditor = ({ roleId, onSaved, onCancel }: RoleEditorProps) => {
+const RoleEditor = ({ roleId, onSaved }: RoleEditorProps) => {
   const isNew = roleId === 'new';
 
   const [name, setName] = useState('');
@@ -148,40 +144,17 @@ const RoleEditor = ({ roleId, onSaved, onCancel }: RoleEditorProps) => {
   const fetchError = isNew ? matrixQuery.error : roleQuery.error;
   const isFetching = isNew ? matrixQuery.isLoading : roleQuery.isLoading;
 
+  // The bar (manifest `saveRoleAction`, title) reads these.
+  usePublishPageValue('rbac.roleName', roleQuery.data?.name);
+  usePublishPageValue('rbac.save', handleSave);
+  usePublishPageValue('rbac.saving', saveMutation.isLoading);
+  usePublishPageValue(
+    'rbac.saveDisabled',
+    saveMutation.isLoading || isFetching || !matrix
+  );
+
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
-      <Title title="RBAC Manager" />
-      <PageHeadingBar
-        title={
-          isNew
-            ? 'Create Role'
-            : `Edit Role${roleQuery.data ? ` — ${roleQuery.data.name}` : ''}`
-        }
-        info="Name and description, the modules this role can see in the admin, and the API permissions enforced by the server. The entire permission matrix is saved on every save."
-        // Sit below the fixed hide-on-scroll app bar (layout compensates with
-        // 48px margin, 56px on xs) so Save/Cancel are never buried under it.
-        sx={{ top: { xs: 56, sm: 48 } }}
-        // Cancel is the right-most Back arrow (returns to the role list).
-        onBack={onCancel}
-        backLabel="Cancel"
-        actions={
-          <HeadingAction
-            icon={
-              saveMutation.isLoading ? (
-                <CircularProgress size={18} color="inherit" />
-              ) : (
-                <SaveIcon fontSize="small" />
-              )
-            }
-            label="Save"
-            forceLabel
-            emphasis
-            color="primary"
-            onClick={handleSave}
-            disabled={saveMutation.isLoading || isFetching || !matrix}
-          />
-        }
-      />
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: 2 }}>
       {saveMutation.error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {saveMutation.error.message}
