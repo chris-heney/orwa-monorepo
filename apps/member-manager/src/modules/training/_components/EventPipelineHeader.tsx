@@ -3,13 +3,13 @@ import {
   UpdateParams,
   useDataProvider,
   useRecordContext,
+  useRedirect,
   useRefresh,
 } from 'react-admin';
 import {
   Alert,
   Box,
   Button,
-  IconButton,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -19,7 +19,6 @@ import {
   Stepper,
   Theme,
   Tooltip,
-  Typography,
   useMediaQuery,
 } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -30,6 +29,11 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import RestoreIcon from '@mui/icons-material/Restore';
 import authProvider from '../../../authProvider';
 import SuccessNotification from '../../_components/SuccessNotification';
+import PageHeadingBar from '../../_components/PageHeadingBar';
+import HeadingAction, {
+  HEADING_ACTION_LABELED_CLASS,
+} from '../../_components/heading/HeadingAction';
+import { EditAction, ShowAction } from '../../_components/heading/HeadingActions';
 import EmailModal from '../training-events/components/EventModalEmailDeq';
 import PostModal from '../training-events/components/EventModalPostWebsite';
 import TrainingStatusChip from './TrainingStatusChip';
@@ -56,14 +60,15 @@ const actionIcons = {
 };
 
 /**
- * Sticky pipeline header for training event pages: title + status chip in a
- * dark bar, a stage stepper, and the single contextual next action.
- * Cancel/Reinstate live in the overflow menu.
+ * Sticky pipeline header for training event pages: title + status chip in the
+ * shared PageHeadingBar, a stage stepper, and the single contextual next
+ * action. Cancel/Reinstate live in the overflow menu; Back is right-most.
  */
 const EventPipelineHeader = ({ context }: EventPipelineHeaderProps) => {
   const record = useRecordContext();
   const dataProvider = useDataProvider();
   const refresh = useRefresh();
+  const redirect = useRedirect();
   const { can } = useCan();
   // Workflow capability tiers — see the tier mapping doc in workflow.ts.
   const canCrud = can('update', 'training-event');
@@ -138,76 +143,93 @@ const EventPipelineHeader = ({ context }: EventPipelineHeaderProps) => {
   const activeStep =
     status && STAGE_ORDER.includes(status) ? STAGE_ORDER.indexOf(status) : -1;
 
+  const handleBack = () => {
+    if (context === 'edit' && record?.id != null) {
+      redirect('show', 'training-events', record.id);
+      return;
+    }
+    redirect('list', 'training-events');
+  };
+
+  const showMenu =
+    context !== 'create' &&
+    (canCancel(status, canCrud) || canReinstate(status, canCrud));
+
   return (
     <>
-      <Box
-        sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          backgroundColor: '#262626',
-          px: 1.5,
-          py: 0.75,
-          minHeight: 48,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Box
-          sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}
-        >
-          <Typography
-            variant="h6"
-            component="h1"
-            noWrap
+      <PageHeadingBar
+        title={
+          <Box
+            component="span"
             sx={{
-              color: 'white',
-              fontWeight: 'bold',
-              textTransform: 'uppercase',
-              letterSpacing: '0.02em',
-              fontSize: isSmall ? '0.8rem' : undefined,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 1.5,
+              minWidth: 0,
             }}
           >
-            {title}
-          </Typography>
-          {!isSmall && deqNumber && (
-            <Typography sx={{ color: 'grey.400', fontSize: '0.85rem' }} noWrap>
-              DEQ #{deqNumber}
-            </Typography>
-          )}
-          {status && <TrainingStatusChip status={status} />}
-        </Box>
-        {context !== 'create' && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {showAction && (
-              <Button
-                variant="contained"
-                color="success"
-                size="small"
-                onClick={runAction}
-                endIcon={actionIcons[action.kind]}
-                sx={{ boxShadow: 'none', whiteSpace: 'nowrap' }}
+            <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
+              {title}
+            </Box>
+            {!isSmall && deqNumber && (
+              <Box
+                component="span"
+                sx={{
+                  color: 'grey.400',
+                  fontSize: '0.85rem',
+                  fontWeight: 400,
+                  textTransform: 'none',
+                  letterSpacing: 0,
+                  whiteSpace: 'nowrap',
+                }}
               >
-                {action.label}
-              </Button>
+                DEQ #{deqNumber}
+              </Box>
             )}
-            {(canCancel(status, canCrud) || canReinstate(status, canCrud)) && (
-              <Tooltip title="More actions">
-                <IconButton
-                  size="small"
-                  onClick={(e) => setMenuAnchor(e.currentTarget)}
-                  sx={{ color: 'grey.400', '&:hover': { color: 'white' } }}
-                >
-                  <MoreVertIcon />
-                </IconButton>
-              </Tooltip>
-            )}
+            {status && <TrainingStatusChip status={status} />}
           </Box>
-        )}
-      </Box>
+        }
+        onBack={handleBack}
+        actions={
+          context !== 'create' ? (
+            <>
+              {showAction && (
+                <Button
+                  // Primary "next step" keeps its text even when heading
+                  // buttons are icon-only (layout CSS opt-out class).
+                  className={HEADING_ACTION_LABELED_CLASS}
+                  variant="contained"
+                  color="success"
+                  size="small"
+                  onClick={runAction}
+                  endIcon={actionIcons[action.kind]}
+                  sx={{ boxShadow: 'none', whiteSpace: 'nowrap' }}
+                >
+                  {action.label}
+                </Button>
+              )}
+              {context === 'show' && canCrud && record?.id != null && (
+                <EditAction
+                  onClick={() => redirect('edit', 'training-events', record.id)}
+                />
+              )}
+              {context === 'edit' && record?.id != null && (
+                <ShowAction
+                  onClick={() => redirect('show', 'training-events', record.id)}
+                />
+              )}
+              {showMenu && (
+                <HeadingAction
+                  icon={<MoreVertIcon fontSize="small" />}
+                  label="More actions"
+                  onClick={(e) => setMenuAnchor(e.currentTarget)}
+                  active={Boolean(menuAnchor)}
+                />
+              )}
+            </>
+          ) : undefined
+        }
+      />
 
       {context !== 'create' && status === 'CANCELLED' && (
         <Alert severity="error" sx={{ borderRadius: 0 }}>

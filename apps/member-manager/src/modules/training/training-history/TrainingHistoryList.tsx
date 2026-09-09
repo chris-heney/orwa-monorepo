@@ -10,22 +10,19 @@ import {
   RaRecord,
   DateField,
   FunctionField,
-  ExportButton,
-  SelectColumnsButton,
   Title,
   useDataProvider,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
-import CreateButton from '../../_components/CustomCreateButton';
 import React from 'react';
 import CustomExportFunction from '../../../helpers/custom-export-function';
 import PageHeadingBar from '../../_components/PageHeadingBar';
+import {
+  ColumnsAction,
+  CreateAction,
+  ExportAction,
+} from '../../_components/heading/HeadingActions';
 import { YearMonthDayMinute } from '../../../helpers/Data';
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
 
 const datagridSx = (theme: Theme) => ({
   '& .RaDatagrid-thead': { whiteSpace: 'nowrap' },
@@ -99,13 +96,9 @@ const TrainingHistoryList = () => {
           info="Attendance and credit-hour records from event check-ins."
           actions={
             <>
-              <CreateButton label="New Record" sx={barButtonSx} />
-              {!isSmall && (
-                <Box sx={{ '& .MuiButton-root': barButtonSx }}>
-                  <SelectColumnsButton />
-                </Box>
-              )}
-              <ExportButton sx={barButtonSx} />
+              <CreateAction label="New Record" />
+              {!isSmall && <ColumnsAction />}
+              <ExportAction />
             </>
           }
         />

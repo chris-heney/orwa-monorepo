@@ -7,15 +7,10 @@ import {
   Title,
 } from 'react-admin';
 import { Datagrid } from "@orwa/entity-id";
-import CreateButton from '../_components/CustomCreateButton';
 import { useEditRowClick } from '../rbac-manager/useCan';
 import { Box, Theme } from '@mui/material';
 import PageHeadingBar from '../_components/PageHeadingBar';
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
+import { CreateAction } from '../_components/heading/HeadingActions';
 
 const termDatagridSx = (theme: Theme) => ({
   '& .RaDatagrid-rowOdd': {
@@ -41,7 +36,7 @@ const TermListHeader = () => (
   <PageHeadingBar
     title="Terms Manager"
     info="Create and tag legal documents shown by TermsGate. Use identifiers like Global, All Conferences, or ORWA Conference ID #N."
-    actions={<CreateButton label="Add Term" sx={barButtonSx} />}
+    actions={<CreateAction label="Add Term" />}
   />
 );
 

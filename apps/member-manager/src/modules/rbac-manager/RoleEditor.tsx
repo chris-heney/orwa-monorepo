@@ -3,7 +3,6 @@ import { useMutation, useQuery } from 'react-query';
 import {
   Alert,
   Box,
-  Button,
   Card,
   CardContent,
   CardHeader,
@@ -14,7 +13,9 @@ import {
   Typography,
 } from '@mui/material';
 import { Title } from 'react-admin';
+import SaveIcon from '@mui/icons-material/Save';
 import PageHeadingBar from '../_components/PageHeadingBar';
+import HeadingAction from '../_components/heading/HeadingAction';
 import { APP_MODULES, ModuleKey } from '../../config/modules';
 import {
   createRole,
@@ -28,11 +29,6 @@ import {
   RoleSummary,
 } from './api';
 import PermissionMatrixTable from './PermissionMatrixTable';
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
 
 /**
  * Simple replication of how Strapi derives a role's unique `type` from its
@@ -165,24 +161,25 @@ const RoleEditor = ({ roleId, onSaved, onCancel }: RoleEditorProps) => {
         // Sit below the fixed hide-on-scroll app bar (layout compensates with
         // 48px margin, 56px on xs) so Save/Cancel are never buried under it.
         sx={{ top: { xs: 56, sm: 48 } }}
+        // Cancel is the right-most Back arrow (returns to the role list).
+        onBack={onCancel}
+        backLabel="Cancel"
         actions={
-          <>
-            <Button sx={barButtonSx} onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={handleSave}
-              disabled={saveMutation.isLoading || isFetching || !matrix}
-              startIcon={
-                saveMutation.isLoading ? (
-                  <CircularProgress size={18} color="inherit" />
-                ) : undefined
-              }
-            >
-              Save
-            </Button>
-          </>
+          <HeadingAction
+            icon={
+              saveMutation.isLoading ? (
+                <CircularProgress size={18} color="inherit" />
+              ) : (
+                <SaveIcon fontSize="small" />
+              )
+            }
+            label="Save"
+            forceLabel
+            emphasis
+            color="primary"
+            onClick={handleSave}
+            disabled={saveMutation.isLoading || isFetching || !matrix}
+          />
         }
       />
       {saveMutation.error && (

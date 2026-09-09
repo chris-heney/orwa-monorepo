@@ -1,16 +1,15 @@
 import React from "react";
-import { Box, IconButton, MenuItem, TextField, Tooltip } from "@mui/material";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import {
-  CreateButton,
-  ExportButton,
-  ListBase,
-  SelectColumnsButton,
-  useStore,
-} from "react-admin";
+import { Box, MenuItem, TextField } from "@mui/material";
+import { ListBase, useStore } from "react-admin";
 import { useAwardContext } from "../AwardContextProvider";
 import RecordCount from "../../_components/RecordCount";
 import PageHeadingBar from "../../_components/PageHeadingBar";
+import {
+  ColumnsAction,
+  CreateAction,
+  ExportAction,
+  FilterAction,
+} from "../../_components/heading/HeadingActions";
 import type { AgDatagridPrefs } from "../../_components/AgDatagrid";
 import {
   buildAwardListFilter,
@@ -76,8 +75,8 @@ const AwardDashboardHeader = () => {
               perPage={agPrefs.pageSize || 50}
             >
               <RecordCount />
-              <ExportButton sx={{ color: "white" }} />
-              <SelectColumnsButton style={{ color: "white" }} />
+              <ExportAction />
+              <ColumnsAction />
             </ListBase>
           ) : null}
           {selectedTab === "winners" ? (
@@ -88,11 +87,7 @@ const AwardDashboardHeader = () => {
               perPage={50}
             >
               <RecordCount />
-              <CreateButton
-                resource="award-winners"
-                label="Add Winner"
-                sx={{ color: "white" }}
-              />
+              <CreateAction resource="award-winners" label="Add Winner" />
             </ListBase>
           ) : null}
           {showYear ? (
@@ -116,22 +111,10 @@ const AwardDashboardHeader = () => {
             </TextField>
           ) : null}
           {selectedTab !== "settings" ? (
-            <Tooltip title="Filter">
-              <IconButton
-                onClick={() => setIsFilterSidebarOpen((open) => !open)}
-                size="small"
-                color="primary"
-                aria-label="Filter"
-              >
-                <FilterAltIcon
-                  fontSize="small"
-                  style={
-                    !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                  }
-                  sx={{ "&:hover": { color: "white" } }}
-                />
-              </IconButton>
-            </Tooltip>
+            <FilterAction
+              active={isFilterSidebarOpen}
+              onClick={() => setIsFilterSidebarOpen((open) => !open)}
+            />
           ) : null}
           {selectedTab === "nominations" ? <AwardPrintSelectedButton /> : null}
         </>

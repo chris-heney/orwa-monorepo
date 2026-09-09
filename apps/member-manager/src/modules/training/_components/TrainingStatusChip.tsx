@@ -16,6 +16,8 @@ const TrainingStatusChip = ({ status, size = 'small' }: TrainingStatusChipProps)
   const dark = theme.palette.mode === 'dark'
   return (
     <Chip
+      // span: the chip is rendered inside heading text (PageHeadingBar title)
+      component="span"
       label={meta.label}
       size={size}
       sx={{

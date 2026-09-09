@@ -6,6 +6,9 @@ import EventPipelineHeader from '../_components/EventPipelineHeader'
 const TrainingEventEdit = () => (
   <Edit
     title="Training Events"
+    // Edit / Show live in the pipeline heading bar; RA's default action
+    // toolbar would add a gutter above it.
+    actions={false}
     sx={{
       '& .RaEdit-card': {
         bgcolor: 'background.paper',

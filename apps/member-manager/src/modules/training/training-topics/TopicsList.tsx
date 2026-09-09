@@ -11,19 +11,16 @@ import {
   RaRecord,
   useDataProvider,
   Title,
-  ExportButton,
-  SelectColumnsButton,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
 import CustomExportFunction from '../../../helpers/custom-export-function';
-import CreateButton from '../../_components/CustomCreateButton';
 import PageHeadingBar from '../../_components/PageHeadingBar';
+import {
+  ColumnsAction,
+  CreateAction,
+  ExportAction,
+} from '../../_components/heading/HeadingActions';
 import { useEditRowClick } from '../../rbac-manager/useCan';
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
 
 const SessionList = () => {
   const rowClick = useEditRowClick();
@@ -66,13 +63,9 @@ const SessionList = () => {
           title="Training Topics"
           actions={
             <>
-              <CreateButton label="New Topics" sx={barButtonSx} />
-              {!isSmall && (
-                <Box sx={{ '& .MuiButton-root': barButtonSx }}>
-                  <SelectColumnsButton />
-                </Box>
-              )}
-              <ExportButton sx={barButtonSx} />
+              <CreateAction label="New Topics" />
+              {!isSmall && <ColumnsAction />}
+              <ExportAction />
             </>
           }
         />

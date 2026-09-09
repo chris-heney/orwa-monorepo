@@ -1,4 +1,4 @@
-import { Box, Button, Theme, useMediaQuery } from '@mui/material';
+import { Box, Theme, useMediaQuery } from '@mui/material';
 import CustomExportFunction from '../../../helpers/custom-export-function';
 import React, { useState } from 'react';
 import {
@@ -12,24 +12,22 @@ import {
   ReferenceField,
   FunctionField,
   RaRecord,
-  ExportButton,
-  SelectColumnsButton,
   Title,
   useDataProvider,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
-import CreateButton from '../../_components/CustomCreateButton';
 import TrainingClassActionsButton from './components/EventListActionsPopUp';
 import TrainingEventListFilter from './components/EventListFilter';
 import EventCardGird from './components/EventListCardGridMobile';
 import PageHeadingBar from '../../_components/PageHeadingBar';
+import {
+  ColumnsAction,
+  CreateAction,
+  ExportAction,
+  FilterAction,
+} from '../../_components/heading/HeadingActions';
 import TrainingStatusChip from '../_components/TrainingStatusChip';
 import { useCan } from '../../rbac-manager/useCan';
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
 
 const datagridSx = (theme: Theme) => ({
   '& .RaDatagrid-thead': { whiteSpace: 'nowrap' },
@@ -45,7 +43,15 @@ const datagridSx = (theme: Theme) => ({
   },
 });
 
-const ListHeader = () => {
+const ListHeader = ({
+  isSmall,
+  filterListOpen,
+  onToggleFilters,
+}: {
+  isSmall: boolean;
+  filterListOpen: boolean;
+  onToggleFilters: () => void;
+}) => {
   const { can } = useCan();
 
   return (
@@ -55,14 +61,17 @@ const ListHeader = () => {
       actions={
         <>
           {can('create', 'training-event') && (
-            <CreateButton label="New Event" sx={barButtonSx} />
+            <CreateAction label="New Event" />
           )}
           {/* Column picker and export only act on the already-fetched list
               (client-side), so read access is enough — no capability gate. */}
-          <Box sx={{ '& .MuiButton-root': barButtonSx }}>
-            <SelectColumnsButton />
-          </Box>
-          <ExportButton sx={barButtonSx} />
+          {!isSmall && <ColumnsAction />}
+          <ExportAction />
+          {/* Desktop shows the filter aside permanently; on small screens the
+              Filter action toggles it. */}
+          {isSmall && (
+            <FilterAction active={filterListOpen} onClick={onToggleFilters} />
+          )}
         </>
       }
     />
@@ -129,12 +138,11 @@ const TrainingEventList = () => {
           '& .RaList-content': { boxShadow: 'none' },
         }}
       >
-        <ListHeader />
-        {isSmall && (
-          <Button onClick={() => setFilterListOpen(!filterListOpen)}>
-            {filterListOpen ? 'Hide Filters' : 'Show Filters'}
-          </Button>
-        )}
+        <ListHeader
+          isSmall={isSmall}
+          filterListOpen={filterListOpen}
+          onToggleFilters={() => setFilterListOpen((open) => !open)}
+        />
         {isSmall ? (
           <EventCardGird />
         ) : (

@@ -32,8 +32,9 @@ import {
 import type { Theme } from "@mui/material/styles";
 import { Title, useNotify } from "react-admin";
 import PageHeadingBar from "../_components/PageHeadingBar";
+import HeadingAction from "../_components/heading/HeadingAction";
+import { RefreshAction } from "../_components/heading/HeadingActions";
 import SearchIcon from "@mui/icons-material/Search";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -437,34 +438,23 @@ const MediaLibraryPage: React.FC = () => {
                 </Typography>
               ) : null}
             </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Button
-                variant="contained"
-                size="small"
-                startIcon={
-                  uploading ? (
-                    <CircularProgress size={16} color="inherit" />
-                  ) : (
-                    <CloudUploadIcon />
-                  )
-                }
-                disabled={uploading}
-                onClick={() => fileInputRef.current?.click()}
-              >
-                Upload
-              </Button>
-              <Tooltip title="Refresh library">
-                <IconButton
-                  onClick={() => setRefreshNonce((n) => n + 1)}
-                  disabled={loading}
-                  aria-label="Refresh library"
-                  size="medium"
-                  sx={{ color: "white" }}
-                >
-                  <RefreshIcon />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            <HeadingAction
+              icon={
+                uploading ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <CloudUploadIcon fontSize="small" />
+                )
+              }
+              label="Upload"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+            />
+            <RefreshAction
+              label="Refresh library"
+              disabled={loading}
+              onClick={() => setRefreshNonce((n) => n + 1)}
+            />
           </>
         }
       />

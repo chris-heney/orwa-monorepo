@@ -10,11 +10,15 @@ import {
   TextField,
 } from "@mui/material";
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
+import { listDrawerContext } from "../../_components/drawer";
 import { useOrwefContext } from "../OrwefContextProvider";
 import {
   WATER_SYSTEM_REGIONS,
+  buildScholarshipListFilter,
   calendarYearChoices,
 } from "../helpers/listFilters";
+
+const RESOURCE = "scholarship-applications";
 
 const OrwefFilterSidebar = () => {
   const {
@@ -32,6 +36,10 @@ const OrwefFilterSidebar = () => {
     <FilterSidebarShell
       open={isFilterSidebarOpen}
       onClose={() => setIsFilterSidebarOpen(false)}
+      context={listDrawerContext({
+        resource: RESOURCE,
+        filter: buildScholarshipListFilter(search, year, region),
+      })}
     >
       <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
         <FormControl fullWidth>

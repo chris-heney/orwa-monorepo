@@ -5,8 +5,6 @@ import React from 'react';
 import {
   List,
   TextField,
-  SelectColumnsButton,
-  ExportButton,
   ConfigurableDatagridColumn,
   useStore,
   SimpleList,
@@ -14,15 +12,14 @@ import {
   Title,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
-import CreateButton from '../_components/CustomCreateButton';
 import PageHeadingBar from '../_components/PageHeadingBar';
+import {
+  ColumnsAction,
+  CreateAction,
+  ExportAction,
+} from '../_components/heading/HeadingActions';
 import { useEditRowClick } from '../rbac-manager/useCan';
 import { useLocation } from 'react-router-dom';
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
 
 const EventRegistrationList = () => {
   const rowClick = useEditRowClick();
@@ -76,19 +73,14 @@ const EventRegistrationList = () => {
           title="Class Rosters"
           actions={
             <>
-              {!isSmall && (
-                <Box sx={{ '& .MuiButton-root': barButtonSx }}>
-                  <SelectColumnsButton />
-                </Box>
-              )}
-              <ExportButton sx={barButtonSx} />
-              <CreateButton
+              <CreateAction
                 label="Register Attendee"
-                sx={barButtonSx}
                 to={{
                   pathname: `/training-event-registrationss/create/${eventId}`,
                 }}
               />
+              {!isSmall && <ColumnsAction />}
+              <ExportAction />
             </>
           }
         />

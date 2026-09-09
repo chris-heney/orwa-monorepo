@@ -1,10 +1,12 @@
 import React from "react";
-import { IconButton, Tooltip } from "@mui/material";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import { ListBase, SelectColumnsButton, useStore } from "react-admin";
+import { ListBase, useStore } from "react-admin";
 import { useOrwefContext } from "../OrwefContextProvider";
 import RecordCount from "../../_components/RecordCount";
 import PageHeadingBar from "../../_components/PageHeadingBar";
+import {
+  ColumnsAction,
+  FilterAction,
+} from "../../_components/heading/HeadingActions";
 import type { AgDatagridPrefs } from "../../_components/AgDatagrid";
 import { buildScholarshipListFilter } from "../helpers/listFilters";
 import ScholarshipPrintButton from "./ScholarshipPrintButton";
@@ -42,25 +44,13 @@ const OrwefDashboardHeader = () => {
             >
               <RecordCount />
               <ScholarshipPrintButton listMode sx={{ color: "white" }} />
-              <SelectColumnsButton style={{ color: "white" }} />
+              <ColumnsAction />
             </ListBase>
           ) : null}
-          <Tooltip title="Filter">
-            <IconButton
-              onClick={() => setIsFilterSidebarOpen((open) => !open)}
-              size="small"
-              color="primary"
-              aria-label="Filter"
-            >
-              <FilterAltIcon
-                fontSize="small"
-                style={
-                  !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                }
-                sx={{ "&:hover": { color: "white" } }}
-              />
-            </IconButton>
-          </Tooltip>
+          <FilterAction
+            active={isFilterSidebarOpen}
+            onClick={() => setIsFilterSidebarOpen((open) => !open)}
+          />
         </>
       }
     />

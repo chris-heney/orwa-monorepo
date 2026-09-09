@@ -22,12 +22,14 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Theme } from '@mui/material/styles';
-import AddIcon from '@mui/icons-material/Add';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SupervisedUserCircleIcon from '@mui/icons-material/SupervisedUserCircle';
 import PageHeadingBar from '../_components/PageHeadingBar';
+import {
+  AddAction,
+  RefreshAction,
+} from '../_components/heading/HeadingActions';
 import {
   ALL_MODULE_KEYS,
   APP_MODULES,
@@ -40,11 +42,6 @@ import { previewModulesForRole, setRolePreview } from './rolePreview';
 
 /** Built-in Strapi roles (plus admin) that must never be deleted. */
 const PROTECTED_ROLE_TYPES = ['public', 'authenticated', 'admin'];
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-};
 
 const roleTableSx = (theme: Theme) => ({
   borderCollapse: 'collapse',
@@ -174,23 +171,15 @@ const RbacDashboard = () => {
         sx={{ top: { xs: 56, sm: 48 } }}
         actions={
           <>
-            <Tooltip title="Refresh roles">
-              <IconButton
-                size="small"
-                sx={barButtonSx}
-                aria-label="Refresh roles"
-                onClick={() => rolesQuery.refetch()}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Tooltip>
-            <Button
-              startIcon={<AddIcon />}
-              sx={barButtonSx}
+            <AddAction
+              label="Create Role"
               onClick={() => setEditorRole('new')}
-            >
-              Create Role
-            </Button>
+            />
+            <RefreshAction
+              label="Refresh roles"
+              disabled={rolesQuery.isFetching}
+              onClick={() => rolesQuery.refetch()}
+            />
           </>
         }
       />

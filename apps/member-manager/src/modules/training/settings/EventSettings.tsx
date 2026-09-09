@@ -8,46 +8,49 @@ import CustomInterface from './program-billed/CustomInterface'
 
 const EventSettings = () => {
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box', p: { xs: 1, sm: 2 } }}>
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
       <Title title="Training Settings" />
       <PageHeadingBar
         title="Training Settings"
         info="Office details, training email templates, billed programs, and training topics."
       />
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%', bgcolor: 'background.paper' }}>
-            <OfficeDetails />
-          </Card>
+      {/* Padding belongs to the content, not around the bar — keeps the bar flush. */}
+      <Box sx={{ p: { xs: 1, sm: 2 }, boxSizing: 'border-box' }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%', bgcolor: 'background.paper' }}>
+              <OfficeDetails />
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Card sx={{ height: '100%', bgcolor: 'background.paper' }}>
+              <EmailInterface module="Training" />
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomInterface
+              rows={[
+                { source: 'name', label: 'Name', type: 'number' },
+                { source: 'description', label: 'Description', type: 'string' },
+              ]}
+              resource="programs"
+              title="Programs Billed"
+              createTitle="Create Program Billed"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <CustomInterface
+              rows={[
+                { source: 'name', label: 'Name', type: 'number' },
+                { source: 'description', label: 'Description', type: 'string' },
+              ]}
+              resource="training-topics"
+              title="Training Topics"
+              createTitle="Create Training Topic"
+            />
+          </Grid>
         </Grid>
-        <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%', bgcolor: 'background.paper' }}>
-            <EmailInterface module="Training" />
-          </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <CustomInterface
-            rows={[
-              { source: 'name', label: 'Name', type: 'number' },
-              { source: 'description', label: 'Description', type: 'string' },
-            ]}
-            resource="programs"
-            title="Programs Billed"
-            createTitle="Create Program Billed"
-          />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <CustomInterface
-            rows={[
-              { source: 'name', label: 'Name', type: 'number' },
-              { source: 'description', label: 'Description', type: 'string' },
-            ]}
-            resource="training-topics"
-            title="Training Topics"
-            createTitle="Create Training Topic"
-          />
-        </Grid>
-      </Grid>
+      </Box>
     </Box>
   )
 }

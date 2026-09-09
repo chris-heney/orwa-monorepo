@@ -14,21 +14,19 @@ import {
   ReferenceArrayField,
   ChipField,
   Title,
-  ExportButton,
-  SelectColumnsButton,
   useListContext,
   useDataProvider,
 } from 'react-admin'
 import { DatagridConfigurable } from '@orwa/entity-id'
 import CustomExportFunction from '../../helpers/custom-export-function'
 import { CurrencyOptions } from '../../config/Settings'
-import CreateButton from '../_components/CustomCreateButton'
 import PageHeadingBar from '../_components/PageHeadingBar'
-
-const barButtonSx = {
-  color: 'white',
-  '&:hover': { backgroundColor: 'rgba(255,255,255,0.08)' },
-}
+import RecordCount from '../_components/RecordCount'
+import {
+  ColumnsAction,
+  CreateAction,
+  ExportAction,
+} from '../_components/heading/HeadingActions'
 
 const AssetListHeader = () => {
   const { total } = useListContext()
@@ -40,22 +38,10 @@ const AssetListHeader = () => {
       info="Track tangible and intangible assets, assignments, and fair market value."
       actions={
         <>
-          {total != null && total > 0 && (
-            <Box
-              component="span"
-              sx={{
-                color: 'white',
-                fontWeight: 700,
-                fontSize: isSmall ? '0.7rem' : '0.875rem',
-                mr: 0.5,
-              }}
-            >
-              {total} Records
-            </Box>
-          )}
-          <CreateButton label="Add Asset" sx={barButtonSx} />
-          {!isSmall && <SelectColumnsButton sx={barButtonSx} />}
-          <ExportButton sx={barButtonSx} />
+          {total != null && total > 0 && <RecordCount />}
+          <CreateAction label="Add Asset" />
+          {!isSmall && <ColumnsAction />}
+          <ExportAction />
         </>
       }
     />

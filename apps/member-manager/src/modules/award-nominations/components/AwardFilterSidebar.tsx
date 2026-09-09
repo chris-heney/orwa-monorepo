@@ -11,8 +11,10 @@ import {
 } from "@mui/material";
 import { useGetList, useNotify } from "react-admin";
 import FilterSidebarShell from "../../_components/FilterSidebarShell";
+import { listDrawerContext } from "../../_components/drawer";
 import { useAwardContext } from "../AwardContextProvider";
 import {
+  buildAwardListFilter,
   calendarYearChoices,
   WATER_SYSTEM_REGIONS,
 } from "../helpers/listFilters";
@@ -57,6 +59,17 @@ const AwardFilterSidebar = () => {
     <FilterSidebarShell
       open={isFilterSidebarOpen && !hideSidebar}
       onClose={() => setIsFilterSidebarOpen(false)}
+      context={
+        selectedTab === "winners"
+          ? listDrawerContext({
+              resource: "award-winners",
+              filter: year === "all" ? {} : { award_year: year },
+            })
+          : listDrawerContext({
+              resource: "award-nominations",
+              filter: buildAwardListFilter(search, year, region, awardType),
+            })
+      }
     >
       <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
         {selectedTab !== "winners" ? (
