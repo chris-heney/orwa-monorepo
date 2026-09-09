@@ -41,7 +41,6 @@ import {
   SoonerwarnManagement,
   Conferences,
   SettingsDashboard,
-  MediaLibraryPage,
   OrwefManagement,
   AwardManagement,
 } from './modules/dashboards';
@@ -71,7 +70,6 @@ export interface LegacyResource {
 
 const LEGACY_RESOURCES: LegacyResource[] = [
   // SHARED
-  { name: 'upload/files', props: { recordRepresentation: 'url' } },
   // MANAGEMENT
   { name: 'staff', def: Staff },
   { name: 'contacts', def: Contacts },
@@ -124,7 +122,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   { name: 'award-nominations', def: AwardNominations },
   { name: 'award-winners', def: AwardWinners },
   { name: 'award-types', def: AwardTypes },
-  { name: 'upload' },
 ];
 
 export interface LegacyRoute {
@@ -163,7 +160,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
     element: <SoonerwarnManagement />,
     module: 'memberships',
   },
-  { path: 'media-library', element: <MediaLibraryPage />, module: 'media-library' },
   {
     path: 'financial-audits/dashboard',
     element: <FinancialAuditDashboard />,

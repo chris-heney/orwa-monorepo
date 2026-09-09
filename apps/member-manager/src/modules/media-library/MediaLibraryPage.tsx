@@ -27,15 +27,10 @@ import {
   ToggleButtonGroup,
   Tooltip,
   Typography,
-  useMediaQuery,
 } from "@mui/material";
-import type { Theme } from "@mui/material/styles";
-import { Title, useNotify } from "react-admin";
-import PageHeadingBar from "../_components/PageHeadingBar";
-import HeadingAction from "../_components/heading/HeadingAction";
-import { RefreshAction } from "../_components/heading/HeadingActions";
+import { useNotify } from "react-admin";
+import { usePublishPageValue } from "../../framework/PageLocalState";
 import SearchIcon from "@mui/icons-material/Search";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DownloadIcon from "@mui/icons-material/Download";
 import ViewListIcon from "@mui/icons-material/ViewList";
@@ -145,7 +140,6 @@ const MediaLibraryPage: React.FC = () => {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [sortKey, setSortKey] = useState<MediaSortKey>("createdAt:desc");
   const [typeFilter, setTypeFilter] = useState<MediaTypeFilter>("all");
-  const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
 
   useEffect(() => {
     const t = window.setTimeout(() => setDebouncedQuery(search.trim()), 400);
@@ -402,63 +396,24 @@ const MediaLibraryPage: React.FC = () => {
     );
   };
 
-  return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: "border-box" }}>
-      <Title title="Media Library" />
-      <PageHeadingBar
-        title="Media Library"
-        info="Upload, search, and filter files in your browser. Copy or download public URLs for emails and the site. In list view, use column headers to sort."
-        actions={
-          <>
-            <Box sx={{ textAlign: "right" }}>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "white",
-                  fontWeight: 700,
-                  fontSize: isSmall ? "0.7rem" : "0.8125rem",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  opacity: loading ? 0.75 : 1,
-                }}
-              >
-                {loading
-                  ? "…"
-                  : `${total.toLocaleString()} ${total === 1 ? "file" : "files"}`}
-              </Typography>
-              {!loading &&
-              allFiles.length > 0 &&
-              (debouncedQuery || typeFilter !== "all") &&
-              total !== allFiles.length ? (
-                <Typography
-                  variant="caption"
-                  sx={{ color: "grey.400", display: "block", lineHeight: 1.2 }}
-                >
-                  {allFiles.length.toLocaleString()} in library
-                </Typography>
-              ) : null}
-            </Box>
-            <HeadingAction
-              icon={
-                uploading ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <CloudUploadIcon fontSize="small" />
-                )
-              }
-              label="Upload"
-              disabled={uploading}
-              onClick={() => fileInputRef.current?.click()}
-            />
-            <RefreshAction
-              label="Refresh library"
-              disabled={loading}
-              onClick={() => setRefreshNonce((n) => n + 1)}
-            />
-          </>
-        }
-      />
+  // The bar (manifest actions) reads these page-local values.
+  usePublishPageValue("media.loading", loading);
+  usePublishPageValue("media.uploading", uploading);
+  usePublishPageValue("media.total", total);
+  usePublishPageValue(
+    "media.inLibrary",
+    !loading &&
+      allFiles.length > 0 &&
+      (debouncedQuery || typeFilter !== "all") &&
+      total !== allFiles.length
+      ? allFiles.length
+      : null
+  );
+  usePublishPageValue("media.upload", () => fileInputRef.current?.click());
+  usePublishPageValue("media.refresh", () => setRefreshNonce((n) => n + 1));
 
+  return (
+    <Box sx={{ width: 1, minWidth: 0, boxSizing: "border-box", p: 2 }}>
       <input
         ref={fileInputRef}
         type="file"
