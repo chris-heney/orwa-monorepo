@@ -8,6 +8,7 @@ import {
 } from "@mui/material";
 import React, { useEffect } from "react";
 import { ListContextProvider, ListControllerResult } from "react-admin";
+import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
 import SummaryRangeSelection from "./_components/SummaryRangeSelect";
 import LegendToggleFilter from "./_components/LegendToggleFilter";
 import PayoutStatusFilter from "./_components/PayoutStatusFilter";
@@ -16,6 +17,7 @@ import { useGrantContext } from "./GrantContextProvider";
 import SelectFiscalYearRange from "./_components/SelectFiscalYearRange";
 import { getRelationFilterId } from "./helpers/getRelationFilterId";
 import FilterSidebarShell from "../_components/FilterSidebarShell";
+import { RightDrawer, listDrawerContext } from "../_components/drawer";
 
 const GrantManagementSidebars = () => {
   const {
@@ -26,13 +28,22 @@ const GrantManagementSidebars = () => {
     setGrantIndex,
     setGrantId,
     setGrantFilterId,
+    grantFilterId,
     grants,
+    resource,
     isSettingsOpen,
     setIsFilterSidebarOpen,
     setIsEmailSidebarOpen,
     setIsActivitySidebarOpen,
     setIsSettingsOpen,
   } = useGrantContext();
+
+  // What the Filters drawer is about: the current tab's list, scoped to the
+  // selected grant (the full per-tab filter lives in GrantDashboardHeader).
+  const filterDrawerContext = listDrawerContext({
+    resource: resource ?? "grant-application-finals",
+    filter: grantFilterId != null ? { grant: grantFilterId } : undefined,
+  });
 
   const selectGrant = (index: number) => {
     const grant = grants?.[index];
@@ -71,6 +82,7 @@ const GrantManagementSidebars = () => {
       <FilterSidebarShell
         open={isFilterSidebarOpen}
         onClose={() => setIsFilterSidebarOpen(false)}
+        context={filterDrawerContext}
       >
         <Box sx={{ p: 2 }}>
           <FormControl>
@@ -111,22 +123,15 @@ const GrantManagementSidebars = () => {
           selectedTab === "application scores") && <SelectFiscalYearRange />}
       </FilterSidebarShell>
 
-      {isActivitySidebarOpen && (
-        <ActivityFeed
-          title=" "
-          entity="grant"
-          sx={{
-            maxWidth: 350,
-            height: 500,
-            mt: 3,
-            ml: 2,
-            position: "sticky",
-            top: 0,
-            zIndex: 10,
-          }}
-          listSx={{ maxHeight: "100vh" }}
-        />
-      )}
+      <RightDrawer
+        open={isActivitySidebarOpen}
+        onClose={() => setIsActivitySidebarOpen(false)}
+        title="Activity Feed"
+        icon={<MarkunreadMailboxIcon fontSize="small" />}
+        context={listDrawerContext({ resource: "grants" })}
+      >
+        <ActivityFeed entity="grant" title=" " frame="plain" />
+      </RightDrawer>
     </>
   );
 };

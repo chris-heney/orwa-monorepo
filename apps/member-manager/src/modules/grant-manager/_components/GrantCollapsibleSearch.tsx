@@ -18,6 +18,7 @@ const GrantCollapsibleSearch = ({ tab, onClearSearch, children }: Props) => {
   const { searchBarOpen } = useGrantContext();
   const open = searchBarOpen[tab];
   const prevOpen = useRef(open);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (prevOpen.current && !open) {
@@ -26,9 +27,20 @@ const GrantCollapsibleSearch = ({ tab, onClearSearch, children }: Props) => {
     prevOpen.current = open;
   }, [open, onClearSearch]);
 
+  // One click on the Search icon should land the cursor in the search box.
+  const focusFirstInput = () => {
+    contentRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+  };
+
   return (
-    <Collapse in={open} timeout={200} unmountOnExit>
+    <Collapse
+      in={open}
+      timeout={200}
+      unmountOnExit
+      onEntered={focusFirstInput}
+    >
       <Box
+        ref={contentRef}
         sx={{
           display: "flex",
           justifyContent: "flex-start",

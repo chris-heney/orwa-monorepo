@@ -43,7 +43,6 @@ const GrantDashboard = () => {
     dashboardContext,
     isSettingsOpen,
     setIsEmailSidebarOpen,
-    isActivitySidebarOpen,
     isEmailSidebarOpen,
     setResource,
     isCreatePayoutModalOpen,
@@ -118,8 +117,9 @@ const GrantDashboard = () => {
       sx={{
         display: "flex",
         flexDirection: isSmall ? "column" : "row",
-        maxWidth:
-          isActivitySidebarOpen || isEmailSidebarOpen ? "90vw" : "96vw",
+        // The Activity drawer is a RightDrawer now (it pushes content via the
+        // layout inset), so only the legacy email well narrows the page.
+        maxWidth: isEmailSidebarOpen ? "90vw" : "96vw",
       }}
     >
       <Box sx={{ flexGrow: 1 }}>
@@ -182,10 +182,7 @@ const GrantDashboard = () => {
               ) : (
                 <Box
                   sx={{
-                    maxWidth:
-                      isActivitySidebarOpen || isEmailSidebarOpen
-                        ? "90vw"
-                        : "96vw",
+                    maxWidth: isEmailSidebarOpen ? "90vw" : "96vw",
                     overflow: "auto",
                   }}
                 >

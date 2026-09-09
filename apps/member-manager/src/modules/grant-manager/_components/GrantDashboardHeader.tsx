@@ -1,26 +1,20 @@
 import React from "react";
-import {
-  Box,
-  Button,
-  IconButton,
-  Tooltip,
-  Theme,
-  Typography,
-  useMediaQuery,
-} from "@mui/material";
+import { Button, Theme, useMediaQuery } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import MarkunreadMailboxIcon from "@mui/icons-material/MarkunreadMailbox";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import SettingsIcon from "@mui/icons-material/Settings";
-import SearchIcon from "@mui/icons-material/Search";
 import RecordCount from "../../_components/RecordCount";
+import PageHeadingBar from "../../_components/PageHeadingBar";
+import {
+  ActivityAction,
+  ColumnsAction,
+  ExportAction,
+  FilterAction,
+  SearchAction,
+  SettingsAction,
+} from "../../_components/heading/HeadingActions";
 import {
   ConfigurableDatagridColumn,
-  ExportButton,
   ListBase,
   RaRecord,
-  SelectColumnsButton,
-  TopToolbar,
   useDataProvider,
   useStore,
 } from "react-admin";
@@ -136,44 +130,35 @@ const GrantDashboardHeader = () => {
           }
       : {};
 
+  const title = isSettingsOpen
+    ? "Grant Management Settings"
+    : dashboardContext === "create"
+    ? "New Grant"
+    : `${
+        grants[grantIndex].name !== "grant" ? grants[grantIndex].name : ""
+      } ${isSmall ? "" : `: ${selectedTab}`}`;
+
+  const toggleSearch = () => {
+    if (!searchableTab) return;
+    const willOpen = !searchBarOpen[searchableTab];
+    if (!willOpen) {
+      // Clear persisted application search before closing so the
+      // provider effect cannot immediately re-open the bar.
+      if (searchableTab === "applications") {
+        setApplicationSearchFilter("");
+      }
+      setSearchBarOpenForTab(searchableTab, false);
+    } else {
+      setSearchBarOpenForTab(searchableTab, true);
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        backgroundColor: "#262626",
-        px: 2,
-      }}
-    >
-      <Typography
-        onClick={() => setGodMode((prev) => !prev)}
-        variant="h6"
-        sx={{
-          fontSize: isSmall ? "10px" : null,
-          color: "white",
-          fontWeight: "bold",
-          textTransform: "uppercase",
-          textAlign: "left",
-        }}
-      >
-        {isSettingsOpen
-          ? "Grant Management Settings"
-          : dashboardContext === "create"
-          ? "New Grant"
-          : `${
-              grants[grantIndex].name !== "grant" ? grants[grantIndex].name : ""
-            } ${isSmall ? "" : `: ${selectedTab}`}`}
-      </Typography>
-      <TopToolbar>
-        <Box
-          className="heading-actions"
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1,
-          }}
-        >
+    <PageHeadingBar
+      title={title}
+      onTitleClick={() => setGodMode((prev) => !prev)}
+      actions={
+        <>
           {resource && (
             <ListBase
               disableSyncWithLocation
@@ -214,8 +199,8 @@ const GrantDashboardHeader = () => {
               }
             >
               <RecordCount />
-              <ExportButton sx={{ color: "white" }} />
-              <SelectColumnsButton style={{ color: "white" }} />
+              <ExportAction />
+              <ColumnsAction />
               {(selectedTab === "payouts" ||
                 selectedTab === "Admin Payouts") && (
                 <Button
@@ -237,144 +222,32 @@ const GrantDashboardHeader = () => {
             </ListBase>
           )}
 
-          {/* <Tooltip
-            title={
-              dashboardContext === "create" ? "Edit Grant" : "Add New Grant"
-            }
-          >
-            <IconButton
-              onClick={() =>
-                setDashboardContext(
-                  dashboardContext === "create" ? "edit" : "create"
-                )
-              }
-              size="small"
-              color="primary"
-            >
-              {dashboardContext === "create" ? (
-                <EditIcon
-                  sx={{
-                    "&:hover": {
-                      color: "white",
-                    },
-                  }}
-                  fontSize="small"
-                />
-              ) : (
-                <AddIcon
-                  sx={{
-                    "&:hover": {
-                      color: "white",
-                    },
-                  }}
-                  fontSize="small"
-                />
-              )}
-            </IconButton>
-          </Tooltip> */}
-
           {searchableTab && (
-            <Tooltip title="Search">
-              <IconButton
-                onClick={() => {
-                  const willOpen = !searchBarOpen[searchableTab];
-                  if (!willOpen) {
-                    // Clear persisted application search before closing so the
-                    // provider effect cannot immediately re-open the bar.
-                    if (searchableTab === "applications") {
-                      setApplicationSearchFilter("");
-                    }
-                    setSearchBarOpenForTab(searchableTab, false);
-                  } else {
-                    setSearchBarOpenForTab(searchableTab, true);
-                  }
-                }}
-                size="small"
-                color="primary"
-              >
-                <SearchIcon
-                  fontSize="small"
-                  style={
-                    !searchBarOpen[searchableTab]
-                      ? { stroke: "white" }
-                      : { fill: "white" }
-                  }
-                  sx={{
-                    "&:hover": {
-                      color: "white",
-                    },
-                  }}
-                />
-              </IconButton>
-            </Tooltip>
+            <SearchAction
+              active={Boolean(searchBarOpen[searchableTab])}
+              onClick={toggleSearch}
+            />
           )}
 
-          <Tooltip title="Filter">
-            <IconButton
-              onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
-              size="small"
-              color="primary"
-            >
-              <FilterAltIcon
-                fontSize="small"
-                style={
-                  !isFilterSidebarOpen ? { stroke: "white" } : { fill: "white" }
-                }
-                sx={{
-                  "&:hover": {
-                    color: "white",
-                  },
-                }}
-              />
-            </IconButton>
-          </Tooltip>
+          <FilterAction
+            active={isFilterSidebarOpen}
+            onClick={() => setIsFilterSidebarOpen(!isFilterSidebarOpen)}
+          />
 
           {selectedTab === "summary" && (
-            <Tooltip title="Activity">
-              <IconButton
-                onClick={() => setIsActivitySidebarOpen(!isActivitySidebarOpen)}
-                size="small"
-                color="primary"
-              >
-                <MarkunreadMailboxIcon
-                  fontSize="small"
-                  sx={{
-                    "&:hover": {
-                      color: "white",
-                    },
-                  }}
-                  style={
-                    !isActivitySidebarOpen
-                      ? { stroke: "white" }
-                      : { fill: "white" }
-                  }
-                />
-              </IconButton>
-            </Tooltip>
+            <ActivityAction
+              active={isActivitySidebarOpen}
+              onClick={() => setIsActivitySidebarOpen(!isActivitySidebarOpen)}
+            />
           )}
 
-          <Tooltip title="Settings">
-            <IconButton
-              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-              size="small"
-              color="primary"
-            >
-              <SettingsIcon
-                fontSize="small"
-                sx={{
-                  "&:hover": {
-                    color: "white",
-                  },
-                }}
-                style={
-                  !isSettingsOpen ? { stroke: "white" } : { fill: "white" }
-                }
-              />
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </TopToolbar>
-    </Box>
+          <SettingsAction
+            active={isSettingsOpen}
+            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+          />
+        </>
+      }
+    />
   );
 };
 

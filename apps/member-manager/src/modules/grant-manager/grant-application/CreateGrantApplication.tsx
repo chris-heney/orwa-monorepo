@@ -1,8 +1,7 @@
 import { Create, SimpleForm, useCreate, useNotify } from 'react-admin'
 import GrantApplicationFormFields from './components/ApplicationFormFields'
 import React from 'react'
-import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader'
-import { Button } from '@mui/material'
+import PageHeadingBar from '../../_components/PageHeadingBar'
 import { FieldValues } from 'react-hook-form'
 import { useGrantContext } from '../GrantContextProvider'
 
@@ -32,9 +31,13 @@ const GrantApplicationCreateForm = ({isCreating, setIsCreating} : GrantApplicati
 
 
   return (
-    <Create sx={{mt: -2}} resource='grant-application-finals' title='Grant Application' redirect={false}>
-      <CustomSecondaryHeader sx={{p: 0}} title='New Grant Application Form' />
-      <Button onClick={() => isCreating ? setIsCreating(false) : setIsCreating(true)}>Cancel</Button>
+    <Create resource='grant-application-finals' title='Grant Application' redirect={false}>
+      {/* Back (right-most) cancels the inline create and returns to the list. */}
+      <PageHeadingBar
+        title='New Grant Application Form'
+        onBack={() => setIsCreating(!isCreating)}
+        backLabel='Cancel'
+      />
       <SimpleForm onSubmit={createApplication}>
         <GrantApplicationFormFields />
       </SimpleForm>
