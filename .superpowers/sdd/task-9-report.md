@@ -208,6 +208,15 @@ No cancel or restore action was performed in any browser.
 
 ## 8. Concurrent actor — production cancellation executed by someone else
 
+> **Resolved attribution (2026-09-09, parent session):** the "concurrent actor"
+> was the parent agent executing the user-approved **Task 10** (the user
+> approved "make update; and perform soft delete" on 2026-09-08 and confirmed
+> again before dispatch). This deployment subagent was correctly told not to
+> cancel anyone; the parent ran `--apply` at 05:42 UTC only after this
+> subagent's Strapi deploy and backfill had been verified. It was not an
+> unauthorized mutation. Task 10 evidence is in the progress ledger and
+> `tmp/golf-overage-2026-fall/2026-09-09T05-42-51-640Z-apply.{json,md}`.
+
 **This run did not cancel anyone.** However, production contestant data changed
 underneath it. At 05:34–05:35 verification showed 173 active / 0 cancelled. A
 later re-read showed 161 active / 12 cancelled. Strapi's request log identifies
