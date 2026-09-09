@@ -71,6 +71,11 @@ describe("conference registration matrix", () => {
   let dbIncrement: ReturnType<typeof vi.fn>;
   let availableContestants: number | null;
   let failContestantCreate: boolean;
+  let failContestantCreateAfter: number | null;
+  let contestantCreateAttempts: number;
+  let failTeamCreate: boolean;
+  let forceReservationFailureAvailability: number | null;
+  let failReleaseOnce: boolean;
 
   beforeEach(() => {
     created = {};
@@ -79,6 +84,11 @@ describe("conference registration matrix", () => {
     emailSend = vi.fn(async () => undefined);
     availableContestants = 100;
     failContestantCreate = false;
+    failContestantCreateAfter = null;
+    contestantCreateAttempts = 0;
+    failTeamCreate = false;
+    forceReservationFailureAvailability = null;
+    failReleaseOnce = false;
     findOneById.mockReset();
     findOneById.mockImplementation(async (uid: string, id: number | string) => {
       if (uid === "api::conference.conference")
@@ -170,12 +180,21 @@ describe("conference registration matrix", () => {
     };
 
     dbDecrement = vi.fn(async (_column: string, amount = 1) => {
+      if (forceReservationFailureAvailability != null) {
+        availableContestants = forceReservationFailureAvailability;
+        forceReservationFailureAvailability = null;
+        return 0;
+      }
       if (availableContestants == null) return 0;
       if (availableContestants < amount) return 0;
       availableContestants -= amount;
       return 1;
     });
     dbIncrement = vi.fn(async (_column: string, amount = 1) => {
+      if (failReleaseOnce) {
+        failReleaseOnce = false;
+        throw new Error("release failed once");
+      }
       if (availableContestants == null) return 0;
       availableContestants += amount;
       return 1;
@@ -198,9 +217,19 @@ describe("conference registration matrix", () => {
         create: vi.fn(async ({ data }: { data: any }) => {
           if (uid === "api::conference-contestant.conference-contestant") {
             await contestantLifecycles.beforeCreate({ params: { data } });
+            contestantCreateAttempts += 1;
             if (failContestantCreate) {
               throw new Error("contestant lifecycle create failed");
             }
+            if (
+              failContestantCreateAfter != null &&
+              contestantCreateAttempts > failContestantCreateAfter
+            ) {
+              throw new Error("contestant create failed after partial persistence");
+            }
+          }
+          if (uid === "api::conference-team.conference-team" && failTeamCreate) {
+            throw new Error("team create failed");
           }
           const entity = {
             ...data,
@@ -599,6 +628,97 @@ describe("conference registration matrix", () => {
     expect(availableContestants).toBe(1);
   });
 
+  it("releases only unpersisted reserved golfer slots after partial contestant create failure", async () => {
+    availableContestants = 4;
+    failContestantCreateAfter = 3;
+
+    const body = await submitRaw({
+      ...basePayload("PartialPersist"),
+      registration_type: "Contestant",
+      tickets: [
+        golferLine("PersistOne"),
+        golferLine("PersistTwo"),
+        golferLine("PersistThree"),
+        golferLine("PersistFour"),
+      ],
+      paymentData: { ...basePayload("PartialPersist").paymentData, amount: 500 },
+    });
+
+    expect(body).not.toMatchObject({ result: "success" });
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(3);
+    expect(dbIncrement).toHaveBeenCalledWith("available_contestants", 1);
+    expect(availableContestants).toBe(1);
+  });
+
+  it("releases zero reserved slots when team creation fails after all golfers persisted", async () => {
+    availableContestants = 4;
+    failTeamCreate = true;
+
+    const body = await submitRaw({
+      ...basePayload("TeamFail"),
+      registration_type: "Contestant",
+      tickets: [
+        golferLine("TeamOne"),
+        golferLine("TeamTwo"),
+        golferLine("TeamThree"),
+        golferLine("TeamFour"),
+      ],
+      team: "Broken Team",
+      paymentData: { ...basePayload("TeamFail").paymentData, amount: 500 },
+    });
+
+    expect(body).not.toMatchObject({ result: "success" });
+    expect(created["api::conference-contestant.conference-contestant"]).toHaveLength(4);
+    expect(dbIncrement).not.toHaveBeenCalled();
+    expect(availableContestants).toBe(0);
+  });
+
+  it("uses fresh availability for failed conditional reservation messages", async () => {
+    availableContestants = 3;
+    forceReservationFailureAvailability = 2;
+
+    const body = await submitRaw({
+      ...basePayload("FreshCapacity"),
+      registration_type: "Contestant",
+      tickets: [golferLine("FreshOne"), golferLine("FreshTwo"), golferLine("FreshThree")],
+      paymentData: { ...basePayload("FreshCapacity").paymentData, amount: 375 },
+    });
+
+    expect(body).toMatchObject({
+      result: "error",
+      message:
+        "Only 2 golfer spots remain for the golf tournament, but this registration includes 3 golfers. Please remove 1 golfer entry and try again.",
+    });
+    expect(service.processPayment).not.toHaveBeenCalled();
+  });
+
+  it("retries reservation release safely after a transient compensation failure", async () => {
+    availableContestants = 1;
+    failReleaseOnce = true;
+    service.processPayment = vi.fn(async () => ({
+      messages: { resultCode: "Error", message: [{ text: "Card declined" }] },
+    }));
+
+    const body = await submitRaw({
+      ...basePayload("ReleaseRetry"),
+      registration_type: "Contestant",
+      paymentType: "Card",
+      tickets: [golferLine("ReleaseRetry")],
+      paymentData: { ...basePayload("ReleaseRetry").paymentData, amount: 125 },
+    });
+
+    expect(body).not.toMatchObject({ result: "success" });
+    expect(dbIncrement).toHaveBeenCalledTimes(2);
+    expect(availableContestants).toBe(1);
+    expect(service.reportWebhookFailure).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        details: expect.objectContaining({ conference: 3, releaseCount: 1 }),
+      }),
+      "golf-reservation-release:payment"
+    );
+  });
+
   it("consumes reserved golf capacity only once on success", async () => {
     availableContestants = 2;
 
@@ -612,6 +732,50 @@ describe("conference registration matrix", () => {
     expect(dbDecrement).toHaveBeenCalledTimes(1);
     expect(dbIncrement).not.toHaveBeenCalled();
     expect(availableContestants).toBe(1);
+  });
+
+  it("uses one event cycle year for sibling records when registration opens in the prior year", async () => {
+    (conference as any).start_date = "2026-09-14";
+    (conference as any).end_date = "2026-09-16";
+    (conference as any).registration_start = "2025-11-01";
+    (conference as any).registration_end = "2026-09-01";
+
+    await submit({
+      ...basePayload("EventYear"),
+      registration_type: "Vendor",
+      paymentType: "Invoice",
+      organization: "ORWA Matrix Event Year",
+      sponsors: [{ id: 19, name: "Golf Hole", amount: 150 }],
+      booths: [{ subtotal: 300, extras: [] }],
+      tickets: [
+        {
+          first: "Vendor",
+          last: "Rep",
+          email: "vendor-year@example.invalid",
+          phone: "4055550101",
+          type: "Vendor",
+          price: 0,
+          extras: [],
+          ticket_type: { id: 21, name: "Vendor", context: "Vendor" },
+        },
+        golferLine("EventYear"),
+      ],
+      team: "Event Year Team",
+      paymentData: { ...basePayload("EventYear").paymentData, amount: 425 },
+    });
+
+    const yearBearingRows = Object.entries(created)
+      .filter(([uid]) => uid !== "api::email-log.email-log")
+      .flatMap(([, rows]) => rows)
+      .filter((row) => Object.prototype.hasOwnProperty.call(row, "year"));
+
+    expect(yearBearingRows.length).toBeGreaterThan(0);
+    expect(new Set(yearBearingRows.map((row) => row.year))).toEqual(new Set([2026]));
+
+    delete (conference as any).start_date;
+    delete (conference as any).end_date;
+    delete (conference as any).registration_start;
+    delete (conference as any).registration_end;
   });
 
   it.each([

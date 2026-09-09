@@ -37,14 +37,14 @@ describe("normalizeFiltersForListQuery", () => {
     ).toEqual({ conferences: [1] });
   });
 
-  it("defaults conference contestants to active", () => {
+  it("defaults conference contestants to not-cancelled so legacy null rows stay visible", () => {
     expect(
       normalizeFiltersForListQuery(
         "conference-contestants",
         { conference: 3, year: 2026 },
         "contestants"
       )
-    ).toEqual({ conference: 3, year: 2026, status: "active" });
+    ).toEqual({ conference: 3, year: 2026, status: { $ne: "cancelled" } });
   });
 
   it("keeps an explicit cancelled status", () => {

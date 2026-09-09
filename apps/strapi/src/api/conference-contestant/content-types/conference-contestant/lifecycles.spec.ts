@@ -147,6 +147,26 @@ describe("conference contestant lifecycle guard", () => {
     ).rejects.toThrow("Cancel and create");
   });
 
+  it("does not treat empty disconnect as a clear when unchanged connect/set is present", async () => {
+    findOneById.mockResolvedValue({
+      documentId: "contestant-1",
+      conference: { id: 3, documentId: "conf-doc" },
+      conference_ticket: { id: 37, documentId: "ticket-doc" },
+    });
+
+    await expect(
+      lifecycles.beforeUpdate(
+        event(
+          {
+            conference: { disconnect: [], set: [{ documentId: "conf-doc" }] },
+            conference_ticket: { disconnect: [], connect: [{ id: 37 }] },
+          },
+          { documentId: "contestant-1" }
+        ) as never
+      )
+    ).resolves.toBeUndefined();
+  });
+
   it("allows unchanged lifecycle full-record values while blocking actual transitions", async () => {
     findOneById.mockResolvedValue({
       documentId: "contestant-1",

@@ -489,3 +489,43 @@
   - Full requested suite: 14 files, 157 tests passed.
   - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
   - Diagnostics: no linter errors on touched files.
+
+## Migration / Settlement NO-SHIP Follow-Up RED
+
+- B1 migration/backfill:
+  - Added executable migration tests for migration-before-schema-sync semantics: no-op when table is absent, create `status` when table exists without the column, backfill `NULL`/empty to `active`, preserve `cancelled`, and remain idempotent.
+  - Added Member Manager and server summary tests requiring default active contestant views to query `$ne: cancelled` so legacy null rows cannot disappear.
+  - Observed failure: Member Manager and server summary used `status: active`, excluding legacy NULL rows.
+- B2 reservation settlement:
+  - Added matrix tests for `4 reserved / 3 persisted / 1 fails => release 1`, team failure after all four golfer rows persisted releases zero, payment failure releases all, and success does not release/double-decrement.
+  - Observed failure: reservation release returned the full reserved count on any failure, even after some golfer rows had persisted.
+- I1 relation clear:
+  - Added lifecycle and REST service tests showing empty `disconnect: []` with unchanged `connect`/`set` is not a clear, while explicit null/empty set remain rejected.
+- I2 webhook year:
+  - Added a matrix assertion that one checkout writes the same event cycle year across registration, attendee, booth, sponsor, contestant, team, and invoice rows when registration opens the prior year.
+- I3 partial capacity message:
+  - Added race-path test where the conditional reservation affects zero rows, rereads fresh availability of 2, and returns the exact `Only 2 golfer spots remain...` message for a 3-golfer request.
+- I4 release retry:
+  - Added transient compensation failure test proving `released` is set only after increment succeeds, the retry restores capacity once, and the compensation failure is reported with conference/count details.
+
+## Migration / Settlement NO-SHIP Follow-Up GREEN
+
+- B1:
+  - Added `2026.09.09T00.00.00.backfill-conference-contestant-status.js`, safe before schema sync: skips missing table, creates missing column, backfills null/empty to active, preserves cancelled, and is idempotent.
+  - Member Manager contestant list defaults and server summary head counts now filter `{ status: { $ne: "cancelled" } }`; explicit Cancelled remains equality.
+- B2:
+  - Golf reservation now exposes `markConsumed`; `handleContestants` creates rows sequentially and marks each persisted golfer.
+  - Failure release returns only `reserved - consumed`; team failure after all golfer rows persisted releases zero; payment failure before persistence releases all.
+- I1:
+  - Relation normalization now treats absent key as no-op, null/empty set as clear, non-empty disconnect without reattach as clear, and empty disconnect with unchanged connect/set as unchanged.
+- I2:
+  - Webhook computes `eventYear` once with `conferenceCycleYear` and uses it for sibling conference records and invoice year where relevant.
+- I3:
+  - Failed conditional reservations reread current conference availability and call `golfCapacityMessage(realRemaining, requested)`.
+- I4:
+  - Reservation release sets `released` only after increment succeeds; compensation failures are logged/reported with conference id, reserved count, consumed count, and release count, and retry remains safe.
+- Verification:
+  - Targeted migration/settlement suite: 9 files, 88 tests passed.
+  - Full related suite: 17 files, 174 tests passed.
+  - Fixture dry run: zero network/writes, 12 cancel requests, active golfers `59 -> 47`, availability `-23 -> -11`.
+  - Diagnostics: no linter errors on touched files.

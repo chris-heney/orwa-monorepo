@@ -57,11 +57,15 @@ const selectionFor = (
 
 type GolfReservation = {
   reserved: number;
+  consumed: number;
+  markConsumed: (count?: number) => void;
   release: () => Promise<void>;
 };
 
 const noGolfReservation = (): GolfReservation => ({
   reserved: 0,
+  consumed: 0,
+  markConsumed: () => undefined,
   release: async () => undefined,
 });
 
@@ -276,7 +280,12 @@ export default ({ strapi }) => {
             );
 
             if (authorizeNetResponse.messages.resultCode !== "Ok") {
-              await golfReservation.release();
+              await releaseGolfReservation(
+                golfReservation,
+                ctx.request.body,
+                "payment",
+                conference
+              );
               await reportFailure(
                 ctx.request.body,
                 authorizeNetResponse.messages.message?.[0]?.text ??
@@ -406,7 +415,9 @@ export default ({ strapi }) => {
                 previousRegistration.id,
                 registrationSource,
                 previousRegistration.organization,
-                conferenceData
+                conferenceData,
+                golfReservation,
+                eventYear
               );
               contestantIds = contestantIds.concat(ids);
               registrationId = previousRegistration.id;
@@ -459,7 +470,9 @@ export default ({ strapi }) => {
                 registrationId,
                 registrationSource,
                 organization,
-                conferenceData
+                conferenceData,
+                golfReservation,
+                eventYear
               );
               contestantIds = contestantIds.concat(ids);
             }
@@ -469,7 +482,8 @@ export default ({ strapi }) => {
                 team,
                 conference,
                 registrationId,
-                contestantIds
+                contestantIds,
+                eventYear
               );
             }
           } else {
@@ -533,7 +547,8 @@ export default ({ strapi }) => {
                 conference,
                 organization,
                 watersystem,
-                registrationId
+                registrationId,
+                eventYear
               ),
             ctx.request.body
           );
@@ -548,7 +563,8 @@ export default ({ strapi }) => {
                   registrationId,
                   registrant,
                   organization,
-                  logo
+                  logo,
+                  eventYear
                 ),
               ctx.request.body
             );
@@ -562,7 +578,8 @@ export default ({ strapi }) => {
                 conference,
                 registrationId,
                 registrationSource,
-                organization
+                organization,
+                eventYear
               ),
             ctx.request.body
           );
@@ -575,7 +592,8 @@ export default ({ strapi }) => {
                 conference,
                 registrationId,
                 organization,
-                conferenceData
+                conferenceData,
+                eventYear
               ),
             ctx.request.body
           );
@@ -586,7 +604,9 @@ export default ({ strapi }) => {
             registrationId,
             registrationSource,
             organization,
-            conferenceData
+            conferenceData,
+            golfReservation,
+            eventYear
           );
 
           if (team && contestantIds.length > 0) {
@@ -597,7 +617,8 @@ export default ({ strapi }) => {
                   team,
                   conference,
                   registrationId,
-                  contestantIds
+                  contestantIds,
+                  eventYear
                 ),
               ctx.request.body
             );
@@ -616,6 +637,7 @@ export default ({ strapi }) => {
                 organization,
                 paymentType,
                 body: ctx.request.body,
+                year: eventYear,
               }),
             ctx.request.body
           );
@@ -636,7 +658,17 @@ export default ({ strapi }) => {
       } catch (err) {
         console.log("Error:", err);
         console.log("Error: Details", err?.details?.errors);
-        await golfReservation.release();
+        try {
+          await releaseGolfReservation(
+            golfReservation,
+            ctx.request.body,
+            "registration",
+            ctx.request?.body?.conference
+          );
+        } catch {
+          // Release failures are reported inside releaseGolfReservation.
+          // Continue reporting the original registration failure too.
+        }
         await reportFailure(ctx.request.body, err, "registration");
         ctx.body = err;
       }
@@ -652,13 +684,14 @@ export default ({ strapi }) => {
     conference, 
     organization, 
     watersystem, 
-    registrationId
+    registrationId,
+    eventYear = currentYear
   ) {
     if (registrationAddons.some((item) => item.label === "Water Taste Test Contestant")) {
       await strapi.documents("api::taste-test-contestant.taste-test-contestant").create({
         data: coerceToSchema("api::taste-test-contestant.taste-test-contestant", {
           conference,
-          year: currentYear,
+          year: eventYear,
           first: registrant.first,
           last: registrant.last,
           email: registrant.email,
@@ -725,21 +758,72 @@ export default ({ strapi }) => {
       .decrement("available_contestants", requestedGolfers);
 
     if (affectedRows(result) !== 1) {
-      throw new ContestantCapacityError(golfCapacityMessage(0, requestedGolfers));
+      const fresh = await findOneById("api::conference.conference", conferenceData.id, {
+        populate: "*",
+      });
+      const realRemaining = Math.max(
+        0,
+        Math.floor(Number(fresh?.available_contestants ?? 0))
+      );
+      throw new ContestantCapacityError(
+        golfCapacityMessage(realRemaining, requestedGolfers)
+      );
     }
 
     let released = false;
+    let consumed = 0;
     return {
       reserved: requestedGolfers,
+      get consumed() {
+        return consumed;
+      },
+      markConsumed: (count = 1) => {
+        consumed = Math.min(requestedGolfers, consumed + count);
+      },
       release: async () => {
         if (released) return;
-        released = true;
+        const toRelease = Math.max(0, requestedGolfers - consumed);
+        if (toRelease === 0) {
+          released = true;
+          return;
+        }
         await strapi.db
           .connection("conferences")
           .where({ id: conferenceData.id })
-          .increment("available_contestants", requestedGolfers);
+          .increment("available_contestants", toRelease);
+        released = true;
       },
     };
+  }
+
+  async function releaseGolfReservation(
+    reservation: GolfReservation,
+    body: any,
+    stage: string,
+    conferenceId: unknown
+  ) {
+    try {
+      await reservation.release();
+    } catch (error) {
+      const details = {
+        conference: conferenceId,
+        reserved: reservation.reserved,
+        consumed: reservation.consumed,
+        releaseCount: Math.max(0, reservation.reserved - reservation.consumed),
+      };
+      strapi.log?.error?.("[conference-webhook] golf reservation release failed", {
+        ...details,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      await reportFailure(
+        body,
+        Object.assign(error instanceof Error ? error : new Error(String(error)), {
+          details,
+        }),
+        `golf-reservation-release:${stage}`
+      );
+      throw error;
+    }
   }
 
   async function createConferenceInvoice({
@@ -749,6 +833,7 @@ export default ({ strapi }) => {
     organization,
     paymentType,
     body,
+    year = currentYear,
   }: {
     registrationId: number | string;
     paymentData: any;
@@ -756,6 +841,7 @@ export default ({ strapi }) => {
     organization: string;
     paymentType: string;
     body: any;
+    year?: number;
   }) {
     const { test: _testToken, ...safeData } = body ?? {};
     await strapi.documents("api::invoice.invoice").create({
@@ -781,7 +867,7 @@ export default ({ strapi }) => {
               }
             : null,
         },
-        year: currentYear,
+        year,
         payment_date: paymentType === "Card" ? new Date().toISOString() : null,
       }),
     });
@@ -796,7 +882,8 @@ export default ({ strapi }) => {
     registrationId, 
     registrant, 
     organization, 
-    logo
+    logo,
+    eventYear = currentYear
   ) {
     const total = sponsors.reduce((acc, sponsor) => acc + sponsor.amount, 0);
     const logoId = toMediaId(logo);
@@ -804,7 +891,7 @@ export default ({ strapi }) => {
     await strapi.documents("api::conference-sponsor.conference-sponsor").create({
       data: coerceToSchema("api::conference-sponsor.conference-sponsor", {
         conference,
-        year: currentYear,
+        year: eventYear,
         registration: registrationId,
         phone: registrant.phone,
         email: registrant.email,
@@ -849,7 +936,8 @@ export default ({ strapi }) => {
     conference, 
     registrationId, 
     registrationSource, 
-    organization
+    organization,
+    eventYear = currentYear
   ) {
     if (!tickets || tickets.length === 0) return;
     
@@ -897,7 +985,7 @@ export default ({ strapi }) => {
       // Create a modified attendee object with all properties
       const attendeeData: Partial<IAttendeeEntity> = {
         conference,
-        year: currentYear,
+        year: eventYear,
         registration: registrationId,
         first: ticket.first,
         last: ticket.last,
@@ -934,7 +1022,8 @@ export default ({ strapi }) => {
     conference, 
     registrationId, 
     organization, 
-    conferenceData
+    conferenceData,
+    eventYear = currentYear
   ) {
     if (!booths || booths.length === 0) return;
     
@@ -949,7 +1038,7 @@ export default ({ strapi }) => {
 
     // Get current booths
     const currentBooths = await strapi.documents("api::conference-booth.conference-booth").findMany({
-      filters: { conference, year: currentYear },
+      filters: { conference, year: eventYear },
     });
 
     for (const [index, booth] of booths.entries()) {
@@ -972,7 +1061,7 @@ export default ({ strapi }) => {
 
       const boothData = {
         conference,
-        year: currentYear,
+        year: eventYear,
         registration: registrationId,
         organization,
         subtotal: booth.subtotal,
@@ -999,7 +1088,9 @@ export default ({ strapi }) => {
     registrationId, 
     registrationSource, 
     organization,
-    conferenceData
+    conferenceData,
+    golfReservation: GolfReservation = noGolfReservation(),
+    eventYear = currentYear
   ) {
     if (!tickets) return [];
     
@@ -1011,8 +1102,9 @@ export default ({ strapi }) => {
 
     const contestantIds: number[] = [];
 
-    // Process all contestants
-    const contestantPromises = contestants.map(async (contestant: ITicketPayload) => {
+    // Process sequentially so reservation settlement is deterministic: each
+    // persisted golfer marks one reserved slot consumed before the next write.
+    for (const contestant of contestants as ITicketPayload[]) {
       const selectedExtras = await service.fetchExtrasData(
         conference,
         contestant.extras
@@ -1043,7 +1135,7 @@ export default ({ strapi }) => {
 
       const newContestant = {
         conference,
-        year: conferenceCycleYear(conferenceData, currentYear),
+        year: eventYear,
         registration: registrationId,
         first: contestant.first,
         last: contestant.last,
@@ -1064,13 +1156,12 @@ export default ({ strapi }) => {
 
       if (countsAgainstGolfCapacity(contestant)) {
         contestantIds.push(contestantEntity.id);
+        golfReservation.markConsumed(1);
       }
 
       console.log("- Contestant:", JSON.stringify(contestantEntity));
       console.log("-------------------------------------------------------------");
-    });
-
-    await Promise.all(contestantPromises);
+    }
 
     return contestantIds;
   }
@@ -1082,14 +1173,15 @@ export default ({ strapi }) => {
     team, 
     conference, 
     registrationId, 
-    contestantIds
+    contestantIds,
+    eventYear = currentYear
   ) {
     console.log("Creating team with contestantIds:", contestantIds);
     
     const newTeam = await strapi.documents("api::conference-team.conference-team").create({
       data: coerceToSchema("api::conference-team.conference-team", {
         conference,
-        year: currentYear,
+        year: eventYear,
         registration: registrationId,
         name: team,
         contestants: contestantIds,

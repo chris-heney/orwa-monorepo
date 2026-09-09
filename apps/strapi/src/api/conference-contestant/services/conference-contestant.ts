@@ -140,7 +140,10 @@ const isExplicitRelationClear = (value: unknown): boolean => {
   const record = value as Record<string, unknown>;
   if (Array.isArray(record.set) && record.set.length === 0) return true;
   if (Array.isArray(record.connect) && record.connect.length === 0) return true;
-  if (Array.isArray(record.disconnect)) return true;
+  const hasReattach =
+    relationDocumentId(record.set) != null ||
+    relationDocumentId(record.connect) != null;
+  if (Array.isArray(record.disconnect) && record.disconnect.length > 0 && !hasReattach) return true;
   return false;
 };
 

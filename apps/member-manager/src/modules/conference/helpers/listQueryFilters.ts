@@ -65,7 +65,7 @@ export function normalizeFiltersForListQuery(
     resource === "conference-contestants" &&
     normalized.status == null
   ) {
-    return { ...normalized, status: "active" };
+    return { ...normalized, status: { $ne: "cancelled" } };
   }
 
   if (

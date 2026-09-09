@@ -294,6 +294,21 @@ describe("conference contestant REST write service", () => {
     expect(updated).toHaveLength(0);
   });
 
+  it("allows empty disconnect when unchanged connect/set relation values are present", async () => {
+    await updateContestant(strapi, {
+      documentId: "active-1",
+      data: {
+        conference: { disconnect: [], set: [{ documentId: "conf-1" }] },
+        conference_ticket: { disconnect: [], connect: [{ id: 37 }] },
+        first: "Grace",
+      },
+    });
+
+    expect(updated).toEqual([
+      expect.objectContaining({ documentId: "active-1", first: "Grace" }),
+    ]);
+  });
+
   it("allows personal edits on active contestants but keeps cancelled contestants read-only", async () => {
     await updateContestant(strapi, {
       documentId: "active-1",

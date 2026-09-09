@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import createConferenceSummaryService from "./conference-summary";
 
 describe("conference-summary service", () => {
-  it("requests only active contestants when building head counts", async () => {
+  it("requests not-cancelled contestants when building head counts so legacy null rows stay visible", async () => {
     const attendeeFindMany = vi.fn(async () => []);
     const contestantFindMany = vi.fn(async () => []);
 
@@ -28,7 +28,7 @@ describe("conference-summary service", () => {
         filters: {
           conference: "3",
           year: "2026",
-          status: "active",
+          status: { $ne: "cancelled" },
         },
       })
     );
