@@ -1,16 +1,8 @@
 import React from 'react';
-import {
-  DateField,
-  FunctionField,
-  List,
-  TextField,
-  Title,
-} from 'react-admin';
-import { Datagrid } from "@orwa/entity-id";
+import { DateField, FunctionField, ListView, TextField } from 'react-admin';
+import { Datagrid } from '@orwa/entity-id';
 import { useEditRowClick } from '../rbac-manager/useCan';
-import { Box, Theme } from '@mui/material';
-import PageHeadingBar from '../_components/PageHeadingBar';
-import { CreateAction } from '../_components/heading/HeadingActions';
+import { Theme } from '@mui/material';
 
 const termDatagridSx = (theme: Theme) => ({
   '& .RaDatagrid-rowOdd': {
@@ -32,49 +24,30 @@ const termDatagridSx = (theme: Theme) => ({
   },
 });
 
-const TermListHeader = () => (
-  <PageHeadingBar
-    title="Terms Manager"
-    info="Create and tag legal documents shown by TermsGate. Use identifiers like Global, All Conferences, or ORWA Conference ID #N."
-    actions={<CreateAction label="Add Term" />}
-  />
-);
-
+/** Body of the `terms.list` page — renders inside the page's ListScope. */
 const TermList = () => {
   const rowClick = useEditRowClick();
 
   return (
-    <Box sx={{ width: 1, minWidth: 0, boxSizing: 'border-box' }}>
-      <Title title="Terms Manager" />
-      <List
-        title=" "
-        sort={{ field: 'updatedAt', order: 'DESC' }}
-        actions={false}
-        sx={{
-          '& .RaList-main': { marginTop: 0 },
-          '& .RaList-content': { boxShadow: 'none' },
-        }}
+    <ListView title=" " actions={false}>
+      <Datagrid
+        rowClick={rowClick}
+        bulkActionButtons={false}
+        sx={termDatagridSx}
       >
-        <TermListHeader />
-        <Datagrid
-          rowClick={rowClick}
-          bulkActionButtons={false}
-          sx={termDatagridSx}
-        >
-          <TextField source="title" />
-          <TextField source="slug" />
-          <FunctionField
-            label="Identifiers"
-            render={(record: { identifiers?: string[] }) =>
-              Array.isArray(record.identifiers)
-                ? record.identifiers.join(', ')
-                : ''
-            }
-          />
-          <DateField source="updatedAt" label="Last Modified" showTime />
-        </Datagrid>
-      </List>
-    </Box>
+        <TextField source="title" />
+        <TextField source="slug" />
+        <FunctionField
+          label="Identifiers"
+          render={(record: { identifiers?: string[] }) =>
+            Array.isArray(record.identifiers)
+              ? record.identifiers.join(', ')
+              : ''
+          }
+        />
+        <DateField source="updatedAt" label="Last Modified" showTime />
+      </Datagrid>
+    </ListView>
   );
 };
 

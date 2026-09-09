@@ -1,12 +1,5 @@
-import GavelIcon from '@mui/icons-material/Gavel'
-import TermList from './TermList'
-import TermCreate from './TermCreate'
-import TermEdit from './TermEdit'
+import { termsModule } from './manifest';
 
-export default {
-  list: TermList,
-  create: TermCreate,
-  edit: TermEdit,
-  icon: GavelIcon,
-  recordRepresentation: 'title',
-}
+/** Resource definition (list is the framework `terms.list` page). */
+export default termsModule.resources!.terms;
+export { termsModule };

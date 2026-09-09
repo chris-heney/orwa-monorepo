@@ -27,7 +27,6 @@ import {
   Attendees,
   EmailsTemplates,
   EmailTasks,
-  Terms,
   ScholarshipApplications,
   AwardNominations,
   AwardWinners,
@@ -126,7 +125,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   // EMAILS
   { name: 'email-templates', def: EmailsTemplates },
   { name: 'scheduled-email-tasks', def: EmailTasks },
-  { name: 'terms', def: Terms },
   { name: 'scholarship-applications', def: ScholarshipApplications },
   { name: 'award-nominations', def: AwardNominations },
   { name: 'award-winners', def: AwardWinners },
