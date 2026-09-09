@@ -44,6 +44,7 @@ const GrantDashboard = () => {
     isSettingsOpen,
     setIsEmailSidebarOpen,
     setIsActivitySidebarOpen,
+    resource,
     setResource,
     isCreatePayoutModalOpen,
     closeCreatePayoutModal,
@@ -109,6 +110,15 @@ const GrantDashboard = () => {
     },
   ];
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
+
+  // `resource` is persisted separately from `selectedTab`; a fresh store (or
+  // a stale one) leaves it null until the user clicks a tab, hiding the
+  // count / export / columns controls on first load. Derive it from the tab.
+  const tabResource =
+    tabs.find((tab) => tab.value === selectedTab)?.resource ?? null;
+  React.useEffect(() => {
+    if (resource !== tabResource) setResource(tabResource);
+  }, [resource, tabResource, setResource]);
 
   if (grants.length === 0) return <Loading />;
 
@@ -197,11 +207,11 @@ const GrantDashboard = () => {
                   <TabContext value={selectedTab.toString()}>
                     {dashboardContext === "edit" && (
                       <Box sx={{ backgroundColor: "background.paper" }}>
-                        <TabPanel
-                          style={{ marginTop: -15 }}
-                          value="summary"
-                          {...a11yTabPanelProps(0)}
-                        >
+                        {/* No negative-margin hacks: the RaShow/RaEdit shells
+                            are already flush (formLayoutThemeOverrides), and
+                            pulling the panel up hid 15px of the summary's
+                            top padding under the sticky tab strip. */}
+                        <TabPanel value="summary" {...a11yTabPanelProps(0)}>
                           <Show
                             title={" "}
                             emptyWhileLoading
@@ -214,7 +224,6 @@ const GrantDashboard = () => {
                         </TabPanel>
                         <TabPanel value="edit" {...a11yTabPanelProps(1)}>
                           <Edit
-                            sx={{ marginTop: -2 }}
                             redirect={false}
                             component={"div"}
                             title={" "}
