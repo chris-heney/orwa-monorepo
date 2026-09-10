@@ -13,9 +13,9 @@ import {
   useRecordContext,
 } from "react-admin";
 import { Box, Grid, Typography } from "@mui/material";
+import FormHeadingBar from "./FormHeadingBar";
 import {
   fullFieldSx,
-  ReviewPageBar,
   ReviewSectionCard,
   ReviewToolbar,
   reviewFormSx,
@@ -78,7 +78,7 @@ const AwardWinnerForm = () => {
       }}
       toolbar={<ReviewToolbar redirect={AWARD_BACK} />}
     >
-      <ReviewPageBar
+      <FormHeadingBar
         title={
           record?.title
             ? `${record.award_year ?? ""} ${record.title}`.trim()

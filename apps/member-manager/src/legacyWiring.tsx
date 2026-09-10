@@ -4,13 +4,9 @@ import {
   EmailsTemplates,
   EmailTasks,
   ScholarshipApplications,
-  AwardNominations,
-  AwardWinners,
-  AwardTypes,
 } from './modules';
 import {
   OrwefManagement,
-  AwardManagement,
 } from './modules/dashboards';
 import {
   isRegisteredModule,
@@ -42,9 +38,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   { name: 'email-templates', def: EmailsTemplates },
   { name: 'scheduled-email-tasks', def: EmailTasks },
   { name: 'scholarship-applications', def: ScholarshipApplications },
-  { name: 'award-nominations', def: AwardNominations },
-  { name: 'award-winners', def: AwardWinners },
-  { name: 'award-types', def: AwardTypes },
 ];
 
 export interface LegacyRoute {
@@ -60,7 +53,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
     element: <OrwefManagement />,
     module: 'scholarships',
   },
-  { path: 'orwa-awards/dashboard', element: <AwardManagement />, module: 'awards' },
 ];
 
 /** Legacy resources the registry does not own yet. */

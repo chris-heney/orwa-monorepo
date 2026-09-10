@@ -13,11 +13,11 @@ import {
   useRecordContext,
 } from "react-admin";
 import { Box, Grid, Typography } from "@mui/material";
+import FormHeadingBar from "./FormHeadingBar";
 import {
   dateInputProps,
   emailFieldSx,
   fullFieldSx,
-  ReviewPageBar,
   ReviewSectionCard,
   ReviewToolbar,
   reviewFormSx,
@@ -64,7 +64,7 @@ const AwardForm = () => {
       sx={reviewFormSx}
       toolbar={<ReviewToolbar redirect={AWARD_BACK} />}
     >
-      <ReviewPageBar title="Review Award Nomination" backTo={AWARD_BACK} />
+      <FormHeadingBar title="Review Award Nomination" backTo={AWARD_BACK} />
       <Box sx={{ width: 1, px: { xs: 1, sm: 2 }, pb: 2 }}>
         <Grid container spacing={2}>
           <Grid item xs={12}>

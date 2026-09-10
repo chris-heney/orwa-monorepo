@@ -1,13 +1,11 @@
 import React from "react";
-import { Show, useRecordContext } from "react-admin";
+import { useRecordContext } from "react-admin";
 import { Typography } from "@mui/material";
 import {
   asDateString,
   PacketField,
   PacketLayout,
   PacketSection,
-  ReviewPageBar,
-  reviewResourceSx,
   StaffSidebar,
   StatusChip,
 } from "../../_components/review-packet";
@@ -21,9 +19,7 @@ import {
   watersystemName,
 } from "../helpers/recordDisplay";
 
-const AWARD_BACK = "/orwa-awards/dashboard";
-
-type AwardRecord = Record<string, unknown> & {
+export type AwardRecord = Record<string, unknown> & {
   nominee_name?: string;
   email?: string;
   daytime_phone?: string;
@@ -76,23 +72,22 @@ type AwardRecord = Record<string, unknown> & {
   } | null;
 };
 
-const nomineeTitle = (record?: AwardRecord) =>
-  record?.nominee_name || "Award Nomination";
+/** Bar title of the `awards.nominationShow` page (manifest `titleBar.title`). */
+export const nomineeTitle = (record?: Record<string, unknown>) =>
+  (record as AwardRecord | undefined)?.nominee_name || "Award Nomination";
 
-const AwardPacket = () => {
+/**
+ * Body of the `kind: 'show'` page — the framework's `ShowBase` provides the
+ * record and its TitleBar renders title / Review / Back, so no heading here.
+ */
+const AwardShow = () => {
   const record = useRecordContext<AwardRecord>();
   const status = record?.nomination_status;
   const meta = status != null ? NOMINATION_META[status] : null;
 
   return (
     <PacketLayout
-      heading={
-        <ReviewPageBar
-          title={nomineeTitle(record)}
-          backTo={AWARD_BACK}
-          showEdit
-        />
-      }
+      heading={null}
       sidebar={
         <StaffSidebar
           chip={
@@ -276,19 +271,5 @@ const AwardPacket = () => {
     </PacketLayout>
   );
 };
-
-const AwardShow = () => (
-  <Show
-    title="ORWA Award Nomination"
-    component="div"
-    actions={false}
-    sx={reviewResourceSx}
-    queryOptions={{
-      meta: { populate: "*", raw: true },
-    }}
-  >
-    <AwardPacket />
-  </Show>
-);
 
 export default AwardShow;

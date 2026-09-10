@@ -1,7 +1,7 @@
 import React from "react";
 import { Create, useGetList, useStore } from "react-admin";
 import AwardTypeForm from "./AwardTypeForm";
-import { reviewResourceSx } from "../../_components/review-packet";
+import { formPageSx } from "./FormHeadingBar";
 import type { AwardTypeRecord } from "../helpers/awardTypes";
 
 const SETTINGS_TAB = "settings" as const;
@@ -28,7 +28,7 @@ const AwardTypeCreate = () => {
         ...data,
         order: typeof data.order === "number" ? data.order : nextOrder,
       })}
-      sx={reviewResourceSx}
+      sx={formPageSx}
     >
       <AwardTypeForm />
     </Create>

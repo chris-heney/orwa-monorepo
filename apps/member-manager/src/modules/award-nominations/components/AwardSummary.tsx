@@ -2,14 +2,14 @@ import React, { useMemo, useState } from "react";
 import { Box, Dialog, DialogContent, DialogTitle, MenuItem, Select, Typography } from "@mui/material";
 import { Loading, useGetList } from "react-admin";
 import { useSummaryTokens } from "../../grant-manager/grants/components/summary/tokens";
-import { useAwardContext } from "../AwardContextProvider";
+import { useAwardYear } from "../helpers/awardStore";
 import { calendarYearChoices } from "../helpers/listFilters";
 import { AwardNomination, buildAwardMetrics } from "../helpers/metrics";
 import CountCard from "../../orwef-scholarships/components/CountCard";
 
 const AwardSummary = () => {
   const T = useSummaryTokens();
-  const { year, setYear } = useAwardContext();
+  const [year, setYear] = useAwardYear();
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const { data, isLoading } = useGetList<AwardNomination>("award-nominations", {
     pagination: { page: 1, perPage: 1000 },

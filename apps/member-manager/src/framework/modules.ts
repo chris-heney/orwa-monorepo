@@ -12,6 +12,7 @@ import { corporateSponsorsModule } from '../modules/sponsors/manifest';
 import { conferenceModule } from '../modules/conference/manifest';
 import { contactsModule } from '../modules/human-resources/manifest';
 import { settingsModule } from '../modules/setting/manifest';
+import { scholarshipsModule } from '../modules/orwef-scholarships/manifest';
 import { finalizeRegistry } from './registry';
 
 /**
@@ -23,6 +24,6 @@ import { finalizeRegistry } from './registry';
  * it to the array. Its `<Resource>`s, routes and menu entry replace the
  * legacy hand-written blocks automatically (see `legacyWiring.tsx`).
  */
-export const MODULES: ModuleManifest[] = [dashboardModule, mediaLibraryModule, emailsModule, termsModule, assetsModule, rbacModule, membershipsModule, grantsModule, trainingModule, corporateSponsorsModule, conferenceModule, contactsModule, settingsModule];
+export const MODULES: ModuleManifest[] = [dashboardModule, mediaLibraryModule, emailsModule, termsModule, assetsModule, rbacModule, membershipsModule, grantsModule, trainingModule, corporateSponsorsModule, conferenceModule, contactsModule, settingsModule, scholarshipsModule];
 
 export const REGISTRY = finalizeRegistry(MODULES);

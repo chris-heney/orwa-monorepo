@@ -1,7 +1,7 @@
 import React from "react";
 import { Create } from "react-admin";
 import AwardWinnerForm from "./AwardWinnerForm";
-import { reviewResourceSx } from "../../_components/review-packet";
+import { formPageSx } from "./FormHeadingBar";
 
 const AwardWinnerCreate = () => (
   <Create
@@ -9,7 +9,7 @@ const AwardWinnerCreate = () => (
     component="div"
     actions={false}
     redirect="/orwa-awards/dashboard"
-    sx={reviewResourceSx}
+    sx={formPageSx}
   >
     <AwardWinnerForm />
   </Create>

@@ -1,7 +1,7 @@
 import React from "react";
 import { Edit, useStore } from "react-admin";
 import AwardTypeForm from "./AwardTypeForm";
-import { reviewResourceSx } from "../../_components/review-packet";
+import { formPageSx } from "./FormHeadingBar";
 
 const SETTINGS_TAB = "settings" as const;
 
@@ -18,7 +18,7 @@ const AwardTypeEdit = () => {
         return "/orwa-awards/dashboard";
       }}
       mutationMode="pessimistic"
-      sx={reviewResourceSx}
+      sx={formPageSx}
     >
       <AwardTypeForm />
     </Edit>

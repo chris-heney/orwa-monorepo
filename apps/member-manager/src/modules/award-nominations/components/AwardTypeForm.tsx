@@ -7,9 +7,9 @@ import {
   useRecordContext,
 } from "react-admin";
 import { Box, Grid } from "@mui/material";
+import FormHeadingBar from "./FormHeadingBar";
 import {
   fullFieldSx,
-  ReviewPageBar,
   ReviewSectionCard,
   ReviewToolbar,
   reviewFormSx,
@@ -31,7 +31,7 @@ const AwardTypeForm = () => {
       defaultValues={{ nominatable: true }}
       toolbar={<ReviewToolbar redirect={SETTINGS_BACK} />}
     >
-      <ReviewPageBar
+      <FormHeadingBar
         title={record?.name ? `Award Type · ${record.name}` : "Add Award Type"}
         backTo={SETTINGS_BACK}
       />

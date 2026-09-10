@@ -1,7 +1,8 @@
 import React from "react";
 import { Edit } from "react-admin";
 import AwardForm from "./AwardForm";
-import { asDateString, reviewResourceSx } from "../../_components/review-packet";
+import { asDateString } from "../../_components/review-packet";
+import { formPageSx } from "./FormHeadingBar";
 
 const transformAward = (data: Record<string, unknown>) => ({
   ...data,
@@ -17,7 +18,7 @@ const AwardEdit = () => (
     redirect={false}
     mutationMode="pessimistic"
     transform={transformAward}
-    sx={reviewResourceSx}
+    sx={formPageSx}
     queryOptions={{ meta: { populate: "*", raw: true } }}
   >
     <AwardForm />

@@ -1,7 +1,7 @@
 import React from "react";
 import { Edit } from "react-admin";
 import AwardWinnerForm from "./AwardWinnerForm";
-import { reviewResourceSx } from "../../_components/review-packet";
+import { formPageSx } from "./FormHeadingBar";
 
 const AwardWinnerEdit = () => (
   <Edit
@@ -10,7 +10,7 @@ const AwardWinnerEdit = () => (
     actions={false}
     redirect={false}
     mutationMode="pessimistic"
-    sx={reviewResourceSx}
+    sx={formPageSx}
     queryOptions={{ meta: { populate: { photo: true } } }}
   >
     <AwardWinnerForm />
