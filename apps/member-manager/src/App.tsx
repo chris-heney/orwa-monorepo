@@ -7,7 +7,6 @@ import {
 import { Admin, CustomRoutes, Resource } from 'react-admin';
 import { AdminLayout } from './layouts';
 import { userPreferencesStore } from './helpers/userPreferencesStore';
-import UserPreferencesSync from './components/UserPreferencesSync';
 import { queryClient } from './helpers/queryClient';
 import { darkTheme, lightTheme } from './theme';
 import { AdminDashboard } from './modules/dashboards';
@@ -70,7 +69,6 @@ export const App = () => {
         disableTelemetry
       >
         <>
-          <UserPreferencesSync />
           <Route path="/login" />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
