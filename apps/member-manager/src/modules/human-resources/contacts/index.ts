@@ -1,11 +1,12 @@
-import ContactList from './ContactList'
 import ContactCreate from './ContactsCreate'
 import ContactEdit from './ContactEdit'
-import ShowContact from './ContactShow'
+
+/**
+ * `list` / `show` are framework pages (`contacts.list`, `contacts.contactShow`)
+ * mounted by the contacts manifest via `pageView`.
+ */
 export default {
-  list: ContactList,
   create: ContactCreate,
   edit: ContactEdit,
-  show: ShowContact,
   recordRepresentation: 'title',
 }

@@ -5,11 +5,10 @@ import {
   List,
   RaRecord,
   ReferenceField,
-  Show,
   TextField,
   UpdateParams,
   useDataProvider,
-  useShowController,
+  useRecordContext,
   FilterLiveSearch
 } from 'react-admin'
 import { Datagrid } from '@orwa/entity-id'
@@ -25,13 +24,16 @@ import LibraryAddIcon from '@mui/icons-material/LibraryAdd'
 import StaffCard from './_components/StaffCard'
 import ActivityFeed from '../../activity/ActivityFeed'
 import { useRefresh } from 'react-admin'
-import ShowHeader from '../_components/ShowHeader'
 import { toRelationWriteId } from '../../../helpers/strapiIds'
 
+/**
+ * Body of the `contacts.staffShow` framework page — rendered inside the
+ * page's `ShowBase`; the heading bar (name, Edit, Back) comes from the manifest.
+ */
 const StaffShow = () => {
   const refresh = useRefresh()
   const dataProvider = useDataProvider()
-  const { record } = useShowController()
+  const record = useRecordContext()
   const [viewAll, setViewAll] = useState(false)
   const [listFilter, setListFilter] = useState<{ assigned_to: Identifier } | undefined>(undefined)
 
@@ -82,12 +84,8 @@ const StaffShow = () => {
 
 
   return (
-    <Show actions={false} title="Staff" component="div">
-      {/* Heading first and flush; the grid below carries the gutter. */}
-      <ShowHeader
-        first={record.contact?.first ?? 'Staff'}
-        last={record.contact?.last ?? ''}
-      />
+    // Padding belongs to the content, not around the bar — keeps the bar flush.
+    <Box sx={{ px: 2, pb: 2, boxSizing: 'border-box' }}>
       <Grid justifyContent={'center'} container spacing={2} sx={{ mt: 0 }}>
 
         <Grid item xs={12} lg={3}>
@@ -208,7 +206,7 @@ const StaffShow = () => {
           </List>
         </Grid>
       </Grid>
-    </Show>
+    </Box>
   )
 }
 

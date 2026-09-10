@@ -6,6 +6,7 @@ import {
   useShowController,
 } from "react-admin";
 import { Box, Divider, Theme, useMediaQuery } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import {
   ContactAvatar,
   ContactEmail,
@@ -14,16 +15,39 @@ import {
   ContactTitle,
 } from "../contacts/fields";
 import ContactVcard from "../contacts/fields/ContactVcard";
-import ShowHeader from "../_components/ShowHeader";
+import PageHeadingBar from "../../_components/PageHeadingBar";
+import { EditAction } from "../../_components/heading/HeadingActions";
+import { useCan } from "../../rbac-manager/useCan";
 
+const INSTRUCTORS_HOME = "/admin/settings?tab=training-instructors";
+
+/**
+ * `training-instructors` is owned by the Training module, so this stays a
+ * plain RA show page — but with the shared heading bar (Edit, then Back
+ * far right) instead of the old ShowHeader.
+ */
 const TrainerShow = () => {
   const { record } = useShowController();
+  const navigate = useNavigate();
+  const { canOnResource } = useCan();
   const isSmall = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
   if (typeof record === "undefined" || !record) return null;
 
   return (
-    <Show actions={false} title={"Training Instructors"}>
-      <ShowHeader first={""} last={""} />
+    <Show actions={false} title={"Training Instructors"} component="div">
+      <PageHeadingBar
+        title="Training Instructor"
+        actions={
+          canOnResource("update", "training-instructors") ? (
+            <EditAction
+              label="Edit Instructor"
+              onClick={() => navigate(`/training-instructors/${record.id}`)}
+            />
+          ) : undefined
+        }
+        onBack={() => navigate(INSTRUCTORS_HOME)}
+        backLabel="Settings"
+      />
       <SimpleShowLayout>
         <ReferenceField
           reference="contacts"

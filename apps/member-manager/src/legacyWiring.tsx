@@ -1,10 +1,6 @@
 import React, { ReactElement } from 'react';
 import type { ModuleKey } from './config/modules';
 import {
-  Contacts,
-  ActivityFeed,
-  Staff,
-  Users,
   EmailsTemplates,
   EmailTasks,
   ScholarshipApplications,
@@ -13,7 +9,6 @@ import {
   AwardTypes,
 } from './modules';
 import {
-  HumanResources,
   FinancialAuditDashboard,
   SoonerwarnManagement,
   SettingsDashboard,
@@ -46,12 +41,7 @@ export interface LegacyResource {
 const LEGACY_RESOURCES: LegacyResource[] = [
   // SHARED
   // MANAGEMENT
-  { name: 'staff', def: Staff },
-  { name: 'contacts', def: Contacts },
-  { name: 'users', def: Users },
   // SHARED
-  { name: 'activities', def: ActivityFeed },
-  { name: 'activity-relations' },
   // EMAILS
   { name: 'email-templates', def: EmailsTemplates },
   { name: 'scheduled-email-tasks', def: EmailTasks },
@@ -71,11 +61,6 @@ export interface LegacyRoute {
 const LEGACY_ROUTES: LegacyRoute[] = [
   { path: 'admin/settings', element: <SettingsDashboard />, module: 'settings' },
   { path: 'event/settings', element: <EventSettings />, module: 'settings' },
-  {
-    path: 'human-resources/dashboard',
-    element: <HumanResources />,
-    module: 'contacts',
-  },
   {
     path: 'orwef-scholarships/dashboard',
     element: <OrwefManagement />,

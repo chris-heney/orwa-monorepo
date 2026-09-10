@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableHead,
@@ -17,7 +17,13 @@ import {
   DialogTitle,
   Button,
 } from "@mui/material";
-import { Loading, useDataProvider, useNotify } from "react-admin";
+import {
+  ListBase,
+  Loading,
+  useDataProvider,
+  useListContext,
+  useNotify,
+} from "react-admin";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PersonSearchIcon from "@mui/icons-material/PersonSearch";
@@ -25,7 +31,7 @@ import { customDatagridStyle } from "../../../css";
 import { IUser } from "./types";
 import SendResetPasswordButton from "../_components/SendResetPasswordButton";
 import EditUserModal from "./EditUserModal";
-import { useHumanResourcesContext } from "../HumanResourcesContext";
+import RolesContextProvider from "../../../context/RolesContextProvider";
 import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
 import { userPreferencesStore } from "../../../helpers/userPreferencesStore";
 import {
@@ -34,18 +40,40 @@ import {
 } from "../../../helpers/impersonation";
 import { getDisplayEntityId } from "../../../helpers/strapiIds";
 
-const UserList: React.FC = () => {
+/** `users` list params shared by the Settings tab scope and the standalone list. */
+export const USERS_LIST_PARAMS = {
+  // users-permissions ignores Strapi pagination meta (total is always 0), so
+  // fetch everything once and page on the client, as before.
+  perPage: 1000,
+  sort: { field: "id", order: "ASC" as const },
+  meta: { raw: true, populate: true },
+};
+
+/**
+ * Users table. Renders inside a react-admin ListContext (the Settings tab's
+ * ListScope or the standalone `UserList` below): the list owns fetching, the
+ * search / Filters drawer values and the sort; this component pages the
+ * result on the client and hosts the edit / delete / impersonate dialogs.
+ */
+export const UsersPanel: React.FC = () => {
   const dataProvider = useDataProvider();
   const notify = useNotify();
-  const { userFilters, userListVersion } = useHumanResourcesContext();
+  const {
+    data,
+    isLoading,
+    sort,
+    setSort,
+    filterValues,
+    refetch,
+  } = useListContext<IUser>();
+  const filteredUsers = useMemo<IUser[]>(() => data ?? [], [data]);
+  const loading = isLoading;
+  const sortField = sort?.field ?? "id";
+  const sortOrder = (sort?.order ?? "ASC") as "ASC" | "DESC";
 
-  const [filteredUsers, setFilteredUsers] = useState<IUser[]>([]); // Users matching the search criteria
   const [users, setUsers] = useState<IUser[]>([]); // Holds the current page users
-  const [loading, setLoading] = useState<boolean>(true);
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
-  const [sortField, setSortField] = useState<string>("id");
-  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">("ASC");
   const [confirmDeleteUser, setConfirmDeleteUser] = useState<IUser | null>(
     null
   );
@@ -54,31 +82,12 @@ const UserList: React.FC = () => {
   const [impersonateUser, setImpersonateUser] = useState<IUser | null>(null);
   const [impersonating, setImpersonating] = useState<boolean>(false);
 
-  // Fetch all users on initial load
-  useEffect(() => {
-    setLoading(true);
-    dataProvider
-      .getList<IUser>("users", {
-        pagination: { page: 1, perPage: 1000 }, // Fetch a large number of users
-        sort: { field: sortField, order: sortOrder },
-        meta: { raw: true, populate: true },
-        filter: userFilters || {},
-      })
-      .then(({ data }) => {
-        setFilteredUsers(data); // Initialize filtered users
-        setLoading(false);
-      })
-      .catch(() => {
-        setFilteredUsers([]);
-        setLoading(false);
-      });
-  }, [dataProvider, sortField, sortOrder, userFilters, userListVersion]);
-
   // A new search / filter yields a different result set; jump back to the
   // first page so a narrowed result is never hidden behind a stale page index.
+  const filterKey = JSON.stringify(filterValues ?? {});
   useEffect(() => {
     setPage(0);
-  }, [userFilters]);
+  }, [filterKey]);
 
   // Update displayed users based on pagination and search filter
   useEffect(() => {
@@ -103,8 +112,7 @@ const UserList: React.FC = () => {
 
   const handleSort = (field: string) => {
     const isAsc = sortField === field && sortOrder === "ASC";
-    setSortOrder(isAsc ? "DESC" : "ASC");
-    setSortField(field);
+    setSort({ field, order: isAsc ? "DESC" : "ASC" });
   };
 
   const handleEdit = (user: IUser) => {
@@ -120,6 +128,7 @@ const UserList: React.FC = () => {
           notify(`User "${confirmDeleteUser.username}" deleted successfully`, {
             type: "success",
           });
+          refetch();
         })
         .catch((error) => {
           notify(`Error: ${error.message}`, { type: "error" });
@@ -145,10 +154,8 @@ const UserList: React.FC = () => {
     setEditModalOpen(false);
   };
 
-  const handleUserUpdated = (updatedUser: IUser) => {
-    setFilteredUsers((prevUsers) =>
-      prevUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-    );
+  const handleUserUpdated = (_updatedUser: IUser) => {
+    refetch();
   };
 
   const confirmImpersonate = async () => {
@@ -454,5 +461,20 @@ const UserList: React.FC = () => {
     </Box>
   );
 };
+
+/** Standalone `/users` resource list (outside the framework shell). */
+const UserList: React.FC = () => (
+  <ListBase
+    resource="users"
+    disableSyncWithLocation
+    perPage={USERS_LIST_PARAMS.perPage}
+    sort={USERS_LIST_PARAMS.sort}
+    queryOptions={{ meta: USERS_LIST_PARAMS.meta }}
+  >
+    <RolesContextProvider>
+      <UsersPanel />
+    </RolesContextProvider>
+  </ListBase>
+);
 
 export default UserList;

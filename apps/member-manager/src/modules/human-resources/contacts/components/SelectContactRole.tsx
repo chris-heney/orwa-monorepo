@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
 import { useDataProvider, useNotify } from "react-admin";
 import { MenuItem, Select, SelectChangeEvent } from "@mui/material";
-import { useHumanResourcesContext } from "../../HumanResourcesContext";
 import IContact from "../types/IContact";
 import { useUserContext } from "../../../../context/UserContextProvider";
+import { useRolesContext } from "../../../../context/RolesContextProvider";
 
 interface SelectContactRoleProps {
   contact: IContact
 }
 
 const SelectContactRole = ({ contact }: SelectContactRoleProps) => {
-  const { roles } = useHumanResourcesContext();
+  const { roles } = useRolesContext();
   const { user } = useUserContext();
   const notify = useNotify();
   const dataProvider = useDataProvider();

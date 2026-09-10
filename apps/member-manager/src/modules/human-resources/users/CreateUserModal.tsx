@@ -13,13 +13,12 @@ import {
   FormControl,
   IconButton,
 } from "@mui/material";
-import { useDataProvider, useNotify } from "react-admin";
+import { useDataProvider, useNotify, useRefresh } from "react-admin";
 import IContact from "../contacts/types/IContact";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import { Add } from "@mui/icons-material";
 import { useRolesContext } from "../../../context/RolesContextProvider";
 import { useGetIdentity } from "../../../helpers/useGetIdentity";
-import { useHumanResourcesContext } from "../HumanResourcesContext";
 
 const CreateUserModal = ({
   contact,
@@ -40,7 +39,8 @@ const CreateUserModal = ({
   const notify = useNotify();
   const { roles } = useRolesContext();
   const identity = useGetIdentity();
-  const { refreshUserList } = useHumanResourcesContext();
+  // Any mounted list (Settings → Users, Contacts) re-queries after a create.
+  const refreshUserList = useRefresh();
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => {
