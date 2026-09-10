@@ -9,7 +9,6 @@ import { AdminLayout } from './layouts';
 import { userPreferencesStore } from './helpers/userPreferencesStore';
 import { queryClient } from './helpers/queryClient';
 import { darkTheme, lightTheme } from './theme';
-import { AdminDashboard } from './modules/dashboards';
 import { guardResource } from './modules/rbac-manager/guardResource';
 import { LoginPage } from './pages';
 import { LocalizationProvider } from '@mui/x-date-pickers';
@@ -24,9 +23,13 @@ import './framework/modules';
 import {
   customRoutes,
   noLayoutRoutes,
+  pageView,
   resourceElements,
 } from './framework/registry';
 import { legacyResources, legacyRoutes } from './legacyWiring';
+
+/** `/` renders the same registered home page as `/admin/dashboard`. */
+const HomeDashboard = pageView('dashboard.home');
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -60,7 +63,7 @@ export const App = () => {
         authProvider={AuthProvider}
         store={userPreferencesStore}
         queryClient={queryClient}
-        dashboard={AdminDashboard}
+        dashboard={HomeDashboard}
         // Providing both themes enables the AppBar theme toggle; react-admin
         // persists the choice and follows the OS preference by default.
         theme={lightTheme}
