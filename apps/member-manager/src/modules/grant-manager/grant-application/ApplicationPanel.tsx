@@ -1,8 +1,8 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Box, Checkbox, Modal, useMediaQuery } from "@mui/material";
 import { Theme } from "@mui/material/styles";
 import {
-  List,
+  ListView,
   TextField,
   NumberField,
   RaRecord,
@@ -11,78 +11,34 @@ import {
   FunctionField,
   useDataProvider,
   ChipField,
-  FilterLiveSearch,
   useNotify,
-  useListContext,
-  useStore,
 } from "react-admin";
 import { CurrencyOptions } from "../../../config/Settings";
-import GrantApplicationCreateForm from "./CreateGrantApplication";
 import ModalDenialReason from "./components/ModalDenialReason";
 import BalanceField from "../payouts/components/BalanceField";
 import { isAwardPaidInFull } from "../payouts/helpers/payoutAmounts";
 import { getGrantStatus } from "../../emails-magement/Helper";
-import { useGrantContext } from "../GrantContextProvider";
-import { buildApplicationListFilter } from "../helpers/fiscalYearFilters";
 import CustomPagination from "../../_components/CustomPagination";
 import TotalPayoutsField from "../payouts/components/TotalPayoutField";
 import AgDatagrid from "../../_components/AgDatagrid";
-import type { AgDatagridPrefs } from "../../_components/AgDatagrid";
 import { IProject } from "../types";
 import coloredSurfaceSx from "../../_helpers/coloredSurfaceSx";
-import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
+import { useAutoOpenSearch } from "../helpers/useGrantSearch";
 
-const AG_PREFS_KEY = "agGrid.grant-application-finals";
+export const AG_PREFS_KEY = "agGrid.grant-application-finals";
 
-const PersistentFilterLiveSearch = () => {
-  const { applicationSearchFilter, setApplicationSearchFilter } =
-    useGrantContext();
-  const { filterValues } = useListContext();
-
-  useEffect(() => {
-    if (filterValues.q !== applicationSearchFilter) {
-      setApplicationSearchFilter(filterValues.q || "");
-    }
-  }, [filterValues.q]);
-
-  return <FilterLiveSearch />;
-};
-
-const ApplicationsSearchActions = () => {
-  const { setApplicationSearchFilter } = useGrantContext();
-  const { filterValues, setFilters } = useListContext();
-
-  const onClearSearch = useCallback(() => {
-    setApplicationSearchFilter("");
-    const next = { ...filterValues };
-    delete next.q;
-    setFilters(next, null);
-  }, [filterValues, setFilters, setApplicationSearchFilter]);
-
-  return (
-    <GrantCollapsibleSearch tab="applications" onClearSearch={onClearSearch}>
-      <PersistentFilterLiveSearch />
-    </GrantCollapsibleSearch>
-  );
-};
-
-const GrantApplicationList = () => {
+/**
+ * Applications tab panel — renders inside the framework's ListScope (the
+ * permanent grant / status / fiscal-year filter comes from `manifest.tsx`),
+ * so there is no second `List` here: count, Export, Columns, Search and the
+ * Filters drawer all share this ListBase.
+ */
+const ApplicationPanel = () => {
   const refresh = useRefresh();
   const notify = useNotify();
-  const [isCreating, setIsCreating] = React.useState(false);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
-
-  const {
-    grantFilterId,
-    applicationStatuses,
-    applicationSearchFilter,
-    fiscalYearStart,
-    fiscalYearEnd,
-  } = useGrantContext();
   const dataProvider = useDataProvider();
-  // useEffect(() => {
-  //   refresh();
-  // }, [applicationStatus, isModalOpen]);
+  useAutoOpenSearch();
 
   // function to displaty projects in a chipfield
 
@@ -117,7 +73,9 @@ const GrantApplicationList = () => {
     // Only Paid reimbursements count. Admin draws, Requested/Not Approved
     // rows, and Strapi decimal-string concatenation used to look like a $0
     // remaining balance and flip these to Paid in Full.
-    const fullyPaid = records.filter((record) => isAwardPaidInFull(record));
+    const fullyPaid = records.filter((record) =>
+      isAwardPaidInFull(record as Parameters<typeof isAwardPaidInFull>[0])
+    );
 
     await Promise.all(
       fullyPaid.map((record) =>
@@ -159,43 +117,14 @@ const GrantApplicationList = () => {
   }, []);
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
-  const [agPrefs] = useStore<AgDatagridPrefs>(AG_PREFS_KEY, {});
-  const listPerPage = agPrefs.pageSize || 50;
 
-  return isCreating ? (
-    <GrantApplicationCreateForm
-      setIsCreating={setIsCreating}
-      isCreating={isCreating}
-    />
-  ) : (
+  return (
     <>
-      <List
-        disableSyncWithLocation
+      <ListView
+        actions={false}
         component="div"
-        filterDefaultValues={applicationSearchFilter.length > 0 ? { q: applicationSearchFilter } : {}}
-        filter={buildApplicationListFilter(
-          grantFilterId,
-          applicationStatuses,
-          fiscalYearStart,
-          fiscalYearEnd
-        )}
         title={" "}
-        resource="grant-application-finals"
-        actions={<ApplicationsSearchActions />}
-        queryOptions={{
-          meta: {
-            raw: true,
-          },
-        }}
-        sort={{ field: "application_date", order: "DESC" }}
-        perPage={listPerPage}
         pagination={<CustomPagination />}
-        sx={{
-          ".RaList-actions": {
-            p: 0,
-            minHeight: 0,
-          },
-        }}
       >
         <AgDatagrid preferenceKey={AG_PREFS_KEY} rowClick="show">
           <FunctionField
@@ -341,7 +270,7 @@ const GrantApplicationList = () => {
             }}
           />
         </AgDatagrid>
-      </List>
+      </ListView>
       <Modal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -355,4 +284,4 @@ const GrantApplicationList = () => {
     </>
   );
 };
-export default GrantApplicationList;
+export default ApplicationPanel;

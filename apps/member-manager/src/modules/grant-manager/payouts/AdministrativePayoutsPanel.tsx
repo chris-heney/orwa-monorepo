@@ -1,14 +1,6 @@
 import { Modal, Theme, useMediaQuery, useTheme } from "@mui/material";
-import React, { useCallback, useEffect } from "react";
-import {
-  DateField,
-  FilterLiveSearch,
-  FunctionField,
-  List,
-  RaRecord,
-  useListFilterContext,
-} from "react-admin";
-import { useGrantContext } from "../GrantContextProvider";
+import React from "react";
+import { DateField, FunctionField, ListView, RaRecord } from "react-admin";
 import CustomPagination from "../../_components/CustomPagination";
 import { EditableDatagridConfigurable } from "@orwa/entity-id";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
@@ -16,57 +8,34 @@ import SelectPayoutStatus from "./components/SelectPayoutStatus";
 import EditPayoutMobile from "./EditPayoutMobile";
 import EditPayout from "./EditPayoutRowForm";
 import PayoutShow from "./PayoutShow";
-import ModalPayoutStatus from "../payouts/components/ModalPayoutStatus";
-import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
-import { LEGACY_PAYOUT_SEARCH_KEYS, stripSearchKeys } from "../helpers/searchBarTabs";
+import ModalPayoutStatus from "./components/ModalPayoutStatus";
+import { CreatePayoutModal } from "./PayoutsPanel";
+import {
+  buildApplicationOrFilter,
+  LEGACY_PAYOUT_SEARCH_KEYS,
+} from "../helpers/searchBarTabs";
+import { useAutoOpenSearch, useSearchOrMirror } from "../helpers/useGrantSearch";
 
+/** Legacy single-field search key of this tab (stripped by the search mirror). */
 const ADMIN_SEARCH_SOURCE = "application][legal_entity_name][$contains";
+const LEGACY_ADMIN_SEARCH_KEYS = [
+  ADMIN_SEARCH_SOURCE,
+  ...LEGACY_PAYOUT_SEARCH_KEYS,
+] as const;
 
-const AdminPayoutsSearchActions = () => {
-  const { filterValues, setFilters } = useListFilterContext();
-  const { setSearchBarOpenForTab } = useGrantContext();
-
-  const onClearSearch = useCallback(() => {
-    setFilters(
-      stripSearchKeys(filterValues as Record<string, unknown>, [
-        ADMIN_SEARCH_SOURCE,
-        ...LEGACY_PAYOUT_SEARCH_KEYS,
-      ]),
-      null
-    );
-  }, [filterValues, setFilters]);
-
-  useEffect(() => {
-    const fv = filterValues as Record<string, unknown>;
-    if (fv[ADMIN_SEARCH_SOURCE]) {
-      setSearchBarOpenForTab("Admin Payouts", true);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
-
-  return (
-    <GrantCollapsibleSearch
-      tab="Admin Payouts"
-      onClearSearch={onClearSearch}
-    >
-      <FilterLiveSearch
-        helperText="Search by application name"
-        source={ADMIN_SEARCH_SOURCE}
-      />
-    </GrantCollapsibleSearch>
-  );
-};
-
-const AdministrativePayoutsList = () => {
+/**
+ * Administrative payouts — renders inside the framework's ListScope; the
+ * permanent grant / status / fiscal-year filter lives in `manifest.tsx`.
+ * Sorted by transaction date ascending so the running Balance column is
+ * meaningful.
+ */
+const AdministrativePayoutsPanel = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedPayout, setSelectedPayout] = React.useState<RaRecord>();
   const [payoutStatus, setPayoutStatus] = React.useState<RaRecord | null>(null);
 
-  const {
-    payoutStatusId,
-    grantFilterId,
-    fiscalYearStart,
-    fiscalYearEnd,
-  } = useGrantContext();
+  useSearchOrMirror(buildApplicationOrFilter, LEGACY_ADMIN_SEARCH_KEYS);
+  useAutoOpenSearch();
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
   const theme = useTheme();
@@ -75,35 +44,7 @@ const AdministrativePayoutsList = () => {
 
   return (
     <>
-      <List
-        disableSyncWithLocation
-        filter={{
-          ...{
-            grant: grantFilterId,
-            type: "Administrative",
-          },
-          ...(payoutStatusId && { payout_status: payoutStatusId }),
-          ...(fiscalYearStart &&
-            fiscalYearEnd && {
-              transaction_date: {
-                $between: [fiscalYearStart, fiscalYearEnd],
-              },
-            }),
-        }}
-        sort={{ field: "transaction_date", order: "ASC" }}
-        title={" "}
-        resource="grant-payouts"
-        perPage={50}
-        queryOptions={{ meta: { raw: true, populate: true } }}
-        pagination={<CustomPagination />}
-        actions={<AdminPayoutsSearchActions />}
-        sx={{
-          ".RaList-actions": {
-            p: 0,
-            minHeight: 0,
-          },
-        }}
-      >
+      <ListView actions={false} title={" "} pagination={<CustomPagination />}>
         <EditableDatagridConfigurable
           mutationMode="undoable"
           noDelete
@@ -161,7 +102,7 @@ const AdministrativePayoutsList = () => {
             }}
           />
         </EditableDatagridConfigurable>
-      </List>
+      </ListView>
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalPayoutStatus
           selectedPayout={selectedPayout}
@@ -169,8 +110,9 @@ const AdministrativePayoutsList = () => {
           setIsModalOpen={setIsModalOpen}
         />
       </Modal>
+      <CreatePayoutModal />
     </>
   );
 };
 
-export default AdministrativePayoutsList;
+export default AdministrativePayoutsPanel;

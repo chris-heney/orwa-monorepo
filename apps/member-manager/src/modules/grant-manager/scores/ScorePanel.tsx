@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect } from "react";
+import React from "react";
 import {
-  List,
+  ListView,
   TextField,
   NumberField,
   DateField,
@@ -9,21 +9,16 @@ import {
   FunctionField,
   useRecordContext,
   useGetOne,
-  useListFilterContext,
 } from "react-admin";
 import { DatagridConfigurable } from "@orwa/entity-id";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import CustomPagination from "../../_components/CustomPagination";
 import { Box, Typography, useTheme } from "@mui/material";
-import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
-import GrantOrLiveSearch from "../_components/GrantOrLiveSearch";
-import { useGrantContext } from "../GrantContextProvider";
-import { buildScoreFiscalYearFilter } from "../helpers/fiscalYearFilters";
 import {
   buildScoresOrFilter,
   LEGACY_SCORE_SEARCH_KEYS,
-  stripSearchKeys,
 } from "../helpers/searchBarTabs";
+import { useAutoOpenSearch, useSearchOrMirror } from "../helpers/useGrantSearch";
 
 const ScoreSheetLink = () => {
   const record = useRecordContext();
@@ -46,62 +41,17 @@ const ScoreSheetLink = () => {
   );
 };
 
-const ScoresSearchActions = () => {
-  const { filterValues, setFilters } = useListFilterContext();
-  const { setSearchBarOpenForTab } = useGrantContext();
-
-  const onClearSearch = useCallback(() => {
-    setFilters(
-      stripSearchKeys(
-        filterValues as Record<string, unknown>,
-        LEGACY_SCORE_SEARCH_KEYS
-      ),
-      null
-    );
-  }, [filterValues, setFilters]);
-
-  useEffect(() => {
-    const fv = filterValues as Record<string, unknown>;
-    const has =
-      Boolean(fv.$or) ||
-      LEGACY_SCORE_SEARCH_KEYS.some((k) => Boolean(fv[k]));
-    if (has) setSearchBarOpenForTab("application scores", true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
-
-  return (
-    <GrantCollapsibleSearch
-      tab="application scores"
-      onClearSearch={onClearSearch}
-    >
-      <GrantOrLiveSearch
-        buildOr={buildScoresOrFilter}
-        legacyKeys={LEGACY_SCORE_SEARCH_KEYS}
-        placeholder="Search by name or ID"
-      />
-    </GrantCollapsibleSearch>
-  );
-};
-
-const ScoreList = () => {
+/**
+ * Scoresheets tab — renders inside the framework's ListScope; the fiscal-year
+ * filter lives in `manifest.tsx`, the search row's `q` is mirrored into the
+ * `grant_application` `$or` filter.
+ */
+const ScorePanel = () => {
   const theme = useTheme();
-  const { fiscalYearStart, fiscalYearEnd } = useGrantContext();
-  const fyFilter = buildScoreFiscalYearFilter(fiscalYearStart, fiscalYearEnd);
+  useSearchOrMirror(buildScoresOrFilter, LEGACY_SCORE_SEARCH_KEYS);
+  useAutoOpenSearch();
   return (
-    <List
-      title={" "}
-      resource="grant-application-scores"
-      pagination={<CustomPagination />}
-      actions={<ScoresSearchActions />}
-      sort={{ field: "date", order: "DESC" }}
-      disableSyncWithLocation
-      filter={fyFilter ?? undefined}
-      sx={{
-        ".RaList-actions": {
-          p: 0,
-          minHeight: 0,
-        },
-      }}
-    >
+    <ListView actions={false} title={" "} pagination={<CustomPagination />}>
       <DatagridConfigurable
         bulkActionButtons={false}
         sx={grantDatagridStyle(theme)}
@@ -180,8 +130,8 @@ const ScoreList = () => {
         </ReferenceField>
         <FunctionField label="Score Sheet" render={() => <ScoreSheetLink />} />
       </DatagridConfigurable>
-    </List>
+    </ListView>
   );
 };
 
-export default ScoreList;
+export default ScorePanel;

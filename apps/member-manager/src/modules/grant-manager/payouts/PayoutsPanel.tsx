@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from "react";
+import React from "react";
 import { Link as RouterLink } from "react-router-dom";
 import {
   Chip,
@@ -11,19 +11,18 @@ import {
 import LanguageIcon from "@mui/icons-material/Language";
 import { Theme } from "@mui/material/styles";
 import {
-  List,
+  ListView,
   TextField,
   DateField,
   NumberField,
   FunctionField,
   RaRecord,
-  useListFilterContext,
 } from "react-admin";
 import { EditableDatagridConfigurable } from "@orwa/entity-id";
 import EditPayout from "./EditPayoutRowForm";
 import EditPayoutMobile from "./EditPayoutMobile";
 import PayoutShow from "./PayoutShow";
-import ModalPayoutStatus from "../payouts/components/ModalPayoutStatus";
+import ModalPayoutStatus from "./components/ModalPayoutStatus";
 import TotalPayoutsField from "./components/TotalPayoutField";
 import BalanceField from "./components/BalanceField";
 import { useGrantContext } from "../GrantContextProvider";
@@ -31,97 +30,50 @@ import CustomPagination from "../../_components/CustomPagination";
 import { grantDatagridStyle } from "../_components/grantDatagridStyle";
 import SelectPayoutStatus from "./components/SelectPayoutStatus";
 import { CurrencyOptions } from "../../../config/Settings";
-import GrantCollapsibleSearch from "../_components/GrantCollapsibleSearch";
-import GrantOrLiveSearch from "../_components/GrantOrLiveSearch";
+import ModalMakePayout from "../grant-application/components/MadalMakePayout";
 import {
   buildApplicationOrFilter,
   LEGACY_PAYOUT_SEARCH_KEYS,
-  stripSearchKeys,
 } from "../helpers/searchBarTabs";
+import { useAutoOpenSearch, useSearchOrMirror } from "../helpers/useGrantSearch";
 
-const PayoutsSearchActions = () => {
-  const { filterValues, setFilters } = useListFilterContext();
-  const { setSearchBarOpenForTab } = useGrantContext();
-
-  const onClearSearch = useCallback(() => {
-    setFilters(
-      stripSearchKeys(
-        filterValues as Record<string, unknown>,
-        LEGACY_PAYOUT_SEARCH_KEYS
-      ),
-      null
-    );
-  }, [filterValues, setFilters]);
-
-  // Open the bar if a prior $or / legacy search is already in filters
-  useEffect(() => {
-    const fv = filterValues as Record<string, unknown>;
-    const has =
-      Boolean(fv.$or) ||
-      LEGACY_PAYOUT_SEARCH_KEYS.some((k) => Boolean(fv[k]));
-    if (has) setSearchBarOpenForTab("payouts", true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- mount only
-
+/** New Payout modal — opened by the bar's "Payout" action (`NewPayoutAction`). */
+export const CreatePayoutModal = () => {
+  const { isCreatePayoutModalOpen, closeCreatePayoutModal, grantId, createPayoutType } =
+    useGrantContext();
   return (
-    <GrantCollapsibleSearch tab="payouts" onClearSearch={onClearSearch}>
-      <GrantOrLiveSearch
-        buildOr={buildApplicationOrFilter}
-        legacyKeys={LEGACY_PAYOUT_SEARCH_KEYS}
-        placeholder="Search by name or ID"
+    <Modal
+      open={isCreatePayoutModalOpen}
+      onClose={closeCreatePayoutModal}
+      aria-labelledby="create-payout-modal"
+    >
+      <ModalMakePayout
+        setIsModalOpen={closeCreatePayoutModal}
+        grantId={grantId}
+        defaultType={createPayoutType}
       />
-    </GrantCollapsibleSearch>
+    </Modal>
   );
 };
 
-const ReimbursementPayoutsList = () => {
+/**
+ * Award (reimbursement) payouts — renders inside the framework's ListScope;
+ * the permanent grant / status / fiscal-year filter lives in `manifest.tsx`.
+ */
+const PayoutsPanel = () => {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [selectedPayout, setSelectedPayout] = React.useState<RaRecord>();
   const [payoutStatus, setPayoutStatus] = React.useState<RaRecord | null>(null);
 
-  const {
-    payoutStatusId,
-    grantFilterId,
-    fiscalYearStart,
-    fiscalYearEnd,
-  } = useGrantContext();
+  useSearchOrMirror(buildApplicationOrFilter, LEGACY_PAYOUT_SEARCH_KEYS);
+  useAutoOpenSearch();
 
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down("sm"));
   const theme = useTheme();
 
   return (
     <>
-      <List
-        disableSyncWithLocation
-        filter={{
-          ...{
-            grant: grantFilterId,
-            type: "Reimbursement",
-          },
-          ...(payoutStatusId && { payout_status: payoutStatusId }),
-          // Financial reporting: reimbursement payouts belong to the fiscal
-          // year their application was approved, not the year they were paid.
-          ...(fiscalYearStart &&
-            fiscalYearEnd && {
-              application: {
-                committee_date: {
-                  $between: [fiscalYearStart, fiscalYearEnd],
-                },
-              },
-            }),
-        }}
-        title={" "}
-        resource="grant-payouts"
-        perPage={50}
-        queryOptions={{ meta: { raw: true, populate: true } }}
-        pagination={<CustomPagination />}
-        actions={<PayoutsSearchActions />}
-        sx={{
-          ".RaList-actions": {
-            p: 0,
-            minHeight: 0,
-          },
-        }}
-      >
+      <ListView actions={false} title={" "} pagination={<CustomPagination />}>
         <EditableDatagridConfigurable
           mutationMode="undoable"
           noDelete
@@ -217,7 +169,7 @@ const ReimbursementPayoutsList = () => {
             )}
           />
         </EditableDatagridConfigurable>
-      </List>
+      </ListView>
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalPayoutStatus
           selectedPayout={selectedPayout}
@@ -225,8 +177,9 @@ const ReimbursementPayoutsList = () => {
           setIsModalOpen={setIsModalOpen}
         />
       </Modal>
+      <CreatePayoutModal />
     </>
   );
 };
 
-export default ReimbursementPayoutsList;
+export default PayoutsPanel;

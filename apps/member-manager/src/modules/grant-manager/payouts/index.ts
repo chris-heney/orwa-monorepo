@@ -1,8 +1,7 @@
 import GradingIcon from '@mui/icons-material/Grading'
-import GrantPayoutsList from './PayoutsList'
 
+/** `list` (→ dashboard Award Payouts tab) is attached by `../manifest.tsx`. */
 export default {
-  list: GrantPayoutsList,
   icon: GradingIcon,
   recordRepresentation: 'title',
 }
