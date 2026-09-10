@@ -1,5 +1,4 @@
 import BusinessIcon from '@mui/icons-material/Business';
-import type { ModuleKey } from '../../config/modules';
 import type { ModuleManifest } from '../../framework/manifest';
 import { pageView } from '../../framework/registry';
 import { createAction, exportAction } from '../../framework/actions';
@@ -11,14 +10,14 @@ import CorporateSponsorsFilters from './components/CorporateSponsorsFilters';
 import exportCorporateSponsors from './helpers/exportCorporateSponsors';
 
 /**
- * Corporate Sponsors — framework-shaped but NOT registered in
- * `framework/modules.ts`: the `<Resource name="corporate-sponsors">` was
- * already commented out in App.tsx before the framework landed, and enabling
- * it needs a new `ModuleKey` (+ the Strapi `MODULE_KEYS` seed). Add
- * `'corporate-sponsors'` to `ModuleKey`, register this module, and it lights up.
+ * Corporate Sponsors. The `<Resource>` had been commented out in App.tsx
+ * before the framework; it is now a registered module with its own
+ * `ModuleKey`. NOTE: `'corporate-sponsors'` is not in the Strapi
+ * `MODULE_KEYS` seed (apps/strapi/src/index.ts) — existing roles need it
+ * granted in RBAC Manager before the menu entry / routes appear for them.
  */
 export const corporateSponsorsModule: ModuleManifest = {
-  id: 'corporate-sponsors' as ModuleKey,
+  id: 'corporate-sponsors',
   title: 'Corporate Sponsors',
   icon: BusinessIcon,
   menu: { label: 'Corporate Sponsors', to: '/corporate-sponsors' },

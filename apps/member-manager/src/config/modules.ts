@@ -25,7 +25,8 @@ export type ModuleKey =
   | 'scholarships'
   | 'awards'
   | 'rbac'
-  | 'settings';
+  | 'settings'
+  | 'corporate-sponsors';
 
 export interface AppModule {
   key: ModuleKey;
@@ -229,6 +230,15 @@ export const APP_MODULES: AppModule[] = [
     to: '/admin/settings',
     pathPrefixes: ['/admin/settings', '/event/settings'],
     resources: [],
+  },
+  {
+    // Not in the Strapi MODULE_KEYS seed yet — grant it per role in RBAC
+    // Manager (or add it to apps/strapi/src/index.ts MODULE_KEYS).
+    key: 'corporate-sponsors',
+    label: 'Corporate Sponsors',
+    to: '/corporate-sponsors',
+    pathPrefixes: ['/corporate-sponsors'],
+    resources: ['corporate-sponsors'],
   },
 ];
 
