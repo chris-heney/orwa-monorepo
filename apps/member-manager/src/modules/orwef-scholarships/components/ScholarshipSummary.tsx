@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Box, MenuItem, Select, Typography } from "@mui/material";
 import { Loading, useGetList } from "react-admin";
 import { useSummaryTokens } from "../../grant-manager/grants/components/summary/tokens";
-import { useOrwefContext } from "../OrwefContextProvider";
+import { useScholarshipYear } from "../helpers/orwefStore";
 import { calendarYearChoices } from "../helpers/listFilters";
 import {
   buildScholarshipMetrics,
@@ -13,7 +13,7 @@ import ScholarshipGlossary from "./ScholarshipGlossary";
 
 const ScholarshipSummary = () => {
   const T = useSummaryTokens();
-  const { year, setYear } = useOrwefContext();
+  const [year, setYear] = useScholarshipYear();
   const [glossaryOpen, setGlossaryOpen] = useState(false);
   const { data, isLoading } = useGetList<ScholarshipApplication>(
     "scholarship-applications",

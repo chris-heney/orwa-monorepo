@@ -16,12 +16,12 @@ import {
   dateInputProps,
   emailFieldSx,
   fullFieldSx,
-  ReviewPageBar,
   ReviewSectionCard,
   ReviewToolbar,
   reviewFormSx,
 } from "../../_components/review-packet";
 import MediaLink from "./MediaLink";
+import FormHeadingBar from "../../award-nominations/components/FormHeadingBar";
 import {
   MAX_FINANCIAL_RESOURCES,
   listFinancialResources,
@@ -67,7 +67,7 @@ const ScholarshipForm = () => {
 
   return (
     <SimpleForm sx={reviewFormSx} toolbar={<ReviewToolbar redirect={SCHOLARSHIP_BACK} />}>
-      <ReviewPageBar title="Review Scholarship Application" backTo={SCHOLARSHIP_BACK} />
+      <FormHeadingBar title="Review Scholarship Application" backTo={SCHOLARSHIP_BACK} />
       <Box sx={{ width: 1, px: { xs: 1, sm: 2 }, pb: 2 }}>
         <Grid container spacing={2}>
           <Grid item xs={12}>

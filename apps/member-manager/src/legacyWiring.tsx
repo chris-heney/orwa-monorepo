@@ -3,11 +3,7 @@ import type { ModuleKey } from './config/modules';
 import {
   EmailsTemplates,
   EmailTasks,
-  ScholarshipApplications,
 } from './modules';
-import {
-  OrwefManagement,
-} from './modules/dashboards';
 import {
   isRegisteredModule,
   isRegisteredResource,
@@ -37,7 +33,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   // EMAILS
   { name: 'email-templates', def: EmailsTemplates },
   { name: 'scheduled-email-tasks', def: EmailTasks },
-  { name: 'scholarship-applications', def: ScholarshipApplications },
 ];
 
 export interface LegacyRoute {
@@ -48,11 +43,6 @@ export interface LegacyRoute {
 }
 
 const LEGACY_ROUTES: LegacyRoute[] = [
-  {
-    path: 'orwef-scholarships/dashboard',
-    element: <OrwefManagement />,
-    module: 'scholarships',
-  },
 ];
 
 /** Legacy resources the registry does not own yet. */

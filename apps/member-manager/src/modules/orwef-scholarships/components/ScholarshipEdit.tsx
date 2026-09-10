@@ -1,7 +1,8 @@
 import React from "react";
 import { Edit } from "react-admin";
 import ScholarshipForm from "./ScholarshipForm";
-import { asDateString, reviewResourceSx } from "../../_components/review-packet";
+import { asDateString } from "../../_components/review-packet";
+import { formPageSx } from "../../award-nominations/components/FormHeadingBar";
 import {
   MAX_FINANCIAL_RESOURCES,
   listFinancialResources,
@@ -38,7 +39,7 @@ const ScholarshipEdit = () => (
     redirect={false}
     mutationMode="pessimistic"
     transform={transformScholarship}
-    sx={reviewResourceSx}
+    sx={formPageSx}
     queryOptions={{
       meta: { populate: "*" },
     }}

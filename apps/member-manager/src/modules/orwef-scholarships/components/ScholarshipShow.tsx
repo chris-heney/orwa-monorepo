@@ -1,5 +1,5 @@
 import React from "react";
-import { Show, useRecordContext } from "react-admin";
+import { useRecordContext } from "react-admin";
 import { Box, Typography } from "@mui/material";
 import {
   asDateString,
@@ -11,8 +11,6 @@ import {
   PacketLayout,
   PacketSection,
   RELATIONSHIP_LABELS,
-  ReviewPageBar,
-  reviewResourceSx,
   StaffSidebar,
   StatusChip,
 } from "../../_components/review-packet";
@@ -21,23 +19,27 @@ import { STATUS_META, ScholarshipStatus } from "../helpers/metrics";
 import { listFinancialResources } from "../helpers/financialResources";
 import MediaLink from "./MediaLink";
 import PacketLetterhead from "./PacketLetterhead";
-import ScholarshipPrintButton from "./ScholarshipPrintButton";
 import type { ScholarshipPacketRecord } from "../helpers/printScholarshipPacket";
-
-const SCHOLARSHIP_BACK = "/orwef-scholarships/dashboard";
 
 type ScholarshipRecord = ScholarshipPacketRecord & {
   application_status?: ScholarshipStatus;
   review_notes?: string | null;
 };
 
-const applicantTitle = (record?: ScholarshipRecord) => {
-  if (record == null) return "Scholarship Application";
-  const name = `${record.applicant_first_name || ""} ${record.applicant_last_name || ""}`.trim();
+/** Bar title of the `scholarships.applicationShow` page (manifest `titleBar.title`). */
+export const applicantTitle = (record?: Record<string, unknown>) => {
+  const r = record as ScholarshipRecord | undefined;
+  if (r == null) return "Scholarship Application";
+  const name = `${r.applicant_first_name || ""} ${r.applicant_last_name || ""}`.trim();
   return name || "Scholarship Application";
 };
 
-const ScholarshipPacket = () => {
+/**
+ * Body of the `kind: 'show'` page — the framework's `ShowBase` provides the
+ * record and its TitleBar renders title / Print / Review / Back, so no
+ * heading here.
+ */
+const ScholarshipShow = () => {
   const record = useRecordContext<ScholarshipRecord>();
   const T = useSummaryTokens();
   const status = record?.application_status;
@@ -50,19 +52,7 @@ const ScholarshipPacket = () => {
 
   return (
     <PacketLayout
-      heading={
-        <ReviewPageBar
-          title={applicantTitle(record)}
-          backTo={SCHOLARSHIP_BACK}
-          showEdit
-          extraActions={
-            <ScholarshipPrintButton
-              record={record}
-              sx={{ color: "white" }}
-            />
-          }
-        />
-      }
+      heading={null}
       sidebar={
         <StaffSidebar
           chip={
@@ -333,19 +323,5 @@ const ScholarshipPacket = () => {
     </PacketLayout>
   );
 };
-
-const ScholarshipShow = () => (
-  <Show
-    title="ORWEF Scholarship"
-    component="div"
-    actions={false}
-    sx={reviewResourceSx}
-    queryOptions={{
-      meta: { populate: "*", raw: true },
-    }}
-  >
-    <ScholarshipPacket />
-  </Show>
-);
 
 export default ScholarshipShow;
