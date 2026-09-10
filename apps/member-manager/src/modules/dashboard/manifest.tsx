@@ -25,7 +25,7 @@ export const dashboardModule: ModuleManifest = {
     {
       // "My Profile" (app-bar avatar menu). `/profile` is in Admin.tsx's
       // ALWAYS_ALLOWED_PATHS, so hosting it here does not gate it on the
-      // dashboard module — it just needs a home once legacyWiring goes.
+      // dashboard module — it just needs a registered home.
       id: 'dashboard.profile',
       route: 'profile',
       kind: 'custom',

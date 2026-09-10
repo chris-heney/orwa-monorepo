@@ -275,8 +275,8 @@ const associateShow: PageManifest = {
  * Memberships — water systems, associates, membership levels / items and the
  * membership-form transactions, on the layout framework (proposal §5 step 1).
  *
- * Also owns the legacy `soonerwarn/dashboard` and `financial-audits/dashboard`
- * routes (still wired in `legacyWiring.tsx`; another pass migrates them).
+ * Also owns the SoonerWARN pages (`../soonerwarn/manifest`) and the
+ * standalone Financial Audit page.
  */
 /** Standalone `/financial-audits/dashboard` (the same widget is embedded in the Summary tab). */
 const financialAudits: PageManifest = {

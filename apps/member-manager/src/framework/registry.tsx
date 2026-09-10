@@ -1,6 +1,11 @@
 import React, { ReactElement } from 'react';
 import { Navigate } from 'react-router-dom';
-import { APP_MODULES, AppModule, ModuleKey } from '../config/modules';
+import {
+  ALL_MODULE_KEYS,
+  APP_MODULES,
+  AppModule,
+  ModuleKey,
+} from '../config/modules';
 import { guardResource } from '../modules/rbac-manager/guardResource';
 import type {
   ModuleManifest,
@@ -21,9 +26,6 @@ import { PageShell } from './PageShell';
 export interface Registry {
   modules: ModuleManifest[];
   pages: Map<string, PageManifest>;
-  moduleKeys: Set<ModuleKey>;
-  resourceNames: Set<string>;
-  routePaths: Set<string>;
 }
 
 let current: Registry | null = null;
@@ -69,19 +71,32 @@ const tabByKey = (tabs: TabManifest[], key: string, pageId: string) => {
   return tab;
 };
 
-/** Reflect a registered module's permissions into the RBAC seed table. */
+/**
+ * Write the RBAC module table (`APP_MODULES`) from the registered manifests,
+ * in `ALL_MODULE_KEYS` order (unknown keys last, in registration order).
+ */
 const syncAppModules = (modules: ModuleManifest[]) => {
-  for (const m of modules) {
-    const entry: AppModule | undefined = APP_MODULES.find((a) => a.key === m.id);
-    const next: AppModule = {
+  const rank = (key: ModuleKey) => {
+    const i = ALL_MODULE_KEYS.indexOf(key);
+    return i === -1 ? Number.MAX_SAFE_INTEGER : i;
+  };
+  const next: AppModule[] = [...modules]
+    .sort((a, b) => rank(a.id) - rank(b.id))
+    .map((m) => ({
       key: m.id,
       label: m.title,
       to: m.menu ? m.menu.to : '/admin/settings',
       pathPrefixes: [...m.permissions.pathPrefixes],
       resources: [...m.permissions.resources],
-    };
-    if (entry) Object.assign(entry, next);
-    else APP_MODULES.push(next);
+    }));
+  APP_MODULES.splice(0, APP_MODULES.length, ...next);
+  if (import.meta.env.DEV) {
+    const missing = ALL_MODULE_KEYS.filter((k) => !modules.some((m) => m.id === k));
+    if (missing.length) {
+      console.warn(
+        `framework: ALL_MODULE_KEYS has no ModuleManifest for: ${missing.join(', ')}`
+      );
+    }
   }
 };
 
@@ -144,16 +159,6 @@ export function finalizeRegistry(list: ModuleManifest[]): Registry {
   current = {
     modules: ordered,
     pages,
-    moduleKeys: new Set(ordered.map((m) => m.id)),
-    resourceNames: new Set(
-      ordered.flatMap((m) => Object.keys(m.resources ?? {}))
-    ),
-    routePaths: new Set(
-      Array.from(pages.values())
-        .map((p) => p.route)
-        .filter((r): r is string => Boolean(r))
-        .concat(ordered.flatMap((m) => (m.routes ?? []).map((r) => r.path)))
-    ),
   };
   return current;
 }
@@ -208,22 +213,9 @@ export const noLayoutRoutes = (): { path: string; element: ReactElement }[] =>
     (m.routes ?? []).filter((r) => r.noLayout)
   );
 
-/** Drop-in for `APP_MODULES` for registered modules only. */
-export const appModules = (): AppModule[] =>
-  getRegistry().modules.map((m) => ({
-    key: m.id,
-    label: m.title,
-    to: m.menu ? m.menu.to : '/admin/settings',
-    pathPrefixes: m.permissions.pathPrefixes,
-    resources: m.permissions.resources,
-  }));
+/** The RBAC module table (same array `config/modules.ts` exports). */
+export const appModules = (): AppModule[] => APP_MODULES;
 
-export const isRegisteredModule = (key: ModuleKey) =>
-  current?.moduleKeys.has(key) ?? false;
-export const isRegisteredResource = (name: string) =>
-  current?.resourceNames.has(name) ?? false;
-export const isRegisteredRoute = (path: string) =>
-  current?.routePaths.has(path.replace(/^\//, '')) ?? false;
 
 /**
  * Component that renders a registered page — for `resources[x].list/show/edit`

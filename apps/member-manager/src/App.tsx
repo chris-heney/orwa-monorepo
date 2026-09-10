@@ -9,7 +9,6 @@ import { AdminLayout } from './layouts';
 import { userPreferencesStore } from './helpers/userPreferencesStore';
 import { queryClient } from './helpers/queryClient';
 import { darkTheme, lightTheme } from './theme';
-import { guardResource } from './modules/rbac-manager/guardResource';
 import { LoginPage } from './pages';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -26,7 +25,6 @@ import {
   pageView,
   resourceElements,
 } from './framework/registry';
-import { legacyResources, legacyRoutes } from './legacyWiring';
 
 /** `/` renders the same registered home page as `/admin/dashboard`. */
 const HomeDashboard = pageView('dashboard.home');
@@ -34,24 +32,18 @@ const HomeDashboard = pageView('dashboard.home');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-// Create/edit pages are capability-guarded from server truth (the role's
-// Strapi permissions), so every role — Staff included — is gated by what the
-// RBAC Manager grants it. The registry applies the same guard.
-const resourceProps = guardResource;
-
 export const App = () => {
   const dataProvider = new StrapiRestDataProviderFactory({
     endpoint: `${import.meta.env.VITE_API_ENDPOINT}/api`,
     type: 'rest',
   }).init();
 
-  // Registry output comes first so it wins over any legacy duplicate; the
-  // legacy lists are already filtered against the registry (legacyWiring.tsx).
+  // Everything below comes from the module registry (framework/modules.ts):
+  // <Resource>s are capability-guarded (guardResource) so every role — Staff
+  // included — is gated by what the RBAC Manager grants it.
   const registryResources = resourceElements();
   const registryRoutes = customRoutes();
   const registryNoLayoutRoutes = noLayoutRoutes();
-  const legacyResourceList = legacyResources();
-  const legacyRouteList = legacyRoutes();
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="EN/en-us">
@@ -80,22 +72,9 @@ export const App = () => {
             <Resource key={name} name={name} {...def} />
           ))}
 
-          {/* --- Legacy <Resource>s (shadowed as modules migrate) --- */}
-          {legacyResourceList.map(({ name, def, props }) => (
-            <Resource
-              key={name}
-              name={name}
-              {...(def ? resourceProps(def) : {})}
-              {...(props ?? {})}
-            />
-          ))}
-
-          {/* --- Pages (registry PageShells first, then legacy dashboards) --- */}
+          {/* --- Module registry: routed pages (PageShells) --- */}
           <CustomRoutes>
             {registryRoutes.map(({ path, element }) => (
-              <Route key={path} path={path} element={element} />
-            ))}
-            {legacyRouteList.map(({ path, element }) => (
               <Route key={path} path={path} element={element} />
             ))}
           </CustomRoutes>

@@ -1,14 +1,12 @@
 /**
- * Module registry — the single source of truth mapping RBAC module keys to
- * navigation and routing. Every menu item in `src/layouts/Admin.tsx`, every
- * CustomRoute path, and every react-admin `<Resource>` in `src/App.tsx` must
- * belong to exactly one module.
+ * RBAC module keys + the `AppModule` table the route guard, login redirect and
+ * RBAC Manager read. The table itself is registry output: each
+ * `ModuleManifest` (`modules/<x>/manifest.tsx`, listed in
+ * `framework/modules.ts`) declares its menu, routes, resources and
+ * permissions, and `finalizeRegistry()` writes them here.
  *
  * NOTE: the backend seed list `MODULE_KEYS` in `apps/strapi/src/index.ts`
- * must stay in sync with the `ModuleKey` union below.
- *
- * Icons stay in the menu component (`src/layouts/Admin.tsx`) — JSX does not
- * belong in config.
+ * must stay in sync with `ALL_MODULE_KEYS` below.
  */
 
 export type ModuleKey =
@@ -40,211 +38,37 @@ export interface AppModule {
   resources: string[];
 }
 
-export const APP_MODULES: AppModule[] = [
-  {
-    key: 'dashboard',
-    label: 'Dashboard',
-    to: '/admin/dashboard',
-    pathPrefixes: ['/admin/dashboard'],
-    resources: [],
-  },
-  {
-    key: 'emails',
-    label: 'Emails',
-    to: '/email-management',
-    pathPrefixes: [
-      '/email-management',
-      '/email-templates',
-      '/scheduled-email-tasks',
-    ],
-    resources: ['email-templates', 'scheduled-email-tasks'],
-  },
-  {
-    key: 'memberships',
-    label: 'Memberships',
-    to: '/membership-management',
-    pathPrefixes: [
-      '/membership-management',
-      '/watersystems',
-      '/associates',
-      '/memberships',
-      '/membership-items',
-      '/invoices',
-      '/financial-audits/dashboard',
-      // SoonerWARN's menu item is commented out in Admin.tsx; its dashboard
-      // route still exists, so memberships owns it until it becomes a module.
-      '/soonerwarn/dashboard',
-    ],
-    resources: [
-      'watersystems',
-      'associates',
-      'memberships',
-      'membership-items',
-      'invoices',
-    ],
-  },
-  {
-    key: 'contacts',
-    label: 'Contacts',
-    to: '/human-resources/dashboard',
-    pathPrefixes: [
-      '/human-resources',
-      '/contacts',
-      '/staff',
-      '/users',
-      '/activities',
-    ],
-    resources: [
-      'contacts',
-      'staff',
-      'users',
-      'activities',
-      'activity-relations',
-    ],
-  },
-  {
-    key: 'assets',
-    label: 'Asset Manager',
-    to: '/assets',
-    pathPrefixes: ['/assets'],
-    resources: [
-      'assets',
-      'shared.field-metas',
-      'components_shared_field_metas',
-    ],
-  },
-  {
-    key: 'media-library',
-    label: 'Media Library',
-    to: '/media-library',
-    pathPrefixes: ['/media-library', '/upload/files'],
-    resources: ['upload/files', 'upload'],
-  },
-  {
-    key: 'training',
-    label: 'Training Manager',
-    to: '/training/dashboard',
-    pathPrefixes: [
-      '/training/dashboard',
-      '/training-events',
-      '/training-event-logs',
-      '/training-settings',
-      '/training-event-registrations',
-      '/training-schedule-blocks',
-      '/training-instructors',
-      '/training-topics',
-      '/training-instructor-certifications',
-    ],
-    resources: [
-      'training-events',
-      'training-event-logs',
-      'training-event-registrations',
-      'training-schedule-blocks',
-      'training-instructors',
-      'training-topics',
-      'training-settings',
-      'training-instructor-certifications',
-    ],
-  },
-  {
-    key: 'conference',
-    label: 'Conference Manager',
-    to: '/conference/dashboard',
-    pathPrefixes: [
-      '/conference/dashboard',
-      '/conferences',
-      '/conference-attendees',
-      '/conference-extras',
-      '/conference-sponsorships',
-      '/conference-sponsors',
-      '/conference-tickets',
-      '/conference-booths',
-      '/conference-contestants',
-      '/conference-registrations',
-      '/conference-schedules',
-    ],
-    resources: [
-      'conferences',
-      'conference-attendees',
-      'conference-extras',
-      'conference-sponsorships',
-      'conference-sponsors',
-      'conference-tickets',
-      'conference-booths',
-      'conference-contestants',
-      'conference-registrations',
-      'conference-schedules',
-    ],
-  },
-  {
-    key: 'terms',
-    label: 'Terms Manager',
-    to: '/terms',
-    pathPrefixes: ['/terms'],
-    resources: ['terms'],
-  },
-  {
-    key: 'grants',
-    label: 'Grant Manager',
-    to: '/grant/dashboard',
-    pathPrefixes: [
-      '/grant/dashboard',
-      '/grants',
-      '/grant-application-finals',
-      '/grant-payouts',
-      '/grant-statuses',
-      '/grant-sub-statuses',
-    ],
-    resources: [
-      'grants',
-      'grant-application-finals',
-      'grant-payouts',
-      'grant-statuses',
-      'grant-sub-statuses',
-    ],
-  },
-  {
-    key: 'scholarships',
-    label: 'ORWEF Scholarships',
-    to: '/orwef-scholarships/dashboard',
-    pathPrefixes: ['/orwef-scholarships', '/scholarship-applications'],
-    resources: ['scholarship-applications'],
-  },
-  {
-    key: 'awards',
-    label: 'ORWA Awards',
-    to: '/orwa-awards/dashboard',
-    pathPrefixes: ['/orwa-awards', '/award-nominations', '/award-winners'],
-    resources: ['award-nominations', 'award-winners'],
-  },
-  {
-    key: 'rbac',
-    label: 'RBAC Manager',
-    to: '/rbac/dashboard',
-    pathPrefixes: ['/rbac'],
-    resources: [],
-  },
-  {
-    key: 'settings',
-    label: 'Settings',
-    to: '/admin/settings',
-    pathPrefixes: ['/admin/settings', '/event/settings'],
-    resources: [],
-  },
-  {
-    // Not in the Strapi MODULE_KEYS seed yet — grant it per role in RBAC
-    // Manager (or add it to apps/strapi/src/index.ts MODULE_KEYS).
-    key: 'corporate-sponsors',
-    label: 'Corporate Sponsors',
-    to: '/corporate-sponsors',
-    pathPrefixes: ['/corporate-sponsors'],
-    resources: ['corporate-sponsors'],
-  },
+/**
+ * Seed contract — every module key, in sidebar / RBAC-editor order. Mirrors
+ * `MODULE_KEYS` in `apps/strapi/src/index.ts` (which lacks
+ * `'corporate-sponsors'` until that seed is updated; grant it per role in RBAC
+ * Manager meanwhile).
+ */
+export const ALL_MODULE_KEYS: readonly ModuleKey[] = [
+  'dashboard',
+  'emails',
+  'memberships',
+  'contacts',
+  'assets',
+  'media-library',
+  'training',
+  'conference',
+  'terms',
+  'grants',
+  'scholarships',
+  'awards',
+  'rbac',
+  'settings',
+  'corporate-sponsors',
 ];
 
-export const ALL_MODULE_KEYS: ModuleKey[] = APP_MODULES.map(
-  (module) => module.key
-);
+/**
+ * Registry output. Filled (in `ALL_MODULE_KEYS` order) by
+ * `finalizeRegistry()` from every `ModuleManifest.permissions` — see
+ * `framework/modules.ts`. Never hand-edit: a module's label, primary route,
+ * owned path prefixes and resources live in its manifest.
+ */
+export const APP_MODULES: AppModule[] = [];
 
 /**
  * Primary route of the first `APP_MODULES` entry the user has access to —

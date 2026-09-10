@@ -48,9 +48,10 @@ export const emailsModule: ModuleManifest = {
   }],
 };
 ```
-Then add it to `MODULES` in `framework/modules.ts`. Its `<Resource>`s, route
-and menu entry replace the legacy blocks in `legacyWiring.tsx` /
-`layouts/Admin.tsx` automatically.
+Then add its key to `ModuleKey` / `ALL_MODULE_KEYS` (`config/modules.ts`, plus
+the Strapi `MODULE_KEYS` seed) and add it to `MODULES` in
+`framework/modules.ts`. Its `<Resource>`s, routes, RBAC table row and menu
+entry all come from the manifest — `App.tsx` / `Admin.tsx` need no edit.
 
 ### Panels
 

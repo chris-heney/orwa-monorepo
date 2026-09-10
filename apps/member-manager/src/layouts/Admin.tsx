@@ -11,19 +11,7 @@ import { CoreLayoutProps } from 'ra-core';
 import { ErrorBoundary } from 'react-error-boundary';
 import { styled, SxProps } from '@mui/material/styles';
 import { MultiLevelMenu, AppLocationContext } from '@react-admin/ra-navigation';
-import InventoryIcon from '@mui/icons-material/Inventory';
-import PermMediaIcon from '@mui/icons-material/PermMedia';
 import AdminAppBar from './components/AdminAppBar';
-import TrainingIcon from '@mui/icons-material/ModelTraining';
-import EventsIcon from '@mui/icons-material/CalendarMonth';
-import SettingsIcon from '@mui/icons-material/Settings';
-import RequestPageIcon from '@mui/icons-material/RequestPage';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import MembersIcon from '@mui/icons-material/Diversity1';
-import PeopleIcon from '@mui/icons-material/Groups';
-import BusinessIcon from '@mui/icons-material/Business';
-// import FavoriteIcon from '@mui/icons-material/Favorite';
 
 import { Navigate, useLocation } from 'react-router-dom';
 import {
@@ -36,21 +24,15 @@ import {
 } from 'react-admin';
 import ErrorRecoveryFallback from './components/ErrorRecoveryFallback';
 import { Box } from '@mui/material';
-import { Email, EmojiEvents, Gavel, School } from '@mui/icons-material';
 import useCurrentUser from '../modules/_helpers/useCurrentUser';
 import { useModuleAccess } from '../modules/rbac-manager/useModuleAccess';
-import {
-  APP_MODULES,
-  AppModule,
-  ModuleKey,
-  firstAllowedPath,
-} from '../config/modules';
+import { APP_MODULES, AppModule, firstAllowedPath } from '../config/modules';
 import { useActionLabels } from '../helpers/useActionLabels';
 import {
   DrawerInsetProvider,
   useDrawerInset,
 } from '../modules/_components/drawer/DrawerInsetContext';
-import { getModule, isRegisteredModule } from '../framework/registry';
+import { getModule } from '../framework/registry';
 import type { ModuleManifest } from '../framework/manifest';
 
 // Auth pages + the user's own profile are reachable regardless of module
@@ -184,180 +166,14 @@ const MyMenu = () => {
     return null;
   }
 
-  // Registered modules render from their manifest; the hand-written blocks
-  // below only survive for modules that have not migrated yet. Menu order is
-  // the APP_MODULES order either way.
-  const has = (key: ModuleKey) =>
-    modules.includes(key) && !isRegisteredModule(key);
-  const registry = (key: ModuleKey) => {
-    if (!modules.includes(key) || !isRegisteredModule(key)) return null;
-    const module = getModule(key);
-    return module ? <RegistryMenuItem key={key} module={module} /> : null;
-  };
-
+  // Every entry comes from a ModuleManifest; APP_MODULES (registry output,
+  // ordered by ALL_MODULE_KEYS) fixes the order.
   return (
     <MultiLevelMenu>
-      {registry('dashboard')}
-      {has('dashboard') && (
-        <MultiLevelMenu.Item
-          name="dashboard"
-          to="/admin/dashboard"
-          label="Dashboard"
-          icon={<DashboardIcon />}
-        />
-      )}
-      {registry('emails')}
-      {has('emails') && (
-        <MultiLevelMenu.Item
-          name="email-management"
-          to="/email-management"
-          label="Emails"
-          icon={<Email />}
-        />
-      )}
-      {registry('memberships')}
-      {has('memberships') && (
-        <MultiLevelMenu.Item
-          name="membership-management"
-          to="/membership-management"
-          label="Memberships"
-          icon={<MembersIcon />}
-        />
-      )}
-      {registry('contacts')}
-      {has('contacts') && (
-        <MultiLevelMenu.Item
-          name="human-resources-dashboard"
-          to="/human-resources/dashboard"
-          label="Contacts"
-          title="Contacts"
-          icon={<PeopleIcon />}
-        />
-      )}
-      {registry('assets')}
-      {has('assets') && (
-        <MultiLevelMenu.Item
-          name="assets"
-          to="/assets"
-          label="Asset Manager"
-          icon={<InventoryIcon />}
-        />
-      )}
-      {registry('media-library')}
-      {has('media-library') && (
-        <MultiLevelMenu.Item
-          name="media-library"
-          to="/media-library"
-          label="Media Library"
-          title="Media Library"
-          icon={<PermMediaIcon />}
-        />
-      )}
-      {registry('training')}
-      {has('training') && (
-        <MultiLevelMenu.Item
-          name="table"
-          label="Training Manager"
-          icon={<TrainingIcon />}
-        >
-          <MultiLevelMenu.Item
-            name="training-dashboard"
-            to="/training/dashboard"
-            label="Training Dashboard"
-          />
-          <MultiLevelMenu.Item
-            name="training-events"
-            to="/training-events"
-            label="Training Events"
-          />
-          <MultiLevelMenu.Item
-            name="training-event-logs"
-            to="/training-event-logs"
-            label="Training History"
-          />
-          <MultiLevelMenu.Item
-            name="training-settings"
-            to="/training-settings/1/edit"
-            label="Settings"
-          />
-        </MultiLevelMenu.Item>
-      )}
-      {registry('conference')}
-      {has('conference') && (
-        <MultiLevelMenu.Item
-          name="conference-dashboard"
-          to="/conference/dashboard"
-          label="Conference Manager"
-          title="Conference Manager"
-          icon={<EventsIcon />}
-        />
-      )}
-      {registry('terms')}
-      {has('terms') && (
-        <MultiLevelMenu.Item
-          name="terms"
-          to="/terms"
-          label="Terms Manager"
-          title="Terms Manager"
-          icon={<Gavel />}
-        />
-      )}
-      {registry('grants')}
-      {has('grants') && (
-        <MultiLevelMenu.Item
-          name="grant-dashboard"
-          to="/grant/dashboard"
-          label="Grant Manager"
-          title="Grant Manager"
-          icon={<RequestPageIcon />}
-        />
-      )}
-      {registry('scholarships')}
-      {has('scholarships') && (
-        <MultiLevelMenu.Item
-          name="orwef-scholarships"
-          to="/orwef-scholarships/dashboard"
-          label="ORWEF Scholarships"
-          title="ORWEF Scholarships"
-          icon={<School />}
-        />
-      )}
-      {registry('awards')}
-      {has('awards') && (
-        <MultiLevelMenu.Item
-          name="orwa-awards"
-          to="/orwa-awards/dashboard"
-          label="ORWA Awards"
-          title="ORWA Awards"
-          icon={<EmojiEvents />}
-        />
-      )}
-      {registry('rbac')}
-      {has('rbac') && (
-        <MultiLevelMenu.Item
-          name="rbac-dashboard"
-          to="/rbac/dashboard"
-          label="RBAC Manager"
-          title="RBAC Manager"
-          icon={<AdminPanelSettingsIcon />}
-        />
-      )}
-      {/* <MultiLevelMenu.Item
-        name="soonerwarn-dashboard"
-        to="/soonerwarn/dashboard"
-        label="SoonerWARN Manager"
-        title="SoonerWARN Manager"
-        icon={<FavoriteIcon />}
-      /> */}
-      {registry('settings')}
-      {has('settings') && (
-        <MultiLevelMenu.Item
-          name="settings"
-          to="/admin/settings"
-          label="Settings"
-          icon={<SettingsIcon />}
-        />
-      )}
+      {APP_MODULES.filter((m) => modules.includes(m.key)).map((m) => {
+        const module = getModule(m.key);
+        return module ? <RegistryMenuItem key={m.key} module={module} /> : null;
+      })}
     </MultiLevelMenu>
   );
 };

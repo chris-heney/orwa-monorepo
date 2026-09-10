@@ -12,9 +12,6 @@ export {
   customRoutes,
   noLayoutRoutes,
   appModules,
-  isRegisteredModule,
-  isRegisteredResource,
-  isRegisteredRoute,
   pageView,
 } from './registry';
 export type { Registry } from './registry';
