@@ -20,7 +20,7 @@ import {
 } from 'react-admin';
 import { useGetIdentity } from '../../helpers/useGetIdentity';
 import { useCan } from '../rbac-manager/useCan';
-import SaveFilterModal from './SaveFilter';
+import { useApplyListView, SavedListView } from './listView';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PublicIcon from '@mui/icons-material/Public';
@@ -31,13 +31,14 @@ import CloseIcon from '@mui/icons-material/Close';
 const SavedFilters = ({
   resource,
   savingQuery,
-  setSavingQuery,
 }: {
   resource: string;
+  /** Read-only here: the header owns the modal; this only triggers a refetch
+   *  when a save closes it. */
   savingQuery: boolean;
-  setSavingQuery: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   const { filterValues, setFilters } = useListFilterContext();
+  const applyView = useApplyListView();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const [editingFilter, setEditingFilter] = useState<string | null>(null);
@@ -114,11 +115,10 @@ const SavedFilters = ({
     // Update selected value based on whether we found a match
     if (matchingFilter) {
       setSelectedValue(matchingFilter.id);
-    } else if (
-      selectedValue !== '-1' &&
-      Object.keys(filterValues || {}).length > 0
-    ) {
-      // If no match found but we have a selected filter and active filters, deselect it
+    } else if (selectedValue !== '-1') {
+      // No match: deselect. This must fire on an *empty* filter set too —
+      // otherwise Reset leaves the dropdown naming a query that is no
+      // longer applied.
       setSelectedValue('-1');
     }
   }, [savedFilters, filterValues]);
@@ -127,17 +127,16 @@ const SavedFilters = ({
     return null;
   }
 
-  // 🔹 Apply a saved filter
+  // 🔹 Apply a saved filter — filters *and* the rest of the view (sort, page
+  // size, shown filter inputs, column selection/order).
   const applyFilter = (selectedFilter: FilterPayload) => {
     if (selectedFilter === undefined) {
-      setFilters([], {});
+      setFilters({}, {});
       return;
-    } else {
-      setFilters(selectedFilter.filters, {
-        ...filterValues,
-        ...selectedFilter,
-      });
     }
+    const view = selectedFilter.view as SavedListView | undefined;
+    setFilters(selectedFilter.filters ?? {}, view?.displayedFilters ?? {});
+    applyView(view);
   };
 
   // 🔹 Update filter name
@@ -356,13 +355,9 @@ const SavedFilters = ({
             </MenuItem>
           ))}
       </TextField>
-      {can('create', 'saved-query') && (
-        <SaveFilterModal
-          resource={resource}
-          savingQuery={savingQuery}
-          setSavingQuery={setSavingQuery}
-        />
-      )}
+      {/* The save-current-filter modal lives in the drawer header
+          (`SaveQueryHeaderAction`) — mounting it here would leave every list
+          whose body omits this picker with a heart that does nothing. */}
 
       {/* Delete Confirmation Dialog */}
       <Dialog

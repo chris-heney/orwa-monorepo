@@ -2,7 +2,6 @@ import BusinessIcon from '@mui/icons-material/Business';
 import type { ModuleManifest } from '../../framework/manifest';
 import { pageView } from '../../framework/registry';
 import { createAction, exportAction } from '../../framework/actions';
-import { SaveQueryHeaderAction } from '../_components/SavedFiltersSection';
 import CorporateSponsorsList from './CorporateSponsorsList';
 import CorporateSponsorCreate from './CorporateSponsorCreate';
 import CorporateSponsorEdit from './CorporateSponsorEdit';
@@ -48,7 +47,6 @@ export const corporateSponsorsModule: ModuleManifest = {
             ? exportCorporateSponsors(records, 'Corporate-Sponsors')
             : undefined,
         filterBody: CorporateSponsorsFilters,
-        filterHeaderActions: SaveQueryHeaderAction,
       },
       actions: [
         createAction('corporate-sponsors', { label: 'Add Corporate Sponsor' }),

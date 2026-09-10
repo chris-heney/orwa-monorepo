@@ -121,6 +121,13 @@ export interface ListManifest {
   meta?: Record<string, unknown>;
   /** RaStore key for list params/selection. Default `${pageId}.${tabKey}`. */
   storeKey?: string;
+  /**
+   * RaStore preference key holding the grid's visible columns — the
+   * `preferenceKey` the panel's Datagrid/AgDatagrid was mounted with.
+   * Default `${resource}.datagrid`. Saved queries capture and restore
+   * `preferences.<this>.columns` (see `_components/listView.ts`).
+   */
+  columnsPreferenceKey?: string;
   /** RA exporter with the page ctx + RA's extra args (fetchRelatedRecords, dataProvider, resource). */
   exporter?: (
     records: RaRecord[],

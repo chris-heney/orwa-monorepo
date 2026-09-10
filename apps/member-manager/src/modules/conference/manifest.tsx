@@ -24,7 +24,6 @@ import type {
   TabManifest,
 } from "../../framework/manifest";
 import { columnsAction, createAction } from "../../framework/actions";
-import { SaveQueryHeaderAction } from "../_components/SavedFiltersSection";
 import Conference from "./index";
 import Attendees from "./attendees";
 import Extras from "./extras";
@@ -73,7 +72,6 @@ const list = (
   sort: { field: "id", order: "ASC" },
   filter: (ctx) => conferenceScopeFilter(ctx.store, tabKey, resource),
   filterBody: ConferenceFilters,
-  filterHeaderActions: SaveQueryHeaderAction,
   ...extra,
 });
 

@@ -18,6 +18,9 @@
     "filters": {
       "type": "json"
     },
+    "view": {
+      "type": "json"
+    },
     "user": {
       "type": "relation",
       "relation": "manyToOne",
