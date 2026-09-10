@@ -2,6 +2,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   fetchRelatedField,
   fetchRelatedRecord,
+  isIdSource,
+  readExportCellValue,
+  readExportColumn,
+  readExportField,
   relationDisplayValue,
   resolveExportCell,
 } from "./fetchRelatedRecord";
@@ -116,5 +120,76 @@ describe("relationDisplayValue", () => {
     expect(relationDisplayValue("New Application")).toBe("New Application");
     expect(relationDisplayValue(12)).toBe("12");
     expect(relationDisplayValue(true)).toBe("Yes");
+  });
+});
+
+const DOC = "w7sc1t8z3pncyru4izhmp44a";
+
+describe("readExportField", () => {
+  it("exports the numeric entityId for an id column, never the documentId", () => {
+    expect(readExportField({ id: DOC, entityId: 42 }, "id")).toBe(42);
+  });
+
+  it("treats documentId and entityId sources the same way", () => {
+    expect(readExportField({ id: DOC, entityId: 42 }, "documentId")).toBe(42);
+    expect(readExportField({ id: DOC, entityId: 42 }, "entityId")).toBe(42);
+  });
+
+  it("exports an empty cell rather than a documentId when there is no PK", () => {
+    expect(readExportField({ id: DOC }, "id")).toBe("");
+  });
+
+  it("passes a legacy numeric id straight through", () => {
+    expect(readExportField({ id: 7 }, "id")).toBe(7);
+  });
+
+  it("leaves non-id columns untouched", () => {
+    expect(readExportField({ id: DOC, name: "Tulsa" }, "name")).toBe("Tulsa");
+  });
+
+  it("is safe on missing records and sources", () => {
+    expect(readExportField(null, "id")).toBeUndefined();
+    expect(readExportField({ id: DOC }, undefined)).toBeUndefined();
+  });
+});
+
+describe("isIdSource", () => {
+  it("flags only the identity columns", () => {
+    expect(isIdSource("id")).toBe(true);
+    expect(isIdSource("documentId")).toBe(true);
+    expect(isIdSource("entityId")).toBe(true);
+    expect(isIdSource("name")).toBe(false);
+    expect(isIdSource(undefined)).toBe(false);
+  });
+});
+
+describe("readExportColumn", () => {
+  it("resolves an ID column to the numeric PK", () => {
+    expect(
+      readExportColumn({ id: DOC, entityId: 42 }, { source: "id", label: "ID" })
+    ).toBe(42);
+  });
+
+  it("falls back to the lowercased label when the column has no source", () => {
+    expect(
+      readExportColumn({ id: DOC, entityId: 42 }, { label: "ID" })
+    ).toBe(42);
+    expect(
+      readExportColumn({ organization: "ORWA" }, { label: "Organization" })
+    ).toBe("ORWA");
+  });
+});
+
+describe("readExportCellValue", () => {
+  it("prefers the source and still resolves id columns numerically", () => {
+    expect(
+      readExportCellValue({ id: DOC, entityId: 42 }, "id", "ID")
+    ).toBe(42);
+  });
+
+  it("falls back to the label when the source misses", () => {
+    expect(
+      readExportCellValue({ team: "Blue" }, "conference_team", "Team")
+    ).toBe("Blue");
   });
 });

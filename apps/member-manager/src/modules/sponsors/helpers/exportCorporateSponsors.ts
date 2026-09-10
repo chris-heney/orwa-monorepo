@@ -1,4 +1,5 @@
 import { RaRecord } from "react-admin";
+import { getDisplayEntityId } from "../../../helpers/strapiIds";
 import jsonExport from "jsonexport/dist";
 import { saveAs } from "file-saver";
 import uploadService from "../../../services/uploadService/uploadService";
@@ -24,7 +25,7 @@ const exportCorporateSponsors = async (
       }
       
       return {
-        "ID": record.id,
+        "ID": getDisplayEntityId(record) ?? "",
         "Company Name": record.name,
         "Active": record.active ? "Yes" : "No",
         "Logo": logoUrl,

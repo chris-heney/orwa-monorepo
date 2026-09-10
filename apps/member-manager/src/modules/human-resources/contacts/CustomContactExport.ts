@@ -7,6 +7,7 @@ import {
 } from 'react-admin';
 import {
   exportRelationResource,
+  readExportColumn,
   resolveExportCell,
 } from '../../../helpers/fetchRelatedRecord';
 
@@ -52,7 +53,7 @@ const CustomContactExport = async (
     for (const column of columns) {
       if (column.label && column.label.trim() !== '') {
         filteredRecord[column.label] = await resolveExportCell(
-          record[column.source as keyof typeof record],
+          readExportColumn(record, column),
           {
             dataProvider,
             resource: exportRelationResource(column.source, column.label),

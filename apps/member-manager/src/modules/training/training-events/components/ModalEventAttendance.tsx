@@ -1,7 +1,19 @@
 import { Box, Button, Fade, Typography } from '@mui/material'
+import jsonExport from 'jsonexport/dist'
 import React from 'react'
-import { Identifier, List, RaRecord, ReferenceField, SimpleList,TextField } from 'react-admin'
-import CustomHeader from '../../../_components/CustomHeader' 
+import {
+  downloadCSV,
+  Identifier,
+  List,
+  RaRecord,
+  ReferenceField,
+  SimpleList,
+  TextField,
+  useDataProvider,
+} from 'react-admin'
+import CustomHeader from '../../../_components/CustomHeader'
+import { fetchRelatedRecord } from '../../../../helpers/fetchRelatedRecord'
+import { getDisplayEntityId } from '../../../../helpers/strapiIds' 
 
 interface SelectedInfo {
     block?: Identifier | Identifier[];
@@ -16,6 +28,30 @@ interface EventAttendanceProps {
     record: RaRecord
   }
 const ModalEventAttendance = ({ record, openModal, setOpenModal, modalTitle, selectedInfo, formatDateTime}: EventAttendanceProps) => {
+  const dataProvider = useDataProvider()
+
+  /**
+   * Export what the list shows (attendee, date, hours) instead of react-admin's
+   * default exporter, which dumps every raw field — including the Strapi 5
+   * documentId on `id`. The ID column exports the numeric PK.
+   */
+  const exporter = async (logs: RaRecord[]) => {
+    const rows = await Promise.all(
+      logs.map(async (log) => {
+        const contact = await fetchRelatedRecord(dataProvider, 'contacts', log.contact)
+        return {
+          ID: getDisplayEntityId(log) ?? '',
+          Attendee: `${contact.first ?? ''} ${contact.last ?? ''}`.trim(),
+          Date: formatDateTime(log),
+          Hours: log.hours ?? '',
+        }
+      })
+    )
+    return jsonExport(rows, (err: Error, csv: string) =>
+      downloadCSV(csv, `${modalTitle || 'Attendance'}`)
+    )
+  }
+
   return (
     <Fade in={openModal}>
       <Box
@@ -42,6 +78,7 @@ const ModalEventAttendance = ({ record, openModal, setOpenModal, modalTitle, sel
             <List
               title={' '}
               hasCreate={false}
+              exporter={exporter}
               filter={(() => {
                 const filter: { event?: Identifier, session?: Identifier | Identifier[], block?: Identifier | Identifier[] } = {}
                 if (selectedInfo.session && selectedInfo.block) {

@@ -1,7 +1,7 @@
 import jsonExport from 'jsonexport/dist'
 import { downloadCSV, ConfigurableDatagridColumn, DataProvider, RaRecord } from 'react-admin'
 import { formatNumber } from '../../../helpers/Formators'
-import { fetchRelatedRecord, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
+import { fetchRelatedRecord, readExportColumn, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
 // import { balance } from '../../payouts/components/BalanceField'
 // import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
 
@@ -29,7 +29,7 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
     for (const column of columns) {
 
       if (column.label && column.label.trim() !== '') {
-        let value = registration[column.source as keyof typeof registration]
+        let value: unknown = readExportColumn(registration, column)
 
         if (column.label === 'Registrant') {
           value = `${registrant.first ?? ''} ${registrant.last ?? ''}`.trim()
@@ -61,9 +61,7 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
             .join(', ')
         }
         else {
-          value = relationDisplayValue(
-            registration[column.source as keyof typeof registration]
-          )
+          value = relationDisplayValue(readExportColumn(registration, column))
         }
 
         // Assign the value to the corresponding label in the filtered record

@@ -1,6 +1,6 @@
 import jsonExport from 'jsonexport/dist'
 import { downloadCSV, ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
-import { fetchRelatedRecord, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
+import { fetchRelatedRecord, readExportColumn, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
 
 const exportContestants = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
 
@@ -21,11 +21,7 @@ const exportContestants = async (RecordList: RaRecord[], availableColumns: Confi
       // Check if the column has a label and it's not empty
       if (column.label && column.label.trim() !== '') {
 
-        let value = relationDisplayValue(
-          typeof column.source !== 'undefined'
-            ? record[column.source as keyof typeof record]
-            : record[column.label.toLowerCase() as keyof typeof record]
-        )
+        let value = relationDisplayValue(readExportColumn(record, column))
 
         if (column.label === 'Team' && team.name) {       
           value = team.name

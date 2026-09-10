@@ -7,11 +7,48 @@ import {
 } from "react-admin";
 import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { IWatersystem } from "../watersystem/WatersystemInterface";
-import { directoryContactFieldFromSource } from "../watersystem/directoryContacts";
+import {
+  DirectoryContactShape,
+  sortDirectoryContactsByTitle,
+} from "../watersystem/directoryContacts";
+import {
+  fetchDirectoryOptOutEmails,
+  getPublishableDirectoryContacts,
+} from "./directoryOptOut";
 import {
   exportRelationResource,
+  readExportField,
   resolveExportCell,
 } from "../../../helpers/fetchRelatedRecord";
+
+/** Directory contact slots printed per system in the Naylor file. */
+export const NAYLOR_CONTACT_SLOTS = 3;
+
+/**
+ * Per-contact columns in the Naylor file, in print order. The system row
+ * already carries a mailing address, so the per-contact one is left out.
+ */
+export const NAYLOR_CONTACT_FIELDS: Array<{
+  label: string;
+  field: keyof DirectoryContactShape;
+}> = [
+  { label: "Title", field: "title" },
+  { label: "First Name", field: "first" },
+  { label: "Last Name", field: "last" },
+  { label: "Email", field: "email" },
+  { label: "Phone", field: "phone" },
+];
+
+/** `Contact 1: Title` … column labels, in the order they are printed. */
+export const naylorContactColumnLabels = (): string[] => {
+  const labels: string[] = [];
+  for (let slot = 1; slot <= NAYLOR_CONTACT_SLOTS; slot += 1) {
+    for (const { label } of NAYLOR_CONTACT_FIELDS) {
+      labels.push(`Contact ${slot}: ${label}`);
+    }
+  }
+  return labels;
+};
 
 export const NaylorExportWaterSystem = async (
   RecordList: IWatersystem[],
@@ -37,6 +74,13 @@ export const NaylorExportWaterSystem = async (
     "Office Email": "Email",
   };
 
+  // Fetched once for the whole export. A failure here rejects on purpose:
+  // MembershipExportAction catches it and notifies "Export failed". Falling
+  // back to the inline flag alone would publish people who opted out.
+  const optOutEmails = dataProvider
+    ? await fetchDirectoryOptOutEmails(dataProvider)
+    : new Set<string>();
+
   const data = await Promise.all(
     RecordList.map(async (watersytem) => {
     const filteredRecord: Record<string, string> = {};
@@ -52,12 +96,10 @@ export const NaylorExportWaterSystem = async (
     for (const column of columns) {
       if (column.label && column.label.trim() !== "") {
         const sourceKey = String(column.source ?? "");
-        let value: unknown = sourceKey.startsWith("dir_contact_")
-          ? directoryContactFieldFromSource(
-              watersytem as unknown as RaRecord,
-              sourceKey
-            )
-          : watersytem[column.source as keyof typeof watersytem];
+        // Directory contacts are written as a fixed block below, from the
+        // opt-out-filtered list — not from the user's column selection.
+        if (sourceKey.startsWith("dir_contact_")) continue;
+        let value: unknown = readExportField(watersytem, column.source);
 
         if (column.label === "Name") {
           value = isMembershipActiveByExpiration(
@@ -81,6 +123,27 @@ export const NaylorExportWaterSystem = async (
         filteredRecord[newLabel] = value as string;
       }
     }
+
+    // Directory contacts: publishable only, ordered by title for print
+    // (Chairman → Vice-Chairman → Director → Manager → Operator → Bookkeeper →
+    // anything else), then re-indexed so slot 1 is the first contact who has
+    // not opted out. Written regardless of column selection so the Naylor file
+    // always carries the same contact block.
+    const publishable = sortDirectoryContactsByTitle(
+      getPublishableDirectoryContacts(
+        watersytem as unknown as RaRecord,
+        optOutEmails
+      )
+    );
+    for (let slot = 1; slot <= NAYLOR_CONTACT_SLOTS; slot += 1) {
+      const contact = publishable[slot - 1];
+      for (const { label, field } of NAYLOR_CONTACT_FIELDS) {
+        const raw = contact?.[field];
+        filteredRecord[`Contact ${slot}: ${label}`] =
+          raw == null ? "" : String(raw);
+      }
+    }
+
     return filteredRecord;
   })
   );
@@ -144,6 +207,7 @@ export const NaylorExportWaterSystem = async (
     "Email",
     "Phone",
     "Fax",
+    ...naylorContactColumnLabels(),
   ];
 
   const orderedData = sortedData.map((record) => {

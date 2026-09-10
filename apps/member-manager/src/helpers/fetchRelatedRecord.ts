@@ -1,5 +1,5 @@
 import { DataProvider, RaRecord } from "react-admin";
-import { isDocumentId } from "./strapiIds";
+import { getDisplayEntityId, isDocumentId } from "./strapiIds";
 
 /**
  * Resolve a Strapi relation that may be a numeric id, documentId string,
@@ -54,6 +54,70 @@ export const fetchRelatedRecord = async (
 
   return {} as RaRecord;
 };
+
+
+/**
+ * Column sources that identify a record rather than describe it.
+ * The data provider remaps the Strapi 5 `documentId` onto `record.id` and
+ * keeps the numeric PK as `entityId`, so a raw `record[source]` read on any
+ * of these writes a documentId into the CSV.
+ */
+const ID_SOURCES = new Set(["id", "documentId", "entityId"]);
+
+export const isIdSource = (source: string | undefined): boolean =>
+  typeof source === "string" && ID_SOURCES.has(source);
+
+/**
+ * Read a datagrid column off a record for export.
+ *
+ * Mirrors what the screen shows: `ensureEntityIdColumn` remaps every
+ * display `source="id"` column to `EntityIdField` (the numeric `entityId`),
+ * so the CSV must resolve id columns the same way instead of emitting the
+ * documentId. Never falls back to the documentId — a record with no numeric
+ * PK exports an empty cell.
+ */
+export function readExportField(record: unknown, source: string | undefined): unknown {
+  if (!record || typeof record !== "object" || !source) return undefined;
+  if (isIdSource(source)) {
+    const entityId = getDisplayEntityId(
+      record as { id?: unknown; entityId?: unknown }
+    );
+    return entityId != null ? entityId : "";
+  }
+  return (record as Record<string, unknown>)[source];
+}
+
+/**
+ * Read a configurable-datagrid column off a record for export, using the
+ * column's `source` and falling back to its lowercased `label` (the legacy
+ * exporter convention) when the column carries no source.
+ */
+export function readExportColumn(
+  record: unknown,
+  column: { source?: string; label?: string }
+): unknown {
+  const source =
+    typeof column.source !== "undefined"
+      ? column.source
+      : column.label?.trim().toLowerCase();
+  return readExportField(record, source);
+}
+
+/**
+ * `readExportField` for exporters that also probe `column.label` as a
+ * fallback source (the legacy `record[label.toLowerCase()]` pattern).
+ */
+export function readExportCellValue(
+  record: unknown,
+  source: string | undefined,
+  label?: string
+): unknown {
+  const bySource = readExportField(record, source);
+  if (bySource !== undefined && bySource !== null) return bySource;
+  const fallback = label?.trim().toLowerCase();
+  if (!fallback) return bySource;
+  return readExportField(record, fallback);
+}
 
 /**
  * Human-readable CSV cell for a relation or scalar.
