@@ -14,7 +14,6 @@ import {
   formatDate,
   getRollingOneYearAgoForFilters,
 } from "../../helpers/activeOrInactiveMembership";
-import { DateRangeIcon } from "@mui/x-date-pickers";
 import { SavedFiltersSection } from "../../../_components/SavedFiltersSection";
 import DateRangeFilter from "../../watersystem/components/DateRangeFilter";
 
@@ -63,16 +62,16 @@ const AssociateListFilterSidebar = () => {
         <SavedFiltersSection />
         <FilterLiveSearch />
 
-        <FilterList label="Date" icon={<DateRangeIcon />}>
-          <DateRangeFilter
-            fields={[
-              "payment_last_date",
-              "application_date",
-              "payment_previous_date",
-              "directory_sent_date",
-            ]}
-          />
-        </FilterList>
+        {/* Renders its own section header: the toggle beside the label both
+            shows the fields and applies/removes the range. */}
+        <DateRangeFilter
+          fields={[
+            "payment_last_date",
+            "application_date",
+            "payment_previous_date",
+            "directory_sent_date",
+          ]}
+        />
 
         {/* Align with list: active ≈ last payment within the past year + not null. */}
         <FilterList label="Member Status" icon={<BadgeIcon />}>

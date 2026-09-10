@@ -17,6 +17,7 @@ import { ValidationHighlight } from "../helpers/validationHighlight";
 const TITLE_OPTIONS: { value: WatersystemDirectoryTitle; label: string }[] = [
   { value: "Chairman", label: "Chairman" },
   { value: "Vice-Chairman", label: "Vice-Chairman" },
+  { value: "Director", label: "Director" },
   { value: "Manager", label: "Manager" },
   { value: "Operator", label: "Operator" },
   { value: "Bookkeeper", label: "Bookkeeper" },

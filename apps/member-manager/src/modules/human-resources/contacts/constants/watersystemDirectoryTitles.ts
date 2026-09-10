@@ -3,6 +3,7 @@ export const WATERSYSTEM_DIRECTORY_TITLE_CHOICES = [
   { id: "", name: "Select" },
   { id: "Chairman", name: "Chairman" },
   { id: "Vice-Chairman", name: "Vice-Chairman" },
+  { id: "Director", name: "Director" },
   { id: "Manager", name: "Manager" },
   { id: "Operator", name: "Operator" },
   { id: "Bookkeeper", name: "Bookkeeper" },

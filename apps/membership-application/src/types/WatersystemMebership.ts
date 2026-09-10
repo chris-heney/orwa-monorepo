@@ -82,6 +82,7 @@ export type county =
 export type WatersystemDirectoryTitle =
   | "Chairman"
   | "Vice-Chairman"
+  | "Director"
   | "Manager"
   | "Operator"
   | "Bookkeeper";

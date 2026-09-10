@@ -17,9 +17,9 @@ import {
   getRollingOneYearAgoForFilters,
 } from "../../helpers/activeOrInactiveMembership";
 import DateRangeFilter from "./DateRangeFilter";
-import { DateRangeIcon } from "@mui/x-date-pickers";
 import { SavedFiltersSection } from "../../../_components/SavedFiltersSection";
 import { isSelected, toggleFilter } from "../../../conference/helpers/selectFilters";
+import ContactTitleFilter from "./ContactTitleFilter";
 
 /** Filters drawer body for the Water Systems tab (renders inside the tab's ListScope). */
 const WaterSystemFilter = () => {
@@ -36,16 +36,16 @@ const WaterSystemFilter = () => {
     <Box sx={{ p: 2 }}>
         <SavedFiltersSection />
         <FilterLiveSearch />
-        <FilterList label="Date" icon={<DateRangeIcon />}>
-          <DateRangeFilter
-            fields={[
-              "payment_last_date",
-              "application_date",
-              "directory_sent_date",
-              "payment_previous_date",
-            ]}
-          />
-        </FilterList>
+        {/* Renders its own section header: the toggle beside the label both
+            shows the fields and applies/removes the range. */}
+        <DateRangeFilter
+          fields={[
+            "payment_last_date",
+            "application_date",
+            "directory_sent_date",
+            "payment_previous_date",
+          ]}
+        />
         {/* Align with list: active ≈ last payment within the past year + not null (simple model; overlap edge cases may still differ). */}
         <FilterList label="Member Status" icon={<BadgeIcon />}>
           <FilterListItem
@@ -98,6 +98,7 @@ const WaterSystemFilter = () => {
           <FilterListItem label="Yes" value={{ workmans_comp: true }} />
           <FilterListItem label="No" value={{ workmans_comp: false }} />
         </FilterList>
+        <ContactTitleFilter />
         <FilterList label="Region" icon={<RegionIcon />}>
           <FilterListItem
             label="Region 1"

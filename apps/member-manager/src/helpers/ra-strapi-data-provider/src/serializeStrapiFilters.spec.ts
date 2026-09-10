@@ -23,6 +23,38 @@ describe("isDocumentId", () => {
   });
 });
 
+describe("relation filters", () => {
+  // Water Systems "Contact Title" filter: Strapi's oneToMany relation filter is
+  // existential, so this keeps systems where ANY contact holds ANY of the
+  // selected titles. A dropped nested `$in` returns every row instead of none,
+  // so assert the emitted path rather than trusting the recursion.
+  it("looks through a oneToMany relation for an $in on a text field", () => {
+    const out: string[] = [];
+    appendFilterQuery(out, "contacts", {
+      title: { $in: ["Manager", "Vice-Chairman"] },
+    });
+
+    expect(out).toEqual([
+      "filters[contacts][title][$in][]=Manager",
+      "filters[contacts][title][$in][]=Vice-Chairman",
+    ]);
+  });
+
+  it("keeps the relation filter alongside the list's other filters", () => {
+    const qs = convertRaParamsToStrapiParams({
+      filter: {
+        region: "Region 1",
+        contacts: { title: { $in: ["Operator"] } },
+      },
+      pagination: { page: 1, perPage: 25 },
+    });
+
+    expect(qs).toContain("filters[region]=Region%201");
+    expect(qs).toContain("filters[contacts][title][$in][]=Operator");
+    expect(qs).not.toContain("object Object");
+  });
+});
+
 describe("documentIdFilterPath", () => {
   it("rewrites id → documentId", () => {
     expect(documentIdFilterPath("filters", "id")).toBe("filters[documentId]");
