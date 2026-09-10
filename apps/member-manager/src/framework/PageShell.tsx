@@ -302,13 +302,18 @@ const PageShellInner = ({ page, module }: ShellProps & { module: ModuleManifest 
   const showSearch = Boolean(page.titleBar.search) && hasList;
   const SubBar = page.titleBar.subBar;
 
+  // `width: 0` + `minWidth: '100%'`: the panel takes exactly the content
+  // column's width and never widens it — a nowrap Datagrid with many columns
+  // scrolls inside the panel instead of pushing the bar's actions (and Back)
+  // under the right drawer / off-screen (hit on Conference › Booths).
   const panels = (
     <Box
       sx={{
         p: 0,
         m: 0,
-        width: '100%',
-        minWidth: 0,
+        width: 0,
+        minWidth: '100%',
+        overflowX: 'auto',
         bgcolor: 'background.paper',
       }}
     >
