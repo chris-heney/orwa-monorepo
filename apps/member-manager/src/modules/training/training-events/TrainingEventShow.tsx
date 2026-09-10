@@ -1,24 +1,17 @@
 import React from 'react'
-import { Show } from 'react-admin'
 import Event from './components/Event'
-import EventPipelineHeader from '../_components/EventPipelineHeader'
+import { EventPipelineStepper } from '../_components/EventPipeline'
 
+/**
+ * Body of the `training.eventShow` page. The framework wraps it in `ShowBase`
+ * and renders the pipeline heading bar (title, next step, Edit, ⋮, Back);
+ * the stage stepper sits first so it lands flush under that bar.
+ */
 const TrainingEventShow = () => (
-  <Show
-    title="Training Events"
-    // Edit / Show live in the pipeline heading bar; RA's default action
-    // toolbar would add a gutter above it.
-    actions={false}
-    sx={{
-      '& .RaShow-card': {
-        bgcolor: 'background.paper',
-        color: 'text.primary',
-      },
-    }}
-  >
-    <EventPipelineHeader context="show" />
+  <>
+    <EventPipelineStepper />
     <Event context="show" />
-  </Show>
+  </>
 )
 
 export default TrainingEventShow

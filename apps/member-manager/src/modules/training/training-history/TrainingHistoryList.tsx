@@ -1,28 +1,19 @@
 import { Box, Theme, useMediaQuery } from '@mui/material';
 import {
-  List,
+  ListView,
   TextField,
   SimpleList,
-  ConfigurableDatagridColumn,
-  useStore,
   ReferenceField,
   Pagination,
   RaRecord,
   DateField,
   FunctionField,
-  Title,
-  useDataProvider,
 } from 'react-admin';
-import { DatagridConfigurable } from "@orwa/entity-id";
+import { DatagridConfigurable } from '@orwa/entity-id';
 import React from 'react';
-import CustomExportFunction from '../../../helpers/custom-export-function';
-import PageHeadingBar from '../../_components/PageHeadingBar';
-import {
-  ColumnsAction,
-  CreateAction,
-  ExportAction,
-} from '../../_components/heading/HeadingActions';
 import { YearMonthDayMinute } from '../../../helpers/Data';
+
+export const TRAINING_HISTORY_PREFERENCE_KEY = 'training-event-logs.datagrid';
 
 const datagridSx = (theme: Theme) => ({
   '& .RaDatagrid-thead': { whiteSpace: 'nowrap' },
@@ -42,136 +33,96 @@ const datagridSx = (theme: Theme) => ({
 const creditHours = (record: RaRecord) =>
   record.hours ?? (record.type === 'Block' ? 4 : 1);
 
+/** Body of the `training.history` page — renders inside the page's ListScope. */
 const TrainingHistoryList = () => {
-  const preferenceKey = 'training-event-logs.datagrid';
-  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
-    `preferences.${preferenceKey}.availableColumns`,
-    []
-  );
-  const [columnIds] = useStore<string[]>(
-    `preferences.${preferenceKey}.columns`,
-    []
-  );
-  const dataProvider = useDataProvider();
-  const exporter = (records: RaRecord[]) => {
-    CustomExportFunction(
-      records,
-      availableColumns,
-      columnIds,
-      'Training History',
-      dataProvider
-    );
-  };
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   return (
-    <Box
+    <ListView
+      title=" "
+      actions={false}
+      pagination={
+        <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
+          <Pagination
+            rowsPerPageOptions={[10, 25, 50, 100]}
+            sx={{ flexDirection: 'row-reverse' }}
+          />
+        </Box>
+      }
       sx={{
-        width: 1,
-        minWidth: 0,
-        boxSizing: 'border-box',
+        '& .RaList-main': { marginTop: 0 },
+        '& .RaList-content': { boxShadow: 'none' },
       }}
     >
-      <Title title="Training History" />
-      <List
-        exporter={exporter}
-        title=" "
-        actions={false}
-        sort={{ field: 'createdAt', order: 'DESC' }}
-        pagination={
-          <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
-            <Pagination
-              rowsPerPageOptions={[10, 25, 50, 100]}
-              sx={{ flexDirection: 'row-reverse' }}
-            />
-          </Box>
-        }
-        sx={{
-          '& .RaList-main': { marginTop: 0 },
-          '& .RaList-content': { boxShadow: 'none' },
-        }}
-      >
-        <PageHeadingBar
-          title="Training History"
-          info="Attendance and credit-hour records from event check-ins."
-          actions={
-            <>
-              <CreateAction label="New Record" />
-              {!isSmall && <ColumnsAction />}
-              <ExportAction />
-            </>
-          }
-        />
-        {isSmall ? (
-          <SimpleList
-            linkType="show"
-            primaryText={
-              <ReferenceField
-                source="contact"
-                label="Name"
-                reference="contacts"
-                link={false}
-              >
-                <TextField source="first" /> <TextField source="last" />
-              </ReferenceField>
-            }
-            secondaryText={(record) =>
-              `${record.type} · ${creditHours(record)} hrs`
-            }
-            tertiaryText={(record) =>
-              new Date(record.createdAt).toLocaleDateString(
-                'en-US',
-                YearMonthDayMinute
-              )
-            }
-          />
-        ) : (
-          <DatagridConfigurable
-            bulkActionButtons={false}
-            rowClick="show"
-            sx={datagridSx}
-          >
+      {isSmall ? (
+        <SimpleList
+          linkType="show"
+          primaryText={
             <ReferenceField
               source="contact"
               label="Name"
               reference="contacts"
-              link="show"
-            >
-              <>
-                <TextField source="first" /> <TextField source="last" />
-              </>
-            </ReferenceField>
-            <ReferenceField
-              source="event"
-              label="Event"
-              reference="training-events"
-              link="show"
-            >
-              <TextField source="training_type" />
-            </ReferenceField>
-            <DateField source="createdAt" label="Checked In" showTime noWrap />
-            <TextField source="type" label="Type" noWrap />
-            <ReferenceField
-              source="block"
-              label="Block"
-              reference="training-schedule-blocks"
               link={false}
             >
-              <TextField source="id" />
+              <TextField source="first" /> <TextField source="last" />
             </ReferenceField>
-            <ReferenceField
-              source="session"
-              label="Session"
-              reference="training-sessions"
-              link={false}
-            >
-              <TextField source="id" />
-            </ReferenceField>
-            <FunctionField render={creditHours} label="Hours" />
-          </DatagridConfigurable>
-        )}
-      </List>
-    </Box>
+          }
+          secondaryText={(record) =>
+            `${record.type} · ${creditHours(record)} hrs`
+          }
+          tertiaryText={(record) =>
+            new Date(record.createdAt).toLocaleDateString(
+              'en-US',
+              YearMonthDayMinute
+            )
+          }
+        />
+      ) : (
+        <DatagridConfigurable
+          bulkActionButtons={false}
+          rowClick="show"
+          sx={datagridSx}
+        >
+          <ReferenceField
+            source="contact"
+            label="Name"
+            reference="contacts"
+            link="show"
+          >
+            <>
+              <TextField source="first" /> <TextField source="last" />
+            </>
+          </ReferenceField>
+          <ReferenceField
+            source="event"
+            label="Event"
+            reference="training-events"
+            link="show"
+          >
+            <TextField source="training_type" />
+          </ReferenceField>
+          <DateField source="createdAt" label="Checked In" showTime noWrap />
+          <TextField source="type" label="Type" noWrap />
+          <ReferenceField
+            source="block"
+            label="Block"
+            reference="training-schedule-blocks"
+            link={false}
+          >
+            <TextField source="id" />
+          </ReferenceField>
+          <ReferenceField
+            source="session"
+            label="Session"
+            reference="training-sessions"
+            link={false}
+          >
+            <TextField source="id" />
+          </ReferenceField>
+          <FunctionField render={creditHours} label="Hours" />
+        </DatagridConfigurable>
+      )}
+    </ListView>
   );
 };
 

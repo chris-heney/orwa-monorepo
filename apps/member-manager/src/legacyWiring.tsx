@@ -1,16 +1,9 @@
 import React, { ReactElement } from 'react';
 import type { ModuleKey } from './config/modules';
 import {
-  TrainingEvent,
-  TrainingHistory,
   Contacts,
-  Topics,
   ActivityFeed,
-  TrainingSettings,
   Conference,
-  Instructors,
-  EventRegistration,
-  TrainingInstructorCertification,
   Staff,
   Users,
   Sponsors,
@@ -25,7 +18,6 @@ import {
 } from './modules';
 import {
   HumanResources,
-  TrainingDashboard,
   FinancialAuditDashboard,
   SoonerwarnManagement,
   Conferences,
@@ -62,18 +54,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   { name: 'staff', def: Staff },
   { name: 'contacts', def: Contacts },
   { name: 'users', def: Users },
-  // TRAINING
-  { name: 'training-events', def: TrainingEvent },
-  { name: 'training-event-logs', def: TrainingHistory },
-  { name: 'training-event-registrations', def: EventRegistration },
-  { name: 'training-schedule-blocks' },
-  { name: 'training-instructors', def: Instructors },
-  { name: 'training-topics', def: Topics },
-  { name: 'training-settings', def: TrainingSettings },
-  {
-    name: 'training-instructor-certifications',
-    def: TrainingInstructorCertification,
-  },
   // CONFERENCE
   { name: 'conference-attendees', def: Attendees },
   { name: 'conference-extras', def: Extras },
@@ -110,7 +90,6 @@ export interface LegacyRoute {
 const LEGACY_ROUTES: LegacyRoute[] = [
   { path: 'admin/settings', element: <SettingsDashboard />, module: 'settings' },
   { path: 'event/settings', element: <EventSettings />, module: 'settings' },
-  { path: 'training/dashboard', element: <TrainingDashboard />, module: 'training' },
   { path: 'conference/dashboard', element: <Conferences />, module: 'conference' },
   {
     path: 'human-resources/dashboard',

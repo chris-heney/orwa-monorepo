@@ -1,12 +1,7 @@
-import TrainingClassCreate from './TrainingEventCreate'
-import TrainingClassEdit from './TrainingEventEdit'
-import TrainingEventList from './TrainingEventList'
-import TrainingEventShow from './TrainingEventShow'
-
+/**
+ * `training-events` resource props. The routed views (list / create / edit /
+ * show) are framework pages — see `../manifest.tsx`.
+ */
 export default {
-  list: TrainingEventList,
-  create: TrainingClassCreate,
-  edit: TrainingClassEdit,
-  show: TrainingEventShow,
   recordRepresentation: 'training_type',
 }

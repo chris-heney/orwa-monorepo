@@ -1,24 +1,16 @@
 import React from 'react'
-import { Edit } from 'react-admin'
 import Event from './components/Event'
-import EventPipelineHeader from '../_components/EventPipelineHeader'
+import { EventPipelineStepper } from '../_components/EventPipeline'
 
+/**
+ * Body of the `training.eventEdit` page. The framework wraps it in `EditBase`
+ * and renders the pipeline heading bar (title, next step, Show, ⋮, Back).
+ */
 const TrainingEventEdit = () => (
-  <Edit
-    title="Training Events"
-    // Edit / Show live in the pipeline heading bar; RA's default action
-    // toolbar would add a gutter above it.
-    actions={false}
-    sx={{
-      '& .RaEdit-card': {
-        bgcolor: 'background.paper',
-        color: 'text.primary',
-      },
-    }}
-  >
-    <EventPipelineHeader context="edit" />
+  <>
+    <EventPipelineStepper />
     <Event context="edit" />
-  </Edit>
+  </>
 )
 
 export default TrainingEventEdit

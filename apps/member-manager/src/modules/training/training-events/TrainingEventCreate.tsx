@@ -1,14 +1,15 @@
 import React from 'react'
-import { Create } from 'react-admin'
+import { CreateBase } from 'react-admin'
 import Event from './components/Event'
-import EventPipelineHeader from '../_components/EventPipelineHeader'
-import { formResourceShellSx } from '../../../css/formLayout'
 
+/**
+ * Body of the `training.eventCreate` page (heading bar = framework TitleBar
+ * with Back far right). `CreateBase` supplies the save context for the form.
+ */
 const TrainingEventCreate = () => (
-  <Create title="Training Events" component="div" sx={formResourceShellSx}>
-    <EventPipelineHeader context="create" />
+  <CreateBase redirect="edit">
     <Event context="create" />
-  </Create>
+  </CreateBase>
 )
 
 export default TrainingEventCreate
