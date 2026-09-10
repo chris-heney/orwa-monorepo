@@ -1,14 +1,14 @@
 import GradingIcon from '@mui/icons-material/Grading'
 import AssociateCreate from './AssociateCreate'
 import AssociateEdit from './AssociateEdit'
-import AssociateList from './AssociateList'
-import AssociateShow from './AssociateShow'
+import { pageView } from '../../../framework/registry'
+import { redirectToMembershipsTab } from '../componenets/RedirectToTab'
 
 export default {
-  list: AssociateList,
+  list: redirectToMembershipsTab('associates'),
   create: AssociateCreate,
   edit: AssociateEdit,
-  show: AssociateShow,
+  show: pageView('memberships.associateShow'),
   icon: GradingIcon,
   recordRepresentation: 'title',
 }

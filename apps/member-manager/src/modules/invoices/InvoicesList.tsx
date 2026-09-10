@@ -29,14 +29,16 @@ import { customDatagridStyle } from '../../css';
 import ConfirmInvoicePaymentModal from './components/InvoicePaymentModal';
 import ResponsiveListItem from '../_components/ResponsiveListItem';
 import InfoIcon from '@mui/icons-material/Info';
-import { useMembershipContext } from '../memberships_v2/MembershipsContextProvider';
 import { useCan } from '../rbac-manager/useCan';
 
-const InvoicesList = ({ filters }: { filters: any }) => {
+/**
+ * The invoices grid + "Mark Payment" modal. Reads the surrounding list
+ * context, so it renders both inside the Memberships dashboard's framework
+ * `ListScope` (Transactions tab) and inside the standalone `InvoicesList`.
+ */
+export const InvoicesGrid = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<RaRecord | null>(null);
-
-  const { invoicesFilters } = useMembershipContext();
 
   const dataProvider = useDataProvider();
   const notify = useNotify();
@@ -123,22 +125,7 @@ const InvoicesList = ({ filters }: { filters: any }) => {
   };
 
   return (
-    <List
-      component="div"
-      resource="invoices"
-      filter={{ ...invoicesFilters, ...filters }}
-      disableSyncWithLocation
-      title=" "
-      actions={false}
-      pagination={
-        <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
-          <Pagination
-            rowsPerPageOptions={[10, 25, 50, 100]}
-            sx={{ flexDirection: 'row-reverse' }}
-          />
-        </Box>
-      }
-    >
+    <>
       {isSmall ? (
         <Typography>Use larger screen to view data</Typography>
       ) : (
@@ -264,8 +251,33 @@ const InvoicesList = ({ filters }: { filters: any }) => {
         record={selectedInvoice}
         onConfirm={handleConfirmPayment}
       />
-    </List>
+    </>
   );
 };
+
+/** Pagination shared by the standalone list and the dashboard panel. */
+export const InvoicesPagination = () => (
+  <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
+    <Pagination
+      rowsPerPageOptions={[10, 25, 50, 100]}
+      sx={{ flexDirection: 'row-reverse' }}
+    />
+  </Box>
+);
+
+/** Standalone invoices list (`/invoices` resource route) with an optional permanent filter. */
+const InvoicesList = ({ filters }: { filters?: Record<string, unknown> }) => (
+  <List
+    component="div"
+    resource="invoices"
+    filter={filters ?? {}}
+    disableSyncWithLocation
+    title=" "
+    actions={false}
+    pagination={<InvoicesPagination />}
+  >
+    <InvoicesGrid />
+  </List>
+);
 
 export default InvoicesList;

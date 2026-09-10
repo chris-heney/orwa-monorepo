@@ -1,59 +1,33 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TextField,
   SimpleList,
   NumberField,
-  Pagination,
-  List,
-  Loading,
+  ListView,
   ReferenceArrayField,
   SingleFieldList,
   ChipField,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
-// import { BulkUpdateFormButton } from '@react-admin/ra-form-layout'
-import { Box, Button, useMediaQuery } from '@mui/material';
+import { Box, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import { CurrencyOptions } from '../../../config/Settings';
-import { useMembershipContext } from '../../memberships_v2/MembershipsContextProvider';
 import { customDatagridStyle } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
 import { useCan } from '../../rbac-manager/useCan';
 
+/** Membership Items tab panel — renders INSIDE the tab's `ListScope` (shared `ListBase`). */
 const MembershipItemsList = () => {
-  const [filterListOpen, setFilterListOpen] = useState(false);
-  const { membershipExtraFilters, isLoading } = useMembershipContext();
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
   const { can } = useCan();
 
-  return isLoading ? (
-    <Loading />
-  ) : (
-    <List
+  return (
+    <ListView
       component={'div'}
-      resource="membership-items"
-      filter={membershipExtraFilters}
-      disableSyncWithLocation
       title={' '}
       actions={false}
-      // if ids are selected dont add marin top to this component make it a transition
-      pagination={
-        <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
-          <Pagination
-            rowsPerPageOptions={[10, 25, 50, 100]}
-            sx={{ flexDirection: 'row-reverse' }}
-          />
-        </Box>
-      }
+      pagination={<CustomPagination />}
     >
-      {isSmall && (
-        <Button
-          onClick={() =>
-            filterListOpen ? setFilterListOpen(false) : setFilterListOpen(true)
-          }
-        >
-          {filterListOpen ? 'Hide Filters' : 'Add Filters'}
-        </Button>
-      )}
       {isSmall ? (
         <Box style={{ whiteSpace: 'nowrap' }}>
           <SimpleList
@@ -85,7 +59,7 @@ const MembershipItemsList = () => {
           </ReferenceArrayField>
         </DatagridConfigurable>
       )}
-    </List>
+    </ListView>
   );
 };
 

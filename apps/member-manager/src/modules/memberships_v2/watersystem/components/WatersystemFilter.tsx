@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent } from "@mui/material";
+import { Box } from "@mui/material";
 import {
   FilterList,
   FilterListItem,
@@ -7,35 +7,23 @@ import {
   Loading,
   useListFilterContext,
 } from "react-admin";
-// import { SavedQueriesList } from '../../../_components/CustomSavedQueryList'
 import BadgeIcon from "@mui/icons-material/Badge";
 import MoneyIcon from "@mui/icons-material/AttachMoney";
 import ShieldIcon from "@mui/icons-material/GppGood";
 import RegionIcon from "@mui/icons-material/SouthAmerica";
 import WorkmansCompIcon from "@mui/icons-material/MedicalInformation";
-import { useMembershipContext } from "../../../memberships_v2/MembershipsContextProvider";
 import {
   formatDate,
   getRollingOneYearAgoForFilters,
-} from "../../../memberships_v2/helpers/activeOrInactiveMembership";
+} from "../../helpers/activeOrInactiveMembership";
 import DateRangeFilter from "./DateRangeFilter";
 import { DateRangeIcon } from "@mui/x-date-pickers";
-import SavedFilters from "../../../_components/SavedFilters";
+import { SavedFiltersSection } from "../../../_components/SavedFiltersSection";
 import { isSelected, toggleFilter } from "../../../conference/helpers/selectFilters";
 
+/** Filters drawer body for the Water Systems tab (renders inside the tab's ListScope). */
 const WaterSystemFilter = () => {
-  const {
-    setWatersystemFilters,
-    selectedTab,
-    savingQuery,
-    setSavingQuery,
-  } = useMembershipContext();
   const { filterValues } = useListFilterContext();
-
-  React.useEffect(() => {
-    if (filterValues)
-      setWatersystemFilters({  ...filterValues });
-  }, [filterValues]);
 
   const rollingOneYearAgo = new Date();
   rollingOneYearAgo.setFullYear(rollingOneYearAgo.getFullYear() - 1);
@@ -45,21 +33,8 @@ const WaterSystemFilter = () => {
   return !filterValues ? (
     <Loading />
   ) : (
-    <Card
-      component={"div"}
-      sx={{
-        minWidth: 200,
-        maxHeight: "70vh",
-        overflow: "auto",
-        position: "sticky",
-      }}
-    >
-      <CardContent>
-        <SavedFilters
-          resource={selectedTab}
-          savingQuery={savingQuery}
-          setSavingQuery={setSavingQuery}
-        />
+    <Box sx={{ p: 2 }}>
+        <SavedFiltersSection />
         <FilterLiveSearch />
         <FilterList label="Date" icon={<DateRangeIcon />}>
           <DateRangeFilter
@@ -149,8 +124,7 @@ const WaterSystemFilter = () => {
             toggleFilter={toggleFilter}
           />
         </FilterList>
-      </CardContent>
-    </Card>
+    </Box>
   );
 };
 export default WaterSystemFilter;

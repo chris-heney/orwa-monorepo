@@ -1,15 +1,14 @@
 import GradingIcon from '@mui/icons-material/Grading'
-import MembershipItemsList from './MembershipItemsList'
 import CreateMembershipItem from './CreateMembershipItem'
 import EditMembershipItem from './EditMembershipItem'
-import MembershipItemShow from './MembershipItemShow'
-
+import { pageView } from '../../../framework/registry'
+import { redirectToMembershipsTab } from '../componenets/RedirectToTab'
 
 export default {
-  list: MembershipItemsList,
+  list: redirectToMembershipsTab('membership-items'),
   create: CreateMembershipItem,
   edit: EditMembershipItem,
-  show: MembershipItemShow,
+  show: pageView('memberships.membershipItemShow'),
   icon: GradingIcon,
   recordRepresentation: 'title',
 }

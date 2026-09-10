@@ -1,18 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TextField,
   BooleanField,
-  useStore,
   SimpleList,
   NumberField,
   DateField,
   RaRecord,
-  List,
+  ListView,
   FunctionField,
-  Loading,
+  useListContext,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
-import { Box, Button, useMediaQuery } from '@mui/material';
+import { Box, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import { CurrencyOptions } from '../../../config/Settings';
 import getExpirationDate, {
@@ -21,44 +20,31 @@ import getExpirationDate, {
 import getExpiryBackground from '../../_helpers/getExpiryBackground';
 import coloredSurfaceSx from '../../_helpers/coloredSurfaceSx';
 import WaterSystemBulkUpdateButton from './components/WaterSystemBulkUpdate';
-import { useMembershipContext } from '../../memberships_v2/MembershipsContextProvider';
 import { customDatagridStyle } from '../../../css';
 import CustomPagination from '../../_components/CustomPagination';
 import { useCan } from '../../rbac-manager/useCan';
 import { getDirectoryContactField } from './directoryContacts';
 
+/**
+ * Water Systems tab panel — renders INSIDE the tab's `ListScope` (one
+ * `ListBase` shared with the heading bar's count / export / columns and the
+ * Filters drawer), so no `List` of its own.
+ */
 const WaterSystemList = () => {
-  const [filterListOpen, setFilterListOpen] = useState(false);
-  const { watersystemFilters, isLoading } = useMembershipContext();
-  const selectedIds = useStore('watersystems.selectedIds')[0] ?? [];
+  const { selectedIds } = useListContext();
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
 
   const { can } = useCan();
 
-  return isLoading ? (
-    <Loading />
-  ) : (
-    <List
+  return (
+    <ListView
       component={'div'}
-      resource="watersystems"
-      filter={watersystemFilters ?? null}
       title={' '}
       actions={false}
-      perPage={100}
-      sx={{
-        mt: selectedIds.length > 0 ? 6 : 0,
-      }}
-      disableSyncWithLocation
+      // Room for react-admin's sliding BulkActionsToolbar while rows are selected.
+      sx={{ mt: selectedIds.length > 0 ? 6 : 0 }}
       pagination={<CustomPagination />}
-      queryOptions={{
-        meta: { raw: true, populate: ['contacts'] },
-      }}
     >
-      {isSmall && (
-        <Button onClick={() => setFilterListOpen(!filterListOpen)}>
-          {filterListOpen ? 'Hide Filters' : 'Add Filters'}
-        </Button>
-      )}
       {isSmall ? (
         <Box style={{ whiteSpace: 'nowrap' }}>
           <SimpleList
@@ -368,7 +354,7 @@ const WaterSystemList = () => {
           ])}
         </DatagridConfigurable>
       )}
-    </List>
+    </ListView>
   );
 };
 

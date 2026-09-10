@@ -1,13 +1,12 @@
 import React from 'react';
-import MembershipsContextProvider from './MembershipsContextProvider';
-import MembershipDashboard from './MembershipDashboard';
+import { pageView } from '../../framework/registry';
 
-const MembershipsDashboard = () => {
-  return (
-    <MembershipsContextProvider>
-      <MembershipDashboard />
-    </MembershipsContextProvider>
-  );
-};
+/**
+ * @deprecated Compatibility shim — the Memberships dashboard is the
+ * framework page `memberships.dashboard` (see `./manifest.tsx`), routed by the
+ * registry. Only `modules/dashboards.ts` still re-exports this name; drop
+ * both once that export is removed.
+ */
+const MembershipsDashboard = pageView('memberships.dashboard');
 
 export default MembershipsDashboard;

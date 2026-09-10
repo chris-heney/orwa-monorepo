@@ -37,6 +37,7 @@ import { isMembershipActiveByExpiration } from '../../_helpers/getExpirationDate
 import { getDirectoryContactsFromRecord } from './directoryContacts';
 import { useCan } from '../../rbac-manager/useCan';
 import { useMembershipContext } from '../MembershipsContextProvider';
+import { getRelationFilterId } from '../../../helpers/strapiIds';
 
 function a11yProps(index: number) {
   return {
@@ -413,7 +414,10 @@ const WatersystemShow = () => {
               }}
             >
               <CustomSecondaryHeader title="Transactions" />
-              <SimpleInvoicesList filters={{ entity_id: record.id }} />
+              {/* `entity_id` is a biginteger, not a relation: filter by the numeric PK, not the documentId. */}
+              <SimpleInvoicesList
+                filters={{ entity_id: getRelationFilterId(record) ?? -1 }}
+              />
             </Box>
           )}
           {accentWindow === 'directory' && (

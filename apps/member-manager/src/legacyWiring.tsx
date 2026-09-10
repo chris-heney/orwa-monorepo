@@ -1,10 +1,8 @@
 import React, { ReactElement } from 'react';
 import type { ModuleKey } from './config/modules';
 import {
-  Associate,
   TrainingEvent,
   TrainingHistory,
-  Watersystem,
   Contacts,
   Grants,
   Applicants,
@@ -17,10 +15,7 @@ import {
   TrainingInstructorCertification,
   Staff,
   Payouts,
-  Memberships,
-  MembershipItems,
   Users,
-  Transactions,
   Sponsors,
   Extras,
   Attendees,
@@ -36,7 +31,6 @@ import {
   TrainingDashboard,
   FinancialAuditDashboard,
   GrantManagement,
-  MembershipManagement,
   SoonerwarnManagement,
   Conferences,
   SettingsDashboard,
@@ -72,12 +66,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   { name: 'staff', def: Staff },
   { name: 'contacts', def: Contacts },
   { name: 'users', def: Users },
-  // MEMBERSHIP
-  { name: 'associates', def: Associate },
-  { name: 'watersystems', def: Watersystem },
-  { name: 'membership-items', def: MembershipItems },
-  { name: 'memberships', def: Memberships },
-  { name: 'invoices', def: Transactions },
   // TRAINING
   { name: 'training-events', def: TrainingEvent },
   { name: 'training-event-logs', def: TrainingHistory },
@@ -146,11 +134,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
     module: 'scholarships',
   },
   { path: 'orwa-awards/dashboard', element: <AwardManagement />, module: 'awards' },
-  {
-    path: 'membership-management',
-    element: <MembershipManagement />,
-    module: 'memberships',
-  },
   {
     path: 'soonerwarn/dashboard',
     element: <SoonerwarnManagement />,

@@ -1,11 +1,9 @@
 import React, { ReactNode } from 'react';
 import {
   ReferenceField,
-  ShowBase,
   SimpleShowLayout,
   TextField,
-  Title,
-  useShowController,
+  useRecordContext,
 } from 'react-admin';
 import {
   List,
@@ -24,8 +22,8 @@ import getExpirationDate, {
 } from '../../_helpers/getExpirationDate';
 import SimpleInvoicesList from '../../invoices/SimpleInvoiceList';
 import { IAssociate } from './AssociateInterface';
-import CustomShowHeader from '../componenets/CustomShowHeader';
 import { useCan } from '../../rbac-manager/useCan';
+import { getRelationFilterId } from '../../../helpers/strapiIds';
 
 const labelStyle: React.CSSProperties = {
   fontWeight: 'bold',
@@ -61,8 +59,13 @@ const ResponsiveListItem: React.FC<ResponsiveListItemProps> = ({
   );
 };
 
+/**
+ * Body of the `memberships.associateShow` page — the framework's `PageShell`
+ * (kind `show`) provides the `ShowBase`, the heading bar (record name, Edit,
+ * Back far right) and the app-bar title.
+ */
 const AssociateShow: React.FC = () => {
-  const { record } = useShowController<IAssociate>();
+  const record = useRecordContext<IAssociate>();
   const { can } = useCan();
 
   if (!record) return null;
@@ -83,12 +86,6 @@ const AssociateShow: React.FC = () => {
   );
 
   return (
-    <ShowBase>
-      <>
-        <Title title="Memberships" />
-        {/* Heading bar outside SimpleShowLayout: its 8px top padding would
-            otherwise open a gap between the app bar and the heading. */}
-        <CustomShowHeader />
         <SimpleShowLayout>
         <Grid container spacing={2}>
           <Grid item xs={12} md={5}>
@@ -261,14 +258,15 @@ const AssociateShow: React.FC = () => {
                 >
                   Transactions
                 </Typography>
-                <SimpleInvoicesList filters={{ entity_id: record.id }} />
+                {/* `entity_id` is a biginteger, not a relation: filter by the numeric PK, not the documentId. */}
+                <SimpleInvoicesList
+                  filters={{ entity_id: getRelationFilterId(record) ?? -1 }}
+                />
               </Card>
             </Grid>
           )}
         </Grid>
         </SimpleShowLayout>
-      </>
-    </ShowBase>
   );
 };
 

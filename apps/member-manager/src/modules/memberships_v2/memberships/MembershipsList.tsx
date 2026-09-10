@@ -1,65 +1,33 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TextField,
-  useStore,
   SimpleList,
   NumberField,
   ReferenceArrayField,
   SingleFieldList,
-  Pagination,
-  List,
-  Loading,
+  ListView,
   ChipField,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
-// import { BulkUpdateFormButton } from '@react-admin/ra-form-layout'
-import { Box, Button, useMediaQuery } from '@mui/material';
+import { Box, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import { CurrencyOptions } from '../../../config/Settings';
-import { useMembershipContext } from '../../memberships_v2/MembershipsContextProvider';
 import { customDatagridStyle } from '../../../css';
+import CustomPagination from '../../_components/CustomPagination';
 import { useCan } from '../../rbac-manager/useCan';
 
+/** Memberships tab panel — renders INSIDE the tab's `ListScope` (shared `ListBase`). */
 const MembershipList = () => {
-  const [filterListOpen, setFilterListOpen] = useState(false);
-  const { membershipFilters, isLoading } = useMembershipContext();
-  const selectedIds = useStore('watersystems.selectedIds')[0] ?? [];
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
-
   const { can } = useCan();
 
-  return isLoading ? (
-    <Loading />
-  ) : (
-    <List
+  return (
+    <ListView
       component={'div'}
-      resource="memberships"
-      filter={membershipFilters}
-      disableSyncWithLocation
       title={' '}
       actions={false}
-      // if ids are selected dont add marin top to this component make it a transition
-      sx={{
-        mt: selectedIds.length > 0 ? 6 : 0,
-      }}
-      pagination={
-        <Box sx={{ maxWidth: '32vw', position: 'sticky', left: 0 }}>
-          <Pagination
-            rowsPerPageOptions={[10, 25, 50, 100]}
-            sx={{ flexDirection: 'row-reverse' }}
-          />
-        </Box>
-      }
+      pagination={<CustomPagination />}
     >
-      {isSmall && (
-        <Button
-          onClick={() =>
-            filterListOpen ? setFilterListOpen(false) : setFilterListOpen(true)
-          }
-        >
-          {filterListOpen ? 'Hide Filters' : 'Add Filters'}
-        </Button>
-      )}
       {isSmall ? (
         <Box style={{ whiteSpace: 'nowrap' }}>
           <SimpleList
@@ -88,7 +56,7 @@ const MembershipList = () => {
           </ReferenceArrayField>
         </DatagridConfigurable>
       )}
-    </List>
+    </ListView>
   );
 };
 

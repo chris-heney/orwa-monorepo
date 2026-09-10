@@ -1,42 +1,18 @@
 import React, { useState } from 'react';
-import { useMembershipContext } from '../MembershipsContextProvider';
-import {
-  Box,
-  Typography,
-  MenuItem,
-  Popover,
-  Switch,
-  Divider,
-} from '@mui/material';
-import PageHeadingBar from '../../_components/PageHeadingBar';
-import HeadingAction from '../../_components/heading/HeadingAction';
-import {
-  CreateAction,
-  FilterAction,
-  HeadingSelect,
-} from '../../_components/heading/HeadingActions';
+import { Box, Typography, Popover, Switch, Divider } from '@mui/material';
+import { styled } from '@mui/material/styles';
 import {
   Button,
   ConfigurableDatagridColumn,
   FieldTitle,
-  ListBase,
-  useStore,
-  useDataProvider,
   useResourceContext,
+  useStore,
   useTranslate,
 } from 'react-admin';
 import ViewWeekIcon from '@mui/icons-material/ViewWeek';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
-import GridViewIcon from '@mui/icons-material/GridView';
-import ViewListIcon from '@mui/icons-material/ViewList';
-import RecordCount from '../../_components/RecordCount';
-import { NaylorExportWaterSystem } from '../helpers/naylorExportWaterSystem';
-import { NaylorExportAssociate } from '../helpers/naylorExportAssociate';
-import { useCan } from '../../rbac-manager/useCan';
-import { defaultWatersystemExport } from '../helpers/defaultWatersystemExport';
-import { defaultAssociateExport } from '../helpers/defaultAssociateExport';
-import { styled } from '@mui/material/styles';
+import HeadingAction from '../../_components/heading/HeadingAction';
 
 const FieldToggleItem = styled('li')(({ theme }) => ({
   display: 'flex',
@@ -60,7 +36,7 @@ const FieldToggleItem = styled('li')(({ theme }) => ({
  * SelectColumnsButton lacks the bulk toggles). Trigger is the standard 32px
  * heading action so it lines up with the other presets.
  */
-const CustomSelectColumnsButton = (props: { preferenceKey?: string }) => {
+export const CustomSelectColumnsButton = (props: { preferenceKey?: string }) => {
   const { preferenceKey: prefKey } = props;
   const resource = useResourceContext();
   const finalPreferenceKey = prefKey || `${resource}.datagrid`;
@@ -322,175 +298,4 @@ const FieldToggleRow = (props: {
   );
 };
 
-const Membershipheader = () => {
-  const {
-    selectedTab,
-    isFilterSidebarOpen,
-    setIsFilterSidebarOpen,
-    watersystemFilters,
-    associateFilters,
-    isSettingsOpen,
-    isGridView,
-    setIsGridView,
-  } = useMembershipContext();
-
-  const { canOnResource } = useCan();
-
-  const resource = selectedTab === 'summary' ? null : selectedTab;
-  const title =
-    selectedTab === 'invoices'
-      ? 'Transactions'
-      : selectedTab.charAt(0).toUpperCase() + selectedTab.slice(1);
-
-  const preferenceKey = `${resource}.datagrid`;
-
-  const [availableColumns] = useStore<ConfigurableDatagridColumn[]>(
-    `preferences.${preferenceKey}.availableColumns`,
-    []
-  );
-
-  const [columnIds] = useStore<string[]>(
-    `preferences.${preferenceKey}.columns`,
-    []
-  );
-
-  const dataProvider = useDataProvider();
-  const [exportType, setExportType] = useState<string>('');
-
-  const handleExport = async (exportType: string) => {
-    if (!resource) {
-      console.error('Resource is null, cannot perform export.');
-      return;
-    }
-
-    const { data: records } = await dataProvider.getList(resource, {
-      pagination: { page: 1, perPage: 1000 }, // Adjust pagination as needed
-      sort: { field: 'id', order: 'ASC' }, // Adjust sorting as needed
-      filter:
-        exportType === 'default'
-          ? resource === 'watersystems'
-            ? watersystemFilters
-            : associateFilters
-          : {},
-      ...(resource === 'watersystems'
-        ? { meta: { raw: true, populate: ['contacts'] } }
-        : {}),
-    });
-
-    if (exportType === 'default') {
-      if (resource === 'watersystems') {
-        defaultWatersystemExport(
-          records,
-          availableColumns,
-          columnIds,
-          `${title}-${new Date().toLocaleDateString()}`,
-          dataProvider
-        );
-      } else if (resource === 'associates') {
-        defaultAssociateExport(
-          records,
-          availableColumns,
-          columnIds,
-          `${title}-${new Date().toLocaleDateString()}`,
-          dataProvider
-        );
-      }
-    } else if (exportType === 'naylor') {
-      if (resource === 'watersystems') {
-        NaylorExportWaterSystem(
-          records,
-          availableColumns,
-          columnIds,
-          `${title}-${new Date().toLocaleDateString()}`,
-          dataProvider
-        );
-      } else if (resource === 'associates') {
-        NaylorExportAssociate(
-          records,
-          `${title}-${new Date().toLocaleDateString()}`,
-          dataProvider
-        );
-      }
-    }
-
-    // Reset the select input after export
-    setExportType('');
-  };
-
-  const handleViewToggle = () => {
-    setIsGridView(!isGridView);
-  };
-
-  return (
-    <PageHeadingBar
-      title={isSettingsOpen ? 'Settings' : title}
-      actions={
-        resource !== null && !isSettingsOpen ? (
-          <ListBase
-            disableSyncWithLocation
-            exporter={undefined}
-            filter={
-              resource === 'watersystems'
-                ? watersystemFilters
-                : resource === 'associates'
-                ? associateFilters
-                : {}
-            }
-            resource={resource}
-          >
-            <RecordCount />
-            {canOnResource('create', resource) && (
-              <CreateAction label={`Add ${title.slice(0, title.length - 1)}`} />
-            )}
-
-            <CustomSelectColumnsButton />
-
-            <HeadingSelect
-              emptyLabel="EXPORT"
-              value={exportType}
-              onChange={(e) => {
-                setExportType(e.target.value as string);
-                handleExport(e.target.value as string);
-              }}
-            >
-              <MenuItem value="" disabled>
-                EXPORT
-              </MenuItem>
-              <MenuItem value="default">Default Export</MenuItem>
-              <MenuItem value="naylor">Naylor Export</MenuItem>
-            </HeadingSelect>
-
-            {/* Grid View Toggle Button - Only show for associates */}
-            {resource === 'associates' && (
-              <HeadingAction
-                icon={
-                  isGridView ? (
-                    <ViewListIcon fontSize="small" />
-                  ) : (
-                    <GridViewIcon fontSize="small" />
-                  )
-                }
-                label={
-                  isGridView ? 'Switch to List View' : 'Switch to Grid View'
-                }
-                onClick={handleViewToggle}
-              />
-            )}
-
-            <FilterAction
-              active={isFilterSidebarOpen}
-              onClick={() => {
-                setIsFilterSidebarOpen((prev) => !prev);
-                setTimeout(() => {
-                  window.scrollTo(document.body.scrollWidth, 0);
-                }, 150);
-              }}
-            />
-          </ListBase>
-        ) : undefined
-      }
-    />
-  );
-};
-
-export default Membershipheader;
+export default CustomSelectColumnsButton;

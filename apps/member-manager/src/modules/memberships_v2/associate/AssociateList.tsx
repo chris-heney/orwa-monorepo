@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   TextField,
   BooleanField,
@@ -6,15 +6,15 @@ import {
   SimpleList,
   NumberField,
   DateField,
-  List,
+  ListView,
   FunctionField,
   RaRecord,
-  Loading,
   ReferenceField,
+  useListContext,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
 import { CurrencyOptions } from '../../../config/Settings';
-import { Box, Button, useMediaQuery } from '@mui/material';
+import { Box, useMediaQuery } from '@mui/material';
 import { Theme } from '@mui/material/styles';
 import getExpirationDate, {
   isMembershipActiveByExpiration,
@@ -23,39 +23,30 @@ import getExpiryBackground from '../../_helpers/getExpiryBackground';
 import coloredSurfaceSx from '../../_helpers/coloredSurfaceSx';
 import AssociateBulkUpdateButton from './components/AssociateBulkUpdateButton';
 import AssociateGrid from './components/AssociateGrid';
-import { useMembershipContext } from '../MembershipsContextProvider';
 import { customDatagridStyle } from '../../../css';
 import CustomPagination from '../../_components/CustomPagination';
 import { useCan } from '../../rbac-manager/useCan';
+import { ASSOCIATE_GRID_VIEW_KEY } from './gridViewKey';
 
+/**
+ * Associates tab panel — renders INSIDE the tab's `ListScope` (shared
+ * `ListBase`); the heading bar's Grid/List toggle writes the same RaStore key.
+ */
 const AssociateList = () => {
-  const [filterListOpen, setFilterListOpen] = useState(false);
-  const { associateFilters, isLoading, isGridView } = useMembershipContext();
+  const [isGridView] = useStore<boolean>(ASSOCIATE_GRID_VIEW_KEY, false);
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
-  const selectedIds = useStore('associates.selectedIds')[0] ?? [];
+  const { selectedIds } = useListContext();
   const { can } = useCan();
 
-  return isLoading ? (
-    <Loading />
-  ) : (
-    <List
+  return (
+    <ListView
       component={'div'}
-      resource="associates"
       title={' '}
-      filter={associateFilters}
       actions={false}
-      sx={{
-        mt: selectedIds.length > 0 ? 6 : 0,
-      }}
-      disableSyncWithLocation
-      perPage={100}
+      // Room for react-admin's sliding BulkActionsToolbar while rows are selected.
+      sx={{ mt: selectedIds.length > 0 ? 6 : 0 }}
       pagination={<CustomPagination />}
     >
-      {isSmall && (
-        <Button onClick={() => setFilterListOpen(!filterListOpen)}>
-          {filterListOpen ? 'Hide Filters' : 'Add Filters'}
-        </Button>
-      )}
       {isSmall ? (
         <SimpleList
           linkType="show"
@@ -329,7 +320,7 @@ const AssociateList = () => {
           />
         </DatagridConfigurable>
       )}
-    </List>
+    </ListView>
   );
 };
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent } from "@mui/material";
+import { Box } from "@mui/material";
 import InsightsIcon from "@mui/icons-material/Insights";
 import BadgeIcon from "@mui/icons-material/Badge";
 import {
@@ -10,22 +10,16 @@ import {
   useListFilterContext,
   useGetList,
 } from "react-admin";
-import { useMembershipContext } from "../../MembershipsContextProvider";
 import {
   formatDate,
   getRollingOneYearAgoForFilters,
 } from "../../helpers/activeOrInactiveMembership";
 import { DateRangeIcon } from "@mui/x-date-pickers";
-import SavedFilters from "../../../_components/SavedFilters";
+import { SavedFiltersSection } from "../../../_components/SavedFiltersSection";
 import DateRangeFilter from "../../watersystem/components/DateRangeFilter";
 
+/** Filters drawer body for the Associates tab (renders inside the tab's ListScope). */
 const AssociateListFilterSidebar = () => {
-  const {
-    setAssociateFilters,
-    selectedTab,
-    savingQuery,
-    setSavingQuery,
-  } = useMembershipContext();
   const { filterValues } = useListFilterContext();
 
   // Fetch memberships for dynamic filter options
@@ -33,10 +27,6 @@ const AssociateListFilterSidebar = () => {
     pagination: { page: 1, perPage: 100 },
     sort: { field: 'name', order: 'ASC' },
   });
-
-  React.useEffect(() => {
-    setAssociateFilters({ ...filterValues });
-  }, [filterValues]);
 
   // Multi-select filter functions for memberships
   const isMembershipSelected = (value: any, filters: any) => {
@@ -69,21 +59,8 @@ const AssociateListFilterSidebar = () => {
   return !filterValues ? (
     <Loading />
   ) : (
-    <Card
-      component={"div"}
-      sx={{
-        minWidth: 200,
-        maxHeight: "70vh",
-        overflow: "auto",
-        position: "sticky",
-      }}
-    >
-      <CardContent>
-        <SavedFilters
-          resource={selectedTab}
-          savingQuery={savingQuery}
-          setSavingQuery={setSavingQuery}
-        />
+    <Box sx={{ p: 2 }}>
+        <SavedFiltersSection />
         <FilterLiveSearch />
 
         <FilterList label="Date" icon={<DateRangeIcon />}>
@@ -154,9 +131,7 @@ const AssociateListFilterSidebar = () => {
             ))
           )}
         </FilterList>
-        {/* TODO Export Button Later */}
-      </CardContent>
-    </Card>
+    </Box>
   );
 };
 export default AssociateListFilterSidebar;
