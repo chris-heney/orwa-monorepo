@@ -68,7 +68,7 @@ const AttendeesFilter: React.FC<AttendeesFilterProps> = ({
                 key={`ticket-${ticket.id}`}
                 label={`${ticket.name} ${
                   filterConferenceId == null
-                    ? (ticket.conferences[0] as IConference).name
+                    ? (ticket.conferences?.[0] as IConference | undefined)?.name ?? ""
                     : ""
                 }`}
                 value={{ conference_ticket: ticketId }}

@@ -1,112 +1,129 @@
 import React, {
   PropsWithChildren,
+  SetStateAction,
   createContext,
+  useCallback,
   useContext,
-  useEffect,
+  useMemo,
   useState,
 } from "react";
-import {
-  IConferenceContextProvider,
-  TabValue,
-} from "./types/IConferenceContextProvider";
-import { Loading, useGetList, useStore } from "react-admin";
+import { Loading, useGetList, useStore, useStoreContext } from "react-admin";
+import { IConferenceContextProvider } from "./types/IConferenceContextProvider";
 import { IConference } from "./types";
 import IConferenceTicket from "./types/IConferenceTicket";
 import {
   DEFAULT_CONFERENCE_ID,
-  MULTI_CONFERENCE_TABS,
   ensureConferenceInFilters,
 } from "./helpers/mergeConferenceAcrossTabFilters";
-import { resourceForConferenceTab } from "./helpers/conferenceTabResources";
+import {
+  CONFERENCE_SELECTION_STORE_KEY,
+  ConferenceSelection,
+  YEARLESS_TABS,
+  coerceSelection,
+  readConferenceSelection,
+} from "./helpers/conferenceSelection";
+import { usePageManifestOptional } from "../../framework/PageContext";
 
 /** Re-export for existing imports. */
 export { DEFAULT_CONFERENCE_ID };
 
-function defaultFilterForTab(tab: string, year: number): Record<string, any> {
-  if (MULTI_CONFERENCE_TABS.has(tab)) {
-    return { conferences: [DEFAULT_CONFERENCE_ID] };
-  }
-  if (tab === "edit") {
-    return { conference: DEFAULT_CONFERENCE_ID };
-  }
-  return { conference: DEFAULT_CONFERENCE_ID, year };
+/** Tab key used when the provider is mounted outside the dashboard (forms). */
+const STANDALONE_TAB = "summary";
+
+interface ConferenceBaseContext {
+  conferences: IConference[];
+  tickets: IConferenceTicket[];
+  /** Tab whose inline "Add …" form is open, or null. */
+  creatingTab: string | null;
+  setCreatingTab: React.Dispatch<SetStateAction<string | null>>;
 }
 
-const yearNow = new Date().getFullYear();
-
-export const ConferenceContext = createContext<IConferenceContextProvider>({
-  year: yearNow,
-  selectedTab: "summary",
-  setYear: () => {},
-  setSelectedTab: () => {},
+const ConferenceBaseContextValue = createContext<ConferenceBaseContext>({
   conferences: [],
   tickets: [],
-  isFilterSidebarOpen: false,
-  setIsFilterSidebarOpen: () => {},
-  resource: "",
-  setResource: () => {},
-  isCreating: false,
-  setIsCreating: () => {},
-  searchFilter: [],
-  setSearchFilter: () => {},
-  savingQuery: false,
-  setSavingQuery: () => {},
-  tabFilters: {},
-  setTabFilters: () => {},
-  tabSorts: {},
-  setTabSorts: () => {},
-  currentFilter: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
+  creatingTab: null,
+  setCreatingTab: () => {},
 });
 
-export const useConferenceContext = () => useContext(ConferenceContext);
+/**
+ * The selected conference / year (RaStore `conference.selection`, falling back
+ * to the legacy per-tab bag). Written only by `ConferenceListSync`.
+ */
+export const useConferenceSelection = (): ConferenceSelection => {
+  const store = useStoreContext();
+  const [stored] = useStore<unknown>(CONFERENCE_SELECTION_STORE_KEY, undefined);
+  return useMemo(
+    () =>
+      stored
+        ? coerceSelection(stored)
+        : readConferenceSelection((key, fallback) =>
+            store.getItem(key, fallback)
+          ),
+    [stored, store]
+  );
+};
 
+/**
+ * Module context for panels, forms and the Schedule module. `selectedTab` /
+ * `resource` are derived from the framework's active tab (proposal §6 #6);
+ * `isCreating` is scoped to that tab so switching tabs always lands on the
+ * list, as the old provider's reset-on-tab-change did.
+ */
+export const useConferenceContext = (): IConferenceContextProvider => {
+  const base = useContext(ConferenceBaseContextValue);
+  const manifest = usePageManifestOptional();
+  const selection = useConferenceSelection();
+
+  const selectedTab = manifest?.tab?.key ?? STANDALONE_TAB;
+  const resource = manifest?.tab?.list?.resource ?? "";
+  const { creatingTab, setCreatingTab } = base;
+
+  const setIsCreating = useCallback<
+    React.Dispatch<SetStateAction<boolean>>
+  >(
+    (value) =>
+      setCreatingTab((prev) => {
+        const current = prev === selectedTab;
+        const next = typeof value === "function" ? value(current) : value;
+        return next ? selectedTab : prev === selectedTab ? null : prev;
+      }),
+    [setCreatingTab, selectedTab]
+  );
+
+  return useMemo<IConferenceContextProvider>(() => {
+    const shaped = ensureConferenceInFilters(
+      { conference: selection.conference, year: selection.year },
+      selectedTab
+    );
+    if (YEARLESS_TABS.has(selectedTab)) delete shaped.year;
+    return {
+      selectedTab,
+      resource,
+      year: selection.year,
+      conferences: base.conferences,
+      tickets: base.tickets,
+      isCreating: creatingTab === selectedTab,
+      setIsCreating,
+      currentFilter: shaped,
+    };
+  }, [
+    selectedTab,
+    resource,
+    selection,
+    base.conferences,
+    base.tickets,
+    creatingTab,
+    setIsCreating,
+  ]);
+};
+
+/**
+ * Loads the module's reference data (conferences, ticket types) once for
+ * every panel. Mounted by the dashboard page via `PageManifest.provider` and
+ * standalone by the sponsor / attendee / extra edit pages.
+ */
 const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
-  const [selectedTab, setSelectedTab] = useStore<TabValue>(
-    "conference-tab-value",
-    "summary"
-  );
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [resource, setResource] = useStore(
-    "selected-conference-resource",
-    ""
-  );
-  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useStore(
-    "conference-filter-sidebar",
-    false
-  );
-  const [searchFilter, setSearchFilter] = useState<
-    React.ReactElement | React.ReactElement[]
-  >([]);
-  const [isCreating, setIsCreating] = useState(false);
-  const [savingQuery, setSavingQuery] = useState(false);
-  const [tabFilters, setTabFilters] = useStore<Record<string, any>>(
-    "conferenceTabFilters",
-    {
-      summary: { year: yearNow, conference: DEFAULT_CONFERENCE_ID },
-      registrations: {
-        conference: DEFAULT_CONFERENCE_ID,
-        year: yearNow,
-      },
-      attendees: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      booths: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      tools: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      contestants: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      teams: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      "taste test": { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      sponsors: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      edit: { conference: DEFAULT_CONFERENCE_ID },
-      schedule: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-      tickets: { conferences: [DEFAULT_CONFERENCE_ID] },
-      extras: { conferences: [DEFAULT_CONFERENCE_ID] },
-      addons: { conferences: [DEFAULT_CONFERENCE_ID] },
-      sponsorships: { conference: DEFAULT_CONFERENCE_ID },
-      feedback: { conference: DEFAULT_CONFERENCE_ID, year: yearNow },
-    }
-  );
-  const [tabSorts, setTabSorts] = useStore<Record<string, any>>(
-    "conferenceTabSorts",
-    {}
-  );
+  const [creatingTab, setCreatingTab] = useState<string | null>(null);
 
   const { data: conferences, isLoading: conferencesLoading } =
     useGetList<IConference>("conferences", {
@@ -121,7 +138,7 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
   // Ticket Types
   const { data: tickets, isLoading: ticketsLoading } =
     useGetList<IConferenceTicket>("conference-tickets", {
-      filter: {}, // @TODO: Filter by Conference ID; might want to use the UseState
+      filter: {}, // @TODO: Filter by Conference ID
       meta: {
         populate: true,
         raw: true,
@@ -129,64 +146,22 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
       pagination: { page: 1, perPage: 1000 },
     });
 
-  useEffect(() => {
-    setIsCreating(false);
-    setSearchFilter([]);
-    setResource(resourceForConferenceTab(selectedTab));
-  }, [selectedTab, setResource]);
-
-  // Persisted tab filters can lose `conference` (toggle/X clear). Re-hydrate.
-  useEffect(() => {
-    setTabFilters((prev) => {
-      let changed = false;
-      const next: Record<string, any> = {};
-      for (const [tab, filters] of Object.entries(prev || {})) {
-        const ensured = ensureConferenceInFilters(filters, tab);
-        next[tab] = ensured;
-        if (ensured !== filters) changed = true;
-      }
-      return changed ? next : prev;
-    });
-  }, [setTabFilters]);
-
-  const currentFilter = ensureConferenceInFilters(
-    {
-      ...defaultFilterForTab(selectedTab, year),
-      ...tabFilters[selectedTab],
-    },
-    selectedTab
+  const value = useMemo<ConferenceBaseContext>(
+    () => ({
+      conferences: conferences ?? [],
+      tickets: tickets ?? [],
+      creatingTab,
+      setCreatingTab,
+    }),
+    [conferences, tickets, creatingTab]
   );
 
   return !tickets || !conferences || conferencesLoading || ticketsLoading ? (
     <Loading />
   ) : (
-    <ConferenceContext.Provider
-      value={{
-        year,
-        setYear,
-        selectedTab,
-        setSelectedTab,
-        conferences,
-        tickets,
-        isFilterSidebarOpen,
-        setIsFilterSidebarOpen,
-        resource,
-        setResource,
-        isCreating,
-        setIsCreating,
-        searchFilter,
-        setSearchFilter,
-        savingQuery,
-        setSavingQuery,
-        tabFilters,
-        setTabFilters,
-        tabSorts,
-        setTabSorts,
-        currentFilter,
-      }}
-    >
+    <ConferenceBaseContextValue.Provider value={value}>
       {children}
-    </ConferenceContext.Provider>
+    </ConferenceBaseContextValue.Provider>
   );
 };
 

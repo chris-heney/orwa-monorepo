@@ -1,11 +1,11 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import { Button, Grid, Box } from "@mui/material";
 import { TextInput, NumberInput, DateInput } from "react-admin";
 import { LocalizationProvider, TimeField } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import { useFormContext } from "react-hook-form";
-import { ConferenceContext } from "../../conference/ConferenceContext";
+import { useConferenceContext } from "../../conference/ConferenceContext";
 
 interface ConferenceScheduleFormProps {
   record?: any;
@@ -19,7 +19,7 @@ const ScheduleForm: React.FC<ConferenceScheduleFormProps> = ({
   onDelete,
 }) => {
 
-  const { conferenceId: conference, year, conferences, conferenceIndex} = useContext(ConferenceContext);
+  const { conferenceId: conference, year, conferences, conferenceIndex } = useConferenceContext();
   const form = useFormContext();
 
   const conferenceStartDate = Array.isArray(conferences) && conferences[conferenceIndex]

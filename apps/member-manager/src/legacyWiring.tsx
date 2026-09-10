@@ -3,12 +3,8 @@ import type { ModuleKey } from './config/modules';
 import {
   Contacts,
   ActivityFeed,
-  Conference,
   Staff,
   Users,
-  Sponsors,
-  Extras,
-  Attendees,
   EmailsTemplates,
   EmailTasks,
   ScholarshipApplications,
@@ -20,7 +16,6 @@ import {
   HumanResources,
   FinancialAuditDashboard,
   SoonerwarnManagement,
-  Conferences,
   SettingsDashboard,
   OrwefManagement,
   AwardManagement,
@@ -54,20 +49,6 @@ const LEGACY_RESOURCES: LegacyResource[] = [
   { name: 'staff', def: Staff },
   { name: 'contacts', def: Contacts },
   { name: 'users', def: Users },
-  // CONFERENCE
-  { name: 'conference-attendees', def: Attendees },
-  { name: 'conference-extras', def: Extras },
-  { name: 'conference-sponsorships', props: { recordRepresentation: 'name' } },
-  { name: 'conference-sponsors', def: Sponsors },
-  { name: 'conference-tickets', props: { recordRepresentation: 'name' } },
-  { name: 'conference-booths' },
-  { name: 'conference-contestants' },
-  { name: 'conference-registrations' },
-  {
-    name: 'conference-schedules',
-    props: { hasCreate: false, recordRepresentation: 'name' },
-  },
-  { name: 'conferences', def: Conference },
   // SHARED
   { name: 'activities', def: ActivityFeed },
   { name: 'activity-relations' },
@@ -90,7 +71,6 @@ export interface LegacyRoute {
 const LEGACY_ROUTES: LegacyRoute[] = [
   { path: 'admin/settings', element: <SettingsDashboard />, module: 'settings' },
   { path: 'event/settings', element: <EventSettings />, module: 'settings' },
-  { path: 'conference/dashboard', element: <Conferences />, module: 'conference' },
   {
     path: 'human-resources/dashboard',
     element: <HumanResources />,

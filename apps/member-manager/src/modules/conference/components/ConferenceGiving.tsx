@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react';
 import {
   AutocompleteInput,
   BooleanInput,
@@ -28,7 +28,7 @@ import {
 import { CurrencyOptions } from '../../../config/Settings'
 import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader'
 import CustomToolBar from '../../_components/CustomToolbar'
-import { ConferenceContext } from '../ConferenceContext'
+import { useConferenceContext } from '../ConferenceContext'
 import { createRecord } from '../../_helpers/createRecord'
 import { updateRecord } from '../../_helpers/updateRecord'
 import { customDatagridStyle, positionStickyComponent } from '../../../css'
@@ -112,7 +112,7 @@ const withCustomAmountDefaults = (formData: RaRecord) => {
 
 const ConferenceGiving = () => {
 
-  const {isCreating, setIsCreating} = useContext(ConferenceContext)
+  const {isCreating, setIsCreating} = useConferenceContext()
 
   const [create] = useCreate()
   const [update] = useUpdate()

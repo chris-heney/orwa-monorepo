@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import {
   AutocompleteArrayInput,
   ChipField,
@@ -33,7 +33,7 @@ import { CurrencyOptions } from "../../../config/Settings";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
 import HelpIcon from "@mui/icons-material/Info";
-import { ConferenceContext, useConferenceContext } from "../ConferenceContext";
+import { useConferenceContext } from "../ConferenceContext";
 import { createRecord } from "../../_helpers/createRecord";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
@@ -184,7 +184,7 @@ const ConferenceTickets = () => {
   const {
     isCreating,
     setIsCreating,
-  } = useContext(ConferenceContext);
+  } = useConferenceContext();
 
   const [create] = useCreate();
   const [update] = useUpdate();

@@ -14,7 +14,8 @@ import {
  * and rep (attendee) email/phone.
  */
 const VendorAttendeeExportButton = () => {
-  const { filterValues, sort, resource } = useListContext();
+  // `filter` is the manifest's permanent conference / year scope.
+  const { filterValues, filter, sort, resource } = useListContext();
   const dataProvider = useDataProvider();
   const notify = useNotify();
   const { conferences } = useConferenceContext();
@@ -30,14 +31,14 @@ const VendorAttendeeExportButton = () => {
       const { data } = await dataProvider.getList("conference-attendees", {
         pagination: { page: 1, perPage: 10000 },
         sort: sort ?? { field: "id", order: "ASC" },
-        filter: filterValues ?? {},
+        filter: { ...(filterValues ?? {}), ...(filter ?? {}) },
       });
 
       const conferenceName =
         conferences.find(
           (c) =>
             getConferenceFilterId(c) ===
-            getPrimaryConferenceId(filterValues ?? {})
+            getPrimaryConferenceId({ ...(filterValues ?? {}), ...(filter ?? {}) })
         )?.name ?? "";
 
       const count = await exportVendorAttendeeRoster(

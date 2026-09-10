@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import {
   TextField,
   ReferenceField,
@@ -41,7 +41,7 @@ import {
 import { alpha } from '@mui/material/styles';
 import type { Theme } from '@mui/material/styles';
 import { CurrencyOptions } from '../../../config/Settings';
-import { ConferenceContext } from '../ConferenceContext';
+import { useConferenceContext } from '../ConferenceContext';
 import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
 import { createRecord } from '../../_helpers/createRecord';
 import { updateRecord } from '../../_helpers/updateRecord';
@@ -414,7 +414,7 @@ const contestantRowSx = (record: RaRecord, _index: number): SxProps =>
     : {};
 
 const ConferenceContestants = () => {
-  const { isCreating, setIsCreating } = useContext(ConferenceContext);
+  const { isCreating, setIsCreating } = useConferenceContext();
 
   const notify = useNotify();
   const [create] = useCreate();

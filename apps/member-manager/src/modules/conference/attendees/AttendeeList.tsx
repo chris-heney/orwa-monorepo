@@ -1,5 +1,5 @@
-import React, { useContext } from 'react';
-import { ConferenceContext } from '../ConferenceContext';
+import React from 'react';
+import { useConferenceContext } from '../ConferenceContext';
 import {
   FunctionField,
   SimpleForm,
@@ -26,7 +26,7 @@ import { ConferenceAttendeeFields } from './AttendeeFormFields';
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
 
 const AttendeeList = () => {
-  const { isCreating, setIsCreating } = useContext(ConferenceContext);
+  const { isCreating, setIsCreating } = useConferenceContext();
 
   // Use the list context from the parent ListBase
   const { resource, filterValues } = useListContext();

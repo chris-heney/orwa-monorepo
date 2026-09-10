@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Box, Button, Divider, Grid, Typography } from "@mui/material";
 import {
   TextField,
@@ -23,7 +23,7 @@ import {
 import { DatagridConfigurable } from "@orwa/entity-id";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
 import CustomToolBar from "../../_components/CustomToolbar";
-import { ConferenceContext } from "../ConferenceContext";
+import { useConferenceContext } from "../ConferenceContext";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { createRecord } from "../../_helpers/createRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
@@ -150,7 +150,7 @@ const TasteTestContestants = () => {
   const {
     isCreating,
     setIsCreating,
-  } = useContext(ConferenceContext);
+  } = useConferenceContext();
 
   const [create] = useCreate();
   const [update] = useUpdate();

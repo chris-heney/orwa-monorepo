@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import {
   ChipField,
   Create,
@@ -13,7 +13,7 @@ import { DatagridConfigurable } from "@orwa/entity-id";
 import { CurrencyOptions } from '../../../config/Settings';
 import { Button } from '@mui/material';
 import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
-import { ConferenceContext } from '../ConferenceContext';
+import { useConferenceContext } from '../ConferenceContext';
 import { createRecord } from '../../_helpers/createRecord';
 import { customDatagridStyle } from '../../../css';
 import CustomPagination from '../../_components/CustomPagination';
@@ -23,7 +23,7 @@ import { useCan } from '../../rbac-manager/useCan';
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 const ConferenceExtras = () => {
-  const { isCreating, setIsCreating } = useContext(ConferenceContext);
+  const { isCreating, setIsCreating } = useConferenceContext();
   const [create] = useCreate();
   const notify = useNotify();
   const { can } = useCan();

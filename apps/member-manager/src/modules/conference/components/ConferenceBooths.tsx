@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import {
   TextInput,
   NumberInput,
@@ -26,7 +26,7 @@ import { CurrencyOptions } from "../../../config/Settings";
 import MetaComponent from "./ConferenceMetaRepeatableComponent";
 import SelectInputRegistration from "./SelectInputRegistration";
 import { ISharedMeta } from "../types/IConference";
-import { ConferenceContext } from "../ConferenceContext";
+import { useConferenceContext } from "../ConferenceContext";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { createRecord } from "../../_helpers/createRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
@@ -99,7 +99,7 @@ const ConferenceBooths = () => {
   const {
     isCreating,
     setIsCreating,
-  } = useContext(ConferenceContext);
+  } = useConferenceContext();
 
   const [update] = useUpdate();
   const [create] = useCreate();
