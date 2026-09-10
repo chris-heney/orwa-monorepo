@@ -3,6 +3,7 @@ import TaskIcon from '@mui/icons-material/Task';
 import StorageOutlinedIcon from '@mui/icons-material/StorageOutlined';
 import type { ModuleManifest } from '../../framework/manifest';
 import { lazyPanel } from '../../framework/lazyPanel';
+import { tabRedirect } from '../../framework/registry';
 import { columnsAction, createAction } from '../../framework/actions';
 import EmailsTemplates from './emails-templates';
 import EmailTasks from './email-taks';
@@ -33,8 +34,14 @@ export const emailsModule: ModuleManifest = {
     resources: ['email-templates', 'scheduled-email-tasks'],
   },
   resources: {
-    'email-templates': EmailsTemplates,
-    'scheduled-email-tasks': EmailTasks,
+    'email-templates': {
+      ...EmailsTemplates,
+      list: tabRedirect('emails.dashboard', 'email-templates'),
+    },
+    'scheduled-email-tasks': {
+      ...EmailTasks,
+      list: tabRedirect('emails.dashboard', 'scheduled-email-tasks'),
+    },
   },
   pages: [
     {

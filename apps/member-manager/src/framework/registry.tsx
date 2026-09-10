@@ -1,4 +1,5 @@
 import React, { ReactElement } from 'react';
+import { Navigate } from 'react-router-dom';
 import { APP_MODULES, AppModule, ModuleKey } from '../config/modules';
 import { guardResource } from '../modules/rbac-manager/guardResource';
 import type {
@@ -232,4 +233,24 @@ export const pageView = (pageId: string) => {
   const View = () => <PageShell page={getPage(pageId)} />;
   View.displayName = `PageView(${pageId})`;
   return View;
+};
+
+/**
+ * Resource `list` view that forwards to a dashboard tab — for resources whose
+ * only list renderer is a tab of a routed page (`/watersystems` →
+ * `/membership-management?tab=watersystems`), so RA's default list route never
+ * mounts a second, bar-less `<List>`. Resolved lazily: the page may be
+ * registered after the resource definition module is evaluated.
+ */
+export const tabRedirect = (pageId: string, tabKey?: string) => {
+  const Redirect = () => {
+    const page = getPage(pageId);
+    if (!page.route) {
+      throw new Error(`framework: page "${pageId}" has no route to redirect to`);
+    }
+    const to = tabKey ? `/${page.route}?tab=${tabKey}` : `/${page.route}`;
+    return <Navigate to={to} replace />;
+  };
+  Redirect.displayName = `TabRedirect(${pageId}${tabKey ? `:${tabKey}` : ''})`;
+  return Redirect;
 };

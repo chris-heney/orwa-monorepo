@@ -28,7 +28,7 @@ import {
   settingsAction,
 } from "../../framework/actions";
 import { filtersAction, filtersDrawer } from "../../framework/Drawers";
-import { pageView } from "../../framework/registry";
+import { pageView, tabRedirect } from "../../framework/registry";
 import Grants from "./grants";
 import Applicants from "./grant-application";
 import Payouts from "./payouts";
@@ -43,10 +43,6 @@ import {
   NewPayoutAction,
   SelectedGrantTitle,
 } from "./_components/GrantActions";
-import {
-  ApplicationsListRedirect,
-  PayoutsListRedirect,
-} from "./_components/DashboardRedirects";
 import {
   buildApplicationListFilter,
   buildScoreFiscalYearFilter,
@@ -214,10 +210,10 @@ export const grantsModule: ModuleManifest = {
     grants: Grants,
     "grant-application-finals": {
       ...Applicants,
-      list: ApplicationsListRedirect,
+      list: tabRedirect("grants.dashboard", "applications"),
       show: pageView("grants.applicationShow"),
     },
-    "grant-payouts": { ...Payouts, list: PayoutsListRedirect },
+    "grant-payouts": { ...Payouts, list: tabRedirect("grants.dashboard", "payouts") },
     "grant-statuses": {},
     "grant-sub-statuses": {},
   },

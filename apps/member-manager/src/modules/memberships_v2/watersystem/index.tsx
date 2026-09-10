@@ -4,7 +4,7 @@ import MembershipsContextProvider from "../MembershipsContextProvider";
 import WatersystemCreate from "./WatersystemCreate";
 import WatersystemShow from "./WatersystemShow";
 import WatersystemEdit from "./WaterSystemEdit";
-import { redirectToMembershipsTab } from "../componenets/RedirectToTab";
+import { tabRedirect } from "../../../framework/registry";
 
 /** The show page opens the shared contact create / edit modals, so it needs the provider. */
 const WatersystemShowWithMembershipContext = () => (
@@ -14,7 +14,7 @@ const WatersystemShowWithMembershipContext = () => (
 );
 
 export default {
-  list: redirectToMembershipsTab("watersystems"),
+  list: tabRedirect("memberships.dashboard", "watersystems"),
   create: WatersystemCreate,
   show: WatersystemShowWithMembershipContext,
   edit: WatersystemEdit,
