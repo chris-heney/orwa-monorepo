@@ -25,18 +25,21 @@ describe("isDocumentId", () => {
 
 describe("relation filters", () => {
   // Water Systems "Contact Title" filter: Strapi's oneToMany relation filter is
-  // existential, so this keeps systems where ANY contact holds ANY of the
-  // selected titles. A dropped nested `$in` returns every row instead of none,
-  // so assert the emitted path rather than trusting the recursion.
-  it("looks through a oneToMany relation for an $in on a text field", () => {
+  // existential, so this keeps systems where ANY contact's title contains ANY
+  // of the selected titles. A dropped nested clause returns every row instead
+  // of none, so assert the emitted path rather than trusting the recursion.
+  it("looks through a oneToMany relation for an $or of $containsi clauses", () => {
     const out: string[] = [];
     appendFilterQuery(out, "contacts", {
-      title: { $in: ["Manager", "Vice-Chairman"] },
+      $or: [
+        { title: { $containsi: "Manager" } },
+        { title: { $containsi: "Vice-Chairman" } },
+      ],
     });
 
     expect(out).toEqual([
-      "filters[contacts][title][$in][]=Manager",
-      "filters[contacts][title][$in][]=Vice-Chairman",
+      "filters[contacts][$or][0][title][$containsi]=Manager",
+      "filters[contacts][$or][1][title][$containsi]=Vice-Chairman",
     ]);
   });
 
@@ -44,14 +47,35 @@ describe("relation filters", () => {
     const qs = convertRaParamsToStrapiParams({
       filter: {
         region: "Region 1",
-        contacts: { title: { $in: ["Operator"] } },
+        contacts: { $or: [{ title: { $containsi: "Operator" } }] },
       },
       pagination: { page: 1, perPage: 25 },
     });
 
     expect(qs).toContain("filters[region]=Region%201");
-    expect(qs).toContain("filters[contacts][title][$in][]=Operator");
+    expect(qs).toContain("filters[contacts][$or][0][title][$containsi]=Operator");
     expect(qs).not.toContain("object Object");
+  });
+
+  // A title such as "chairman" is lowercase alphanumeric and would otherwise
+  // trip the documentId heuristic into emitting `[title][documentId]`.
+  it("does not mistake a lowercase title search term for a documentId", () => {
+    const out: string[] = [];
+    appendFilterQuery(out, "contacts", {
+      $or: [{ title: { $containsi: "bookkeeper" } }],
+    });
+
+    expect(out).toEqual([
+      "filters[contacts][$or][0][title][$containsi]=bookkeeper",
+    ]);
+  });
+
+  // Saved filters persisted before the substring change still carry `$in`.
+  it("still serializes the legacy $in relation shape", () => {
+    const out: string[] = [];
+    appendFilterQuery(out, "contacts", { title: { $in: ["Manager"] } });
+
+    expect(out).toEqual(["filters[contacts][title][$in][]=Manager"]);
   });
 });
 
