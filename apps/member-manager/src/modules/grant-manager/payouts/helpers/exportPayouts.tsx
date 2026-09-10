@@ -6,6 +6,7 @@ import {
   fetchRelatedRecord,
   readExportColumn,
   relationDisplayValue,
+  selectExportColumns,
 } from '../../../../helpers/fetchRelatedRecord'
 
 const exportPayouts = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
@@ -16,11 +17,7 @@ const exportPayouts = async (RecordList: RaRecord[], availableColumns: Configura
 
     const filteredRecord = {} as Record<string, string>
 
-    let columns = availableColumns
-
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter(column => columnIds?.includes(column.index))
-    }
+    const columns = selectExportColumns(availableColumns, columnIds);
 
     const application = await fetchRelatedRecord(
       dataProvider,

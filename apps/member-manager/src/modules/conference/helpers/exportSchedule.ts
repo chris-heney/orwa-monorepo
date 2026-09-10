@@ -5,6 +5,7 @@ import {
   exportRelationResource,
   readExportColumn,
   resolveExportCell,
+  selectExportColumns,
 } from '../../../helpers/fetchRelatedRecord'
 
 const exportSchedule = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
@@ -13,11 +14,7 @@ const exportSchedule = async (RecordList: RaRecord[], availableColumns: Configur
 
     const filteredRecord = {} as Record<string, string>
 
-    let columns = availableColumns
-
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter(column => columnIds?.includes(column.index))
-    }
+    const columns = selectExportColumns(availableColumns, columnIds);
 
     for (const column of columns) {
 

@@ -119,6 +119,17 @@ export interface ListManifest {
   sort?: SortPayload;
   perPage?: number;
   meta?: Record<string, unknown>;
+  /**
+   * `meta` for the Export button's own `getList` (defaults to `meta`).
+   *
+   * Export runs a SEPARATE query from the grid's — `ExportButton` passes only
+   * its own `meta` prop. Without this the export fetched with `raw: false`, and
+   * `formatResponseRA` collapses every populated relation back to a documentId,
+   * so relation columns (`point_of_contact.phone`) exported blank even though
+   * the grid showed them. Set `raw: true` plus the populate the CSV needs —
+   * that also spares the exporter a per-record lookup for each relation.
+   */
+  exportMeta?: Record<string, unknown>;
   /** RaStore key for list params/selection. Default `${pageId}.${tabKey}`. */
   storeKey?: string;
   /** RA exporter with the page ctx + RA's extra args (fetchRelatedRecords, dataProvider, resource). */

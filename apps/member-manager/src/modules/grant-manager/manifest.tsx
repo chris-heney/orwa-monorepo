@@ -48,6 +48,7 @@ import {
   buildScoreFiscalYearFilter,
 } from "./helpers/fiscalYearFilters";
 import { sanitizeNumericFilterIds } from "./helpers/getRelationFilterId";
+import { APPLICATION_EXPORT_META } from "./grant-application/helpers/ExportApplication";
 import ActivityFeed from "../activity/ActivityFeed";
 import GrantApplicationDetails from "./grant-application/components/GrantApplicationDetails";
 import {
@@ -265,6 +266,11 @@ export const grantsModule: ModuleManifest = {
               perPage: 50,
               sort: { field: "application_date", order: "DESC" },
               meta: { raw: true },
+              // The CSV needs the contact (Email/Phone), the status name and
+              // every payout (Total Paid Out / Balance) on the record itself.
+              // Populating them here is ONE request for the whole export; the
+              // exporter used to fetch all four per row.
+              exportMeta: APPLICATION_EXPORT_META,
               filter: applicationsFilter,
               filterBody: GrantFilters,
             },

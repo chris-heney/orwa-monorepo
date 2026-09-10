@@ -16,12 +16,22 @@ import {
   ExportAction,
 } from '../modules/_components/heading/HeadingActions';
 import type { ActionManifest, PageCtx, TitleBarApi } from './manifest';
+import { useListManifest } from './ListScope';
 
 type ActionComponent = React.ComponentType<{ ctx: PageCtx; api: TitleBarApi }>;
 
 /* ---------- component wrappers (read the ListScope's ListContext) ---------- */
 
-export const ExportActionComponent: ActionComponent = () => <ExportAction />;
+/**
+ * Export the current list. Feeds the list's `exportMeta` (falling back to its
+ * `meta`) into `ExportButton`, which runs its own `getList` — otherwise the
+ * export fetches unpopulated/non-raw records and relation columns come out
+ * blank even though the grid shows them.
+ */
+export const ExportActionComponent: ActionComponent = () => {
+  const list = useListManifest();
+  return <ExportAction meta={list?.exportMeta ?? list?.meta} />;
+};
 export const ColumnsActionComponent: ActionComponent = () => <ColumnsAction />;
 
 /** RA CreateButton for the list resource (RBAC-gated by `can`). */

@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  buildExportRelationCache,
   fetchRelatedField,
   fetchRelatedRecord,
   isIdSource,
   readExportCellValue,
   readExportColumn,
   readExportField,
+  readPath,
   relationDisplayValue,
   resolveExportCell,
+  selectExportColumns,
 } from "./fetchRelatedRecord";
 
 const getOne = vi.fn();
@@ -191,5 +194,147 @@ describe("readExportCellValue", () => {
     expect(
       readExportCellValue({ team: "Blue" }, "conference_team", "Team")
     ).toBe("Blue");
+  });
+});
+
+describe("selectExportColumns", () => {
+  const columns = [
+    { index: "0", label: "ID" },
+    { index: "1", label: "Name" },
+    { index: "2", label: "Email" },
+    { index: "3", label: "Phone" },
+  ];
+
+  it("exports in the user's on-screen order, not declaration order", () => {
+    // The grid renders columnIds.map(i => children[i]); the CSV must match.
+    expect(
+      selectExportColumns(columns, ["3", "1", "0"]).map((c) => c.label)
+    ).toEqual(["Phone", "Name", "ID"]);
+  });
+
+  it("drops the columns the user hid", () => {
+    expect(selectExportColumns(columns, ["1", "2"]).map((c) => c.label)).toEqual(
+      ["Name", "Email"]
+    );
+  });
+
+  it("falls back to every column when there is no saved preference", () => {
+    expect(selectExportColumns(columns, []).map((c) => c.label)).toEqual([
+      "ID",
+      "Name",
+      "Email",
+      "Phone",
+    ]);
+    expect(selectExportColumns(columns, undefined)).toEqual(columns);
+  });
+
+  it("ignores stale indices that no longer exist", () => {
+    expect(selectExportColumns(columns, ["2", "99"]).map((c) => c.label)).toEqual(
+      ["Email"]
+    );
+  });
+});
+
+describe("readPath", () => {
+  it("walks a dotted relation source (the blank Phone column)", () => {
+    expect(
+      readPath(
+        { point_of_contact: { phone: "555-0100" } },
+        "point_of_contact.phone"
+      )
+    ).toBe("555-0100");
+  });
+
+  it("returns undefined instead of throwing when the relation is missing", () => {
+    expect(
+      readPath({ point_of_contact: null }, "point_of_contact.phone")
+    ).toBeUndefined();
+    expect(readPath({}, "a.b.c")).toBeUndefined();
+  });
+
+  it("still reads plain sources", () => {
+    expect(readPath({ county: "Stephens" }, "county")).toBe("Stephens");
+  });
+});
+
+describe("readExportField dotted sources", () => {
+  it("exports the populated relation field the grid shows", () => {
+    expect(
+      readExportField(
+        { point_of_contact: { phone: "555-0100" } },
+        "point_of_contact.phone"
+      )
+    ).toBe("555-0100");
+  });
+});
+
+describe("buildExportRelationCache", () => {
+  it("fetches each relation type once instead of once per record", async () => {
+    const getMany = vi.fn().mockResolvedValue({
+      data: [
+        { id: 1, name: "New Application" },
+        { id: 2, name: "Approved" },
+      ],
+    });
+    const provider = { getMany } as unknown as Parameters<
+      typeof buildExportRelationCache
+    >[2];
+
+    const cache = await buildExportRelationCache(
+      [
+        { id: "a", status: 1 },
+        { id: "b", status: 2 },
+        { id: "c", status: 1 },
+      ],
+      [{ source: "status", label: "Status" }],
+      provider,
+      { status: "grant-statuses" }
+    );
+
+    expect(getMany).toHaveBeenCalledTimes(1);
+    expect(getMany).toHaveBeenCalledWith("grant-statuses", { ids: [1, 2] });
+    expect(cache.get("grant-statuses:1")).toMatchObject({
+      name: "New Application",
+    });
+  });
+
+  it("resolves cells from the cache without another round trip", async () => {
+    const getMany = vi
+      .fn()
+      .mockResolvedValue({ data: [{ id: 7, name: "Paid" }] });
+    const getOne = vi.fn();
+    const provider = { getMany, getOne } as unknown as Parameters<
+      typeof buildExportRelationCache
+    >[2];
+
+    const cache = await buildExportRelationCache(
+      [{ id: "a", payout_status: 7 }],
+      [{ source: "payout_status", label: "Payout Status" }],
+      provider
+    );
+
+    await expect(
+      resolveExportCell(7, {
+        dataProvider: provider as never,
+        resource: "payout-statuses",
+        cache,
+      })
+    ).resolves.toBe("Paid");
+    expect(getOne).not.toHaveBeenCalled();
+  });
+
+  it("survives a failed lookup with blank cells", async () => {
+    const getMany = vi.fn().mockRejectedValue(new Error("boom"));
+    const provider = { getMany } as unknown as Parameters<
+      typeof buildExportRelationCache
+    >[2];
+    await expect(
+      buildExportRelationCache(
+        [{ id: "a", status: 1 }],
+        [{ source: "status", label: "Status" }],
+        provider,
+        { status: "grant-statuses" }
+      )
+    ).resolves.toEqual(new Map());
   });
 });

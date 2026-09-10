@@ -36,7 +36,8 @@ export const SelectedGrantTitle = () => {
  */
 export const GrantExportAction = () => {
   const tab = usePageManifest().tab?.key;
-  const resource = useListManifest()?.resource ?? "";
+  const list = useListManifest();
+  const resource = list?.resource ?? "";
   const dataProvider = useDataProvider();
 
   const preferenceKey = `${resource}.datagrid`;
@@ -80,7 +81,14 @@ export const GrantExportAction = () => {
     }
   };
 
-  return <ExportAction exporter={exporter} />;
+  // `ExportButton` runs its own getList — without the list's export meta it
+  // refetches unpopulated, non-raw rows and relation columns export blank.
+  return (
+    <ExportAction
+      exporter={exporter}
+      meta={list?.exportMeta ?? list?.meta}
+    />
+  );
 };
 
 /** "Payout" — opens the New Payout modal rendered by the payout panels. */

@@ -1,7 +1,7 @@
 import jsonExport from 'jsonexport/dist'
 import { downloadCSV, ConfigurableDatagridColumn, DataProvider, RaRecord } from 'react-admin'
 import { formatNumber } from '../../../helpers/Formators'
-import { fetchRelatedRecord, readExportColumn, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
+import { fetchRelatedRecord, readExportColumn, relationDisplayValue, selectExportColumns } from '../../../helpers/fetchRelatedRecord'
 // import { balance } from '../../payouts/components/BalanceField'
 // import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
 
@@ -13,11 +13,10 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
 
     const filteredRecord = {} as Record<string, string>
 
-    let columns = availableColumns
-
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter(column => columnIds?.includes(column.index)).slice(8,11)
-    }
+    // Export every column the user has on screen, in their order. This used to
+    // `.slice(8, 11)` the filtered list — a positional pick that silently threw
+    // away all but three columns and could not survive column reordering.
+    const columns = selectExportColumns(availableColumns, columnIds)
 
     const registrant = await fetchRelatedRecord(
       dataProvider,

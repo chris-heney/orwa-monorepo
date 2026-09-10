@@ -9,6 +9,7 @@ import { formatDate } from "../../../helpers/dateFormatter";
 import fetchRelatedRecord, {
   readExportColumn,
   relationDisplayValue,
+  selectExportColumns,
 } from "../../../helpers/fetchRelatedRecord";
 
 const formatExportDate = (value: unknown): string => {
@@ -32,13 +33,7 @@ const exportSponsors = async (
     RecordList.map(async (record) => {
       const filteredRecord = {} as Record<string, string>;
 
-      let columns = availableColumns;
-
-      if (columnIds.length > 0) {
-        columns = availableColumns.filter((column) =>
-          columnIds?.includes(column.index)
-        );
-      }
+      const columns = selectExportColumns(availableColumns, columnIds);
 
       const registration = await fetchRelatedRecord(
         dataProvider,

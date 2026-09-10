@@ -1,4 +1,4 @@
-import { DataProvider, RaRecord } from "react-admin";
+import { DataProvider, Identifier, RaRecord } from "react-admin";
 import { getDisplayEntityId, isDocumentId } from "./strapiIds";
 
 /**
@@ -84,7 +84,51 @@ export function readExportField(record: unknown, source: string | undefined): un
     );
     return entityId != null ? entityId : "";
   }
-  return (record as Record<string, unknown>)[source];
+  return readPath(record, source);
+}
+
+/**
+ * Read a datagrid `source` off a record, following dotted paths.
+ *
+ * Datagrid columns address populated relations the way RA's own fields do
+ * (`<TextField source="point_of_contact.phone" />`). A flat `record[source]`
+ * read returns undefined for those, which is why Phone exported blank while
+ * the grid showed it — the CSV has to walk the path like the screen does.
+ */
+export function readPath(record: unknown, source: string): unknown {
+  if (!record || typeof record !== "object") return undefined;
+  if (!source.includes(".")) {
+    return (record as Record<string, unknown>)[source];
+  }
+  let cursor: unknown = record;
+  for (const segment of source.split(".")) {
+    if (cursor == null || typeof cursor !== "object") return undefined;
+    cursor = (cursor as Record<string, unknown>)[segment];
+  }
+  return cursor;
+}
+
+/**
+ * The columns to export, in the order the user arranged them on screen.
+ *
+ * `preferences.<key>.columns` is the ordered list of visible column indices —
+ * both `DatagridConfigurable` and `AgDatagrid` render
+ * `columnIds.map(i => children[i])`, so that array *is* the on-screen order.
+ * Exporters used to `availableColumns.filter(c => columnIds.includes(c.index))`,
+ * which keeps the original declaration order and silently discards the user's
+ * drag-reordering. Map over `columnIds` instead so the CSV mirrors the grid.
+ */
+export function selectExportColumns<T extends { index: string }>(
+  availableColumns: T[],
+  columnIds: string[] | undefined
+): T[] {
+  if (!columnIds || columnIds.length === 0) return availableColumns;
+  const byIndex = new Map(
+    availableColumns.map((column) => [column.index, column])
+  );
+  return columnIds
+    .map((index) => byIndex.get(index))
+    .filter((column): column is T => Boolean(column));
 }
 
 /**
@@ -190,13 +234,114 @@ const looksLikeRelationId = (value: unknown): boolean =>
   (typeof value === "string" && /^\d+$/.test(value));
 
 /**
+ * Relation records already fetched for an export, keyed `resource:id`.
+ *
+ * Exports used to resolve every unresolved relation with its own
+ * `dataProvider.getOne`, so a 500-row list fired 500+ requests and took
+ * minutes. `buildExportRelationCache` fetches each relation *type* once with a
+ * single `getMany`; `resolveExportCell` then reads cells out of the map.
+ */
+export type ExportRelationCache = Map<string, RaRecord>;
+
+const relationCacheKey = (resource: string, id: unknown) => `${resource}:${id}`;
+
+/** The id to look a relation up by, or undefined when it is not id-shaped. */
+const relationLookupId = (value: unknown): Identifier | undefined => {
+  if (value == null || value === "") return undefined;
+  if (looksLikeRelationId(value)) return value as Identifier;
+  if (typeof value === "object" && !Array.isArray(value)) {
+    const obj = value as RaRecord;
+    // A populated object needs no lookup — only bare {id}/{documentId} refs do.
+    if (relationDisplayValue(obj)) return undefined;
+    const id = obj.id ?? (obj as { documentId?: string }).documentId;
+    return looksLikeRelationId(id) ? (id as Identifier) : undefined;
+  }
+  return undefined;
+};
+
+/**
+ * Pre-fetch every relation an export will need: one `getMany` per resource
+ * instead of one `getOne` per record per column.
+ *
+ * Collects the id-shaped values the chosen columns point at, de-duplicates
+ * them per resource, and resolves each resource in one round trip. Failures
+ * are swallowed per resource — a missing lookup exports a blank cell exactly
+ * as the per-record path did, rather than failing the whole download.
+ */
+export async function buildExportRelationCache(
+  records: readonly RaRecord[],
+  columns: readonly { source?: string; label?: string }[],
+  dataProvider?: DataProvider,
+  relationResources?: Record<string, string>
+): Promise<ExportRelationCache> {
+  const cache: ExportRelationCache = new Map();
+  if (!dataProvider || records.length === 0) return cache;
+
+  const idsByResource = new Map<string, Set<Identifier>>();
+
+  for (const column of columns) {
+    if (isIdSource(column.source)) continue;
+    const resource = exportRelationResource(
+      column.source,
+      column.label,
+      relationResources
+    );
+    if (!resource) continue;
+    for (const record of records) {
+      const raw = readExportColumn(record, column);
+      const values = Array.isArray(raw) ? raw : [raw];
+      for (const value of values) {
+        const id = relationLookupId(value);
+        if (id === undefined) continue;
+        const bucket = idsByResource.get(resource) ?? new Set<Identifier>();
+        bucket.add(id);
+        idsByResource.set(resource, bucket);
+      }
+    }
+  }
+
+  await Promise.all(
+    Array.from(idsByResource.entries()).map(async ([resource, ids]) => {
+      try {
+        const { data } = await dataProvider.getMany(resource, {
+          ids: Array.from(ids),
+        });
+        for (const related of data ?? []) {
+          // Index under every id shape a cell might carry: the RA id
+          // (documentId after `withStableId`), the numeric PK, and the raw
+          // documentId — the same record answers all three.
+          const record = related as RaRecord;
+          for (const key of [
+            record.id,
+            (record as { entityId?: unknown }).entityId,
+            (record as { documentId?: unknown }).documentId,
+          ]) {
+            if (key == null) continue;
+            cache.set(relationCacheKey(resource, key), record);
+          }
+        }
+      } catch {
+        /* leave these cells blank, as the per-record path did */
+      }
+    })
+  );
+
+  return cache;
+}
+
+/**
  * CSV cell for a datagrid value. Unwraps populated relations; when the value
  * is a Strapi 5 documentId/number and a resource is known, fetches the label
  * instead of writing the id.
  */
 export async function resolveExportCell(
   value: unknown,
-  options?: { dataProvider?: DataProvider; resource?: string }
+  options?: {
+    dataProvider?: DataProvider;
+    resource?: string;
+    /** Pre-fetched relations (`buildExportRelationCache`) — consulted first. */
+    cache?: ExportRelationCache;
+  }
 ): Promise<string> {
   if (value == null || value === "") return "";
   if (typeof value === "boolean") return value ? "Yes" : "No";
@@ -206,6 +351,15 @@ export async function resolveExportCell(
       value.map((item) => resolveExportCell(item, options))
     );
     return parts.filter(Boolean).join(", ");
+  }
+
+  // A pre-fetched relation answers without another round trip.
+  if (options?.resource && options.cache?.size) {
+    const id = relationLookupId(value);
+    if (id !== undefined) {
+      const cached = options.cache.get(relationCacheKey(options.resource, id));
+      if (cached) return relationDisplayValue(cached);
+    }
   }
 
   if (typeof value === "object") {

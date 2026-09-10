@@ -9,6 +9,7 @@ import {
   exportRelationResource,
   readExportColumn,
   resolveExportCell,
+  selectExportColumns,
 } from '../../../helpers/fetchRelatedRecord';
 
 const fetchAllRecords = async (dataProvider: any, resource: string, page = 1, perPage = 1000, accumulatedRecords: RaRecord[] = []) => {
@@ -42,13 +43,7 @@ const CustomContactExport = async (
   const data = await Promise.all(
     RecordList.map(async (record) => {
     const filteredRecord = {} as Record<string, string>;
-    let columns = availableColumns;
-
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter((column) =>
-        columnIds.includes(column.index)
-      );
-    }
+    const columns = selectExportColumns(availableColumns, columnIds);
 
     for (const column of columns) {
       if (column.label && column.label.trim() !== '') {
