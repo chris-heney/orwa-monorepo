@@ -11,11 +11,9 @@ import {
 import {
   FinancialAuditDashboard,
   SoonerwarnManagement,
-  SettingsDashboard,
   OrwefManagement,
   AwardManagement,
 } from './modules/dashboards';
-import EventSettings from './modules/training/settings/EventSettings';
 import {
   isRegisteredModule,
   isRegisteredResource,
@@ -59,8 +57,6 @@ export interface LegacyRoute {
 }
 
 const LEGACY_ROUTES: LegacyRoute[] = [
-  { path: 'admin/settings', element: <SettingsDashboard />, module: 'settings' },
-  { path: 'event/settings', element: <EventSettings />, module: 'settings' },
   {
     path: 'orwef-scholarships/dashboard',
     element: <OrwefManagement />,
