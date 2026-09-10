@@ -83,6 +83,10 @@ open at a time (RaStore `${pageId}.drawer`).
 `titleBar.title` may be `(ctx) => ctx.record?.name`. Mount them from
 `resources[x].show = pageView('module.page')` (no extra route needed).
 
+When a resource's only list renderer is a dashboard tab, point RA's default
+list route at it: `resources[x].list = tabRedirect('module.dashboard', 'tabKey')`
+(never mount a second, bar-less `<List>`).
+
 ### Extending another module's page (Odoo inherit)
 
 ```ts
@@ -105,7 +109,8 @@ sticky wrapper (Training's event-pipeline stepper). It receives no props.
 | `${pageId}.tab` (or `titleBar.tabStoreKey`) | active tab key |
 | `${pageId}.drawer` | open drawer id or `null` |
 | `${pageId}.search` | search row open |
-| `${pageId}.${tabKey}.listParams` / `.selectedIds` (or `list.storeKey`) | RA list params (RA writes these) |
+| `${storeKey}.listParams` (`storeKey` = `list.storeKey` or `${pageId}.${tabKey}` / `${pageId}.list`) | RA `ListParams` `{ sort, order, page, perPage, filter, displayedFilters }` — written by `ListScope`'s `ListParamsPersistence` (RA 4.16 never persists params for `disableSyncWithLocation` lists) and restored on mount as `sort` / `perPage` / `filterDefaultValues` / `setPage` |
+| `${storeKey}.selectedIds` | RA selection (RA writes this) |
 
 ## Layout contract (enforced)
 
