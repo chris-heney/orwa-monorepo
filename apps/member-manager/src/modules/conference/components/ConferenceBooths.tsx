@@ -30,6 +30,7 @@ import { useConferenceContext } from "../ConferenceContext";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { createRecord } from "../../_helpers/createRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
+import { formResourceShellSx } from "../../../css/formLayout";
 import CustomPagination from "../../_components/CustomPagination";
 import { getPrimaryConferenceId } from "../helpers/mergeConferenceAcrossTabFilters";
 
@@ -110,7 +111,7 @@ const ConferenceBooths = () => {
     <Create
       title={" "}
       component={"div"}
-      sx={{ mt: -2 }}
+      sx={formResourceShellSx}
       redirect={false}
       resource="conference-booths"
     >

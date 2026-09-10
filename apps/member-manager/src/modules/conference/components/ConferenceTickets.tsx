@@ -37,6 +37,7 @@ import { useConferenceContext } from "../ConferenceContext";
 import { createRecord } from "../../_helpers/createRecord";
 import { updateRecord } from "../../_helpers/updateRecord";
 import { customDatagridStyle, positionStickyComponent } from "../../../css";
+import { formResourceShellSx } from "../../../css/formLayout";
 import CustomPagination from "../../_components/CustomPagination";
 import SafeReferenceArrayField from "./SafeReferenceArrayField";
 import { normalizeRecordArrays } from "../helpers/normalizeRecordArrays";
@@ -193,9 +194,7 @@ const ConferenceTickets = () => {
 
   return isCreating ? (
     <Create
-      sx={{
-        mt: -2,
-      }}
+      sx={formResourceShellSx}
       title={" "}
       redirect={false}
       resource="conference-tickets"

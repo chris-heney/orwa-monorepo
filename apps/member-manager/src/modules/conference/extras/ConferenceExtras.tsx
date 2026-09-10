@@ -16,6 +16,7 @@ import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
 import { useConferenceContext } from '../ConferenceContext';
 import { createRecord } from '../../_helpers/createRecord';
 import { customDatagridStyle } from '../../../css';
+import { formResourceShellSx } from '../../../css/formLayout';
 import CustomPagination from '../../_components/CustomPagination';
 import ConferenceExtraForm from './ConferenceExtraForm';
 import SafeReferenceArrayField from '../components/SafeReferenceArrayField';
@@ -31,7 +32,7 @@ const ConferenceExtras = () => {
 
   return isCreating ? (
     <Create
-      sx={{ mt: -2 }}
+      sx={formResourceShellSx}
       title={' '}
       redirect={false}
       resource="conference-extras"

@@ -6,6 +6,7 @@ import AddIcon from '@mui/icons-material/Add'
 import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { FieldValues } from 'react-hook-form'
 import CustomToolBar from '../../../_components/CustomToolbar'
+import { formResourceShellSx } from '../../../../css/formLayout'
 
 
 interface CustomInterfaceProps {
@@ -72,7 +73,7 @@ const CustomInterface = ({ rows, resource, createTitle, InputFields, inputs }: C
 
   return isCreating ? (
     <Box>
-      <Create sx={{ mt: -2 }} redirect={false} title={' '} resource={resource}>
+      <Create sx={formResourceShellSx} redirect={false} title={' '} resource={resource}>
         <CustomSecondaryHeader title={`Add ${title}`} />
         <Button onClick={() => isCreating ? setIsCreating(false) : setIsCreating(true)}>Back</Button>
         <SimpleForm onSubmit={createProjectType}>
