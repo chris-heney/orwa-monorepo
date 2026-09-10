@@ -7,6 +7,8 @@ import {
 } from "react-admin";
 import {
   exportRelationResource,
+  isIdSource,
+  readExportCellValue,
   resolveExportCell,
 } from "../fetchRelatedRecord";
 
@@ -32,16 +34,21 @@ const CustomExportFunction = async (
 
       for (const column of columns) {
         if (column.label && column.label.trim() !== "") {
-          const raw =
-            record[column.source as keyof typeof record] ??
-            record[column.label.toLowerCase() as keyof typeof record];
-          const resource = exportRelationResource(
-            column.source,
-            column.label,
-            relationResources
-          );
-          filteredRecord[column.label as keyof typeof record] =
-            await resolveExportCell(raw, { dataProvider, resource });
+          const raw = readExportCellValue(record, column.source, column.label);
+          // ID columns export the numeric PK (what EntityIdField shows on
+          // screen) — never the documentId, and never a relation lookup.
+          if (isIdSource(column.source)) {
+            filteredRecord[column.label as keyof typeof record] =
+              raw == null ? "" : String(raw);
+          } else {
+            const resource = exportRelationResource(
+              column.source,
+              column.label,
+              relationResources
+            );
+            filteredRecord[column.label as keyof typeof record] =
+              await resolveExportCell(raw, { dataProvider, resource });
+          }
         }
 
         if (column.label === "Team") {

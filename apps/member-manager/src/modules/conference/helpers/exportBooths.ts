@@ -8,6 +8,7 @@ import {
 import { formatDate } from "../../../helpers/dateFormatter";
 import { formatNumber } from "../../../helpers/Formators";
 import fetchRelatedRecord, {
+  readExportColumn,
   relationDisplayValue,
 } from "../../../helpers/fetchRelatedRecord";
 
@@ -54,7 +55,7 @@ const exportBooths = async (
 
       for (const column of columns) {
         if (column.label && column.label.trim() !== "") {
-          let value = booth[column.source as keyof typeof booth];
+          let value = readExportColumn(booth, column) as unknown;
           if (column.label === "Registrant") {
             value = `${registrant.first ?? ""} ${registrant.last ?? ""}`.trim();
           } else if (column.label === "Email") {
@@ -78,9 +79,7 @@ const exportBooths = async (
               .map((item: ConfigurableDatagridColumn) => `${item.label}`)
               .join(", ");
           } else {
-            value = relationDisplayValue(
-              booth[column.source as keyof typeof booth]
-            );
+            value = relationDisplayValue(readExportColumn(booth, column));
           }
           filteredRecord[column.label as keyof typeof booth] = value as string;
         }

@@ -3,6 +3,7 @@ import { downloadCSV, ConfigurableDatagridColumn, RaRecord, DataProvider } from 
 import formatTime from '../../_helpers/formatTime'
 import {
   exportRelationResource,
+  readExportColumn,
   resolveExportCell,
 } from '../../../helpers/fetchRelatedRecord'
 
@@ -24,9 +25,7 @@ const exportSchedule = async (RecordList: RaRecord[], availableColumns: Configur
       if (column.label && column.label.trim() !== '') {
 
         let value = await resolveExportCell(
-          typeof column.source !== 'undefined'
-            ? schedule[column.source as keyof typeof schedule]
-            : schedule[column.label.toLowerCase() as keyof typeof schedule],
+          readExportColumn(schedule, column),
           {
             dataProvider,
             resource: exportRelationResource(column.source, column.label),

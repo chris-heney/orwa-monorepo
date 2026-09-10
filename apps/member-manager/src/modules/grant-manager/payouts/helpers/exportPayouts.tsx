@@ -4,6 +4,7 @@ import { balance } from '../../payouts/components/BalanceField'
 import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
 import {
   fetchRelatedRecord,
+  readExportColumn,
   relationDisplayValue,
 } from '../../../../helpers/fetchRelatedRecord'
 
@@ -52,7 +53,7 @@ const exportPayouts = async (RecordList: RaRecord[], availableColumns: Configura
         } else if (column.label === 'Total Paid Out') {
           value = applicationId != null ? await totalPaidOut(dataProvider, applicationId) : ''
         } else {
-          value = relationDisplayValue(payout[column.source as keyof typeof payout])
+          value = relationDisplayValue(readExportColumn(payout, column))
         }
 
         // Assign the value to the corresponding label in the filtered record

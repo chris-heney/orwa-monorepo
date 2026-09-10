@@ -5,6 +5,7 @@ import getExpirationDate, {
 } from "../../_helpers/getExpirationDate";
 import {
   fetchRelatedRecord,
+  readExportField,
   relationDisplayValue,
 } from "../../../helpers/fetchRelatedRecord";
 
@@ -88,7 +89,9 @@ export const defaultAssociateExport = async (
       else {
         const sourceKey = column.source as string;
         if (sourceKey && record[sourceKey] !== undefined) {
-          exportRecord[columnLabel] = relationDisplayValue(record[sourceKey]);
+          exportRecord[columnLabel] = relationDisplayValue(
+            readExportField(record, sourceKey)
+          );
         } else {
           exportRecord[columnLabel] = '';
         }

@@ -7,6 +7,7 @@ import {
 } from "react-admin";
 import { formatDate } from "../../../helpers/dateFormatter";
 import fetchRelatedRecord, {
+  readExportColumn,
   relationDisplayValue,
 } from "../../../helpers/fetchRelatedRecord";
 
@@ -53,11 +54,7 @@ const exportAttendees = async (
 
       for (const column of columns) {
         if (column.label && column.label.trim() !== "") {
-          let value = relationDisplayValue(
-            typeof column.source !== "undefined"
-              ? record[column.source as keyof typeof record]
-              : record[column.label.toLowerCase() as keyof typeof record]
-          );
+          let value = relationDisplayValue(readExportColumn(record, column));
 
           if (column.label === "Date Registered") {
             // Always overwrite — source is often "registration" (documentId).

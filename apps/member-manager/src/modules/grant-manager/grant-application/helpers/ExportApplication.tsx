@@ -10,6 +10,7 @@ import { totalPaidOut } from "../../payouts/components/TotalPayoutField";
 import { IGrantApplication } from "../GrantApplicationTypes";
 import {
   fetchRelatedRecord,
+  readExportColumn,
   relationDisplayValue,
 } from "../../../../helpers/fetchRelatedRecord";
 
@@ -64,9 +65,7 @@ const ExportApplications = async (
               application.id as Identifier
             );
           } else {
-            value = relationDisplayValue(
-              application[column.source as keyof typeof application]
-            );
+            value = relationDisplayValue(readExportColumn(application, column));
           }
 
           if (column.label === "Selected Projects") {

@@ -22,6 +22,7 @@ import {
 import dayjs from "dayjs";
 import { IGrantPayout } from "./GrantTypes";
 import { formatNumber } from "../../../../helpers/Formators";
+import { getDisplayEntityId } from "../../../../helpers/strapiIds";
 import { IGrantApplication } from "../../grant-application/GrantApplicationTypes";
 import DownloadIcon from "@mui/icons-material/Download";
 import {
@@ -122,7 +123,7 @@ const FinancialBreakdown: React.FC<FinancialBreakdownProps> = ({
 
       return {
         type: "Application",
-        id: app.application_id ?? app.id,
+        id: app.application_id ?? getDisplayEntityId(app) ?? "",
         recordId: app.id,
         date: app.committee_date,
         name: app.legal_entity_name,

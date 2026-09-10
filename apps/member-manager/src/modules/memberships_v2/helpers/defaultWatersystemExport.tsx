@@ -6,6 +6,7 @@ import getExpirationDate, {
 import { directoryContactFieldFromSource } from "../watersystem/directoryContacts";
 import {
   exportRelationResource,
+  readExportField,
   resolveExportCell,
 } from "../../../helpers/fetchRelatedRecord";
 
@@ -77,7 +78,7 @@ export const defaultWatersystemExport = async (
           );
         } else if (sourceKey && record[sourceKey] !== undefined) {
           exportRecord[columnLabel] = await resolveExportCell(
-            record[sourceKey],
+            readExportField(record, sourceKey),
             {
               dataProvider,
               resource: exportRelationResource(sourceKey, columnLabel),

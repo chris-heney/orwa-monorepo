@@ -1,5 +1,6 @@
 import jsonExport from "jsonexport/dist";
 import { downloadCSV, DataProvider, RaRecord } from "react-admin";
+import { getDisplayEntityId } from "../../../helpers/strapiIds";
 import fetchRelatedRecord from "../../../helpers/fetchRelatedRecord";
 import { isDocumentId } from "../../../helpers/strapiIds";
 
@@ -158,7 +159,7 @@ const exportVendorAttendeeRoster = async (
         "Rep phone": (record.phone as string) ?? "",
         "Rep title": (record.title as string) ?? "",
         "Registration date": (registration as unknown as { registration_date: string })?.registration_date ?? "",
-        "Attendee ID": String(record.id ?? ""),
+        "Attendee ID": String(getDisplayEntityId(record) ?? ""),
       };
     })
   );

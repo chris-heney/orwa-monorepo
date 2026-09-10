@@ -73,3 +73,54 @@ export function directoryContactFieldFromSource(
   if (!field) return "";
   return getDirectoryContactField(record, idx, field);
 }
+
+/**
+ * Print order for directory contacts, left to right, by title.
+ *
+ * Held separately from WATERSYSTEM_DIRECTORY_TITLE_CHOICES on purpose: that
+ * list drives a form picker and may be reordered for data-entry convenience,
+ * while this is the order a published directory reads in. The two are kept in
+ * step by a spec that fails if a picker choice has no rank here.
+ *
+ * Any title outside this list (including a blank one) sorts last.
+ */
+export const DIRECTORY_TITLE_PRINT_ORDER = [
+  "Chairman",
+  "Vice-Chairman",
+  "Director",
+  "Manager",
+  "Operator",
+  "Bookkeeper",
+] as const;
+
+/**
+ * Comparison key for a title: case-, space- and punctuation-insensitive, so
+ * "Vice-Chairman", "Vice Chairman" and "vice chairman" all rank together.
+ * Titles are free text in Strapi, so they will not always match the picker.
+ */
+const normalizeTitleKey = (title: unknown): string =>
+  typeof title === "string" ? title.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+
+const TITLE_RANK = new Map<string, number>(
+  DIRECTORY_TITLE_PRINT_ORDER.map((title, index) => [
+    normalizeTitleKey(title),
+    index,
+  ])
+);
+
+/** Rank of a title in the print order; unknown/blank titles rank last. */
+export const directoryTitleRank = (title: unknown): number =>
+  TITLE_RANK.get(normalizeTitleKey(title)) ?? DIRECTORY_TITLE_PRINT_ORDER.length;
+
+/**
+ * Directory contacts ordered by title for publication. Stable: contacts that
+ * share a rank (two Directors, or two untitled contacts) keep the order they
+ * were entered in. Returns a new array; the input is untouched.
+ */
+export function sortDirectoryContactsByTitle<T extends { title?: string }>(
+  contacts: readonly T[]
+): T[] {
+  return [...contacts].sort(
+    (a, b) => directoryTitleRank(a.title) - directoryTitleRank(b.title)
+  );
+}
