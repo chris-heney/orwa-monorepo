@@ -1,2 +1,2 @@
-export { default as FinancialAuditDashboard } from './memberships_v2/FinancialAuditDashboard';
-export { default as SoonerwarnManagement } from './soonerwarn/SoonerwarnManagement';
+export { default as OrwefManagement } from './orwef-scholarships/OrwefManagement';
+export { default as AwardManagement } from './award-nominations/AwardManagement';

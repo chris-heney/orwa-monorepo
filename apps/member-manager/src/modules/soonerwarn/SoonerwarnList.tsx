@@ -1,14 +1,12 @@
 import React from "react";
-import { Box, IconButton, Tooltip, useMediaQuery } from "@mui/material";
-import { Theme } from "@mui/material/styles";
+import { Box, IconButton, Tooltip } from "@mui/material";
 import {
-  List,
+  ListView,
   TextField,
   NumberField,
   RaRecord,
   DateField,
   FunctionField,
-  FilterLiveSearch,
   Edit,
   SimpleForm,
   Create,
@@ -30,9 +28,14 @@ import { updateRecord } from "../_helpers/updateRecord";
 import CustomToolBar from "../_components/CustomToolbar";
 import SelectSoonerwarnStatus from "./components/SelectSoonerwarnStatus";
 
+/**
+ * Applications / Volunteer tab panel — renders inside the tab's ListScope
+ * (`soonerwarns`); the status filter is a plain list filter value now, set by
+ * the Filters drawer.
+ */
 const SoonerwarnList = () => {
   const [isEditing, setIsEditing] = React.useState(false);
-  const { isCreating, setIsCreating, selectedStatuses, setSelectedApplication} =
+  const { isCreating, setIsCreating, setSelectedApplication } =
     useSoonerwarnContext();
   const [create] = useCreate();
   const [update] = useUpdate();
@@ -52,27 +55,11 @@ const SoonerwarnList = () => {
     </Create>
   ) : (
     <>
-      <List
-        disableSyncWithLocation
+      <ListView
         component="div"
         title=" "
-        resource="soonerwarns"
-        actions={<FilterLiveSearch />}
-        filter={{ status: selectedStatuses }}
-        queryOptions={{
-          meta: {
-            raw: true,
-          },
-        }}
-        perPage={50}
+        actions={false}
         pagination={<CustomPagination />}
-        sx={{
-          ".RaList-actions": {
-            display: "flex",
-            justifyContent: "flex-start",
-            px: 2,
-          },
-        }}
       >
         <DatagridConfigurable
           sx={customDatagridStyle}
@@ -114,10 +101,7 @@ const SoonerwarnList = () => {
                     </SimpleForm>
                   </Edit>
                 ) : (
-                  <SoonerwarnShow
-                    isEditing={isEditing}
-                    setIsEditing={setIsEditing}
-                  />
+                  <SoonerwarnShow />
                 )}
               </>
             );
@@ -139,7 +123,7 @@ const SoonerwarnList = () => {
           <TextField source="physical_address_state" label="State" noWrap />
           <TextField source="physical_address_zip" label="Zip" noWrap />
         </DatagridConfigurable>
-      </List>
+      </ListView>
     </>
   );
 };

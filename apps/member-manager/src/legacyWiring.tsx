@@ -9,8 +9,6 @@ import {
   AwardTypes,
 } from './modules';
 import {
-  FinancialAuditDashboard,
-  SoonerwarnManagement,
   OrwefManagement,
   AwardManagement,
 } from './modules/dashboards';
@@ -63,16 +61,6 @@ const LEGACY_ROUTES: LegacyRoute[] = [
     module: 'scholarships',
   },
   { path: 'orwa-awards/dashboard', element: <AwardManagement />, module: 'awards' },
-  {
-    path: 'soonerwarn/dashboard',
-    element: <SoonerwarnManagement />,
-    module: 'memberships',
-  },
-  {
-    path: 'financial-audits/dashboard',
-    element: <FinancialAuditDashboard />,
-    module: 'memberships',
-  },
 ];
 
 /** Legacy resources the registry does not own yet. */

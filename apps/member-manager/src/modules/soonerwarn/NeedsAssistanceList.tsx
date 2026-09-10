@@ -5,14 +5,12 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Theme } from "@mui/material/styles";
 import {
-  List,
+  ListView,
   NumberField,
   RaRecord,
   DateField,
   FunctionField,
-  FilterLiveSearch,
   Edit,
   SimpleForm,
   Create,
@@ -34,14 +32,15 @@ import { updateRecord } from "../_helpers/updateRecord";
 import CustomToolBar from "../_components/CustomToolbar";
 import SelectSoonerwarnStatus from "./components/SelectSoonerwarnStatus";
 
+/**
+ * Needs Assistance tab panel — renders inside the tab's ListScope
+ * (`soonerwarn-requests`); the status filter is a list filter value set by
+ * the Filters drawer.
+ */
 const NeedsAssistanceList = () => {
   const [isEditing, setIsEditing] = React.useState(false);
-  const {
-    isCreating,
-    setIsCreating,
-    selectedRequestedStatuses,
-    setSelectedApplication,
-  } = useSoonerwarnContext();
+  const { isCreating, setIsCreating, setSelectedApplication } =
+    useSoonerwarnContext();
   const [create] = useCreate();
   const [update] = useUpdate();
   const notify = useNotify();
@@ -65,27 +64,11 @@ const NeedsAssistanceList = () => {
     </Create>
   ) : (
     <>
-      <List
-        disableSyncWithLocation
+      <ListView
         component="div"
         title=" "
-        resource="soonerwarn-requests"
-        actions={<FilterLiveSearch />}
-        filter={{ status: selectedRequestedStatuses }}
-        queryOptions={{
-          meta: {
-            raw: true,
-          },
-        }}
-        perPage={50}
+        actions={false}
         pagination={<CustomPagination />}
-        sx={{
-          ".RaList-actions": {
-            display: "flex",
-            justifyContent: "flex-start",
-            px: 2,
-          },
-        }}
       >
         <DatagridConfigurable
           sx={customDatagridStyle}
@@ -188,7 +171,7 @@ const NeedsAssistanceList = () => {
             }}
           />
         </DatagridConfigurable>
-      </List>
+      </ListView>
     </>
   );
 };

@@ -40,6 +40,8 @@ import { GridViewToggleAction } from './componenets/GridViewToggleAction';
 import MembershipShow from './memberships/MembershipShow';
 import MembershipItemShow from './membership-items/MembershipItemShow';
 import AssociateShow from './associate/AssociateShow';
+import FinancialAuditDashboard from './FinancialAuditDashboard';
+import { soonerwarnPages } from '../soonerwarn/manifest';
 
 /* ---------- module-specific bar actions ---------- */
 
@@ -276,6 +278,20 @@ const associateShow: PageManifest = {
  * Also owns the legacy `soonerwarn/dashboard` and `financial-audits/dashboard`
  * routes (still wired in `legacyWiring.tsx`; another pass migrates them).
  */
+/** Standalone `/financial-audits/dashboard` (the same widget is embedded in the Summary tab). */
+const financialAudits: PageManifest = {
+  id: 'memberships.financialAudits',
+  route: 'financial-audits/dashboard',
+  kind: 'custom',
+  titleBar: {
+    title: 'Financial Audit',
+    infoTooltip:
+      'Unearned membership dues as of a chosen date — the deferred-revenue figure auditors ask for.',
+    back: '/membership-management',
+  },
+  body: FinancialAuditDashboard,
+};
+
 export const membershipsModule: ModuleManifest = {
   id: 'memberships',
   title: 'Memberships',
@@ -290,8 +306,8 @@ export const membershipsModule: ModuleManifest = {
       '/membership-items',
       '/invoices',
       '/financial-audits/dashboard',
-      // SoonerWARN's menu item is commented out in Admin.tsx; its dashboard
-      // route still exists, so memberships owns it until it becomes a module.
+      // SoonerWARN has no menu item of its own; its pages live in
+      // `../soonerwarn/manifest` and are registered under memberships.
       '/soonerwarn/dashboard',
     ],
     resources: [
@@ -309,7 +325,14 @@ export const membershipsModule: ModuleManifest = {
     memberships: Memberships,
     invoices: Transactions,
   },
-  pages: [dashboard, membershipShow, membershipItemShow, associateShow],
+  pages: [
+    dashboard,
+    membershipShow,
+    membershipItemShow,
+    associateShow,
+    financialAudits,
+    ...soonerwarnPages,
+  ],
 };
 
 export default membershipsModule;
