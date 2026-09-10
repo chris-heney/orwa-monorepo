@@ -17,8 +17,11 @@ import { useDrawerFlag } from './drawer/DrawerLocalState';
 export const SavedFiltersSection = ({ resource }: { resource?: string }) => {
   const contextResource = useResourceContext();
   const [savingQuery] = useDrawerFlag('savingQuery');
+  // Null on Filters drawers mounted without a list (grant-manager's Summary /
+  // Map reuse `GrantFilters` there); SavedFilters' list hooks would throw.
+  const hasList = useContext(ListFilterContext) != null;
   const effective = resource ?? contextResource;
-  if (!effective) return null;
+  if (!hasList || !effective) return null;
   return <SavedFilters resource={effective} savingQuery={savingQuery} />;
 };
 

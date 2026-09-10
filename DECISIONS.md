@@ -86,6 +86,42 @@ columns, column order, per-page, sort — not just filter values.
 - Both header actions read `ListFilterContext` via `useContext` and render
   nothing when it is absent.
 
+### 7. The saved-query picker reaches every list that can save
+
+- A universal Save is only half a feature if the list has no picker to load it
+  back. Five sidebars had none: `GrantFilters`, both Soonerwarn status bodies,
+  `OrwefFilterSidebar`, `AwardFilterSidebar`. They now render
+  `SavedFiltersSection` as the first child of their existing padded box, which
+  is where the other twelve already put it.
+- **Not** hoisted into `DefaultFiltersBody` instead, even though that would be
+  DRYer. Conference deliberately hides the picker on its scope-only tabs
+  (Summary / Tools / Edit), and those tabs *do* have a `list` — so a central
+  render would need a new per-tab opt-out and would change behaviour there.
+  Worth revisiting if a second list ever wants to opt out.
+- `SavedFiltersSection` now returns null without a `ListFilterContext`, for the
+  same reason the header actions do — `GrantFilters` is also the body of
+  grant-manager's list-less Summary and Map tabs.
+
+### 8. Applying a whole view in one handler is safe on this RA version
+
+- Checked rather than assumed, because "setSort then setPerPage then setPage,
+  all in one click handler" is a classic stale-closure trap.
+- `ra-core`'s `useListParams.changeParams` accumulates actions dispatched in the
+  same tick into `tempParams.current` (seeded from `query` by the first call,
+  then reduced onto itself) and commits them in one scheduled flush. And
+  `setFilters(filter, displayedFilters, debounce = false)` is **not** debounced
+  by default. So filters, sort, per-page and page all land together.
+- If ra-core is ever upgraded, re-read that function before trusting
+  `useApplyListView`.
+
+### Known limits
+
+- `AgDatagrid` persists in-grid **drag** reorder to its own `agGrid.<resource>`
+  prefs (`onColumnMoved={persistColumnWidths}`), not to
+  `preferences.<key>.columns`. A saved view therefore captures the column order
+  chosen through the Columns button, not one dragged in the grid. Column
+  *widths* are likewise not part of a saved view.
+
 ### Verification
 
 - `tsc --noEmit`: 148 top-level errors, identical to the pre-change baseline,

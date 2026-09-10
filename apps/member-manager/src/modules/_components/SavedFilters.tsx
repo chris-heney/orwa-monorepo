@@ -20,7 +20,11 @@ import {
 } from 'react-admin';
 import { useGetIdentity } from '../../helpers/useGetIdentity';
 import { useCan } from '../rbac-manager/useCan';
-import { useApplyListView, SavedListView } from './listView';
+import {
+  findActiveSavedQuery,
+  useApplyListView,
+  SavedListView,
+} from './listView';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PublicIcon from '@mui/icons-material/Public';
@@ -78,50 +82,23 @@ const SavedFilters = ({
     }
   }, [savingQuery]);
 
-  // Check if current filters match any saved filter and select it
+  // Keep the dropdown naming whichever saved query is actually applied.
   useEffect(() => {
     if (!savedFilters || savedFilters.length === 0) return;
-
-    // Check if the current filter values match any saved filter
-    const matchingFilter = savedFilters.find((filter) => {
-      if (!filter.filters) return false;
-
-      // Check if the filter has the same properties and values
-      const filterEntries = Object.entries(filter.filters);
-      if (filterEntries.length === 0) return false;
-
-      // Check if filterValues has all the keys in this filter
-      if (Object.keys(filterValues || {}).length < filterEntries.length)
-        return false;
-
-      // All filter criteria must match
-      return filterEntries.every(([key, value]) => {
-        // Check deep equality for arrays, objects, or simple equality for primitives
-        if (Array.isArray(value) && Array.isArray(filterValues[key])) {
-          if (value.length !== filterValues[key].length) return false;
-          return value.every((v, i) => v === filterValues[key][i]);
-        } else if (
-          typeof value === 'object' &&
-          value !== null &&
-          typeof filterValues[key] === 'object' &&
-          filterValues[key] !== null
-        ) {
-          return JSON.stringify(value) === JSON.stringify(filterValues[key]);
-        }
-        return value === filterValues[key];
-      });
-    });
-
-    // Update selected value based on whether we found a match
-    if (matchingFilter) {
-      setSelectedValue(matchingFilter.id);
+    const active = findActiveSavedQuery(
+      savedFilters,
+      filterValues,
+      selectedValue
+    );
+    if (active) {
+      setSelectedValue(active.id);
     } else if (selectedValue !== '-1') {
       // No match: deselect. This must fire on an *empty* filter set too —
       // otherwise Reset leaves the dropdown naming a query that is no
       // longer applied.
       setSelectedValue('-1');
     }
-  }, [savedFilters, filterValues]);
+  }, [savedFilters, filterValues, selectedValue]);
 
   if (!identity?.id) {
     return null;

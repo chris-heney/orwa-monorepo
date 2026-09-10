@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useListContext, useStore } from 'react-admin';
-import { usePageManifest } from '../../framework/PageContext';
+import { usePageManifestOptional } from '../../framework/PageContext';
 
 /**
  * Everything a saved query restores *besides* the filter values: sort, page
@@ -72,14 +72,68 @@ export const canRestoreColumns = (
       (!view.columnsKey || view.columnsKey === columnsKey)
   );
 
+const valuesEqual = (a: unknown, b: unknown): boolean => {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((v, i) => v === b[i]);
+  }
+  if (typeof a === 'object' && a !== null && typeof b === 'object' && b !== null) {
+    return JSON.stringify(a) === JSON.stringify(b);
+  }
+  return a === b;
+};
+
+/**
+ * Is this saved query the one currently applied? Its filters must all be
+ * present in the live filter values (a subset match, as before).
+ *
+ * A query saved with *no* filters is not a no-op any more — it can still carry
+ * a column order, sort and page size — so it counts as applied exactly when no
+ * filters are active, rather than never matching.
+ */
+export const savedFilterMatches = (
+  saved: Record<string, unknown> | undefined | null,
+  current: Record<string, unknown> | undefined | null
+): boolean => {
+  const savedEntries = Object.entries(saved ?? {});
+  const currentValues = current ?? {};
+  if (savedEntries.length === 0) return Object.keys(currentValues).length === 0;
+  if (Object.keys(currentValues).length < savedEntries.length) return false;
+  return savedEntries.every(([key, value]) =>
+    valuesEqual(value, currentValues[key])
+  );
+};
+
+/**
+ * Which saved query the dropdown should show. On a tie the current selection
+ * wins, so an empty-filter view does not jump to a different empty-filter view
+ * on every re-render.
+ */
+export const findActiveSavedQuery = <
+  T extends { id: string | number; filters?: Record<string, unknown> | null }
+>(
+  savedQueries: T[],
+  filterValues: Record<string, unknown> | undefined | null,
+  currentId: string | number | undefined
+): T | undefined => {
+  const matches = savedQueries.filter((q) =>
+    savedFilterMatches(q.filters, filterValues)
+  );
+  if (matches.length === 0) return undefined;
+  return (
+    matches.find((q) => String(q.id) === String(currentId)) ?? matches[0]
+  );
+};
+
 /**
  * RaStore key holding the visible-column ids for the current list.
  * `ListManifest.columnsPreferenceKey` overrides it for lists whose grid was
  * mounted with a non-default `preferenceKey`.
  */
 export const useColumnsPreferenceKey = (): string => {
-  const { tab, page } = usePageManifest();
-  const list = tab?.list ?? page.list;
+  // Optional: these hooks run in filter sidebars, which a legacy page could
+  // still mount outside PageShell. `usePageManifest` throws there.
+  const manifest = usePageManifestOptional();
+  const list = manifest?.tab?.list ?? manifest?.page?.list;
   const { resource } = useListContext();
   return columnsPreferenceKeyFor(
     list?.columnsPreferenceKey,
