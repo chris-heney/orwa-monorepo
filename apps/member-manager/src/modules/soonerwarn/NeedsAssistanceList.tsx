@@ -23,6 +23,7 @@ import { DatagridConfigurable } from "@orwa/entity-id";
 import { Visibility, Edit as EditIcon } from "@mui/icons-material";
 import CustomPagination from "../_components/CustomPagination";
 import { customDatagridStyle } from "../../css";
+import { formResourceShellSx } from "../../css/formLayout";
 import SoonerwarnShow from "./SoonerwarnShow";
 import SoonerwarnFormFields from "./components/SoonerwarnFormFields";
 import { useSoonerwarnContext } from "./SoonerwarnContextProvider";
@@ -51,7 +52,7 @@ const NeedsAssistanceList = () => {
       resource="soonerwarn-requests"
       redirect={false}
       title={" "}
-      sx={{ mt: -2 }}
+      sx={formResourceShellSx}
     >
       <CustomSecondaryHeader title="New Soonerwarn Application" />
       <SimpleForm

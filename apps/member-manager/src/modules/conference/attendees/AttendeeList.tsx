@@ -17,6 +17,7 @@ import {
 import { DatagridConfigurable } from "@orwa/entity-id";
 import { Button } from '@mui/material';
 import { customDatagridStyle } from '../../../css';
+import { formResourceShellSx } from '../../../css/formLayout';
 import { useCan } from '../../rbac-manager/useCan';
 import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
 import CustomPagination from '../../_components/CustomPagination';
@@ -42,9 +43,7 @@ const AttendeeList = () => {
       title={' '}
       resource={resource}
       component={'div'}
-      sx={{
-        mt: -2,
-      }}
+      sx={formResourceShellSx}
     >
       <CustomSecondaryHeader title="Add New Attendee" />
       <Button

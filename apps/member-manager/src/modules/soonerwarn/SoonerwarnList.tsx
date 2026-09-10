@@ -19,6 +19,7 @@ import { DatagridConfigurable } from "@orwa/entity-id";
 import { Visibility, Edit as EditIcon } from "@mui/icons-material";
 import CustomPagination from "../_components/CustomPagination";
 import { customDatagridStyle } from "../../css";
+import { formResourceShellSx } from "../../css/formLayout";
 import SoonerwarnShow from "./SoonerwarnShow";
 import SoonerwarnFormFields from "./components/SoonerwarnFormFields";
 import { useSoonerwarnContext } from "./SoonerwarnContextProvider";
@@ -43,7 +44,7 @@ const SoonerwarnList = () => {
   const remove = useRemoveFromStore();
 
   return isCreating ? (
-    <Create resource="soonerwarns" redirect={false} title={" "} sx={{ mt: -2 }}>
+    <Create resource="soonerwarns" redirect={false} title={" "} sx={formResourceShellSx}>
       <CustomSecondaryHeader title="New Soonerwarn Application" />
       <SimpleForm
         onSubmit={(formData) =>

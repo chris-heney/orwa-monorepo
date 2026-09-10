@@ -30,6 +30,7 @@ import CustomToolBar from '../../_components/CustomToolbar';
 import { createRecord } from '../../_helpers/createRecord';
 import { updateRecord } from '../../_helpers/updateRecord';
 import { customDatagridStyle, positionStickyComponent } from '../../../css';
+import { formResourceShellSx } from '../../../css/formLayout';
 import CustomPagination from '../../_components/CustomPagination';
 //TODO fix so tickets and extras work theyre turning the contact into a null object
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
@@ -118,9 +119,7 @@ const ConferenceTeams = () => {
 
   return isCreating ? (
     <Create
-      sx={{
-        mt: -2,
-      }}
+      sx={formResourceShellSx}
       title={' '}
       resource="conference-teams"
       component={'div'}

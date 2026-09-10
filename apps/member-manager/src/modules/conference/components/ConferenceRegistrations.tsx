@@ -38,6 +38,7 @@ import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
 import { createRecord } from '../../_helpers/createRecord';
 import { updateRecord } from '../../_helpers/updateRecord';
 import { customDatagridStyle, positionStickyComponent } from '../../../css';
+import { formResourceShellSx } from '../../../css/formLayout';
 import CustomPagination from '../../_components/CustomPagination';
 import RegistrationReceipt from './RegistrationReceipt';
 import EditIcon from '@mui/icons-material/Edit';
@@ -255,9 +256,7 @@ const ConferenceRegistrations = () => {
 
   return isCreating ? (
     <Create
-      sx={{
-        mt: -2,
-      }}
+      sx={formResourceShellSx}
       title={' '}
       resource="conference-registrations"
       component={'div'}

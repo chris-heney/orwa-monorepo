@@ -46,6 +46,7 @@ import CustomSecondaryHeader from '../../_components/CustomSecondaryHeader';
 import { createRecord } from '../../_helpers/createRecord';
 import { updateRecord } from '../../_helpers/updateRecord';
 import { customDatagridStyle, positionStickyComponent } from '../../../css';
+import { formResourceShellSx } from '../../../css/formLayout';
 import { ISharedMeta } from '../types/IConference';
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
 import {
@@ -423,9 +424,7 @@ const ConferenceContestants = () => {
 
   return isCreating ? (
     <Create
-      sx={{
-        mt: -2,
-      }}
+      sx={formResourceShellSx}
       title={' '}
       resource="conference-contestants"
       component={'div'}
