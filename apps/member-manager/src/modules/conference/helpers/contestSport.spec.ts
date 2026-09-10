@@ -33,6 +33,12 @@ describe("resolveContestSport", () => {
     ).toBe("fish");
   });
 
+  it("does not count a ticket that names a sport only to exclude it", () => {
+    expect(resolveContestSport(ticket("Non-Golfer Banquet Guest"))).toBeNull();
+    expect(resolveContestSport(ticket("Non Golfer Spouse"))).toBeNull();
+    expect(resolveContestSport(ticket("Non-Fisher Guest"))).toBeNull();
+  });
+
   it("leaves sportless rows unclassified", () => {
     expect(resolveContestSport({ type: "Contestant" })).toBeNull();
     expect(resolveContestSport(ticket("Contestant"))).toBeNull();

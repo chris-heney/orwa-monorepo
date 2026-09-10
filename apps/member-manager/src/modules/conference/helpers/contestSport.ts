@@ -25,6 +25,9 @@ const relationName = (relation: unknown): string => {
   return typeof relation === "string" ? relation : "";
 };
 
+/** "Non-Golfer", "non fisher" — a ticket that names a sport to exclude it. */
+const NEGATED = /(^|[^a-z0-9])non[-\s]*(golf|fish|bass)/i;
+
 export const resolveContestSport = (
   record: SportRecord | null | undefined
 ): ContestSport | null => {
@@ -37,6 +40,9 @@ export const resolveContestSport = (
   // A bare "Contestant" ticket names no sport — leave it unclassified rather
   // than guessing a bucket for it.
   if (!raw || raw === "contestant") return null;
+  // "Non-Golfer Banquet Guest" is not a golfer. Strapi's golf-capacity
+  // predicate (contestant-capacity.ts) carries the same negation guard.
+  if (NEGATED.test(raw)) return null;
   if (raw.includes("golf")) return "golf";
   if (raw.includes("fish") || raw.includes("bass")) return "fish";
   return null;
