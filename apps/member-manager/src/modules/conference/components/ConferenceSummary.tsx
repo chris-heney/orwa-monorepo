@@ -237,25 +237,36 @@ const ConferenceSummary = () => {
               Contest Corner
             </Typography>
             <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
-              {contest.byType.map((c) => (
-                <MetricChip
-                  key={c.name}
-                  label={c.name}
-                  value={c.count}
-                  tone={T.water}
-                />
-              ))}
-              <MetricChip label="Teams" value={contest.teams} tone={T.inflow} />
               <MetricChip
-                label="Taste Test Entries"
-                value={contest.tasteTest}
-                tone={T.violet}
+                label="Fishers"
+                value={contest.fishers}
+                tone={T.water}
+              />
+              <MetricChip
+                label="Golfers"
+                value={contest.golfers}
+                tone={T.water}
+              />
+              <MetricChip
+                label="Golf Teams"
+                value={contest.golfTeams}
+                tone={T.inflow}
+              />
+              <MetricChip
+                label="Total Contestants"
+                value={contest.contestants}
+                tone={T.inflow}
               />
               <MetricChip
                 label="Contest Fees"
                 value={contest.fees}
                 format="money"
                 tone={T.committed}
+              />
+              <MetricChip
+                label="Taste Test Entries"
+                value={contest.tasteTest}
+                tone={T.violet}
               />
             </Box>
           </Box>
