@@ -10,6 +10,7 @@ import {
 import { useDataProvider, useListFilterContext, useNotify } from "react-admin";
 import { useGetIdentity } from "../../helpers/useGetIdentity";
 import CustomSecondaryHeader from "./CustomSecondaryHeader";
+import { useCaptureListView } from "./listView";
 
 const SaveFilterModal = ({
   resource,
@@ -22,6 +23,7 @@ const SaveFilterModal = ({
 }) => {
   const dataProvider = useDataProvider();
   const { filterValues } = useListFilterContext();
+  const captureView = useCaptureListView();
   const [filterName, setFilterName] = useState("");
   const [isPublic, setIsPublic] = useState(false);
 
@@ -39,7 +41,12 @@ const SaveFilterModal = ({
       await dataProvider.create("saved-queries", {
         data: {
           name: filterName,
+          // `filters` stays the filter values alone — rows saved before
+          // `view` existed still apply, and the "which saved query is
+          // active?" match in SavedFilters compares filters only.
           filters: filterValues,
+          // Sort, page size, shown filter inputs and column order/selection.
+          view: captureView(),
           is_public: isPublic,
           user: identity.id,
           resource: resource,

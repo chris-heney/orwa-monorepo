@@ -10,6 +10,7 @@ import {
   TextField,
 } from "@mui/material";
 import { WATER_SYSTEM_REGIONS, calendarYearChoices } from "../helpers/listFilters";
+import { SavedFiltersSection } from "../../_components/SavedFiltersSection";
 import {
   useScholarshipRegion,
   useScholarshipSearch,
@@ -27,6 +28,7 @@ const OrwefFilterSidebar = () => {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <SavedFiltersSection />
       <FormControl fullWidth>
         <FormLabel>Search</FormLabel>
         <TextField

@@ -8,7 +8,6 @@ import type { ModuleManifest, PageCtx } from '../../framework/manifest';
 import { lazyPanel } from '../../framework/lazyPanel';
 import { searchAction } from '../../framework/actions';
 import { listParamsStoreKey } from '../../framework/ListScope';
-import { SaveQueryHeaderAction } from '../_components/SavedFiltersSection';
 import EventSettings from '../training/settings/EventSettings';
 import UserFilters from '../human-resources/users/UserFilters';
 import { USERS_LIST_PARAMS } from '../human-resources/users/UserList';
@@ -93,7 +92,6 @@ export const settingsModule: ModuleManifest = {
               // users-permissions returns no pagination total → no "N Records".
               selectionCount: false,
               filterBody: UserFilters,
-              filterHeaderActions: SaveQueryHeaderAction,
             },
             actions: [searchAction],
             panel: lazyPanel(() =>

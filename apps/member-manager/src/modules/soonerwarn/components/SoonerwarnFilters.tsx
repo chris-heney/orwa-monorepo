@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import { useListFilterContext } from 'react-admin';
 import SoonerwarnStatusFilter from './SoonerwarnStatusFilter';
+import { SavedFiltersSection } from '../../_components/SavedFiltersSection';
 
 /**
  * Filters drawer body: the status radio list bound to the ListScope's
@@ -25,6 +26,7 @@ const StatusFilterBody = ({ statusResource }: { statusResource: string }) => {
 
   return (
     <Box sx={{ p: 2 }}>
+      <SavedFiltersSection />
       <SoonerwarnStatusFilter
         resource={statusResource}
         selectedStatuses={selected}

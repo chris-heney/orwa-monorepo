@@ -10,7 +10,6 @@ import EmailTasks from './email-taks';
 import EmailFilters from './emails-templates/EmailFilters';
 import EmailTaskFilters from './email-taks/components/EmailTaskFilters';
 import EmailLogFilters from './email-logs/EmailLogFilters';
-import { SaveQueryHeaderAction } from '../_components/SavedFiltersSection';
 
 /**
  * Email Management — the reference module manifest.
@@ -62,7 +61,6 @@ export const emailsModule: ModuleManifest = {
             list: {
               resource: 'email-templates',
               filterBody: EmailFilters,
-              filterHeaderActions: SaveQueryHeaderAction,
             },
             actions: [createAction('email-templates'), columnsAction],
             panel: lazyPanel(() => import('./emails-templates/EmailInterface')),
@@ -75,7 +73,6 @@ export const emailsModule: ModuleManifest = {
             list: {
               resource: 'scheduled-email-tasks',
               filterBody: EmailTaskFilters,
-              filterHeaderActions: SaveQueryHeaderAction,
             },
             actions: [createAction('scheduled-email-tasks'), columnsAction],
             panel: lazyPanel(() => import('./email-taks/ScheduledTaskList')),
@@ -88,7 +85,6 @@ export const emailsModule: ModuleManifest = {
             list: {
               resource: 'email-logs',
               filterBody: EmailLogFilters,
-              filterHeaderActions: SaveQueryHeaderAction,
             },
             actions: [columnsAction],
             panel: lazyPanel(() => import('./email-logs/EmailLogList')),
