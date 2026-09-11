@@ -36,6 +36,7 @@ import VendorAttendeeExportButton from "./components/VendorAttendeeExportButton"
 import { conferencePanel } from "./components/conferencePanel";
 import { inlineAddAction } from "./components/ConferenceAddAction";
 import { conferenceExportAction } from "./components/ConferenceExportAction";
+import { scheduleBarActions } from "../Schedule/scheduleActions";
 import {
   CONFERENCE_SELECTION_STORE_KEY,
   conferenceScopeFilter,
@@ -199,7 +200,13 @@ const tabs: TabManifest[] = [
     label: "Schedule",
     icon: ScheduleIcon,
     list: list("schedule", "conference-schedules"),
-    actions: gridActions("conference-schedules", "Add Schedule"),
+    // Not `gridActions`: the schedule is a day-grouped table, not a
+    // DatagridConfigurable, so Columns had nothing to choose and the grid
+    // exporter downloaded an empty CSV.
+    actions: [
+      inlineAddAction("conference-schedules", "Add Schedule"),
+      ...scheduleBarActions,
+    ],
     panel: conferencePanel(() => import("./components/ConferenceSchedules")),
   },
   {

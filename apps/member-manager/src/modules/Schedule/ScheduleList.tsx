@@ -13,7 +13,7 @@ import dayjs from "dayjs";
 
 import { ScheduleItem } from "./types";
 import ConferenceScheduleCard from "../Schedule/components/ScheduleCard";
-import { groupRecordsByDate } from "../Schedule/utils";
+import { groupRecordsByDate, scheduleConferenceName } from "../Schedule/utils";
 import { useListContext } from "react-admin";
 import { useConferenceContext } from "../conference/ConferenceContext";
 
@@ -216,7 +216,7 @@ const ScheduleList: React.FC = () => {
           color: printView ? "#000" : "text.primary",
         }}
       >
-        ORWA {conferences.find((conference) => conference.id === filterValues?.conference)?.name} - {filterValues?.year} Schedule
+        ORWA {scheduleConferenceName(conferences, filterValues?.conference)} - {filterValues?.year} Schedule
       </Typography>
       {Object.keys(groupedRecords).map((date) => {
         // Check if this date's records contain speaker, company, or description content

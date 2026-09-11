@@ -1,4 +1,26 @@
 import { ScheduleItem } from "./types";
+import { getConferenceFilterId } from "../conference/helpers/mergeConferenceAcrossTabFilters";
+
+/**
+ * Name of the selected conference. Filter values carry the numeric PK, while
+ * the data provider sets `conference.id` to the documentId — so the old
+ * `conference.id === filterValues.conference` never matched and the schedule
+ * title, PDF and CSV names came out without the conference.
+ */
+export const scheduleConferenceName = (
+  conferences: { id?: unknown; entityId?: unknown; name?: string }[],
+  conferenceId: unknown
+): string => {
+  if (conferenceId == null || conferenceId === "") return "";
+  const numeric = Number(conferenceId);
+  return (
+    conferences.find(
+      (conference) =>
+        getConferenceFilterId(conference) === numeric ||
+        String(conference.id) === String(conferenceId)
+    )?.name ?? ""
+  );
+};
 
 export const groupRecordsByDate = (records: ScheduleItem[]) => {
   const grouped: Record<string, ScheduleItem[]> = {};

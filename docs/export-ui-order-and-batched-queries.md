@@ -196,6 +196,44 @@ yields rows of `{}` → an empty CSV while the grid renders normally:
 - Contestants now go through `CustomExportFunction`, so Team and Ticket export
   as names (Ticket used to be a documentId) with one batched lookup each.
 
+## 3d. Conference Schedule: bar Export was blank, controls lived on the page
+
+**Blank bar Export.** The Schedule tab used the generic `gridActions`, so its
+Export ran the grid exporter over `preferences.conference-schedules.datagrid.*`.
+The schedule is a day-grouped table (`ScheduleList`), not a
+`DatagridConfigurable`, so those preferences never exist → zero columns →
+empty CSV. Columns had nothing to choose for the same reason.
+
+**On-page controls.** Duplicate / Clear / Print view / Download PDF / Export
+were `ScheduleControls` buttons inside the panel, in both the edit and print
+views, instead of registered title-bar actions like every other tab.
+
+*Why they were on the page:* framework actions render in the page's title bar,
+outside the tab panel, and the schedule's state (print view, dialogs, the PDF
+target ref, the loaded records) lived in the panel's `ScheduleProvider`.
+
+*Decision:* follow the Conference module's existing pattern for bar ↔ panel
+state (`creatingTab` for the inline Add action) rather than invent a new one.
+`ScheduleBarProvider`, mounted in the conference page provider, holds print
+view and the open dialog; `ScheduleProvider` sources that state from it (the
+modals and `ScheduleContext` API are unchanged) and registers its `downloadPdf`
+/ `exportCsv` commands through a ref so re-renders never re-register.
+`scheduleActions.tsx` declares the five `ActionManifest`s; Download PDF only
+renders in print view. With Add and the automatic Filters action the tab has
+exactly `MAX_BAR_ACTIONS` (7), so nothing falls into the overflow menu, where
+component actions cannot run.
+
+**Newlines in the CSV.** Descriptions are multi-line; the hand-built CSV only
+escaped quotes in Description, so a line break split the row and a quote in any
+other field broke it. `scheduleCsv.ts` builds the same layout (day heading rows,
+optional columns, blank row between days) with every cell quoted, quotes
+doubled, and CR/LF/U+2028/U+2029 collapsed to a space. Dates are parsed as
+local calendar days instead of `new Date("YYYY-MM-DD")` + 1 day.
+
+**Conference name.** Title, PDF name and CSV name compared `conference.id`
+(documentId) with the numeric filter value, so the name never matched
+("ORWA  - 2026 Schedule"). `scheduleConferenceName` matches the numeric PK.
+
 ## 4. No progress indication
 
 `ExportAction` now announces the row count on click and confirms when the file

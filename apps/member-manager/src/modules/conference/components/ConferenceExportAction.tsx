@@ -16,7 +16,6 @@ import exportAttendees from "../helpers/exportAttendes";
 import exportBooths from "../helpers/exportBooths";
 import exportContestants from "../helpers/exportContestants";
 import exportRegistrations from "../helpers/exportRegistrations";
-import exportSchedule from "../helpers/exportSchedule";
 import exportSponsors from "../helpers/exportSponsors";
 import { useConferenceContext, useConferenceSelection } from "../ConferenceContext";
 import { getConferenceFilterId } from "../helpers/mergeConferenceAcrossTabFilters";
@@ -34,7 +33,6 @@ const EXPORTERS: Record<string, ResourceExporter> = {
   "conference-attendees": exportAttendees,
   "conference-booths": exportBooths,
   "conference-registrations": exportRegistrations,
-  "conference-schedules": exportSchedule,
   "conference-contestants": exportContestants,
   "conference-sponsors": exportSponsors,
 };
