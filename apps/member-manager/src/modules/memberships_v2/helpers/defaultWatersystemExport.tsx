@@ -8,6 +8,7 @@ import {
   exportRelationResource,
   readExportField,
   resolveExportCell,
+  selectExportColumns,
 } from "../../../helpers/fetchRelatedRecord";
 
 export const defaultWatersystemExport = async (
@@ -18,9 +19,7 @@ export const defaultWatersystemExport = async (
   dataProvider?: DataProvider
 ) => {
   // Filter columns based on columnIds if provided
-  const columns = columnIds?.length > 0
-    ? availableColumns.filter(column => columnIds.includes(column.index))
-    : availableColumns;
+  const columns = selectExportColumns(availableColumns, columnIds);
 
   const exportData = await Promise.all(
     records.map(async (record) => {

@@ -1,8 +1,6 @@
 import { Box, Button, Fade, Typography } from '@mui/material'
-import jsonExport from 'jsonexport/dist'
 import React from 'react'
 import {
-  downloadCSV,
   Identifier,
   List,
   RaRecord,
@@ -14,6 +12,7 @@ import {
 import CustomHeader from '../../../_components/CustomHeader'
 import { fetchRelatedRecord } from '../../../../helpers/fetchRelatedRecord'
 import { getDisplayEntityId } from '../../../../helpers/strapiIds' 
+import downloadJsonAsCsv from '../../../../helpers/downloadJsonAsCsv'
 
 interface SelectedInfo {
     block?: Identifier | Identifier[];
@@ -47,9 +46,7 @@ const ModalEventAttendance = ({ record, openModal, setOpenModal, modalTitle, sel
         }
       })
     )
-    return jsonExport(rows, (err: Error, csv: string) =>
-      downloadCSV(csv, `${modalTitle || 'Attendance'}`)
-    )
+    return downloadJsonAsCsv(rows, `${modalTitle || 'Attendance'}`)
   }
 
   return (

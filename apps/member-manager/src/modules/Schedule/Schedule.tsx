@@ -1,16 +1,17 @@
 import React from "react";
 import { Box } from "@mui/material";
 import ScheduleProvider from "../Schedule/ScheduleProvider";
-import ScheduleControls from "../Schedule/components/ScheduleControls";
 import ScheduleList from "../Schedule/ScheduleList";
 import ScheduleModals from "../Schedule/ScheduleModals";
 
-
+/**
+ * Duplicate / Clear / Print view / Download PDF / Export are title-bar
+ * actions (`scheduleActions.tsx`, registered on the Conference Schedule tab).
+ */
 const Schedule = () => {
   return (
     <ScheduleProvider>
       <Box sx={{ p: 2, backgroundColor: "background.paper", color: "text.primary" }}>
-        <ScheduleControls />
         <ScheduleList />
         <ScheduleModals />
       </Box>

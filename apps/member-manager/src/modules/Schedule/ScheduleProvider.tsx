@@ -1,8 +1,11 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useState,
   useEffect,
+  useMemo,
+  useRef,
   PropsWithChildren,
 } from "react";
 import {
@@ -19,7 +22,10 @@ import {
   handleDeleteScheduleItem,
   handleSaveScheduleItem,
 } from "./scheduleService";
-import { formatDate } from "./utils";
+import { formatDate, scheduleConferenceName } from "./utils";
+import { ScheduleDialog, useScheduleBar } from "./ScheduleBarContext";
+import { downloadScheduleCsv } from "./scheduleCsv";
+import type { ScheduleItem } from "./types";
 
 interface ScheduleContextProps {
   records: RaRecord[];
@@ -100,9 +106,42 @@ const ScheduleProvider = ({ children }: PropsWithChildren) => {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
-  const [printView, setPrintView] = useState(false);
-  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
-  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+
+  // Print view and the Duplicate / Clear dialogs are driven by the Schedule
+  // tab's title-bar actions, which render outside this panel — so when a
+  // page-level ScheduleBarProvider is mounted the state lives there.
+  const bar = useScheduleBar();
+  const [localPrintView, setLocalPrintView] = useState(false);
+  const [localDialog, setLocalDialog] = useState<ScheduleDialog>(null);
+  const printView = bar ? bar.printView : localPrintView;
+  const setPrintView = bar ? bar.setPrintView : setLocalPrintView;
+  const dialog = bar ? bar.dialog : localDialog;
+  const setDialog = bar ? bar.setDialog : setLocalDialog;
+
+  /** Boolean `setIsXModalOpen` over the single `dialog` value. */
+  const dialogSetter = useCallback(
+    (
+      which: Exclude<ScheduleDialog, null>
+    ): React.Dispatch<React.SetStateAction<boolean>> =>
+      (value) =>
+        setDialog((prev) => {
+          const open = prev === which;
+          const next = typeof value === "function" ? value(open) : value;
+          return next ? which : open ? null : prev;
+        }),
+    [setDialog]
+  );
+  const isDuplicateModalOpen = dialog === "duplicate";
+  const setIsDuplicateModalOpen = useMemo(
+    () => dialogSetter("duplicate"),
+    [dialogSetter]
+  );
+  const isClearModalOpen = dialog === "clear";
+  const setIsClearModalOpen = useMemo(
+    () => dialogSetter("clear"),
+    [dialogSetter]
+  );
+
   const [targetConference, setTargetConference] = useState<number | null>(
     filterValues?.conference as number
   );
@@ -113,14 +152,13 @@ const ScheduleProvider = ({ children }: PropsWithChildren) => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
+  const conferenceName = scheduleConferenceName(
+    conferences,
+    filterValues?.conference
+  );
+
   const { toPDF, targetRef } = usePDF({
-    filename: `${
-      filterValues?.conference
-        ? conferences.find(
-            (conference) => conference.id === filterValues?.conference
-          )?.name
-        : "All Conference"
-    }-schedule-${filterValues?.year}`,
+    filename: `${conferenceName || "All Conference"}-schedule-${filterValues?.year}`,
     resolution: Resolution.HIGH,
     page: { margin: Margin.SMALL },
   });
@@ -234,6 +272,39 @@ const ScheduleProvider = ({ children }: PropsWithChildren) => {
       setIsClearModalOpen(false);
     });
   };
+
+  // Publish the panel's commands to the title bar. The registered callbacks
+  // are created once and read the latest toPDF / records through a ref, so
+  // re-renders never re-register (which would re-render the bar provider,
+  // then this panel, in a loop).
+  const latest = useRef({ toPDF, records, conferenceName });
+  latest.current = { toPDF, records, conferenceName };
+  const registerCommands = bar?.registerCommands;
+  const setRecordCount = bar?.setRecordCount;
+  const setBarPrintView = bar?.setPrintView;
+  const setBarDialog = bar?.setDialog;
+
+  useEffect(() => {
+    if (!registerCommands) return undefined;
+    registerCommands({
+      downloadPdf: () => latest.current.toPDF(),
+      exportCsv: () =>
+        downloadScheduleCsv(
+          latest.current.records as ScheduleItem[],
+          latest.current.conferenceName
+        ),
+    });
+    return () => {
+      // Leaving the tab: no stale commands, and it reopens in the edit view.
+      registerCommands(null);
+      setBarPrintView?.(false);
+      setBarDialog?.(null);
+    };
+  }, [registerCommands, setBarPrintView, setBarDialog]);
+
+  useEffect(() => {
+    setRecordCount?.(records.length);
+  }, [setRecordCount, records.length]);
 
   return (
     <ScheduleContext.Provider

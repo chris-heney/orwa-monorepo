@@ -7,6 +7,7 @@ import {
   fetchRelatedRecord,
   readExportField,
   relationDisplayValue,
+  selectExportColumns,
 } from "../../../helpers/fetchRelatedRecord";
 
 export const defaultAssociateExport = async (
@@ -17,9 +18,7 @@ export const defaultAssociateExport = async (
   dataProvider: DataProvider
 ) => {
   // Filter columns based on columnIds if provided
-  const columns = columnIds?.length > 0
-    ? availableColumns.filter(column => columnIds.includes(column.index))
-    : availableColumns;
+  const columns = selectExportColumns(availableColumns, columnIds);
 
   // Helper function to get contact information
   const getContactInfo = async (recordId: unknown, field: string) => {

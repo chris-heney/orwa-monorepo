@@ -1,6 +1,4 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   DataProvider,
   RaRecord,
@@ -20,6 +18,7 @@ import {
   readExportField,
   resolveExportCell,
 } from "../../../helpers/fetchRelatedRecord";
+import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv";
 
 /** Directory contact slots printed per system in the Naylor file. */
 export const NAYLOR_CONTACT_SLOTS = 3;
@@ -218,7 +217,5 @@ export const NaylorExportWaterSystem = async (
     return orderedRecord;
   });
 
-  return jsonExport(orderedData, (err: Error, csv: string) =>
-    downloadCSV(csv, `${title}`)
-  );
+  return downloadJsonAsCsv(orderedData, `${title}`);
 };

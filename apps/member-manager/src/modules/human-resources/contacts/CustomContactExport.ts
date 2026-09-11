@@ -1,6 +1,4 @@
-import jsonExport from 'jsonexport/dist';
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   RaRecord,
   DataProvider,
@@ -9,7 +7,9 @@ import {
   exportRelationResource,
   readExportColumn,
   resolveExportCell,
+  selectExportColumns,
 } from '../../../helpers/fetchRelatedRecord';
+import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv"
 
 const fetchAllRecords = async (dataProvider: any, resource: string, page = 1, perPage = 1000, accumulatedRecords: RaRecord[] = []) => {
   const { data, total } = await dataProvider.getList(resource, {
@@ -42,13 +42,7 @@ const CustomContactExport = async (
   const data = await Promise.all(
     RecordList.map(async (record) => {
     const filteredRecord = {} as Record<string, string>;
-    let columns = availableColumns;
-
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter((column) =>
-        columnIds.includes(column.index)
-      );
-    }
+    const columns = selectExportColumns(availableColumns, columnIds);
 
     for (const column of columns) {
       if (column.label && column.label.trim() !== '') {
@@ -74,12 +68,8 @@ const CustomContactExport = async (
   );
 
   // Export the combined records to CSV
-  return jsonExport(data, (err: Error, csv: string) => {
-    if (err) {
-      console.error('CSV Export Error:', err);
-      return;
-    }
-    downloadCSV(csv, `${title}.csv`);
+  return downloadJsonAsCsv(data, `${title}.csv`).catch((err: Error) => {
+    console.error('CSV Export Error:', err);
   });
 };
 

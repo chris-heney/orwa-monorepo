@@ -1,16 +1,17 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   DataProvider,
   RaRecord,
 } from "react-admin";
 import {
+  buildExportRelationCache,
   exportRelationResource,
   isIdSource,
   readExportCellValue,
   resolveExportCell,
+  selectExportColumns,
 } from "../fetchRelatedRecord";
+import downloadJsonAsCsv from "../downloadJsonAsCsv";
 
 const CustomExportFunction = async (
   RecordList: RaRecord[],
@@ -20,17 +21,22 @@ const CustomExportFunction = async (
   dataProvider?: DataProvider,
   relationResources?: Record<string, string>
 ) => {
+  // Columns come out in the order the user arranged them on screen, not in
+  // declaration order (see `selectExportColumns`).
+  const columns = selectExportColumns(availableColumns, columnIds);
+
+  // One `getMany` per relation type up front, instead of a `getOne` per record
+  // per relation column while building the rows.
+  const cache = await buildExportRelationCache(
+    RecordList,
+    columns,
+    dataProvider,
+    relationResources
+  );
+
   const data = await Promise.all(
     RecordList.map(async (record) => {
       const filteredRecord = {} as Record<string, string>;
-
-      let columns = availableColumns;
-
-      if (columnIds.length > 0) {
-        columns = availableColumns.filter((column) =>
-          columnIds?.includes(column.index)
-        );
-      }
 
       for (const column of columns) {
         if (column.label && column.label.trim() !== "") {
@@ -47,7 +53,7 @@ const CustomExportFunction = async (
               relationResources
             );
             filteredRecord[column.label as keyof typeof record] =
-              await resolveExportCell(raw, { dataProvider, resource });
+              await resolveExportCell(raw, { dataProvider, resource, cache });
           }
         }
 
@@ -57,6 +63,7 @@ const CustomExportFunction = async (
             resource:
               relationResources?.team ??
               exportRelationResource("team", "Team", relationResources),
+            cache,
           });
         }
       }
@@ -64,9 +71,7 @@ const CustomExportFunction = async (
     })
   );
 
-  return jsonExport(data, (err: Error, csv: string) =>
-    downloadCSV(csv, `${title}`)
-  );
+  return downloadJsonAsCsv(data, `${title}`);
 };
 
 export default CustomExportFunction;

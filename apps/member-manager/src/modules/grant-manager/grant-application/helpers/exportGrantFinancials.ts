@@ -1,8 +1,8 @@
 // utils/exportHelpers.ts
 import dayjs from "dayjs";
-import jsonExport from "jsonexport/dist";
 import { downloadCSV } from "react-admin";
 import { formatNumber } from "../../../../helpers/Formators";
+import downloadJsonAsCsv from "../../../../helpers/downloadJsonAsCsv";
 
 interface ExportOptions {
   filename: string;
@@ -33,9 +33,7 @@ const exportData = async (data: any[], options: ExportOptions) => {
     return formattedItem;
   });
 
-  return jsonExport(formattedData, (err: Error, csv: string) => {
-    downloadCSV(csv, options.filename);
-  });
+  return downloadJsonAsCsv(formattedData, options.filename);
 };
 
 export const exportApplications = (

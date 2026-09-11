@@ -1,39 +1,19 @@
-import jsonExport from 'jsonexport/dist'
-import { downloadCSV, ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
-import { fetchRelatedRecord, readExportColumn, relationDisplayValue } from '../../../helpers/fetchRelatedRecord'
+import { ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
+import CustomExportFunction from '../../../helpers/custom-export-function'
 
-const exportContestants = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
-
-  const data = await Promise.all(RecordList.map(async (record) => {
-
-    const filteredRecord = {} as Record<string, string>
-
-    let columns = availableColumns
-
-    if (columnIds.length > 0) {
-      columns = availableColumns.filter(column => columnIds?.includes(column.index))
-    }
-
-    const team = await fetchRelatedRecord(dataProvider, 'conference-teams', record.team)
-
-    for (const column of columns) {
-
-      // Check if the column has a label and it's not empty
-      if (column.label && column.label.trim() !== '') {
-
-        let value = relationDisplayValue(readExportColumn(record, column))
-
-        if (column.label === 'Team' && team.name) {       
-          value = team.name
-        }
-        filteredRecord[column.label as keyof typeof record] = value as string
-      }
-    }
-    return filteredRecord
-  }))
-
-  return jsonExport(data, (err: Error, csv: string) => downloadCSV(csv, `${title}`))
-}
-
+/**
+ * Contestants → CSV.
+ *
+ * The shared exporter resolves Team and Ticket to their names with one batched
+ * lookup per relation (this used to fetch the team once per row and wrote the
+ * ticket's documentId), and joins the Items chips' labels.
+ */
+const exportContestants = (
+  RecordList: RaRecord[],
+  availableColumns: ConfigurableDatagridColumn[],
+  columnIds: string[],
+  title: string,
+  dataProvider: DataProvider
+) => CustomExportFunction(RecordList, availableColumns, columnIds, title, dataProvider)
 
 export default exportContestants

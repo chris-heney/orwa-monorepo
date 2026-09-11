@@ -1,6 +1,4 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   DataProvider,
   RaRecord,
@@ -10,7 +8,9 @@ import { formatNumber } from "../../../helpers/Formators";
 import fetchRelatedRecord, {
   readExportColumn,
   relationDisplayValue,
+  selectExportColumns,
 } from "../../../helpers/fetchRelatedRecord";
+import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv";
 
 const formatExportDate = (value: unknown): string => {
   if (value == null || value === "") return "";
@@ -33,13 +33,7 @@ const exportBooths = async (
     RecordList.map(async (booth) => {
       const filteredRecord = {} as Record<string, string>;
 
-      let columns = availableColumns;
-
-      if (columnIds.length > 0) {
-        columns = availableColumns.filter((column) =>
-          columnIds?.includes(column.index)
-        );
-      }
+      const columns = selectExportColumns(availableColumns, columnIds);
 
       const registration = await fetchRelatedRecord(
         dataProvider,
@@ -89,9 +83,7 @@ const exportBooths = async (
     })
   );
 
-  return jsonExport(data, (err: Error, csv: string) =>
-    downloadCSV(csv, `${title}`)
-  );
+  return downloadJsonAsCsv(data, `${title}`);
 };
 
 export default exportBooths;

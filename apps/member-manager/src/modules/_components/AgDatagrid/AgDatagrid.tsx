@@ -122,7 +122,15 @@ const AgDatagrid = ({
                 _: `Unlabeled column #%{column}`,
               }),
     }));
-    if (columns.length !== availableColumns.length) {
+    // Compare the whole column signature, not just the count: synced prefs
+    // from an older layout with the same number of columns would otherwise
+    // keep stale sources/labels, which the Columns picker and every CSV
+    // export read.
+    const signature = (list: RaColumnMeta[]) =>
+      JSON.stringify(
+        list.map((c) => [String(c.index), c.source ?? null, c.label ?? null])
+      );
+    if (signature(columns) !== signature(availableColumns)) {
       setAvailableColumns(columns);
     }
     if (omitProp) {

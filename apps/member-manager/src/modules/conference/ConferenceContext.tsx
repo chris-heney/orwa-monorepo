@@ -23,6 +23,7 @@ import {
   readConferenceSelection,
 } from "./helpers/conferenceSelection";
 import { usePageManifestOptional } from "../../framework/PageContext";
+import ScheduleBarProvider from "../Schedule/ScheduleBarContext";
 
 /** Re-export for existing imports. */
 export { DEFAULT_CONFERENCE_ID };
@@ -160,7 +161,7 @@ const ConferenceContextProvider = ({ children }: PropsWithChildren) => {
     <Loading />
   ) : (
     <ConferenceBaseContextValue.Provider value={value}>
-      {children}
+      <ScheduleBarProvider>{children}</ScheduleBarProvider>
     </ConferenceBaseContextValue.Provider>
   );
 };

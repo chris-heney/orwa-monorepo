@@ -1,11 +1,10 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   DataProvider,
 } from "react-admin";
 import { isMembershipActiveByExpiration } from "../../_helpers/getExpirationDate";
 import { IAssociate } from "../associate/AssociateInterface";
 import { fetchRelatedRecord } from "../../../helpers/fetchRelatedRecord";
+import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv";
 
 export const NaylorExportAssociate = async (
   RecordList: IAssociate[],
@@ -79,11 +78,7 @@ export const NaylorExportAssociate = async (
     return 0;
   });
 
-  return jsonExport(sortedData, (err: Error, csv: string) => {
-    if (err) {
-      console.error("Error exporting CSV:", err);
-      return;
-    }
-    downloadCSV(csv, `${title}.csv`);
+  return downloadJsonAsCsv(sortedData, `${title}.csv`).catch((err: Error) => {
+    console.error("Error exporting CSV:", err);
   });
 };

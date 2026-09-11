@@ -1,9 +1,12 @@
 import React from 'react';
 import { Box, Select, SelectProps, Tooltip } from '@mui/material';
 import {
+  Exporter,
   ExportButton,
   ExportButtonProps,
   SelectColumnsButton,
+  useListContext,
+  useNotify,
 } from 'react-admin';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
@@ -166,11 +169,66 @@ export const ColumnsAction = ({
   );
 };
 
-export const ExportAction = (props: ExportButtonProps) => {
+/**
+ * Export with progress feedback.
+ *
+ * A CSV download is silent between the click and the file landing — on a large
+ * list that reads as a dead button. Announce the row count on click and
+ * confirm when the file is written, wrapping whichever exporter is in play
+ * (explicit prop or the one from the list context).
+ */
+export const ExportAction = ({
+  exporter,
+  onClick,
+  ...props
+}: ExportButtonProps) => {
   const [showLabels] = useActionLabels();
+  const notify = useNotify();
+  const { exporter: exporterFromContext, total } = useListContext();
+  const effectiveExporter = exporter || exporterFromContext;
+
+  const wrappedExporter = React.useMemo<Exporter | undefined>(() => {
+    if (!effectiveExporter) return undefined;
+    return async (records, fetchRelatedRecords, dataProvider, resource) => {
+      try {
+        await effectiveExporter(
+          records,
+          fetchRelatedRecords,
+          dataProvider,
+          resource
+        );
+        notify(`Export ready — ${records.length} rows downloaded.`, {
+          type: 'success',
+          autoHideDuration: 4000,
+        });
+      } catch (error) {
+        // Swallow rather than rethrow: RA's own catch would add a second,
+        // vaguer toast on top of this one.
+        console.error(error);
+        notify('Export failed. Please try again.', { type: 'error' });
+      }
+    };
+  }, [effectiveExporter, notify]);
+
+  // RA types the Button's onClick as the intersection of a DOM and a React
+  // handler; take the loose parameter and hand it straight back.
+  const handleClick = ((event: Parameters<
+    NonNullable<ExportButtonProps['onClick']>
+  >[0]) => {
+    notify(
+      total
+        ? `Preparing export of ${total} rows — this may take a moment…`
+        : 'Preparing export — this may take a moment…',
+      { type: 'info', autoHideDuration: 6000 }
+    );
+    onClick?.(event);
+  }) as ExportButtonProps['onClick'];
+
   return (
     <ExportButton
       size="small"
+      exporter={wrappedExporter}
+      onClick={handleClick}
       label={showLabels ? undefined : ' '}
       sx={{
         color: 'white',
