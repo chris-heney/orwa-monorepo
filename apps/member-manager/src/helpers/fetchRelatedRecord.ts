@@ -118,17 +118,49 @@ export function readPath(record: unknown, source: string): unknown {
  * which keeps the original declaration order and silently discards the user's
  * drag-reordering. Map over `columnIds` instead so the CSV mirrors the grid.
  */
-export function selectExportColumns<T extends { index: string }>(
-  availableColumns: T[],
-  columnIds: string[] | undefined
-): T[] {
-  if (!columnIds || columnIds.length === 0) return availableColumns;
+export function selectExportColumns<
+  T extends { index: string | number; source?: string; label?: string }
+>(availableColumns: T[], columnIds: (string | number)[] | undefined): T[] {
+  // Every exporter skips columns without a label. Synced preferences can
+  // carry an `availableColumns` entry whose label was never stored (react-admin
+  // only re-registers the list when the column COUNT changes), which silently
+  // drops that column — or every column — from the file.
+  const exportable = (availableColumns ?? [])
+    .map((column) => {
+      const label =
+        typeof column.label === "string" && column.label.trim() !== ""
+          ? column.label
+          : labelFromSource(column.source);
+      return label ? { ...column, label } : undefined;
+    })
+    .filter((column): column is T & { label: string } => Boolean(column));
+
+  if (!columnIds || columnIds.length === 0) return exportable;
+
+  // Indices are compared as strings: a preference written as numbers would
+  // otherwise match nothing here while the grid (which indexes an array)
+  // still renders every column.
   const byIndex = new Map(
-    availableColumns.map((column) => [column.index, column])
+    exportable.map((column) => [String(column.index), column])
   );
-  return columnIds
-    .map((index) => byIndex.get(index))
-    .filter((column): column is T => Boolean(column));
+  const selected = columnIds
+    .map((index) => byIndex.get(String(index)))
+    .filter((column): column is T & { label: string } => Boolean(column));
+
+  // Never produce a blank file for a grid that plainly has columns: if the
+  // saved selection no longer resolves, export everything instead.
+  return selected.length > 0 ? selected : exportable;
+}
+
+/** "conference_ticket" → "Conference Ticket"; undefined when there is no source. */
+export function labelFromSource(source: string | undefined): string | undefined {
+  if (typeof source !== "string" || source.trim() === "") return undefined;
+  const last = source.split(".").pop() ?? source;
+  return last
+    .replace(/[_-]+/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+    .trim();
 }
 
 /**

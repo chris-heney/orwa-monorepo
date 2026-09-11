@@ -139,6 +139,63 @@ hardcoded meta and never goes through `ExportButton`, so `exportMeta` cannot
 reach it. `defaultWatersystemExport` / `defaultAssociateExport` still pick up
 the column-ordering fix; `naylorExportWaterSystem` keeps its contractual order.
 
+## 3b. Every exporter's promise hung forever (jsonexport trap)
+
+`jsonexport` 3.x always returns a Promise, but when handed a callback it calls
+the callback and **never resolves** that Promise:
+
+```js
+return new Promise((resolve, reject) => {
+  parser.parse(json, (err, result) => {
+    if (callback) return callback(err, result);   // resolve() never runs
+    ...
+```
+
+Fifteen exporters did `return jsonExport(rows, cb)` from async code. The file
+still downloaded (from the callback), but the exporter's promise never settled:
+the Conference Manager Export button stayed disabled after the first click, the
+Water Systems export select never reset, and the new "Export ready" toast could
+never fire. Reproduced against prod data: `getList` returned 72 rows in ~2s,
+the CSV was captured, and the exporter promise was still pending 40s later.
+
+*Fix:* `helpers/downloadJsonAsCsv` wraps the callback in a promise that
+resolves (or rejects on `err`, which the old callbacks ignored). It keeps the
+2-argument `(rows, callback)` call when there are no options — jsonexport picks
+its overload by argument count, and the Naylor spec's mock depends on it.
+
+## 3c. Blank CSV on a grid that clearly has rows — stale synced column prefs
+
+Report: Fall Conference contestants exported a blank CSV on prod. Everything on
+the data path checked out against prod (read-only): 180 contestants, 92 for
+2026; the exact export query returns every active row; the real exporter builds
+a 12.7 KB CSV; and the real UI in a headless browser (read-only proxy, fresh
+preferences) exports the same 73-line file. The prod bundle's export action is
+identical to `main`'s. So a blank file can only come from per-user browser
+state — the synced `preferences.conference-contestants.datagrid.*` keys.
+(Reading the user's stored prefs from the prod DB was not permitted, so the
+exact shape is unconfirmed.)
+
+Every exporter builds a row from columns that have a label, so any of these
+yields rows of `{}` → an empty CSV while the grid renders normally:
+
+- `availableColumns` entries without labels — react-admin re-registers the list
+  only when the column **count** changes, so an older same-count layout survives
+  indefinitely (and preferences sync across devices);
+- `columns` indices stored as numbers — the grid indexes an array and renders
+  them, `columnIds.includes("3")` matches nothing;
+- a saved selection whose indices no longer resolve.
+
+*Fixes:*
+
+- `selectExportColumns` compares indices as strings, derives a label from
+  `source` when one is missing, and falls back to every column rather than
+  producing a blank file.
+- `DatagridConfigurable` (our `@orwa/entity-id` wrapper) and `AgDatagrid`
+  re-register `availableColumns` whenever the index/source/label **signature**
+  differs, not just the count — which also fixes the Columns picker.
+- Contestants now go through `CustomExportFunction`, so Team and Ticket export
+  as names (Ticket used to be a documentId) with one batched lookup each.
+
 ## 4. No progress indication
 
 `ExportAction` now announces the row count on click and confirms when the file

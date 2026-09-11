@@ -1,6 +1,4 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   RaRecord,
   DataProvider,
@@ -11,6 +9,7 @@ import fetchRelatedRecord, {
   relationDisplayValue,
   selectExportColumns,
 } from "../../../helpers/fetchRelatedRecord";
+import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv";
 
 const formatExportDate = (value: unknown): string => {
   if (value == null || value === "") return "";
@@ -74,9 +73,7 @@ const exportSponsors = async (
     })
   );
 
-  return jsonExport(data, (err: Error, csv: string) =>
-    downloadCSV(csv, `${title}`)
-  );
+  return downloadJsonAsCsv(data, `${title}`);
 };
 
 export default exportSponsors;

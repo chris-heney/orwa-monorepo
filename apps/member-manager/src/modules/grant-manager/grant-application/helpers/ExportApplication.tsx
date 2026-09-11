@@ -1,6 +1,4 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   DataProvider,
 } from "react-admin";
@@ -15,6 +13,7 @@ import {
   relationDisplayValue,
   selectExportColumns,
 } from "../../../../helpers/fetchRelatedRecord";
+import downloadJsonAsCsv from "../../../../helpers/downloadJsonAsCsv";
 
 /**
  * `meta` for the Applications export query (`ListManifest.exportMeta`).
@@ -120,9 +119,7 @@ const ExportApplications = async (
     return filteredRecord;
   });
 
-  return jsonExport(data, (err: Error, csv: string) =>
-    downloadCSV(csv, `${title}`)
-  );
+  return downloadJsonAsCsv(data, `${title}`);
 };
 
 export default ExportApplications;

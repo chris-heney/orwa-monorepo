@@ -1,6 +1,4 @@
-import jsonExport from 'jsonexport/dist';
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   RaRecord,
   DataProvider,
@@ -11,6 +9,7 @@ import {
   resolveExportCell,
   selectExportColumns,
 } from '../../../helpers/fetchRelatedRecord';
+import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv"
 
 const fetchAllRecords = async (dataProvider: any, resource: string, page = 1, perPage = 1000, accumulatedRecords: RaRecord[] = []) => {
   const { data, total } = await dataProvider.getList(resource, {
@@ -69,12 +68,8 @@ const CustomContactExport = async (
   );
 
   // Export the combined records to CSV
-  return jsonExport(data, (err: Error, csv: string) => {
-    if (err) {
-      console.error('CSV Export Error:', err);
-      return;
-    }
-    downloadCSV(csv, `${title}.csv`);
+  return downloadJsonAsCsv(data, `${title}.csv`).catch((err: Error) => {
+    console.error('CSV Export Error:', err);
   });
 };
 

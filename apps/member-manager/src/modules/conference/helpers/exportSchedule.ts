@@ -1,5 +1,4 @@
-import jsonExport from 'jsonexport/dist'
-import { downloadCSV, ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
+import { ConfigurableDatagridColumn, RaRecord, DataProvider } from 'react-admin'
 import formatTime from '../../_helpers/formatTime'
 import {
   exportRelationResource,
@@ -7,6 +6,7 @@ import {
   resolveExportCell,
   selectExportColumns,
 } from '../../../helpers/fetchRelatedRecord'
+import downloadJsonAsCsv from '../../../helpers/downloadJsonAsCsv'
 
 const exportSchedule = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
 
@@ -46,7 +46,7 @@ const exportSchedule = async (RecordList: RaRecord[], availableColumns: Configur
     return filteredRecord
   }))
 
-  return jsonExport(data, (err: Error, csv: string) => downloadCSV(csv, `${title}`))
+  return downloadJsonAsCsv(data, `${title}`)
 }
 
 

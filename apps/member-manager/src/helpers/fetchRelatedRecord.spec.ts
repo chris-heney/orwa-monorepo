@@ -233,6 +233,35 @@ describe("selectExportColumns", () => {
       ["Email"]
     );
   });
+
+  it("matches indices stored as numbers (the grid renders them; the CSV used to drop them)", () => {
+    expect(
+      selectExportColumns(columns, [3, 1] as unknown as string[]).map((c) => c.label)
+    ).toEqual(["Phone", "Name"]);
+  });
+
+  it("falls back to every column instead of a blank file when nothing resolves", () => {
+    expect(selectExportColumns(columns, ["98", "99"]).map((c) => c.label)).toEqual([
+      "ID",
+      "Name",
+      "Email",
+      "Phone",
+    ]);
+  });
+
+  it("derives a label from the source when the stored preference lost it", () => {
+    const stale: { index: string; source?: string; label?: string }[] = [
+      { index: "0", source: "first" },
+      { index: "1", source: "conference_ticket" },
+      { index: "2", source: "point_of_contact.phone" },
+      { index: "3" },
+    ];
+    expect(selectExportColumns(stale, []).map((c) => c.label)).toEqual([
+      "First",
+      "Conference Ticket",
+      "Phone",
+    ]);
+  });
 });
 
 describe("readPath", () => {

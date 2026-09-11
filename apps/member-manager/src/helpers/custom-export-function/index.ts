@@ -1,6 +1,4 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   ConfigurableDatagridColumn,
   DataProvider,
   RaRecord,
@@ -13,6 +11,7 @@ import {
   resolveExportCell,
   selectExportColumns,
 } from "../fetchRelatedRecord";
+import downloadJsonAsCsv from "../downloadJsonAsCsv";
 
 const CustomExportFunction = async (
   RecordList: RaRecord[],
@@ -72,9 +71,7 @@ const CustomExportFunction = async (
     })
   );
 
-  return jsonExport(data, (err: Error, csv: string) =>
-    downloadCSV(csv, `${title}`)
-  );
+  return downloadJsonAsCsv(data, `${title}`);
 };
 
 export default CustomExportFunction;

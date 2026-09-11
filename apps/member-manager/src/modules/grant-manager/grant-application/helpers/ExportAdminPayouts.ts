@@ -1,11 +1,10 @@
-import jsonExport from "jsonexport/dist";
 import {
-  downloadCSV,
   DataProvider,
   RaRecord,
 } from "react-admin";
 import { formatNumber } from "../../../../helpers/Formators";
 import { fetchRelatedField } from "../../../../helpers/fetchRelatedRecord";
+import downloadJsonAsCsv from "../../../../helpers/downloadJsonAsCsv";
 
 const exportPayouts = async (
   RecordList: RaRecord[],
@@ -46,12 +45,8 @@ const exportPayouts = async (
   );
 
   // Convert to CSV and download
-  return jsonExport(data, (err: Error, csv: string) => {
-    if (err) {
-      console.error("Export Error:", err);
-      return;
-    }
-    downloadCSV(csv, `${title}`);
+  return downloadJsonAsCsv(data, `${title}`).catch((err: Error) => {
+    console.error("Export Error:", err);
   });
 };
 

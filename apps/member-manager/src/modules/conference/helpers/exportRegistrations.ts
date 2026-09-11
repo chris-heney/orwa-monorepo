@@ -1,7 +1,7 @@
-import jsonExport from 'jsonexport/dist'
-import { downloadCSV, ConfigurableDatagridColumn, DataProvider, RaRecord } from 'react-admin'
+import { ConfigurableDatagridColumn, DataProvider, RaRecord } from 'react-admin'
 import { formatNumber } from '../../../helpers/Formators'
 import { fetchRelatedRecord, readExportColumn, relationDisplayValue, selectExportColumns } from '../../../helpers/fetchRelatedRecord'
+import downloadJsonAsCsv from '../../../helpers/downloadJsonAsCsv'
 // import { balance } from '../../payouts/components/BalanceField'
 // import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
 
@@ -71,9 +71,7 @@ const exportRegistrations = async (RecordList: RaRecord[], availableColumns: Con
     return filteredRecord
   }))
 
-  return jsonExport(data, (err: Error, csv: string) => {
-    return downloadCSV(csv, `${title}`)
-  })
+  return downloadJsonAsCsv(data, `${title}`)
 }
 
 export default exportRegistrations

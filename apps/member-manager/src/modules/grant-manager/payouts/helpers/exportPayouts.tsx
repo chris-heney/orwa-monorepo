@@ -1,5 +1,4 @@
-import jsonExport from 'jsonexport/dist'
-import { downloadCSV, ConfigurableDatagridColumn, DataProvider, Identifier, RaRecord } from 'react-admin'
+import { ConfigurableDatagridColumn, DataProvider, Identifier, RaRecord } from 'react-admin'
 import { balance } from '../../payouts/components/BalanceField'
 import { totalPaidOut } from '../../payouts/components/TotalPayoutField'
 import {
@@ -8,6 +7,7 @@ import {
   relationDisplayValue,
   selectExportColumns,
 } from '../../../../helpers/fetchRelatedRecord'
+import downloadJsonAsCsv from '../../../../helpers/downloadJsonAsCsv'
 
 const exportPayouts = async (RecordList: RaRecord[], availableColumns: ConfigurableDatagridColumn[], columnIds: string[], title: string, dataProvider: DataProvider) => {
   // When you use async functions within map, it returns an array of promises, 
@@ -61,7 +61,7 @@ const exportPayouts = async (RecordList: RaRecord[], availableColumns: Configura
     return filteredRecord
   }))
 
-  return jsonExport(data, (err: Error, csv: string) => downloadCSV(csv, `${title}`))
+  return downloadJsonAsCsv(data, `${title}`)
 }
 
 export default exportPayouts
