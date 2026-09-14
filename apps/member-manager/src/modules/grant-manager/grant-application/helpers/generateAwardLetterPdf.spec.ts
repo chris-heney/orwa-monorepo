@@ -1,4 +1,4 @@
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts } from "pdf-lib";
 import { describe, expect, it } from "vitest";
 import { IGrantApplication } from "../GrantApplicationTypes";
 import {
@@ -6,6 +6,7 @@ import {
   buildAgreementBlocks,
   buildAwardLetterModel,
   generateAwardLetterDocument,
+  layoutAgreement,
 } from "./generateAwardLetterPdf";
 
 // Shape mirrors a populated grant-application-final record (see Creek County
@@ -37,8 +38,6 @@ describe("buildAwardLetterModel", () => {
       entityName: "Creek County Rural Water District #1",
       applicationId: "20362",
       chairmanName: "Stanley Storer",
-      attestName: "Mitch Conley",
-      attestTitle: "Manager",
       grantAmount: "$100,000",
       matchAmount: "$46,027",
       totalProjectCost: "$146,027",
@@ -100,14 +99,47 @@ describe("buildAwardLetterModel", () => {
     }
   });
 
-  it("leaves attest name/title optional (handwritten at signing)", () => {
-    const model = buildAwardLetterModel({
-      ...application,
-      signatory_name: null,
-      signatory_title: undefined,
-    } as unknown as IGrantApplication);
-    expect(model.attestName).toBe("");
-    expect(model.attestTitle).toBe("");
+  it("does not carry a witness name or title (handwritten at signing)", () => {
+    const model = buildAwardLetterModel(application);
+    expect(model).not.toHaveProperty("attestName");
+    expect(model).not.toHaveProperty("attestTitle");
+  });
+});
+
+describe("layoutAgreement signature block", () => {
+  const signatureOps = async (app: IGrantApplication) => {
+    const doc = await PDFDocument.create();
+    const fonts = {
+      regular: await doc.embedFont(StandardFonts.TimesRoman),
+      bold: await doc.embedFont(StandardFonts.TimesRomanBold),
+    };
+    const model = buildAwardLetterModel(app);
+    return layoutAgreement([{ kind: "signature" }], model, fonts, 10).ops;
+  };
+
+  it("never prints the application's signatory as the witness", async () => {
+    const texts = (await signatureOps(application))
+      .filter((op) => op.kind === "text")
+      .map((op) => (op as { text: string }).text);
+    expect(texts.join("\n")).not.toContain("Mitch Conley");
+    expect(texts.join("\n")).not.toContain("Manager");
+    expect(texts).toEqual(["Attest:", "By: Stanley Storer", "Title:", "(BOARD SEAL)"]);
+  });
+
+  it("gives the witness a blank name (Attest) line and a blank Title line", async () => {
+    const ops = await signatureOps(application);
+    const attest = ops.find((op) => op.kind === "text" && op.text === "Attest:")!;
+    const title = ops.find((op) => op.kind === "text" && op.text === "Title:")!;
+    const lines = ops.filter((op) => op.kind === "line") as { x1: number; x2: number; y: number }[];
+    const onRow = (row: { y: number }) => lines.filter((line) => Math.abs(line.y - (row.y - 2)) < 0.01);
+
+    // Attest row: witness line (left) + chairman signature line (right)
+    expect(onRow(attest)).toHaveLength(2);
+    // Title row: one write-in line, ending where the Attest line ends
+    const [titleLine] = onRow(title);
+    expect(titleLine).toBeDefined();
+    expect(titleLine.x2).toBeCloseTo(Math.min(...onRow(attest).map((line) => line.x2)));
+    expect(titleLine.x2 - titleLine.x1).toBeGreaterThan(100);
   });
 });
 

@@ -6,6 +6,8 @@
 
 // @TODO: https://nodemailer.com/
 
+import { mergeAttachments, templateAttachments, uploadsBaseUrl } from '../helpers/attachments';
+
 export default ({strapi}) => ({
   sendEmail: async (ctx, next) => {
 
@@ -61,12 +63,12 @@ export default ({strapi}) => ({
         }
       ) : null;
 
-      const templateAttachments = emailTemplate ? emailTemplate?.attachments?.map((attachment: any) => {
-        return {
-          name: attachment.name,
-          url: `${process.env.STRAPI_API_ENDPOINT}${attachment.url}`
-        }
-      }) : null;
+      // The template's own files always go out; posted attachments (e.g. the
+      // generated RIG Agreement) are added to them, not swapped in for them.
+      const attachment = mergeAttachments(
+        templateAttachments(emailTemplate?.attachments, uploadsBaseUrl()),
+        attachments
+      );
 
       const payload = {
         to: to ? to : emailTemplate.to, // emailTemplate.to,
@@ -79,7 +81,7 @@ export default ({strapi}) => ({
         subject: subject ? subject : subjectTemplate,
         // text: 'Goodbye world!', // Replace with a valid field ID
         html: html ? html : emailTemplateHtml,
-        attachment: attachments ?? templateAttachments ?? null
+        attachment
       };
       
       // const payload = {

@@ -14,8 +14,8 @@ import { formatNumber } from "../../../../helpers/Formators";
  *   [Match Amount]              -> expected_utility_match (fallbacks: portion_matched_by_recipient, total − grant)
  *   [Total Project Cost]        -> approved_project_cost (fallback: grant + match)
  *   "I, ____, duly authorized Chairman" / By: [Signer's Name] -> chairman.first + chairman.last
- *   Attest: [Person's Name]     -> signatory_name  (the applicant's signatory: manager / clerk)
- *   Title: [Title of Person Signing] -> signatory_title
+ *   Attest: [Person's Name]     -> left blank; whoever witnesses the signing writes it in
+ *   Title: [Title of Person Signing] -> left blank; handwritten by that witness
  *
  * Layout constraint: the agreement must fit on ONE letter page (no footer).
  * The body font is shrunk in small steps until the whole document fits.
@@ -43,8 +43,6 @@ export interface AwardLetterModel {
   entityName: string;
   applicationId: string;
   chairmanName: string;
-  attestName: string;
-  attestTitle: string;
   grantAmount: string;
   matchAmount: string;
   totalProjectCost: string;
@@ -107,8 +105,6 @@ export function buildAwardLetterModel(
     entityName,
     applicationId,
     chairmanName,
-    attestName: (application.signatory_name ?? "").trim(),
-    attestTitle: (application.signatory_title ?? "").trim(),
     grantAmount: formatNumber(grant),
     matchAmount: formatNumber(match),
     totalProjectCost: formatNumber(totalProjectCost),
@@ -347,7 +343,7 @@ interface Layout {
   bottomY: number;
 }
 
-function layoutAgreement(
+export function layoutAgreement(
   blocks: Block[],
   model: AwardLetterModel,
   fonts: Fonts,
@@ -411,16 +407,15 @@ function layoutAgreement(
         ops.push({ kind: "line", x1: leftX + labelW("Attest: "), x2: leftX + labelW("Attest: ") + lineW, y: y - 2 });
         ops.push({ kind: "line", x1: rightX, x2: rightX + lineW + labelW("By: "), y: y - 2 });
 
-        // Row 2: typed names under the lines
+        // Row 2: chairman's typed name. The witness (Attest) side is never
+        // prefilled — anyone present at the signing may witness it.
         y -= lineHeight;
-        if (model.attestName) {
-          ops.push({ kind: "text", text: model.attestName, font: fonts.regular, size, x: leftX + labelW("Attest: "), y });
-        }
         ops.push({ kind: "text", text: `By: ${model.chairmanName}`, font: fonts.regular, size, x: rightX, y });
 
-        // Row 3: attesting person's title
+        // Row 3: witness title, a blank write-in line matching the Attest line
         y -= lineHeight;
-        ops.push({ kind: "text", text: `Title: ${model.attestTitle || "____________________"}`, font: fonts.regular, size, x: leftX, y });
+        ops.push({ kind: "text", text: "Title:", font: fonts.regular, size, x: leftX, y });
+        ops.push({ kind: "line", x1: leftX + labelW("Title: "), x2: leftX + labelW("Attest: ") + lineW, y: y - 2 });
 
         // Row 4: seal
         y -= lineHeight * 1.4;
