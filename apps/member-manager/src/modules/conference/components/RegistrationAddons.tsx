@@ -7,7 +7,6 @@ import {
   Edit,
   NumberField,
   NumberInput,
-  RaRecord,
   ReferenceArrayInput,
   SelectInput,
   SimpleForm,
@@ -17,8 +16,6 @@ import {
   required,
   useCreate,
   useNotify,
-  useRemoveFromStore,
-  useUpdate,
 } from "react-admin";
 import { DatagridConfigurable } from "@orwa/entity-id";
 import { CurrencyOptions } from "../../../config/Settings";
@@ -31,16 +28,16 @@ import {
   Typography,
 } from "@mui/material";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import CustomToolBar from "../../_components/CustomToolbar";
 import { RichTextInput } from "ra-input-rich-text";
 import { useConferenceContext } from "../ConferenceContext";
 import { createRecord } from "../../_helpers/createRecord";
-import { updateRecord } from "../../_helpers/updateRecord";
-import { customDatagridStyle, positionStickyComponent } from "../../../css";
+import { customDatagridStyle } from "../../../css";
 import { formResourceShellSx } from "../../../css/formLayout";
 import CustomPagination from "../../_components/CustomPagination";
 import SafeReferenceArrayField from "./SafeReferenceArrayField";
-import { normalizeRecordArrays } from "../helpers/normalizeRecordArrays";
+import DatagridExpandEdit, {
+  DatagridExpandProps,
+} from "./DatagridExpandEdit";
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 
@@ -270,10 +267,8 @@ const RegistrationAddons = () => {
     isCreating,
     setIsCreating,
   } = useConferenceContext();
-  const [update] = useUpdate();
   const [create] = useCreate();
   const notify = useNotify();
-  const remove = useRemoveFromStore();
 
   return isCreating ? (
     <Create
@@ -314,38 +309,15 @@ const RegistrationAddons = () => {
         isRowSelectable={() => false}
         rowClick="expand"
         sx={customDatagridStyle}
-        expand={(record: RaRecord) => {
-          return (
-            <Edit
-              sx={positionStickyComponent}
-              title={" "}
-              id={record.id}
-              resource="registration-addons"
-              redirect={false}
-            >
-              <SimpleForm
-                record={normalizeRecordArrays(record, [
-                  "conferences",
-                  "included",
-                  "excluded",
-                ])}
-                onSubmit={(formData) =>
-                  updateRecord(
-                    formData,
-                    record,
-                    update,
-                    notify,
-                    remove,
-                    "registration-addons"
-                  )
-                }
-                toolbar={<CustomToolBar />}
-              >
-                <ConferenceExtraForm />
-              </SimpleForm>
-            </Edit>
-          );
-        }}
+        expand={({ id }: DatagridExpandProps) => (
+          <DatagridExpandEdit
+            id={id}
+            resource="registration-addons"
+            arrayFields={["conferences", "included", "excluded"]}
+          >
+            <ConferenceExtraForm />
+          </DatagridExpandEdit>
+        )}
       >
         <SafeReferenceArrayField
           source="conferences"

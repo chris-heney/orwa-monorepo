@@ -10,13 +10,14 @@ import currencyFormatter, { formatCurrency } from "../../helpers/currencyFormat"
 import { useFormContext, useFieldArray } from "react-hook-form";
 import {
   useConferenceId,
+  usePriceTier,
   useRegistrationOptions,
-  useRegistrationSource,
   useTicketIndex,
 } from "../../AppContextProvider";
 import { IExtraOption, ITicketOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
+import { priceFor } from "../../helpers/priceTier";
 import {
   availableContestantSports,
   ContestantSport,
@@ -58,7 +59,7 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
   const conferenceId = useConferenceId();
   const { TicketOptions, ExtraOptions, ConferenceOptions } =
     useRegistrationOptions();
-  const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const { control, watch, setValue, trigger, getValues } = useFormContext();
   const { update, remove } = useFieldArray({ control, name: "tickets" });
   const { notify } = useNotify();
@@ -174,9 +175,7 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
     (!needsParticipantTier || participantTier != null);
 
   const priceOf = (ticketOption: { price_online?: number; price_event?: number } | null) =>
-    registrationSource === "kiosk"
-      ? ticketOption?.price_event
-      : ticketOption?.price_online;
+    ticketOption ? priceFor(ticketOption, priceTier) : undefined;
 
   const effectiveTier: ContestantTier | undefined = needsFisherTier
     ? (fisherTier ?? undefined)
@@ -225,10 +224,7 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
       ticket;
     const allTickets = (getValues("tickets") as ITicketPayload[]) || [];
     const preservedAttach = resolveCartAttachIndex(fresh, allTickets);
-    const base =
-      registrationSource === "kiosk"
-        ? Number(option.price_event) || 0
-        : Number(option.price_online) || 0;
+    const base = priceFor(option, priceTier);
     const extrasPrice = (fresh.extras || [])
       .map((extraId) => getExtraData(ExtraOptions, extraId))
       .filter(Boolean)
@@ -240,12 +236,7 @@ const ContestantModal: React.FC<ContestantModalProps> = ({
         ) {
           return sum;
         }
-        return (
-          sum +
-          (registrationSource === "online"
-            ? Number(extra?.price_online) || 0
-            : Number(extra?.price_event) || 0)
-        );
+        return sum + priceFor(extra, priceTier);
       }, 0);
 
     // Standalone/contestant-only tickets never attach to a cart or another

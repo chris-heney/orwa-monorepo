@@ -2,6 +2,7 @@ import { useContext, useEffect } from "react";
 import {
   RegistrationSource,
   useBoothIndex,
+  usePriceTier,
   useRegistrationOptions,
 } from "../../AppContextProvider";
 import { IBoothPayload } from "../../types/types";
@@ -12,6 +13,7 @@ import { useNotify } from "mj-react-form-builder";
 import { getExtraData } from "../../helpers/getExtraData";
 import { formatCurrency } from "../../helpers/currencyFormat";
 import { boothBasePrice } from "../../helpers/boothBasePrice";
+import { priceFor } from "../../helpers/priceTier";
 
 interface IBoothModalProps {
   isOpen: {
@@ -29,6 +31,7 @@ interface IBoothModalProps {
 const AddBoothModal = ({ setIsOpen, isOpen }: IBoothModalProps) => {
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
   const registrationSource = useContext(RegistrationSource);
+  const priceTier = usePriceTier();
   const { boothIndex, setBoothIndex } = useBoothIndex();
   const { watch, trigger, control } = useFormContext();
   const { notify } = useNotify();
@@ -56,9 +59,7 @@ const AddBoothModal = ({ setIsOpen, isOpen }: IBoothModalProps) => {
         ?.map((extra: number) => {
           const currentExtra = getExtraData(ExtraOptions, extra);
           if (!currentExtra) return 0;
-          return registrationSource === "online"
-            ? currentExtra.price_online
-            : currentExtra.price_event;
+          return priceFor(currentExtra, priceTier);
         })
         .reduce((acc: number, curr: number) => acc + curr, 0) || 0;
 

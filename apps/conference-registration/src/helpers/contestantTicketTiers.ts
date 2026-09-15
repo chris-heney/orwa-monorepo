@@ -1,3 +1,4 @@
+import { PriceTier, priceFor } from "./priceTier";
 import { ITicketOption } from "../types/types";
 import { ticketMatchesContext } from "./ticketMatchesContext";
 
@@ -67,12 +68,8 @@ export const hasBothContestantTiers = (
 /** Lowest price of a tier, for showing "$75" / "$150" on the toggle. */
 export const tierMinPrice = (
   tickets: ITicketOption[],
-  registrationSource: string | null | undefined
+  priceTier: PriceTier
 ): number | null => {
-  const prices = tickets
-    .map((ticket) =>
-      registrationSource === "kiosk" ? ticket.price_event : ticket.price_online
-    )
-    .filter((price): price is number => typeof price === "number");
+  const prices = tickets.map((ticket) => priceFor(ticket, priceTier));
   return prices.length > 0 ? Math.min(...prices) : null;
 };

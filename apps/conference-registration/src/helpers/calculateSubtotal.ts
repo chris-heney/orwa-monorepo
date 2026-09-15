@@ -5,11 +5,12 @@ import {
   ITicketPayload,
 } from "../types/types";
 import { getExtraData } from "./getExtraData";
-import { applyFreeVendorPricing } from "./applyFreeVendorPricing";
+import { applyTicketPricing } from "./applyTicketPricing";
+import { PriceTier, priceFor } from "./priceTier";
 
 export const calculateSubtotal = (
   payload: IRegistrationPayload,
-  registrationSource = "online",
+  priceTier: PriceTier,
   non_member_fee = 1000,
   extraOptions: IExtraOption[]
 ) => {
@@ -25,13 +26,13 @@ export const calculateSubtotal = (
 
   let subtotal = 0;
 
-  // Re-apply booth-bundled free Vendor pricing from current booth count so
-  // stale ticket.price values (saved before a booth was added) cannot inflate
-  // the charged total.
-  const pricedTickets = applyFreeVendorPricing(
+  // Re-price every ticket from the catalog at the current tier so a stale
+  // ticket.price (saved before a booth was added, or before early pricing
+  // ended) cannot change the charged total.
+  const pricedTickets = applyTicketPricing(
     tickets ?? [],
     booths?.length ?? 0,
-    registrationSource,
+    priceTier,
     extraOptions
   );
 
@@ -46,19 +47,13 @@ export const calculateSubtotal = (
   registrationAddonIds?.forEach((extra) => {
     const currentExtra = getExtraData(extraOptions, extra);
     if (!currentExtra) return 0;
-    subtotal +=
-      registrationSource === "online"
-        ? currentExtra.price_online
-        : currentExtra.price_event;
+    subtotal += priceFor(currentExtra, priceTier);
   });
 
   registrationExtrasIds?.forEach((extra) => {
     const currentExtra = getExtraData(extraOptions, extra);
     if (!currentExtra) return 0;
-    subtotal +=
-      registrationSource === "online"
-        ? currentExtra.price_online
-        : currentExtra.price_event;
+    subtotal += priceFor(currentExtra, priceTier);
   });
 
   sponsors.forEach((sponsor) => {

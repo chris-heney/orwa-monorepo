@@ -4,7 +4,7 @@ import AddBoothModal from "../components/_components/ModalBooth";
 import {
   RegistrationOptions,
   useBoothIndex,
-  useRegistrationSource,
+  usePriceTier,
 } from "../AppContextProvider";
 import { useFormContext } from "react-hook-form";
 import { IBoothPayload, IRegistrationOptions } from "../types/types";
@@ -15,6 +15,7 @@ import { TextInput } from "mj-react-form-builder";
 import SkipBoothStep from "../components/SkipBoothStep";
 import Loading from "../components/Loading";
 import { getExtraData } from "../helpers/getExtraData";
+import { priceFor } from "../helpers/priceTier";
 import { ValidationHighlight } from "../helpers/validationHighlight";
 
 const OptionWrap = ({
@@ -63,7 +64,7 @@ const StepBooths = () => {
     setValue,
   } = useFormContext();
 
-  const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
 
   const [isBoothModalOpen, setIsBoothModalOpen] = React.useState({
     open: false,
@@ -86,12 +87,7 @@ const StepBooths = () => {
       (total: number, extra: number) => {
         const currentExtra = getExtraData(ExtraOptions, extra);
         if (!currentExtra) return total;
-        return (
-          total +
-          (registrationSource === "kiosk"
-            ? currentExtra.price_event
-            : currentExtra.price_online)
-        );
+        return total + priceFor(currentExtra, priceTier);
       },
       0
     );
@@ -108,7 +104,7 @@ const StepBooths = () => {
     agencyType,
     ExtraOptions,
     ConferenceOptions.non_member_fee,
-    registrationSource,
+    priceTier,
   ]);
 
   const selectMember = (value: "Member" | "Non Member") => {

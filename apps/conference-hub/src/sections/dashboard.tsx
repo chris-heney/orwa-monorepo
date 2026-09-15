@@ -7,6 +7,7 @@ import { addToCalendar } from "../helpers/addToCalendar";
 import { CalendarIcon, DocumentTextIcon } from "@heroicons/react/20/solid";
 import ConferenceBeginsIn from "../components/ConferenceBeginsIn";
 import { ui } from "../ui/tokens";
+import { earlyPricingEndsOn, isEarlyPricingOpen } from "../helpers/priceTier";
 
 const Dashboard = () => {
   const { conference } = useConferenceKioskProvider();
@@ -19,6 +20,13 @@ const Dashboard = () => {
   const registerHref = `https://orwa.org/conference-registration/?conference_id=${conference.id}&source=${
     conference.status === "Online Registration" ? "online" : "kiosk"
   }`;
+
+  // Early pricing runs through online_registration_end (inclusive); after
+  // that the registration form charges event pricing.
+  const earlyPricingOpen =
+    conference.status === "Online Registration" &&
+    isEarlyPricingOpen(conference.online_registration_end);
+  const earlyPricingEnd = earlyPricingEndsOn(conference.online_registration_end);
 
   return (
     <div className="space-y-6">
@@ -45,13 +53,12 @@ const Dashboard = () => {
         </div>
 
         <div className="flex flex-col items-center gap-4">
-          {conference.status === "Online Registration" &&
-            conference.online_registration_end && (
-              <EarlyRegistrationDiscount
-                startDate={conference.online_registration_end}
-              />
-            )}
-          {(conference.status === "Kiosk Registration" ||
+          {earlyPricingOpen && earlyPricingEnd && (
+            <EarlyRegistrationDiscount endsOn={earlyPricingEnd} />
+          )}
+          {((conference.status === "Online Registration" &&
+            !earlyPricingOpen) ||
+            conference.status === "Kiosk Registration" ||
             conference.status === "Archived" ||
             conference.status === "Online Registration Closed") && (
             <ConferenceBeginsIn />

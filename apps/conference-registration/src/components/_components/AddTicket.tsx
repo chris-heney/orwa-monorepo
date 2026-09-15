@@ -2,14 +2,15 @@ import { Dispatch, SetStateAction } from "react";
 import { useFormContext, useFieldArray } from "react-hook-form";
 import { formatMoneyOrIncluded } from "../../helpers/currencyFormat";
 import {
+  usePriceTier,
   useRegistrationOptions,
-  useRegistrationSource,
   useTicketIndex,
 } from "../../AppContextProvider";
 import { ITicketPayload } from "../../types/types";
 import { isExtraIncluded } from "../../helpers/isExtraIncluded";
 import { fetchSingleTicket } from "../../helpers/fetchSingleTicket";
 import { getExtraData } from "../../helpers/getExtraData";
+import { priceFor } from "../../helpers/priceTier";
 import { ticketMatchesContext } from "../../helpers/ticketMatchesContext";
 import { freeVendorAllowance } from "../../helpers/freeVendorAllowance";
 import currencyFormatter from "../../helpers/currencyFormat";
@@ -38,7 +39,7 @@ const AddTicketComponent = ({
     name: "tickets",
   });
 
-  const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const tickets = watch("tickets") || [];
   const typedTickets = tickets.filter(
     (ticket: ITicketPayload) => ticket.type === type
@@ -165,9 +166,7 @@ const AddTicketComponent = ({
                         <span className="inline-flex items-baseline gap-1.5">
                           <span className="font-normal text-slate-400 line-through">
                             {currencyFormatter.format(
-                              registrationSource === "online"
-                                ? ticket.ticket_type?.price_online || 0
-                                : ticket.ticket_type?.price_event || 0
+                              priceFor(ticket.ticket_type, priceTier)
                             )}
                           </span>
                           <span>Included with booth</span>
@@ -187,18 +186,14 @@ const AddTicketComponent = ({
                           <span className="inline-flex items-baseline gap-1.5">
                             <span className="text-slate-400 line-through">
                               {currencyFormatter.format(
-                                registrationSource === "online"
-                                  ? ticket.ticket_type?.price_online || 0
-                                  : ticket.ticket_type?.price_event || 0
+                                priceFor(ticket.ticket_type, priceTier)
                               )}
                             </span>
                             <span>Included with booth</span>
                           </span>
                         ) : (
                           formatMoneyOrIncluded(
-                            registrationSource === "online"
-                              ? ticket.ticket_type?.price_online
-                              : ticket.ticket_type?.price_event
+                            priceFor(ticket.ticket_type, priceTier)
                           )
                         )}
                       </span>
@@ -221,9 +216,7 @@ const AddTicketComponent = ({
                             )
                               ? "Included"
                               : formatMoneyOrIncluded(
-                                  registrationSource === "online"
-                                    ? currentExtra.price_online
-                                    : currentExtra.price_event
+                                  priceFor(currentExtra, priceTier)
                                 )}
                           </span>
                         </li>

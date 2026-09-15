@@ -11,14 +11,15 @@ import CustomSecondaryHeader from "./CustomSecondaryHeader";
 import { formatCurrency } from "../../helpers/currencyFormat";
 import { useFormContext, useFieldArray, useWatch } from "react-hook-form";
 import {
+  usePriceTier,
   useRegistrationOptions,
-  useRegistrationSource,
   useTicketIndex,
   useUserContext,
 } from "../../AppContextProvider";
 import { IExtraOption, ITicketOption, ITicketPayload } from "../../types/types";
 import AddExtras from "../AddExtras";
 import { getExtraData } from "../../helpers/getExtraData";
+import { priceFor } from "../../helpers/priceTier";
 import {
   formatExtrasConfirmList,
   getUncheckedOptionalExtras,
@@ -57,7 +58,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
   const { ticketIndex } = useTicketIndex();
   const { isAdminView } = useUserContext();
   const { TicketOptions, ExtraOptions } = useRegistrationOptions();
-  const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
 
   const { control, watch, setValue, trigger } = useFormContext();
 
@@ -205,10 +206,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
     if (type === "Vendor" && vendorOrdinal < freeVendors()) {
       ticketPrice = 0; // Free ticket
     } else {
-      ticketPrice =
-        registrationSource === "online"
-          ? ticketType?.price_online || 0
-          : ticketType?.price_event || 0;
+      ticketPrice = priceFor(ticketType, priceTier);
     }
 
     const extrasPrice = (ticket.extras || [])
@@ -225,10 +223,7 @@ const TicketModal: React.FC<ITicketModalProps> = ({
       })
       .reduce(
         (sum: number, extra: IExtraOption) =>
-          sum +
-          (registrationSource === "online"
-            ? extra?.price_online || 0
-            : extra?.price_event || 0),
+          sum + priceFor(extra, priceTier),
         0
       );
 
@@ -248,7 +243,6 @@ const TicketModal: React.FC<ITicketModalProps> = ({
 
     update(ticketIndex, {
       ...ticket,
-      // extras: registrationSource === "online" ?  includedExtras : null,
       extras: includedExtras,
       ticket_type: ticketType,
     });

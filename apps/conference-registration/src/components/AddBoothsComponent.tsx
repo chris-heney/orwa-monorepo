@@ -6,6 +6,7 @@ import {
 } from "../helpers/currencyFormat";
 import {
   useBoothIndex,
+  usePriceTier,
   useRegistrationOptions,
   useRegistrationSource,
 } from "../AppContextProvider";
@@ -13,6 +14,7 @@ import { IBoothPayload } from "../types/types";
 import { getExtraData } from "../helpers/getExtraData";
 import { boothHasExtras } from "../helpers/boothHasExtras";
 import { boothBasePrice } from "../helpers/boothBasePrice";
+import { priceFor } from "../helpers/priceTier";
 
 interface AddBoothComponentProps {
   setIsBoothModalOpen: Dispatch<
@@ -35,6 +37,7 @@ const AddBoothsComponent = ({
 
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
   const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
 
   const booths = (watch("booths") || []) as IBoothPayload[];
   const hasOptions = boothHasExtras(ExtraOptions, registrationSource);
@@ -46,12 +49,7 @@ const AddBoothsComponent = ({
     (booth.extras || []).reduce((sum: number, extraId) => {
       const currentExtra = getExtraData(ExtraOptions, extraId);
       if (!currentExtra) return sum;
-      return (
-        sum +
-        (registrationSource === "online"
-          ? currentExtra.price_online
-          : currentExtra.price_event)
-      );
+      return sum + priceFor(currentExtra, priceTier);
     }, 0);
 
   // Correct persisted $0 additional booths when booth_price_2 was null/0
@@ -73,7 +71,7 @@ const AddBoothsComponent = ({
     if (needsUpdate) {
       replace(next);
     }
-  }, [ConferenceOptions, booths, ExtraOptions, registrationSource]);
+  }, [ConferenceOptions, booths, ExtraOptions, priceTier]);
 
   const handleAddBooth = () => {
     const nextIndex = booths.length;
@@ -195,9 +193,7 @@ const AddBoothsComponent = ({
                           <span>{currentExtra.name}</span>
                           <span className="tabular-nums text-slate-800">
                             {formatMoneyOrIncluded(
-                              registrationSource === "online"
-                                ? currentExtra.price_online
-                                : currentExtra.price_event
+                              priceFor(currentExtra, priceTier)
                             )}
                           </span>
                         </li>

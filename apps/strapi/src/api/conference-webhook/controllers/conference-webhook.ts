@@ -38,6 +38,7 @@ import {
   isContestantTicket,
 } from "../helpers/contestant-capacity";
 import { conferenceCycleYear } from "../helpers/conference-cycle-year";
+import { PriceTier, priceFor, resolvePriceTier } from "../helpers/price-tier";
 
 /**
  * Conference webhook controller
@@ -137,6 +138,12 @@ export default ({ strapi }) => {
           populate: "*"
         });
         const eventYear = conferenceCycleYear(conferenceData, currentYear);
+        // Early (price_online) vs event pricing: the source alone is not enough
+        // once the conference's online_registration_end date has passed.
+        const priceTier: PriceTier = resolvePriceTier(
+          registrationSource,
+          conferenceData?.online_registration_end
+        );
 
         const isContestantOnlyCheckout = registration_type === "Contestant";
         const contestantTickets: ITicketPayload[] = (tickets ?? []).filter(
@@ -370,7 +377,7 @@ export default ({ strapi }) => {
           const registrationAddons = selectedRegistrationAddons.map(
             (addon, index) => ({
               key: addon.name + " " + index,
-              value: registrationSource === "online" ? addon.price_online.toString() : addon.price_event.toString(),
+              value: priceFor(addon, priceTier).toString(),
               label: addon.name,
               addon: addon.id,
             })
@@ -378,7 +385,7 @@ export default ({ strapi }) => {
 
           const extras = extrasData.map((extra) => ({
             key: extra.name,
-            value: registrationSource === "online" ? extra.price_online.toString() : extra.price_event.toString(),
+            value: priceFor(extra, priceTier).toString(),
             label: extra.name,
             selection: selectionFor(registration_extra_selections, extra.id),
             item: extra.id,
@@ -433,7 +440,7 @@ export default ({ strapi }) => {
                 lines,
                 conference,
                 previousRegistration.id,
-                registrationSource,
+                priceTier,
                 previousRegistration.organization,
                 conferenceData,
                 golfReservation,
@@ -488,7 +495,7 @@ export default ({ strapi }) => {
                 standaloneContestants,
                 conference,
                 registrationId,
-                registrationSource,
+                priceTier,
                 organization,
                 conferenceData,
                 golfReservation,
@@ -597,7 +604,7 @@ export default ({ strapi }) => {
                 tickets,
                 conference,
                 registrationId,
-                registrationSource,
+                priceTier,
                 organization,
                 eventYear
               ),
@@ -613,6 +620,7 @@ export default ({ strapi }) => {
                 registrationId,
                 organization,
                 conferenceData,
+                priceTier,
                 eventYear
               ),
             ctx.request.body
@@ -622,7 +630,7 @@ export default ({ strapi }) => {
             tickets,
             conference,
             registrationId,
-            registrationSource,
+            priceTier,
             organization,
             conferenceData,
             golfReservation,
@@ -955,7 +963,7 @@ export default ({ strapi }) => {
     tickets, 
     conference, 
     registrationId, 
-    registrationSource, 
+    priceTier, 
     organization,
     eventYear = currentYear
   ) {
@@ -976,7 +984,7 @@ export default ({ strapi }) => {
 
       const extras: IExtraEntity[] = selectedExtras.map((extra, index) => ({
         key: extra.name + " " + index,
-        value: registrationSource === "online" ? extra.price_online.toString() : extra.price_event.toString(),
+        value: priceFor(extra, priceTier).toString(),
         label: extra.name,
         selection: selectionFor(ticket.extra_selections, extra.id),
         item: extra.id,
@@ -1043,6 +1051,7 @@ export default ({ strapi }) => {
     registrationId, 
     organization, 
     conferenceData,
+    priceTier,
     eventYear = currentYear
   ) {
     if (!booths || booths.length === 0) return;
@@ -1071,7 +1080,7 @@ export default ({ strapi }) => {
 
       const boothExtras = selectedExtras.map((extra, index) => ({
         key: extra.name + " " + index,
-        value: extra.price_online.toString(),
+        value: priceFor(extra, priceTier).toString(),
         label: extra.name,
         selection: selectionFor(booth.extra_selections, extra.id),
         item: extra.id,
@@ -1106,7 +1115,7 @@ export default ({ strapi }) => {
     tickets, 
     conference, 
     registrationId, 
-    registrationSource, 
+    priceTier, 
     organization,
     conferenceData,
     golfReservation: GolfReservation = noGolfReservation(),
@@ -1143,9 +1152,7 @@ export default ({ strapi }) => {
           return {
             key: extra.name + " " + index,
             value:
-              registrationSource === "online"
-                ? extra.price_online.toString()
-                : extra.price_event.toString(),
+              priceFor(extra, priceTier).toString(),
             label: extra.name,
             selection: selectionFor(contestant.extra_selections, extra.id),
             item: extra.id,

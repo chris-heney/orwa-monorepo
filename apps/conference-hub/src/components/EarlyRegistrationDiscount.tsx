@@ -1,15 +1,19 @@
 import Countdown from "./Countdown";
 
 interface EarlyRegistrationDiscountProps {
-  startDate: string;
+  /**
+   * First day of event pricing (YYYY-MM-DD) — the day after
+   * `online_registration_end`, so the countdown runs through the last early day.
+   */
+  endsOn: string;
 }
 
 const EarlyRegistrationDiscount = ({
-  startDate,
+  endsOn,
 }: EarlyRegistrationDiscountProps) => {
   return (
     <Countdown
-      targetDate={startDate}
+      targetDate={endsOn}
       subtitle="Early registration"
       title="Discount ends in"
     />

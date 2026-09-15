@@ -8,6 +8,7 @@ import {
   processAndUploadFiles,
 } from "../helpers/processAndUploadFiles";
 import {
+  usePriceTier,
   useRegistrationOptions,
   useRegistrationSource,
   useUserContext,
@@ -43,6 +44,7 @@ const EntryListSidebar = () => {
   const { setViewingEntries } = useUserContext();
 
   const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const { ConferenceOptions, ExtraOptions } = useRegistrationOptions();
 
   const { notify } = useNotify();
@@ -106,7 +108,7 @@ const EntryListSidebar = () => {
           expirationDate: cardExpiration,
           amount: calculateSubtotal(
             processedPayload,
-            registrationSource,
+            priceTier,
             payload["agency"] === "false" &&
               payload["member_status"] === "Non Member"
               ? ConferenceOptions.non_member_fee

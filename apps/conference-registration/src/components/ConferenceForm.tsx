@@ -6,6 +6,7 @@ import {
   useEntryPayload,
   useExtraDetails,
   useFormSubmitted,
+  usePriceTier,
   useRegistrationOptions,
   useRegistrationSource,
   useStepContext,
@@ -13,12 +14,13 @@ import {
 } from "../AppContextProvider";
 import StepNavigation from "./StepNavigation";
 import { Form, NotifyProvider } from "mj-react-form-builder";
-import { defaultPayload } from "../types/types";
+import { defaultPayload, ITicketPayload } from "../types/types";
 import Loading from "./Loading";
 import EntryListSidebar from "../entries/EntryListSidebar";
 import { sanitizeRegistrationExtras } from "../helpers/sanitizeRegistrationExtras";
 import { useEntryList } from "../providers/EntryListProvider";
 import { loadWizardDraft } from "../helpers/wizardPersistence";
+import { applyTicketPricing } from "../helpers/applyTicketPricing";
 import WizardStateSync from "./WizardStateSync";
 import { ValidationHighlightProvider } from "../helpers/validationHighlight";
 import { isRegistrationOpen } from "../helpers/isRegistrationOpen";
@@ -28,6 +30,7 @@ const ConferenceForm = () => {
   const { isOpen, extraDetails, setExtraDetails, setIsOpen } =
     useExtraDetails();
   const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const conferenceId = useContext(ConferenceId);
   const { isLoading, ConferenceOptions, ExtraOptions } =
     useRegistrationOptions();
@@ -58,6 +61,20 @@ const ConferenceForm = () => {
     : {
         ...defaultPayload,
         ...(wizardDraft?.values ?? {}),
+        // A draft keeps each ticket's price from when it was saved; re-price
+        // so ticket cards and step totals match checkout at today's tier.
+        ...(Array.isArray(wizardDraft?.values?.tickets)
+          ? {
+              tickets: applyTicketPricing(
+                wizardDraft.values.tickets as ITicketPayload[],
+                Array.isArray(wizardDraft.values.booths)
+                  ? wizardDraft.values.booths.length
+                  : 0,
+                priceTier,
+                ExtraOptions
+              ),
+            }
+          : {}),
         // Always bind to the current conference from the URL.
         conference: conferenceId,
       };

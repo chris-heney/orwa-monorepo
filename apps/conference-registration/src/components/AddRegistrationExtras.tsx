@@ -3,11 +3,12 @@ import InfoIcon from "@mui/icons-material/Info";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import currencyFormatter from "../helpers/currencyFormat";
+import { priceFor } from "../helpers/priceTier";
 import { IExtraOption } from "../types/types";
 import {
   useExtraDetails,
+  usePriceTier,
   useRegistrationOptions,
-  useRegistrationSource,
 } from "../AppContextProvider";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
@@ -31,7 +32,7 @@ const AddRegistrationExtras = ({
   });
 
   const { RegistrationAddons } = useRegistrationOptions();
-  const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const { setExtraDetails, setIsOpen } = useExtraDetails();
 
   const openDetailsModal = (extra: IExtraOption) => {
@@ -105,17 +106,11 @@ const AddRegistrationExtras = ({
                     />
                   )}
                 </div>
-                {registrationSource === "online"
-                  ? extra.price_online > 0 && (
-                      <span className="text-gray-700 font-medium">
-                        {currencyFormatter.format(extra.price_online)}
-                      </span>
-                    )
-                  : extra.price_event > 0 && (
-                      <span className="text-gray-700 font-medium">
-                        {currencyFormatter.format(extra.price_event)}
-                      </span>
-                    )}
+                {priceFor(extra, priceTier) > 0 && (
+                  <span className="text-gray-700 font-medium">
+                    {currencyFormatter.format(priceFor(extra, priceTier))}
+                  </span>
+                )}
               </div>
               {extra.max_qty_each > 1 && (
                 <div className="flex items-center mt-2">

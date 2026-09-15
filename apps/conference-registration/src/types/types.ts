@@ -453,6 +453,8 @@ export interface IConference extends IConferenceDraft {
     | "Archived"
     | "Closed";
   available_contestants: number;
+  /** Last day (YYYY-MM-DD, inclusive) of `price_online` pricing. */
+  online_registration_end?: string | null;
   logo: {
     url: string;
     data?: {

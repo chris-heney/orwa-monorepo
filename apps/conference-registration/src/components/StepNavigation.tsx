@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   useConferenceId,
   useFormSubmitted,
+  usePriceTier,
   useRegistrationOptions,
   useRegistrationSource,
   useStepContext,
@@ -13,7 +14,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import { useNotify } from "mj-react-form-builder";
 import { IRegistrationPayload, ITicketPayload } from "../types/types";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
-import { applyFreeVendorPricing } from "../helpers/applyFreeVendorPricing";
+import { applyTicketPricing } from "../helpers/applyTicketPricing";
 import {
   isUnresolvedUpload,
   processAndUploadFiles,
@@ -56,6 +57,7 @@ const StepNavigation = () => {
   const { isAdminView, isLoggedIn, isTestMode } = useUserContext();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const conferenceId = useConferenceId() ?? "2";
   const { getValues, trigger, getFieldState, formState } = useFormContext();
   // Subscribe so formState.errors stays current after await trigger().
@@ -493,14 +495,14 @@ const StepNavigation = () => {
     // consent — the webhook's per-ticket `promotional_emails` field is left
     // undefined for them, consistent with the existing schema (optional
     // boolean on conference-attendee).
-    processedPayload.tickets = applyFreeVendorPricing(
+    processedPayload.tickets = applyTicketPricing(
       ((processedPayload.tickets ?? []) as ITicketPayload[]).map((ticket) =>
         ticket.type === "Attendee"
           ? { ...ticket, promotional_emails: payload.promotional_emails }
           : { ...ticket, promotional_emails: undefined }
       ),
       (processedPayload.booths ?? []).length,
-      registrationSource,
+      priceTier,
       ExtraOptions
     );
 
@@ -524,7 +526,7 @@ const StepNavigation = () => {
         expirationDate: cardExpiration,
         amount: calculateSubtotal(
           processedPayload,
-          registrationSource,
+          priceTier,
           getValues("agency") === "false" &&
             getValues("member_status") === "Non Member"
             ? ConferenceOptions.non_member_fee

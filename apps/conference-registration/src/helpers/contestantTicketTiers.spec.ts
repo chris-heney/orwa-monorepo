@@ -100,7 +100,7 @@ describe("tierMinPrice", () => {
   it("uses online price by default and event price for kiosk", () => {
     const kiosk = ticket({ id: 40, price_online: 75, price_event: 100 });
     expect(tierMinPrice([kiosk], "online")).toBe(75);
-    expect(tierMinPrice([kiosk], "kiosk")).toBe(100);
+    expect(tierMinPrice([kiosk], "event")).toBe(100);
     expect(tierMinPrice([], "online")).toBeNull();
   });
 });

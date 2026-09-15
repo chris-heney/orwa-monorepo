@@ -2,6 +2,7 @@
  * conference-webhook service
  */
 
+import { priceFor, resolvePriceTier } from "../helpers/price-tier";
 import {
   IContactEntity,
   IExtraEntity,
@@ -442,6 +443,10 @@ export default ({ strapi }) => {
       const conferenceData = await findOneById("api::conference.conference", conference, {
         populate: "*"
       });
+      const priceTier = resolvePriceTier(
+        registrationSource,
+        conferenceData?.online_registration_end
+      );
 
       // Helper functions
       const fetchExtrasForTickets = async (ticketsArray: any[] = []) => {
@@ -718,9 +723,7 @@ export default ({ strapi }) => {
                       .map((extra) => {
                         const qty = countExtraQty(booth.extras, extra.id);
                         const unitPrice =
-                          registrationSource === "online"
-                            ? extra.price_online
-                            : extra.price_event;
+                          priceFor(extra, priceTier);
                         const { label, amount } = formatExtraLine(
                           extra,
                           qty,
@@ -825,9 +828,7 @@ export default ({ strapi }) => {
                 ticket.type === "Vendor" && ticketIndex + 1 <= freeVendors()
                   ? "Included"
                   : currencyFormatter.format(
-                      registrationSource === "online"
-                        ? ticket.ticket_type.price_online
-                        : ticket.ticket_type.price_event
+                      priceFor(ticket.ticket_type, priceTier)
                     )
               }
             </td>
@@ -841,9 +842,7 @@ export default ({ strapi }) => {
                     .map((extra) => {
                       const qty = countExtraQty(ticket.extras, extra.id);
                       const unitPrice =
-                        registrationSource === "online"
-                          ? extra.price_online
-                          : extra.price_event;
+                        priceFor(extra, priceTier);
                       const { label, amount } = formatExtraLine(
                         extra,
                         qty,
@@ -894,9 +893,7 @@ export default ({ strapi }) => {
         .map((addon, index) => {
           const qty = countExtraQty(registrationAddonsIds, addon.id);
           const unitPrice =
-            registrationSource === "online"
-              ? addon.price_online
-              : addon.price_event;
+            priceFor(addon, priceTier);
           const { label, amount } = formatExtraLine(addon, qty, unitPrice);
           return `
           <tr style="background-color:${
@@ -936,9 +933,7 @@ export default ({ strapi }) => {
         .map((extra, index) => {
           const qty = countExtraQty(registrationExtrasIds, extra.id);
           const unitPrice =
-            registrationSource === "online"
-              ? extra.price_online
-              : extra.price_event;
+            priceFor(extra, priceTier);
           const { label, amount } = formatExtraLine(
             extra,
             qty,

@@ -41,10 +41,13 @@ import {
   saveAdminView,
 } from "./helpers/adminViewPersistence";
 import { detectTestMode } from "./helpers/detectTestMode";
+import { PriceTier, resolvePriceTier } from "./helpers/priceTier";
 
 export const ConferenceId = createContext<string | null>(null);
 export const PassportId = createContext<string | null>(null);
 export const RegistrationSource = createContext<string>("online");
+/** "online" (price_online) or "event" (price_event) — see helpers/priceTier. */
+export const PriceTierContext = createContext<PriceTier>("online");
 export const RegistrationOptions = createContext<IRegistrationOptions>({
   AllConferenceOptions: [],
   ConferenceOptions: {} as IConference,
@@ -105,6 +108,7 @@ export const EntryPayload = createContext<EntryPayloadContext>({
 export const useConferenceId = () => useContext(ConferenceId);
 export const useRegistrationOptions = () => useContext(RegistrationOptions);
 export const useRegistrationSource = () => useContext(RegistrationSource);
+export const usePriceTier = () => useContext(PriceTierContext);
 export const useExtraDetails = () => useContext(ExtraDetails);
 export const useStepContext = () => useContext(FormSteps);
 export const useBoothIndex = () => useContext(BoothIndex);
@@ -234,6 +238,13 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
     watersystemsStatus,
   ]);
 
+  // Price by date as well as source: after online_registration_end an
+  // online registration pays price_event.
+  const priceTier = resolvePriceTier(
+    registrationSource,
+    registrationOptions.ConferenceOptions?.online_registration_end
+  );
+
   return (
     // Passed with Query Parameter:
     <User.Provider
@@ -254,6 +265,7 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
           <PassportId.Provider value={passportId}>
             {/* // Passed with Query Parameter: */}
             <RegistrationSource.Provider value={registrationSource}>
+            <PriceTierContext.Provider value={priceTier}>
               <RegistrationOptions.Provider
                 value={{
                   ...(registrationOptions as IRegistrationOptions),
@@ -292,6 +304,7 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
                   </BoothIndex.Provider>
                 </TicketIndex.Provider>
               </RegistrationOptions.Provider>
+            </PriceTierContext.Provider>
             </RegistrationSource.Provider>
           </PassportId.Provider>
         </ConferenceId.Provider>

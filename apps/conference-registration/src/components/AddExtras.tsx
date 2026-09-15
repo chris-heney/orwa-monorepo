@@ -6,11 +6,13 @@ import { formatMoneyOrIncluded } from "../helpers/currencyFormat";
 import { IExtraOption } from "../types/types";
 import {
   useExtraDetails,
+  usePriceTier,
   useRegistrationOptions,
   useRegistrationSource,
 } from "../AppContextProvider";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { isExtraIncluded } from "../helpers/isExtraIncluded";
+import { priceFor } from "../helpers/priceTier";
 import { filterVisibleExtras } from "../helpers/filterVisibleExtras";
 import { validationHighlightClassName } from "../helpers/validationHighlight";
 import {
@@ -43,6 +45,7 @@ const AddExtras = ({
 
   const { ExtraOptions } = useRegistrationOptions();
   const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
   const { setExtraDetails, setIsOpen } = useExtraDetails();
 
   const tickets = watch(field);
@@ -304,11 +307,7 @@ const AddExtras = ({
                 <span className="shrink-0 font-medium text-slate-700">
                   {isExtraIncluded(ticket, ExtraOptions, extra.id)
                     ? "Included"
-                    : formatMoneyOrIncluded(
-                        registrationSource === "online"
-                          ? extra.price_online
-                          : extra.price_event
-                      )}
+                    : formatMoneyOrIncluded(priceFor(extra, priceTier))}
                 </span>
               </div>
               {quantitySelectionEnabled(extra) &&

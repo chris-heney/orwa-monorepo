@@ -45,6 +45,7 @@ vi.mock("../AppContextProvider", () => ({
     ExtraOptions: [],
   }),
   useRegistrationSource: () => "online",
+  usePriceTier: () => "online",
   useUserContext: () => ({ setViewingEntries }),
 }));
 

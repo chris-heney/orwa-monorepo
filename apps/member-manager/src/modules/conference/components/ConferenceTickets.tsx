@@ -3,10 +3,8 @@ import {
   AutocompleteArrayInput,
   ChipField,
   Create,
-  Edit,
   NumberField,
   NumberInput,
-  RaRecord,
   ReferenceArrayInput,
   SelectInput,
   SimpleForm,
@@ -16,8 +14,6 @@ import {
   required,
   useCreate,
   useNotify,
-  useRemoveFromStore,
-  useUpdate,
 } from "react-admin";
 import { DatagridConfigurable } from "@orwa/entity-id";
 import {
@@ -31,16 +27,16 @@ import {
 } from "@mui/material";
 import { CurrencyOptions } from "../../../config/Settings";
 import CustomSecondaryHeader from "../../_components/CustomSecondaryHeader";
-import CustomToolBar from "../../_components/CustomToolbar";
 import HelpIcon from "@mui/icons-material/Info";
 import { useConferenceContext } from "../ConferenceContext";
 import { createRecord } from "../../_helpers/createRecord";
-import { updateRecord } from "../../_helpers/updateRecord";
-import { customDatagridStyle, positionStickyComponent } from "../../../css";
+import { customDatagridStyle } from "../../../css";
 import { formResourceShellSx } from "../../../css/formLayout";
 import CustomPagination from "../../_components/CustomPagination";
 import SafeReferenceArrayField from "./SafeReferenceArrayField";
-import { normalizeRecordArrays } from "../helpers/normalizeRecordArrays";
+import DatagridExpandEdit, {
+  DatagridExpandProps,
+} from "./DatagridExpandEdit";
 
 // @TODO: Implement ConferenceExtraForm a inline edit
 
@@ -81,7 +77,7 @@ const ConferenceTicketsForm = () => {
               <ReferenceArrayInput
                 reference="conferences"
                 source="conferences"
-                label="Price at Event"
+                label="Conferences"
                 fullWidth
                 helperText={false}
               >
@@ -188,8 +184,6 @@ const ConferenceTickets = () => {
   } = useConferenceContext();
 
   const [create] = useCreate();
-  const [update] = useUpdate();
-  const remove = useRemoveFromStore();
   const notify = useNotify();
 
   return isCreating ? (
@@ -231,38 +225,15 @@ const ConferenceTickets = () => {
         isRowSelectable={() => false}
         rowClick="expand"
         sx={customDatagridStyle}
-        expand={(record: RaRecord) => {
-          return (
-            <Edit
-              sx={positionStickyComponent}
-              title={" "}
-              id={record.id}
-              resource="conference-tickets"
-              redirect={false}
-            >
-              <SimpleForm
-                record={normalizeRecordArrays(record, [
-                  "conferences",
-                  "includes",
-                  "excludes",
-                ])}
-                onSubmit={(formData) =>
-                  updateRecord(
-                    formData,
-                    record,
-                    update,
-                    notify,
-                    remove,
-                    "conference-tickets"
-                  )
-                }
-                toolbar={<CustomToolBar />}
-              >
-                <ConferenceTicketsForm />
-              </SimpleForm>
-            </Edit>
-          );
-        }}
+        expand={({ id }: DatagridExpandProps) => (
+          <DatagridExpandEdit
+            id={id}
+            resource="conference-tickets"
+            arrayFields={["conferences", "includes", "excludes"]}
+          >
+            <ConferenceTicketsForm />
+          </DatagridExpandEdit>
+        )}
       >
         <SafeReferenceArrayField
           source="conferences"

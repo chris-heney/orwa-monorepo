@@ -14,8 +14,8 @@ import CardForm from "../components/CardForm";
 import { stateOptions } from "../helpers/stateOptions";
 import {
   useFormSubmitted,
+  usePriceTier,
   useRegistrationOptions,
-  useRegistrationSource,
 } from "../AppContextProvider";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
 import { IRegistrationPayload, ITicketPayload } from "../types/types";
@@ -32,7 +32,7 @@ const BillingStep = () => {
   const { submitted } = useFormSubmitted();
   const { register, watch, setValue, getValues } = useFormContext();
   const paymentType = watch("paymentType");
-  const registrationSource = useRegistrationSource();
+  const priceTier = usePriceTier();
 
   const { agency, member_status } = getValues() as IRegistrationPayload;
 
@@ -47,7 +47,7 @@ const BillingStep = () => {
 
   const totalAmount = calculateSubtotal(
     getValues() as IRegistrationPayload,
-    registrationSource,
+    priceTier,
     agency === "false" && member_status === "Non Member"
       ? ConferenceOptions.non_member_fee
       : 0,

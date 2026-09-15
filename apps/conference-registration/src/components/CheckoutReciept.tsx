@@ -1,14 +1,13 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import currencyFormatter, {
   formatMoneyOrIncluded,
 } from "../helpers/currencyFormat";
 import { useFormContext } from "react-hook-form";
-import {
-  useRegistrationOptions,
-  RegistrationSource,
-} from "../AppContextProvider";
+import { usePriceTier, useRegistrationOptions } from "../AppContextProvider";
 import { isExtraIncluded } from "../helpers/isExtraIncluded";
 import { calculateSubtotal } from "../helpers/calculateSubtotal";
+import { applyTicketPricing } from "../helpers/applyTicketPricing";
+import { priceFor } from "../helpers/priceTier";
 import { getExtraData } from "../helpers/getExtraData";
 import { boothBasePrice } from "../helpers/boothBasePrice";
 import { formatTicketLineLabel } from "../helpers/formatTicketLineLabel";
@@ -66,7 +65,7 @@ const CheckoutReceipt = () => {
   const { ConferenceOptions, ExtraOptions, RegistrationAddons } =
     useRegistrationOptions();
   const { getValues, watch } = useFormContext();
-  const registrationSource = useContext(RegistrationSource);
+  const priceTier = usePriceTier();
   const [expanded, setExpanded] = useState<boolean>(true);
 
   const boothCount = watch("booths")?.length || 0;
@@ -87,7 +86,7 @@ const CheckoutReceipt = () => {
   const totalAmount = currencyFormatter.format(
     calculateSubtotal(
       getValues() as IRegistrationPayload,
-      registrationSource,
+      priceTier,
       agency === "false" && member_status === "Non Member"
         ? ConferenceOptions.non_member_fee
         : 0,
@@ -95,12 +94,18 @@ const CheckoutReceipt = () => {
     )
   );
 
+  // The same per-line prices calculateSubtotal charges; a stored
+  // ticket.price can be stale (see applyTicketPricing).
+  const pricedTickets = applyTicketPricing(
+    tickets ?? [],
+    boothCount,
+    priceTier,
+    ExtraOptions
+  );
+
   const ticketLineValue = (ticket: ITicketPayload, index: number) => {
     const isVendor = ticket.type === "Vendor";
-    const listPrice =
-      registrationSource === "online"
-        ? ticket.ticket_type?.price_online || 0
-        : ticket.ticket_type?.price_event || 0;
+    const listPrice = priceFor(ticket.ticket_type, priceTier);
     const compensated =
       isVendor && vendorOrdinalAtIndex(tickets, index) < freeVendorSlots;
 
@@ -108,8 +113,8 @@ const CheckoutReceipt = () => {
       return <CompensatedMoney listPrice={listPrice} />;
     }
 
-    // ticket.price includes paid extras; show that charged amount for the line
-    return formatMoneyOrIncluded(ticket.price);
+    // Includes paid extras: the amount charged for this line.
+    return formatMoneyOrIncluded(pricedTickets[index]?.price ?? ticket.price);
   };
 
   return (
@@ -192,9 +197,7 @@ const CheckoutReceipt = () => {
                           isExtraIncluded(ticket, ExtraOptions, extra)
                             ? "Included"
                             : formatMoneyOrIncluded(
-                                registrationSource === "online"
-                                  ? currentExtra?.price_online
-                                  : currentExtra?.price_event
+                                priceFor(currentExtra, priceTier)
                               )
                         }
                       />
@@ -228,7 +231,7 @@ const CheckoutReceipt = () => {
                     key={addon}
                     index={index}
                     label={currentExtra?.name || ""}
-                    value={formatMoneyOrIncluded(currentExtra?.price_online)}
+                    value={formatMoneyOrIncluded(priceFor(currentExtra, priceTier))}
                   />
                 );
               })}
@@ -247,9 +250,7 @@ const CheckoutReceipt = () => {
                     key={extra}
                     label={currentExtra?.name || ""}
                     value={formatMoneyOrIncluded(
-                      registrationSource === "online"
-                        ? currentExtra?.price_online
-                        : currentExtra?.price_event
+                      priceFor(currentExtra, priceTier)
                     )}
                   />
                 );

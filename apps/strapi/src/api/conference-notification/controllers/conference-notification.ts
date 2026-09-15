@@ -3,6 +3,7 @@
  */
 
 import { findOneById } from '../../../utils/document-compat';
+import { priceFor, resolvePriceTier } from '../../conference-webhook/helpers/price-tier';
 
 export default ({ strapi }) => {
 
@@ -61,8 +62,16 @@ export default ({ strapi }) => {
         })
 
 
+        // Price as of when they registered: after online_registration_end an
+        // online registration paid price_event.
+        const priceTier = resolvePriceTier(
+          registration.registration_source,
+          conferenceData?.online_registration_end,
+          new Date(registration.createdAt)
+        )
+
         const ticketPrice = (type: 'Attendee' | 'Vendor' | 'Guest') => {
-          return ticketOptions.find((ticket) => ticket.name.includes(type))?.price_online
+          return priceFor(ticketOptions.find((ticket) => ticket.name.includes(type)), priceTier)
         }
 
         // For ticket itmes or booth items inside the current cell display them in a bullet list
