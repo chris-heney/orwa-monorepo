@@ -14,6 +14,10 @@ import {
 } from 'react-admin';
 import type { ListManifest, PageCtx } from './manifest';
 import { usePageCtx, usePageManifest } from './PageContext';
+import {
+  ResetFiltersHeaderAction,
+  SaveQueryHeaderAction,
+} from '../modules/_components/SavedFiltersSection';
 import { DEFAULT_PER_PAGE, DEFAULT_SORT } from './prefetch';
 
 interface ListScopeProps {
@@ -205,12 +209,24 @@ export const DefaultFiltersBody = () => {
   );
 };
 
-/** Optional header buttons in the Filters drawer. */
+/**
+ * Filters drawer titlebar, LTR: Reset, Save, [manifest extras], Collapse.
+ * Reset and Save are unconditional — every Filters drawer gets the same three
+ * controls — so lists must NOT declare them again in `filterHeaderActions`;
+ * that prop is for genuinely list-specific buttons. The collapse chevron is
+ * `RightDrawer`'s and always sits last.
+ */
 export const DefaultFiltersHeaderActions = () => {
   const { tab, page } = usePageManifest();
   const list = tab?.list ?? page.list;
   const Extra = list?.filterHeaderActions;
-  return Extra ? <Extra /> : null;
+  return (
+    <>
+      <ResetFiltersHeaderAction />
+      <SaveQueryHeaderAction />
+      {Extra ? <Extra /> : null}
+    </>
+  );
 };
 
 /** Hook for panel bodies: the manifest of the list they render in. */

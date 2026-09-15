@@ -13,7 +13,6 @@ import {
   recordId,
   showRecordAction,
 } from '../../framework/actions';
-import { SaveQueryHeaderAction } from '../_components/SavedFiltersSection';
 import TrainingEvent from './training-events';
 import TrainingHistory from './training-history';
 import Topics from './training-topics';
@@ -159,7 +158,6 @@ export const trainingModule: ModuleManifest = {
         perPage: 10,
         exporter: datagridExporter(TRAINING_EVENTS_PREFERENCE_KEY, 'Training Events'),
         filterBody: EventListFilter,
-        filterHeaderActions: SaveQueryHeaderAction,
       },
       actions: [
         createAction(EVENTS, { label: 'New Event' }),

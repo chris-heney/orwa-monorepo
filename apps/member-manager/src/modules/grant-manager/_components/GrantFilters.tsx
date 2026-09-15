@@ -13,6 +13,7 @@ import SummaryRangeSelection from "./SummaryRangeSelect";
 import LegendToggleFilter from "./LegendToggleFilter";
 import PayoutStatusFilter from "./PayoutStatusFilter";
 import SelectFiscalYearRange from "./SelectFiscalYearRange";
+import { SavedFiltersSection } from "../../_components/SavedFiltersSection";
 
 const FISCAL_YEAR_TABS = new Set([
   "summary",
@@ -27,6 +28,8 @@ export const GrantSelector = () => {
   const { grants, grantIndex, selectGrant } = useGrantContext();
   return (
     <Box sx={{ p: 2 }}>
+      {/* Renders nothing on the list-less Summary / Map tabs. */}
+      <SavedFiltersSection />
       <FormControl>
         <FormLabel>Grants</FormLabel>
         <RadioGroup

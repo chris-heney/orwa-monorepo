@@ -22,7 +22,6 @@ import {
   editRecordAction,
   exportAction,
 } from '../../framework/actions';
-import { SaveQueryHeaderAction } from '../_components/SavedFiltersSection';
 import Associate from './associate';
 import Watersystem from './watersystem';
 import Memberships from './memberships';
@@ -118,7 +117,6 @@ const dashboard: PageManifest = {
           sort: { field: 'id', order: 'ASC' },
           meta: { raw: true, populate: ['contacts'] },
           filterBody: WaterSystemFilter,
-          filterHeaderActions: SaveQueryHeaderAction,
         },
         actions: [
           createAction('watersystems', { label: 'Add Watersystem' }),
@@ -139,7 +137,6 @@ const dashboard: PageManifest = {
           perPage: 100,
           sort: { field: 'id', order: 'ASC' },
           filterBody: AssociateListFilterSidebar,
-          filterHeaderActions: SaveQueryHeaderAction,
         },
         actions: [
           createAction('associates', { label: 'Add Associate' }),
@@ -161,7 +158,6 @@ const dashboard: PageManifest = {
           perPage: 10,
           sort: { field: 'id', order: 'ASC' },
           filterBody: SearchFilters,
-          filterHeaderActions: SaveQueryHeaderAction,
         },
         actions: [
           createAction('memberships', { label: 'Add Membership' }),
@@ -182,7 +178,6 @@ const dashboard: PageManifest = {
           perPage: 10,
           sort: { field: 'id', order: 'ASC' },
           filterBody: SearchFilters,
-          filterHeaderActions: SaveQueryHeaderAction,
         },
         actions: [
           createAction('membership-items', { label: 'Add Item' }),
@@ -212,7 +207,6 @@ const dashboard: PageManifest = {
               : {}),
           }),
           filterBody: InvoicesFilters,
-          filterHeaderActions: SaveQueryHeaderAction,
         },
         actions: [exportAction, columnsAction],
         panel: lazyPanel(() => import('./transactions/TransactionsPanel')),

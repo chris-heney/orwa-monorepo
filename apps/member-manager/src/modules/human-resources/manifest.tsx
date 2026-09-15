@@ -11,7 +11,6 @@ import {
   exportAction,
   searchAction,
 } from '../../framework/actions';
-import { SaveQueryHeaderAction } from '../_components/SavedFiltersSection';
 import Contacts from './contacts';
 import Staff from './staff';
 import Users from './users';
@@ -100,7 +99,6 @@ export const contactsModule: ModuleManifest = {
       list: {
         resource: 'contacts',
         filterBody: ContactFilters,
-        filterHeaderActions: SaveQueryHeaderAction,
         exporter: (_records, ctx, { dataProvider }) =>
           CustomContactExport(
             'contacts',

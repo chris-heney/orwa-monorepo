@@ -13,6 +13,7 @@ import { useGetList, useNotify } from "react-admin";
 import { usePageManifest } from "../../../framework/PageContext";
 import { calendarYearChoices, WATER_SYSTEM_REGIONS } from "../helpers/listFilters";
 import { awardTypeChoices, type AwardTypeRecord } from "../helpers/awardTypes";
+import { SavedFiltersSection } from "../../_components/SavedFiltersSection";
 import {
   useAwardRegion,
   useAwardSearch,
@@ -55,6 +56,7 @@ const AwardFilterSidebar = () => {
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <SavedFiltersSection />
       {nominations ? (
         <>
           <FormControl fullWidth>

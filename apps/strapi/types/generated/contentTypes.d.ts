@@ -3246,6 +3246,7 @@ export interface ApiSavedQuerySavedQuery extends Struct.CollectionTypeSchema {
       'manyToOne',
       'plugin::users-permissions.user'
     >;
+    view: Schema.Attribute.JSON;
   };
 }
 
