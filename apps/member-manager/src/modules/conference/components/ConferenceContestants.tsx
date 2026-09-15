@@ -22,7 +22,6 @@ import {
   SaveButton,
   useListContext,
   useResourceContext,
-  useStore,
 } from 'react-admin';
 import { DatagridConfigurable } from "@orwa/entity-id";
 import {
@@ -33,8 +32,6 @@ import {
   Divider,
   Grid,
   Stack,
-  ToggleButton,
-  ToggleButtonGroup,
   type SxProps,
   Typography,
 } from '@mui/material';
@@ -49,13 +46,6 @@ import { customDatagridStyle, positionStickyComponent } from '../../../css';
 import { formResourceShellSx } from '../../../css/formLayout';
 import { ISharedMeta } from '../types/IConference';
 import { getPrimaryConferenceId } from '../helpers/mergeConferenceAcrossTabFilters';
-import {
-  applyContestantStatusFilter,
-  contestantStatusFromFilters,
-  CONTESTANT_STATUS_VIEW_STORE_KEY,
-  DEFAULT_CONTESTANT_STATUS_FILTER,
-} from '../helpers/listQueryFilters';
-import type { ContestantStatusFilter } from '../helpers/listQueryFilters';
 import {
   contestantCreateDefaults,
   contestantUpdatePayload,
@@ -182,76 +172,6 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
       </Grid>
       <ContestantExtrasEditor conferenceId={filterConferenceId} />
     </Grid>
-  );
-};
-
-const ContestantStatusFilterControl = () => {
-  const { filterValues, setFilters } = useListContext();
-  // The list store is keyed on the current tab filters, so it is rebuilt
-  // whenever the conference or year changes. Persisting the view separately
-  // keeps the operator's choice through those remounts.
-  const [, setStoredStatus] = useStore<ContestantStatusFilter>(
-    CONTESTANT_STATUS_VIEW_STORE_KEY,
-    DEFAULT_CONTESTANT_STATUS_FILTER
-  );
-  const statusValue = contestantStatusFromFilters(filterValues);
-
-  const handleStatusChange = (
-    _event: React.MouseEvent<HTMLElement>,
-    nextStatus: ContestantStatusFilter | null
-  ) => {
-    if (!nextStatus) return;
-
-    setStoredStatus(nextStatus);
-    setFilters(
-      applyContestantStatusFilter(filterValues, nextStatus),
-      undefined,
-      false
-    );
-  };
-
-  return (
-    <Box
-      sx={{
-        display: 'flex',
-        // The contestant table is wider than the viewport and the dashboard
-        // scrolls sideways as a whole, so aligning right put this control
-        // ~2600px out and the operator never saw it. The left edge is where an
-        // unscrolled page starts, on a phone as much as on a desktop.
-        justifyContent: 'flex-start',
-        mb: 1,
-      }}
-    >
-      <ToggleButtonGroup
-        exclusive
-        size="small"
-        value={statusValue}
-        onChange={handleStatusChange}
-        aria-label="Contestant status filter"
-        sx={{
-          bgcolor: 'background.paper',
-          '& .MuiToggleButton-root': {
-            color: 'text.primary',
-            borderColor: 'divider',
-            textTransform: 'none',
-          },
-          '& .Mui-selected': {
-            bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
-            color: 'text.primary',
-          },
-        }}
-      >
-        <ToggleButton value="active" aria-label="Show active contestants">
-          Active
-        </ToggleButton>
-        <ToggleButton value="cancelled" aria-label="Show cancelled contestants">
-          Cancelled
-        </ToggleButton>
-        <ToggleButton value="all" aria-label="Show all contestants">
-          All
-        </ToggleButton>
-      </ToggleButtonGroup>
-    </Box>
   );
 };
 
@@ -454,7 +374,6 @@ const ConferenceContestants = () => {
     </Create>
   ) : (
     <Box>
-      <ContestantStatusFilterControl />
       <DatagridConfigurable
         sx={customDatagridStyle}
         rowSx={contestantRowSx}
