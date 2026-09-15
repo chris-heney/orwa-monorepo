@@ -4,6 +4,7 @@ import {
   buildContestantMetricsFilter,
   deriveConferenceRevenueBreakdown,
 } from "./conferenceMetricContestants";
+import { summarizeContestSports } from "./contestSport";
 
 describe("conferenceMetricContestants", () => {
   it("does not add a brittle status filter to the scoped metrics fetch", () => {
@@ -51,5 +52,31 @@ describe("conferenceMetricContestants", () => {
       cancelledPendingRefundContestants: 1600,
       ticketsExtras: 0,
     });
+  });
+
+  it("keeps cancelled golfers and their teams out of the Contest Corner totals", () => {
+    const contestants = [
+      {
+        id: "a",
+        status: "active",
+        conference_ticket: { id: 1, name: "Golfer" },
+        team: { id: 7, name: "Aqua" },
+      },
+      {
+        id: "b",
+        status: "cancelled",
+        conference_ticket: { id: 1, name: "Golfer" },
+        team: { id: 9, name: "Wells" },
+      },
+      {
+        id: "c",
+        status: "active",
+        conference_ticket: { id: 2, name: "Fishing Tournament" },
+      },
+    ];
+
+    expect(
+      summarizeContestSports(activeMetricContestants(contestants))
+    ).toEqual({ fishers: 1, golfers: 1, golfTeams: 1, total: 2 });
   });
 });
