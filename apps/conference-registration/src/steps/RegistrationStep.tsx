@@ -64,17 +64,6 @@ const RegistrationStep = () => {
     isAdminView && isLoggedIn
   );
 
-  // A draft saved while booths were still available may carry a Vendor type
-  // that can no longer be offered — reset it so the Vendor steps collapse.
-  useEffect(() => {
-    if (registrationType === "Vendor" && !offerVendor) {
-      setValue("registration_type", null);
-      setValue("booths", []);
-      setValue("tickets", []);
-      unregister("organization");
-    }
-  }, [offerVendor, registrationType, setValue, unregister]);
-
   useEffect(() => {
     const stepsToHide: string[] = [];
 
@@ -112,7 +101,7 @@ const RegistrationStep = () => {
       case "Vendor":
         if (!offerVendor) {
           // Stale Vendor draft with booths sold out: hide everything until
-          // the reset effect above clears the type.
+          // WizardStateSync clears the type.
           stepsToHide.push(
             "attendee_registration",
             "booth_registration",
@@ -312,7 +301,9 @@ const RegistrationStep = () => {
                 return `Select ${options.slice(0, -1).join(", ")}, or ${last} to continue.`;
               })()}
               {hasAvailableSponsorships
-                ? " Sponsorship packages are also available as an add-on to Attendee or Vendor registrations."
+                ? ` Sponsorship packages are also available as an add-on to Attendee${
+                    offerVendor ? " or Vendor" : ""
+                  } registrations.`
                 : ""}
             </p>
           )}
