@@ -39,6 +39,7 @@ Apps under `sites/orwa/` on `orwa@orwa.ssh.wpengine.net`:
 | associate-directory | `associate-directory/` | https://orwa.org/associate-directory/ |
 | awards | `awards-nomination-form/` | https://orwa.org/awards-nomination-form/ |
 | scholarship-application | `scholarship-application/` | https://orwa.org/scholarship-application/ |
+| membership-application | `membership-forms/` | https://orwa.org/membership-forms/ (System/Associate Membership apply + renew buttons) |
 
 ### Build (never `nx build` for production)
 
