@@ -24,8 +24,11 @@ import downloadJsonAsCsv from "../../../helpers/downloadJsonAsCsv";
 export const NAYLOR_CONTACT_SLOTS = 3;
 
 /**
- * Per-contact columns in the Naylor file, in print order. The system row
- * already carries a mailing address, so the per-contact one is left out.
+ * Per-contact columns in the Naylor file, in print order: name and title only.
+ * The system row already carries the office phone, email and mailing address,
+ * and ORWA asked (2026-09-15) that the per-contact email and phone be dropped
+ * from the printed directory. The contact's email is still read — it remains
+ * the key that correlates directory opt-outs across duplicate contact rows.
  */
 export const NAYLOR_CONTACT_FIELDS: Array<{
   label: string;
@@ -34,8 +37,6 @@ export const NAYLOR_CONTACT_FIELDS: Array<{
   { label: "Title", field: "title" },
   { label: "First Name", field: "first" },
   { label: "Last Name", field: "last" },
-  { label: "Email", field: "email" },
-  { label: "Phone", field: "phone" },
 ];
 
 /** `Contact 1: Title` … column labels, in the order they are printed. */
