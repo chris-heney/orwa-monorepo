@@ -8,11 +8,16 @@ import {
   useRegistrationSource,
   useStepContext,
   useTicketIndex,
+  useUserContext,
 } from "../AppContextProvider";
 import { ITicketPayload } from "../types/types";
 import SelectPreviousRegistration from "../components/_components/SelectPreviousRegistration";
 import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 import { ValidationHighlight } from "../helpers/validationHighlight";
+import {
+  boothsSoldOut,
+  offerVendorRegistration,
+} from "../helpers/offerVendorRegistration";
 
 const StepVendors = () => {
   const { watch } = useFormContext();
@@ -30,6 +35,7 @@ const StepVendors = () => {
   const tickets = watch("tickets") || [];
   const registrationSource = useRegistrationSource();
   const { ConferenceOptions } = useRegistrationOptions();
+  const { isAdminView, isLoggedIn } = useUserContext();
 
   useEffect(() => {
     const ticketPrice = tickets
@@ -48,19 +54,21 @@ const StepVendors = () => {
     (ticket: ITicketPayload) => ticket.type === "Vendor"
   ).length;
 
+  const soldOut = boothsSoldOut(ConferenceOptions?.booths_available);
+  // Online with booths sold out, this step is unreachable from the Type step;
+  // if a stale draft lands here anyway, show only the closed notice.
+  const vendorOffered = offerVendorRegistration(
+    ConferenceOptions?.booths_available,
+    registrationSource,
+    isAdminView && isLoggedIn
+  );
   const showPreviousRegistration =
     booths.length === 0 || registrationSource === "kiosk";
-  const showBoothClosedNotice =
-    registrationSource === "kiosk" ||
-    ConferenceOptions?.booths_available === 0;
+  const showBoothClosedNotice = registrationSource === "kiosk" || soldOut;
   const showVendorRepCallout =
-    registrationSource === "online" &&
-    ConferenceOptions?.booths_available !== 0 &&
-    booths.length !== 0;
+    registrationSource === "online" && !soldOut && booths.length !== 0;
   const showBackToBooths =
-    booths.length === 0 &&
-    registrationSource === "online" &&
-    ConferenceOptions?.booths_available !== 0;
+    booths.length === 0 && registrationSource === "online" && !soldOut;
 
   const handleAddBoothStep = () => {
     setFormSteps((prev) =>
@@ -74,6 +82,22 @@ const StepVendors = () => {
     return (
       <div className="container mx-auto max-w-3xl px-4 py-16 text-center text-slate-500">
         Loading…
+      </div>
+    );
+  }
+
+  if (!vendorOffered) {
+    return (
+      <div className="container mx-auto max-w-3xl px-0 py-6 text-left">
+        <header className="mb-6 border-b border-slate-200 pb-5">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+            Vendor Information
+          </h2>
+        </header>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+          Booth sales are closed — all booths for this conference have been
+          sold. Go back and choose another registration type.
+        </div>
       </div>
     );
   }

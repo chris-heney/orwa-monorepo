@@ -21,6 +21,7 @@ import { useFormContext } from "react-hook-form";
 import Loading from "../components/Loading";
 import { ValidationHighlight } from "../helpers/validationHighlight";
 import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
+import { offerVendorRegistration } from "../helpers/offerVendorRegistration";
 
 const RegistrationStep = () => {
   const { setFormSteps } = useContext(FormSteps);
@@ -56,6 +57,12 @@ const RegistrationStep = () => {
   const offerContestantOnly = hasContestantTickets;
   // Sponsor Only registration only makes sense when there's something to sponsor.
   const offerSponsorOnly = hasAvailableSponsorships;
+  // Vendor is off the menu online once booths sell out; kiosk and admin keep it.
+  const offerVendor = offerVendorRegistration(
+    ConferenceOptions.booths_available,
+    registrationSource,
+    isAdminView && isLoggedIn
+  );
 
   useEffect(() => {
     const stepsToHide: string[] = [];
@@ -92,6 +99,16 @@ const RegistrationStep = () => {
         );
         break;
       case "Vendor":
+        if (!offerVendor) {
+          // Stale Vendor draft with booths sold out: hide everything until
+          // WizardStateSync clears the type.
+          stepsToHide.push(
+            "attendee_registration",
+            "booth_registration",
+            "vendor_registration"
+          );
+          break;
+        }
         stepsToHide.push("attendee_registration");
         if (
           ConferenceOptions.booths_available <= 0 &&
@@ -130,6 +147,7 @@ const RegistrationStep = () => {
     ConferenceOptions.booths_available,
     isAdminView,
     isLoggedIn,
+    offerVendor,
     previousRegistrationChange,
     registrationSource,
     registrationType,
@@ -220,18 +238,20 @@ const RegistrationStep = () => {
                   }
                 }}
               />
-              <VendorOrAttendeeBox
-                {...register("registration_type")}
-                registrationType="Vendor"
-                checked={registrationType}
-                setRegistrationType={() => {
-                  if (registrationType !== "Vendor") {
-                    setValue("registration_type", "Vendor");
-                    setValue("tickets", []);
-                    unregister("organization");
-                  }
-                }}
-              />
+              {offerVendor && (
+                <VendorOrAttendeeBox
+                  {...register("registration_type")}
+                  registrationType="Vendor"
+                  checked={registrationType}
+                  setRegistrationType={() => {
+                    if (registrationType !== "Vendor") {
+                      setValue("registration_type", "Vendor");
+                      setValue("tickets", []);
+                      unregister("organization");
+                    }
+                  }}
+                />
+              )}
               {offerContestantOnly && (
                 <VendorOrAttendeeBox
                   {...register("registration_type")}
@@ -270,7 +290,8 @@ const RegistrationStep = () => {
           {!registrationType && (
             <p className="mt-3 text-xs font-medium text-amber-700">
               {(() => {
-                const options = ["Attendee", "Vendor"];
+                const options = ["Attendee"];
+                if (offerVendor) options.push("Vendor");
                 if (offerContestantOnly) options.push("Contestant Only");
                 if (offerSponsorOnly) options.push("Sponsor Only");
                 if (options.length <= 2) {
@@ -280,7 +301,9 @@ const RegistrationStep = () => {
                 return `Select ${options.slice(0, -1).join(", ")}, or ${last} to continue.`;
               })()}
               {hasAvailableSponsorships
-                ? " Sponsorship packages are also available as an add-on to Attendee or Vendor registrations."
+                ? ` Sponsorship packages are also available as an add-on to Attendee${
+                    offerVendor ? " or Vendor" : ""
+                  } registrations.`
                 : ""}
             </p>
           )}
