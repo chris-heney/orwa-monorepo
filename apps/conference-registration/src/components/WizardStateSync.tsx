@@ -4,12 +4,10 @@ import {
   useConferenceId,
   useEntryPayload,
   useFormSubmitted,
-  useRegistrationOptions,
   useRegistrationSource,
   useStepContext,
   useUserContext,
 } from "../AppContextProvider";
-import { offerVendorRegistration } from "../helpers/offerVendorRegistration";
 import {
   canJumpWizardSteps,
   canJumpWizardStepsFromSession,
@@ -34,39 +32,11 @@ const WizardStateSync = () => {
   const conferenceId = useConferenceId() ?? "2";
   const source = useRegistrationSource() || "online";
   const { steps, stepIndex, setStepIndex } = useStepContext();
-  const { watch, getValues, setValue, unregister } = useFormContext();
+  const { watch, getValues } = useFormContext();
   const { submitted } = useFormSubmitted();
   const { entryPayload } = useEntryPayload();
   const { isLoggedIn, isAdminView } = useUserContext();
-  const { ConferenceOptions } = useRegistrationOptions();
   const canJumpSteps = canJumpWizardSteps(isLoggedIn, isAdminView);
-
-  // A draft saved while booths were still available may carry a Vendor type
-  // that can no longer be offered (sold out since, or refetched as sold out
-  // while parked on the Vendors step). This lives here rather than on the
-  // Type step because only the current step is mounted.
-  const registrationType = watch("registration_type");
-  const vendorOffered = offerVendorRegistration(
-    ConferenceOptions?.booths_available,
-    source,
-    isAdminView && isLoggedIn
-  );
-  useEffect(() => {
-    if (entryPayload) return;
-    if (registrationType !== "Vendor" || vendorOffered) return;
-    setValue("registration_type", null);
-    setValue("booths", []);
-    setValue("tickets", []);
-    unregister("organization");
-    setStepIndex(0);
-  }, [
-    entryPayload,
-    registrationType,
-    setStepIndex,
-    setValue,
-    unregister,
-    vendorOffered,
-  ]);
 
   // Capture preferred step once on mount — before URL sync can overwrite it.
   // Guests ignore `?step=` (deep-link jump); draft restore still works on refresh.

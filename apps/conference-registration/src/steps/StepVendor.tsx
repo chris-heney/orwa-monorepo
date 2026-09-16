@@ -8,16 +8,12 @@ import {
   useRegistrationSource,
   useStepContext,
   useTicketIndex,
-  useUserContext,
 } from "../AppContextProvider";
 import { ITicketPayload } from "../types/types";
 import SelectPreviousRegistration from "../components/_components/SelectPreviousRegistration";
 import { ticketMatchesContext } from "../helpers/ticketMatchesContext";
 import { ValidationHighlight } from "../helpers/validationHighlight";
-import {
-  boothsSoldOut,
-  offerVendorRegistration,
-} from "../helpers/offerVendorRegistration";
+import { boothsSoldOut } from "../helpers/boothsSoldOut";
 
 const StepVendors = () => {
   const { watch } = useFormContext();
@@ -35,7 +31,6 @@ const StepVendors = () => {
   const tickets = watch("tickets") || [];
   const registrationSource = useRegistrationSource();
   const { ConferenceOptions } = useRegistrationOptions();
-  const { isAdminView, isLoggedIn } = useUserContext();
 
   useEffect(() => {
     const ticketPrice = tickets
@@ -55,16 +50,12 @@ const StepVendors = () => {
   ).length;
 
   const soldOut = boothsSoldOut(ConferenceOptions?.booths_available);
-  // Online with booths sold out, this step is unreachable from the Type step;
-  // if a stale draft lands here anyway, show only the closed notice.
-  const vendorOffered = offerVendorRegistration(
-    ConferenceOptions?.booths_available,
-    registrationSource,
-    isAdminView && isLoggedIn
-  );
   const showPreviousRegistration =
     booths.length === 0 || registrationSource === "kiosk";
-  const showBoothClosedNotice = registrationSource === "kiosk" || soldOut;
+  // Sold out online the Booths step is skipped, so this page stands in for it:
+  // the notice belongs here, directly above the previous-registration picker.
+  const showSoldOutNotice = soldOut;
+  const showKioskBoothNotice = registrationSource === "kiosk" && !soldOut;
   const showVendorRepCallout =
     registrationSource === "online" && !soldOut && booths.length !== 0;
   const showBackToBooths =
@@ -82,22 +73,6 @@ const StepVendors = () => {
     return (
       <div className="container mx-auto max-w-3xl px-4 py-16 text-center text-slate-500">
         Loading…
-      </div>
-    );
-  }
-
-  if (!vendorOffered) {
-    return (
-      <div className="container mx-auto max-w-3xl px-0 py-6 text-left">
-        <header className="mb-6 border-b border-slate-200 pb-5">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-            Vendor Information
-          </h2>
-        </header>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
-          Booth sales are closed — all booths for this conference have been
-          sold. Go back and choose another registration type.
-        </div>
       </div>
     );
   }
@@ -126,7 +101,16 @@ const StepVendors = () => {
         </div>
       )}
 
-      {showBoothClosedNotice && (
+      {showSoldOutNotice && (
+        <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
+          All booths are sold out; however, if you&apos;ve already registered,
+          you can add another vendor to your current booth registration. This
+          process requires choosing a pre-existing registration{" "}
+          <strong className="font-semibold">before</strong> adding the vendor.
+        </div>
+      )}
+
+      {showKioskBoothNotice && (
         <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
           Booth sales are closed. If you need to add an additional vendor rep to
           an existing booth, use Add Vendor below.
