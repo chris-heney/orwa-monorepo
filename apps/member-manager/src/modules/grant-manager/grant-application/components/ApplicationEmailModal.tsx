@@ -118,9 +118,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
     try {
       await update('grant-application-finals', { id: record?.id, data: applicationData, previousData: record })
       notify('Grant Application Was Updated', { type: 'success', autoHideDuration: 3000 })
-
-      // This path also moves the application to `applicationStatus` — log it like the other paths.
-      if (record) sendActivity(dataProvider, `Grant Application Was Updated to ${applicationStatus?.name}`, [{ entity: 'grant-application', record }])
+      // The activity-feed plugin logs the status change server-side.
     } catch (error) {
       notify('Error updating Grant Application', { type: 'error' })
       console.error(error)
@@ -142,9 +140,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
     try {
       await update('grant-application-finals', { id: selectedApplication?.id, data: applicationData ,previousData: selectedApplication })
       notify(`Grant Application Was Updated to ${applicationStatus?.name}`, { type: 'success', autoHideDuration: 3000 })
-
-      // send an activity to the activity feed that the application was updated
-      if (selectedApplication) sendActivity(dataProvider, `Grant Application Was Updated to ${applicationStatus?.name}`, [{ entity: 'grant-application', record: selectedApplication }])
+      // The activity-feed plugin logs the status change server-side.
     } catch (error) {
       notify(`Error updating Grant Application to ${applicationStatus?.name}`, { type: 'error' })
       console.error(error)

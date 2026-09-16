@@ -2,7 +2,6 @@ import React, { Dispatch, SetStateAction } from 'react'
 import { Identifier, Loading, RaRecord, TextField, useDataProvider, useGetList, useGetOne, useListContext, useNotify, useRecordContext, useRefresh } from 'react-admin'
 import { MenuItem, Select } from '@mui/material'
 import getContrastColor from '../../../_helpers/getContrastColor'
-import { sendActivity } from '../../../../helpers/sendActivity'
 import { useGrantContext } from '../../GrantContextProvider'
 import { toRelationWriteId } from '../../helpers/getRelationFilterId'
 
@@ -55,10 +54,7 @@ const GrantStatus = ({
       try {
         await dataProvider.update('grant-application-finals', { id: record.id, previousData: { ...record }, data: { status: toRelationWriteId(status) } })
         notify(`Grant Application was Updated to ${status.name}`, { type: 'success' })
-
-        // Send Activity to Activity Log
-        await sendActivity(dataProvider, `Grant Application Was Updated to ${status?.name}`, [{ entity: 'grant-application', record }])
-
+        // The activity-feed plugin logs the status change server-side.
       } catch (error) {
         notify(`Error updating Grant Application to ${status.name}`, { type: 'error' })
         console.error(error)

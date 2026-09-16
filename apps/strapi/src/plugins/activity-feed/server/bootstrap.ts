@@ -1,6 +1,14 @@
 "use strict";
 import dayjs from "dayjs";
 import { findOneById } from "./utils/document-compat";
+import {
+  GRANT_APPLICATION_FINAL_MODEL,
+  GRANT_APPLICATION_FINAL_UID,
+  GRANT_APPLICATION_STATUS_POPULATE,
+  grantApplicationStatusChange,
+  pendingSnapshots,
+  type GrantApplicationSnapshot,
+} from "./grant-application-status";
 /**
  * Supported Activities:
  *   - Asset Assigned: ${asset.name} has been assigned to ${staff.contact.first} ${staff.contact.last}. //done
@@ -107,12 +115,43 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
       .submitTrainingSchedule(undefined, eventId, result.data, duplicateHours);
   };
 
+  /**
+   * Load a grant application (with what the status message needs) from a
+   * db-lifecycle `where`, which carries the numeric id for document-service
+   * updates and may carry a documentId for direct db.query calls.
+   */
+  const loadGrantApplication = async (
+    where: { id?: number; documentId?: string } | undefined
+  ): Promise<GrantApplicationSnapshot | null> => {
+    if (!where) return null;
+    const filters = where.id != null
+      ? { id: where.id }
+      : where.documentId
+        ? { documentId: where.documentId }
+        : null;
+    if (!filters) return null;
+    return strapi.documents(GRANT_APPLICATION_FINAL_UID).findFirst({
+      filters,
+      populate: GRANT_APPLICATION_STATUS_POPULATE,
+    });
+  };
+
   strapi.db.lifecycles.subscribe({
     beforeUpdate: async (event: any) => {
       const message: string[] = [];
       const relations: { id: number; name: string }[] = [];
 
       switch (event.model.singularName) {
+        case GRANT_APPLICATION_FINAL_MODEL: {
+          // Snapshot the current status so afterUpdate can tell a real
+          // transition from an edit of other fields.
+          const before = await loadGrantApplication(event.params?.where);
+          if (event.state && typeof event.state === "object") {
+            event.state.grantApplicationBefore = before;
+          }
+          if (before?.id != null) pendingSnapshots.set(before.id, before);
+          break;
+        }
         case "asset":
           const assetId = event.params.where.id;
           const assetBase = await findOneById("api::asset.asset", assetId, {
@@ -413,52 +452,24 @@ export default async ({ strapi, env }: { strapi: any; env: any }) => {
           }
 
           break;
-        case "grant-application": {
-          // Clients may send the status relation as an object ({ id }) or a raw id.
-          const rawStatus = event.params.data.status;
-          const statusId = rawStatus && typeof rawStatus === "object" ? rawStatus.id : rawStatus;
-          if (!statusId) break;
+        case GRANT_APPLICATION_FINAL_MODEL: {
+          // Relation values in event.params.data are already transformed to
+          // { set: [...] } shapes here — compare the re-read record against
+          // the beforeUpdate snapshot instead of parsing the payload.
+          const rowId: number | undefined = event.result?.id ?? event.params?.where?.id;
+          const before: GrantApplicationSnapshot | null | undefined =
+            event.state?.grantApplicationBefore ??
+            (rowId != null ? pendingSnapshots.get(rowId) : undefined);
+          if (rowId != null) pendingSnapshots.delete(rowId);
 
-          const status = await findOneById("api::grant-denial-reason.grant-denial-reason", statusId, {
-            populate: "*"
-          });
-
-          const applicationId = event.result.id;
-          const application = await findOneById("api::grant-application.grant-application", applicationId, {
-            populate: "*"
-          });
-          if (!status || !application) break;
-
-          const grant = application.grant?.id
-            ? await findOneById("api::grant.grant", application.grant.id, {
-                populate: "*"
-              })
-            : null;
-          const contact = application.applicant?.id
-            ? await findOneById("api::contact.contact", application.applicant.id, {
-                populate: "*"
-              })
-            : null;
-          message.push(
-            `Grant Application for ${grant?.name ?? "grant"} was ${
-              status.name === "Approved"
-                ? "Approved"
-                : status.name === "Not Approved"
-                ? "Not Approved"
-                : `rejected ${status.name}`
-            } for ${contact?.first ?? ""} ${contact?.last ?? ""} by ${
-              application.updatedBy?.firstname ?? ""
-            } ${application.updatedBy?.lastname ?? ""}`
+          const after = await loadGrantApplication(
+            rowId != null ? { id: rowId } : event.params?.where
           );
+          const change = grantApplicationStatusChange(before, after);
+          if (!change) break;
 
-          relations.push({ id: applicationId, name: "grant-application" });
-          if (grant) {
-            relations.push({ id: grant.id, name: "grant" });
-          }
-          if (contact) {
-            relations.push({ id: contact.id, name: "contact" });
-          }
-
+          message.push(...change.message);
+          relations.push(...change.relations);
           break;
         }
         // on status change of a payout make an activity for the payout and attatch it to the grant application and related entities
