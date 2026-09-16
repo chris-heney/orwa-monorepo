@@ -59,9 +59,8 @@ const SelectSoonerwarnStatus = ({
       // Send Activity to Activity Log
       await sendActivity(
         dataProvider,
-        "soonerwarn-activities",
         `Soonerwarn application was updated to ${status?.name}`,
-        [record?.id]
+        [{ entity: "soonerwarn-activities", record }]
       );
     } catch (error) {
       notify(`Error updating soonerwarn application to ${status.name}`, {

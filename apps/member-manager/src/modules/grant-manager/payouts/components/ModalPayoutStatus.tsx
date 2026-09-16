@@ -46,7 +46,10 @@ const PayoutModal = React.forwardRef<HTMLDivElement, ModalContentProps>(function
         },
       })
       notify('Payout Was Updated', { type: 'success' })
-      sendActivity(dataProvider, 'grant-application', `Grant Payout for ${selectedPayout?.application.legal_entity_name} was ${payoutStatus?.name} `, [selectedPayout?.id, selectedPayout?.application.id])
+      sendActivity(dataProvider, `Grant Payout for ${selectedPayout?.application.legal_entity_name} was ${payoutStatus?.name} `, [
+        { entity: 'grant-payouts', record: selectedPayout },
+        { entity: 'grant-application', record: selectedPayout?.application },
+      ])
       setIsModalOpen(false)
       refresh()
     } catch (error) {
@@ -86,7 +89,10 @@ const PayoutModal = React.forwardRef<HTMLDivElement, ModalContentProps>(function
       })
 
       response.status === 500 ? notify(`Error sending Email ${template.email_name}`, { type: 'error' }) : notify(`Email ${template?.email_name} Sent`, { type: 'success' })
-      sendActivity(dataProvider, 'grant-application', `Email ${template?.email_name} Sent`, [selectedPayout?.id, selectedPayout?.application.id])
+      sendActivity(dataProvider, `Email ${template?.email_name} Sent`, [
+        { entity: 'grant-payouts', record: selectedPayout },
+        { entity: 'grant-application', record: selectedPayout?.application },
+      ])
     } catch (error) {
       notify(`Error sending Email ${template?.email_name}`, { type: 'error' })
       console.log(error)

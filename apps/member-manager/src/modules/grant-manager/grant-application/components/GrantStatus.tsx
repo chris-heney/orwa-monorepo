@@ -57,7 +57,7 @@ const GrantStatus = ({
         notify(`Grant Application was Updated to ${status.name}`, { type: 'success' })
 
         // Send Activity to Activity Log
-        await sendActivity(dataProvider, 'grant-application', `Grant Application Was Updated to ${status?.name}`, [record?.id])
+        await sendActivity(dataProvider, `Grant Application Was Updated to ${status?.name}`, [{ entity: 'grant-application', record }])
 
       } catch (error) {
         notify(`Error updating Grant Application to ${status.name}`, { type: 'error' })

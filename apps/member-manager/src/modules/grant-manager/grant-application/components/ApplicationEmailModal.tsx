@@ -91,7 +91,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
           },
           body: JSON.stringify(payload),
         })
-        if (response.status === 200 && selectedApplication ) sendActivity(dataProvider, 'grant-application', `Email Sent: ${template.email_name}`, [selectedApplication?.id])
+        if (response.status === 200 && selectedApplication ) sendActivity(dataProvider, `Email Sent: ${template.email_name}`, [{ entity: 'grant-application', record: selectedApplication }])
         response.status === 500 ? notify(`Error sending Email for ${template.email_name}`, { type: 'error' }) : notify(`Email for ${template.email_name} Sent`, { type: 'success' })
 
       } catch (error) {
@@ -118,6 +118,9 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
     try {
       await update('grant-application-finals', { id: record?.id, data: applicationData, previousData: record })
       notify('Grant Application Was Updated', { type: 'success', autoHideDuration: 3000 })
+
+      // This path also moves the application to `applicationStatus` — log it like the other paths.
+      if (record) sendActivity(dataProvider, `Grant Application Was Updated to ${applicationStatus?.name}`, [{ entity: 'grant-application', record }])
     } catch (error) {
       notify('Error updating Grant Application', { type: 'error' })
       console.error(error)
@@ -141,7 +144,7 @@ const ApplicationEmailModal = ({ applicationStatus, selectedApplication, setIsEm
       notify(`Grant Application Was Updated to ${applicationStatus?.name}`, { type: 'success', autoHideDuration: 3000 })
 
       // send an activity to the activity feed that the application was updated
-      if (selectedApplication) sendActivity(dataProvider, 'grant-application', `Grant Application Was Updated to ${applicationStatus?.name}`, [selectedApplication?.id])
+      if (selectedApplication) sendActivity(dataProvider, `Grant Application Was Updated to ${applicationStatus?.name}`, [{ entity: 'grant-application', record: selectedApplication }])
     } catch (error) {
       notify(`Error updating Grant Application to ${applicationStatus?.name}`, { type: 'error' })
       console.error(error)
