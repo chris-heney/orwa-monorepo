@@ -61,12 +61,28 @@ describe("NaylorExportWaterSystem — directory contacts", () => {
       { id: 1, first: "Ada", last: "Byron", title: "Manager", email: "ada@x.org", phone: "555-1000" },
     ]);
     expect(row["Contact 1: First Name"]).toBe("Ada");
+    expect(row["Contact 1: Last Name"]).toBe("Byron");
     expect(row["Contact 1: Title"]).toBe("Manager");
-    expect(row["Contact 1: Email"]).toBe("ada@x.org");
-    expect(row["Contact 1: Phone"]).toBe("555-1000");
     // Unfilled slots still emit their columns, so the file shape is stable.
     expect(row["Contact 2: First Name"]).toBe("");
-    expect(row["Contact 3: Email"]).toBe("");
+    expect(row["Contact 3: Title"]).toBe("");
+  });
+
+  it("prints only name and title per contact — no email or phone columns", async () => {
+    const { row } = await run([
+      { id: 1, first: "Ada", last: "Byron", title: "Manager", email: "ada@x.org", phone: "555-1000" },
+    ]);
+    const contactKeys = Object.keys(row).filter((k) => k.startsWith("Contact "));
+    expect(contactKeys).toEqual([
+      "Contact 1: Title", "Contact 1: First Name", "Contact 1: Last Name",
+      "Contact 2: Title", "Contact 2: First Name", "Contact 2: Last Name",
+      "Contact 3: Title", "Contact 3: First Name", "Contact 3: Last Name",
+    ]);
+    expect(row).not.toHaveProperty("Contact 1: Email");
+    expect(row).not.toHaveProperty("Contact 1: Phone");
+    // The contact's email and phone never leak into any other cell either.
+    expect(Object.values(row)).not.toContain("ada@x.org");
+    expect(Object.values(row)).not.toContain("555-1000");
   });
 
   it("suppresses a contact flagged inline, and re-indexes the survivors", async () => {
