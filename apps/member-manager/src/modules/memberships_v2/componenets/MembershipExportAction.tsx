@@ -9,7 +9,7 @@ import {
   useStore,
 } from 'react-admin';
 import { HeadingSelect } from '../../_components/heading/HeadingActions';
-import { NaylorExportWaterSystem } from '../helpers/naylorExportWaterSystem';
+import { downloadNaylorWaterSystems } from '../helpers/downloadNaylorWaterSystems';
 import { NaylorExportAssociate } from '../helpers/naylorExportAssociate';
 import { defaultWatersystemExport } from '../helpers/defaultWatersystemExport';
 import { defaultAssociateExport } from '../helpers/defaultAssociateExport';
@@ -52,10 +52,16 @@ export const MembershipExportAction = () => {
     const title = TITLES[resource] ?? resource;
     const fileName = `${title}-${new Date().toLocaleDateString()}`;
     try {
-      // Every export runs its OWN query, never the grid's rows. The Default
-      // export honours the user's filters; the Naylor file is the published
-      // directory, so it ignores the grid's filters, sort and columns entirely
-      // and always re-reads every record.
+      // The water systems Naylor file is built by Strapi (query → rows → CSV);
+      // this app only downloads it, so nothing about the user's view — columns,
+      // filters, sort, saved preferences — can reach the published directory.
+      if (type === 'naylor' && resource === 'watersystems') {
+        await downloadNaylorWaterSystems();
+        return;
+      }
+
+      // Every other export runs its OWN query, never the grid's rows. The
+      // Default exports honour the user's filters and columns by design.
       const records: RaRecord[] = [];
       let expected: number | undefined;
       for (let page = 1; page <= EXPORT_MAX_PAGES; page += 1) {
@@ -101,8 +107,6 @@ export const MembershipExportAction = () => {
             dataProvider
           );
         }
-      } else if (resource === 'watersystems') {
-        await NaylorExportWaterSystem(records as never, fileName, dataProvider);
       } else {
         await NaylorExportAssociate(records as never, fileName, dataProvider);
       }

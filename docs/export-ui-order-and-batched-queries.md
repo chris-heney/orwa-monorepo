@@ -31,9 +31,13 @@ map over it too.
 Empty/absent `columnIds` still means "everything", and indices that no longer
 resolve are dropped rather than emitting holes.
 
-**Naylor is deliberately excluded** (`naylorExportWaterSystem.ts`): its column
-order is a contractual directory format with its own title-priority sort, not a
-reflection of the screen.
+**Naylor is deliberately excluded**: its column order is a contractual
+directory format with its own title-priority sort, not a reflection of the
+screen. Since 2026-09-17 the water systems Naylor file is not built in this app
+at all — Strapi produces it (`GET /api/watersystems/naylor-export`,
+`apps/strapi/src/api/watersystem/helpers/naylor-export.ts`) and
+`MembershipExportAction` only downloads it, after the client-side exporter was
+found blanking every column the user had hidden in the grid.
 
 ### Sub-decision: `exportRegistrations` lost its `.slice(8, 11)`
 
@@ -137,7 +141,9 @@ populate/compute treatment as a separate change.
 `MembershipExportAction` runs its **own** `dataProvider.getList` with its own
 hardcoded meta and never goes through `ExportButton`, so `exportMeta` cannot
 reach it. `defaultWatersystemExport` / `defaultAssociateExport` still pick up
-the column-ordering fix; `naylorExportWaterSystem` keeps its contractual order.
+the column-ordering fix. The water systems Naylor file is server-built (see §2)
+and takes nothing from the client; `naylorExportAssociate` keeps its own fixed
+column list.
 
 ## 3b. Every exporter's promise hung forever (jsonexport trap)
 
@@ -161,7 +167,7 @@ the CSV was captured, and the exporter promise was still pending 40s later.
 *Fix:* `helpers/downloadJsonAsCsv` wraps the callback in a promise that
 resolves (or rejects on `err`, which the old callbacks ignored). It keeps the
 2-argument `(rows, callback)` call when there are no options — jsonexport picks
-its overload by argument count, and the Naylor spec's mock depends on it.
+its overload by argument count, and exporter spec mocks depend on it.
 
 ## 3c. Blank CSV on a grid that clearly has rows — stale synced column prefs
 
