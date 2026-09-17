@@ -15,9 +15,10 @@ export default factories.createCoreController(
     /**
      * GET /api/watersystems/naylor-export → the Naylor directory file (CSV).
      *
-     * Takes no parameters on purpose: the published directory is every water
-     * system, in directory order, with the contractual columns. A caller's
-     * grid columns, filters, sort or page size have no way in.
+     * Takes no parameters on purpose: the published directory is every current
+     * member system (the builder selects them), in directory order, with the
+     * contractual columns. A caller's grid columns, filters, sort or page size
+     * have no way in.
      *
      * Reads through the query engine, not the content API: no default page
      * limit to silently truncate the directory, and no per-role sanitizing of
