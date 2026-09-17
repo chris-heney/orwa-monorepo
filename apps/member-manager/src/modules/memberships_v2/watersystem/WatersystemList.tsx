@@ -264,6 +264,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-first`}
               source={`dir_contact_${n}_first`}
+              sortable={false}
               label={`Contact ${n}: First Name`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'first')
@@ -273,6 +274,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-last`}
               source={`dir_contact_${n}_last`}
+              sortable={false}
               label={`Contact ${n}: Last Name`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'last')
@@ -282,6 +284,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-title`}
               source={`dir_contact_${n}_title`}
+              sortable={false}
               label={`Contact ${n}: Title`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'title')
@@ -291,6 +294,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-email`}
               source={`dir_contact_${n}_email`}
+              sortable={false}
               label={`Contact ${n}: Email`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'email')
@@ -300,6 +304,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-phone`}
               source={`dir_contact_${n}_phone`}
+              sortable={false}
               label={`Contact ${n}: Phone`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'phone')
@@ -309,6 +314,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-mail-line1`}
               source={`dir_contact_${n}_mail_line1`}
+              sortable={false}
               label={`Contact ${n}: Mailing line 1`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'address_mailing_line1')
@@ -318,6 +324,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-mail-line2`}
               source={`dir_contact_${n}_mail_line2`}
+              sortable={false}
               label={`Contact ${n}: Mailing line 2`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'address_mailing_line2')
@@ -327,6 +334,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-city`}
               source={`dir_contact_${n}_mail_city`}
+              sortable={false}
               label={`Contact ${n}: Mail city`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'address_mailing_city')
@@ -336,6 +344,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-mail-state`}
               source={`dir_contact_${n}_mail_state`}
+              sortable={false}
               label={`Contact ${n}: Mail state`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'address_mailing_state')
@@ -345,6 +354,7 @@ const WaterSystemList = () => {
             <FunctionField
               key={`dir-${n}-mail-zip`}
               source={`dir_contact_${n}_mail_zip`}
+              sortable={false}
               label={`Contact ${n}: Mail ZIP`}
               render={(record: RaRecord) =>
                 getDirectoryContactField(record, n, 'address_mailing_zip')

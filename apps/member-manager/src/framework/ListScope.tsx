@@ -10,11 +10,17 @@ import {
   SavedQueriesList,
   SortPayload,
   useListContext,
+  useNotify,
   useStore,
 } from 'react-admin';
 import type { ListManifest, PageCtx } from './manifest';
 import { usePageCtx, usePageManifest } from './PageContext';
 import { DEFAULT_PER_PAGE, DEFAULT_SORT } from './prefetch';
+import {
+  parseStrapiInvalidQueryKey,
+  sortUsesKey,
+  stripFilterKey,
+} from './invalidQueryKey';
 
 interface ListScopeProps {
   list: ListManifest;
@@ -98,6 +104,88 @@ const ListParamsPersistence = ({
 };
 
 /**
+ * Self-heal a list whose saved sort or filter names a key Strapi rejects.
+ *
+ * One click on the header of a computed column (its `source` is not a Strapi
+ * attribute) sends that key as `sort`; Strapi answers 400 "Invalid key …",
+ * `ListParamsPersistence` has already saved the sort to RaStore, the prefs sync
+ * has pushed it to the server, and from then on the tab fails on every visit
+ * and every device — the user cannot reach a header to undo it.
+ *
+ * This reads the rejected key out of the error (`invalidQueryKey.ts`) and
+ * drops exactly that: the sort goes back to the list's default, or the filter
+ * loses that entry. Because the fix goes through `setSort` / `setFilters`,
+ * `ListParamsPersistence` writes the corrected params over the saved ones, and
+ * the store's debounced push carries them to the server — local and remote
+ * memory are repaired by the same path that poisoned them.
+ */
+const ListInvalidQueryKeyRecovery = ({
+  defaultSort,
+}: {
+  defaultSort: SortPayload;
+}) => {
+  const { error, sort, setSort, filterValues, displayedFilters, setFilters } =
+    useListContext();
+  const notify = useNotify();
+  // One attempt per error object: if the repaired query fails too (a bad
+  // permanent filter, say) this must not spin.
+  const handled = useRef<unknown>(null);
+
+  useEffect(() => {
+    if (!error || handled.current === error) return;
+    const invalid = parseStrapiInvalidQueryKey(error);
+    if (!invalid) return;
+    handled.current = error;
+
+    if (invalid.param !== 'filters' && sortUsesKey(sort?.field, invalid.key)) {
+      // The manifest default could itself be the bad key; `id` always sorts.
+      const fallback = sortUsesKey(defaultSort.field, invalid.key)
+        ? DEFAULT_SORT
+        : defaultSort;
+      if (!sortUsesKey(fallback.field, invalid.key)) {
+        setSort(fallback);
+        notify(
+          `This list can't be sorted by "${invalid.key}", so it went back to its default order.`,
+          { type: 'warning' }
+        );
+        return;
+      }
+    }
+
+    if (invalid.param !== 'sort') {
+      const nextFilters = stripFilterKey(filterValues, invalid);
+      if (nextFilters) {
+        const nextDisplayed =
+          stripFilterKey(displayedFilters, invalid) ?? displayedFilters;
+        setFilters(nextFilters, nextDisplayed, false);
+        notify(
+          `This list can't be filtered by "${invalid.key}", so that filter was removed.`,
+          { type: 'warning' }
+        );
+        return;
+      }
+    }
+
+    // Nothing the user controls carries the key (a manifest's permanent filter,
+    // say). `ListScope` held the raw error back expecting a repair — show it.
+    notify((error as { message?: string }).message || 'ra.notification.http_error', {
+      type: 'error',
+    });
+  }, [
+    error,
+    sort?.field,
+    defaultSort,
+    filterValues,
+    displayedFilters,
+    setSort,
+    setFilters,
+    notify,
+  ]);
+
+  return null;
+};
+
+/**
  * ONE `ListBase` per resource tab shared by title-bar count / export /
  * columns / selection actions, the panel's grid and the Filters drawer body —
  * replaces the duplicated header `ListBase`s legacy dashboards mounted just
@@ -153,6 +241,25 @@ export const ListScope = ({
     [list, filterCtx]
   );
 
+  const notify = useNotify();
+  const queryOptions = useMemo(
+    () => ({
+      ...(list.meta ? { meta: list.meta } : {}),
+      // Replaces react-admin's default list `onError` (a red toast with the raw
+      // message). An "Invalid key …" rejection is repaired and explained by
+      // `ListInvalidQueryKeyRecovery`; everything else is reported as before.
+      onError: (error: unknown) => {
+        if (parseStrapiInvalidQueryKey(error)) return;
+        const message = (error as { message?: string } | null)?.message;
+        notify(message || 'ra.notification.http_error', {
+          type: 'error',
+          messageArgs: { _: message },
+        });
+      },
+    }),
+    [list.meta, notify]
+  );
+
   const base = (
     <ListBase
       resource={list.resource}
@@ -162,10 +269,11 @@ export const ListScope = ({
       sort={initialSort}
       perPage={initialPerPage}
       exporter={exporter ?? false}
-      queryOptions={list.meta ? { meta: list.meta } : undefined}
+      queryOptions={queryOptions}
       disableSyncWithLocation
     >
       <ListParamsPersistence storeKey={storeKey} savedPage={saved.page ?? 1} />
+      <ListInvalidQueryKeyRecovery defaultSort={list.sort ?? DEFAULT_SORT} />
       {children}
     </ListBase>
   );
