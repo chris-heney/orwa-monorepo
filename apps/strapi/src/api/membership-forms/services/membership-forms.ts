@@ -11,6 +11,7 @@ import {
 
 import { findOneById, updateById } from "../../../utils/document-compat";
 import { coerceToSchema } from "../../../utils/coerce-to-schema";
+import { mergeDirectoryContactIds } from "../helpers/directory-contacts";
 
 /**
  * membership-forms service
@@ -878,11 +879,18 @@ export default ({ strapi }) => {
           });
 
           if (data.contacts !== undefined && Array.isArray(data.contacts)) {
-            const contactIds = await syncWatersystemDirectoryContacts(data);
-            await strapi.documents("api::watersystem.watersystem").update({
-              documentId: response.documentId,
-              data: { contacts: contactIds }
-            });
+            // A brand-new system has no contacts yet, so the merge is just
+            // "link these" — and it skips the write when none were entered.
+            const contactIds = mergeDirectoryContactIds(
+              [],
+              await syncWatersystemDirectoryContacts(data)
+            );
+            if (contactIds !== null) {
+              await strapi.documents("api::watersystem.watersystem").update({
+                documentId: response.documentId,
+                data: { contacts: contactIds }
+              });
+            }
           }
 
           // Submit transaction
@@ -1144,10 +1152,24 @@ export default ({ strapi }) => {
 
           const watersystemId = parseInt(data.watersystem);
 
-          const contactIds =
+          // Directory contacts from the form are ADDITIVE — see
+          // helpers/directory-contacts.ts. The renewal form cannot show the
+          // system's existing contacts, so its list (often empty) must never
+          // replace them: this used to detach every linked contact on renewal.
+          const submittedContactIds =
             data.contacts !== undefined && Array.isArray(data.contacts)
               ? await syncWatersystemDirectoryContacts(data)
-              : null;
+              : [];
+          const existingSystem = await strapi.db
+            .query("api::watersystem.watersystem")
+            .findOne({
+              where: { id: watersystemId },
+              populate: { contacts: { select: ["id"] } },
+            });
+          const contactIds = mergeDirectoryContactIds(
+            existingSystem?.contacts,
+            submittedContactIds
+          );
 
           const renewalData: Record<string, any> = {
             ...pickWatersystemEntityData(data),
