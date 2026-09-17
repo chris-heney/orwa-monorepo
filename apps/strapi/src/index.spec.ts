@@ -3,7 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import {
   CONTESTANT_LIFECYCLE_ACTIONS,
   CONTESTANT_LIFECYCLE_ROLE_GRANTS,
+  NAYLOR_EXPORT_ACTIONS,
+  NAYLOR_EXPORT_ROLE_GRANTS,
   configureContestantLifecyclePermissions,
+  configureNaylorExportPermissions,
 } from "./index";
 import { contestantActionPermissionUid } from "../../member-manager/src/modules/conference/helpers/contestantStatus";
 
@@ -99,6 +102,46 @@ describe("configureContestantLifecyclePermissions", () => {
     await expect(
       configureContestantLifecyclePermissions(strapi)
     ).resolves.toBeUndefined();
+    expect(strapi.log.warn).toHaveBeenCalledOnce();
+  });
+});
+
+/**
+ * GET /api/watersystems/naylor-export is a custom route, so it 403s for every
+ * user until bootstrap grants it. member-manager's "Naylor Export" is nothing
+ * but a download of that URL, so the action uid here must match the route's
+ * handler (`watersystem.naylorExport`).
+ */
+describe("Naylor export bootstrap permissions", () => {
+  it("grants the route's action", () => {
+    expect(NAYLOR_EXPORT_ACTIONS).toEqual([
+      "api::watersystem.watersystem.naylorExport",
+    ]);
+  });
+
+  it("targets Admin and Staff, never public or authenticated", async () => {
+    expect(NAYLOR_EXPORT_ROLE_GRANTS.map(({ roleWhere }) => roleWhere.type)).toEqual([
+      "admin",
+      "staff",
+    ]);
+
+    const strapi = fakeStrapi();
+    await configureNaylorExportPermissions(strapi);
+
+    const targetedRoles = strapi.roleFindOne.mock.calls.map(
+      ([{ where }]) => where.type
+    );
+    expect(targetedRoles).toEqual(["admin", "staff"]);
+    expect(
+      strapi.permissionCreate.mock.calls.map(([{ data }]) => data.action)
+    ).toEqual([...NAYLOR_EXPORT_ACTIONS, ...NAYLOR_EXPORT_ACTIONS]);
+  });
+
+  it("warns instead of throwing when the role lookup fails", async () => {
+    const strapi = fakeStrapi();
+    strapi.roleFindOne.mockRejectedValue(new Error("db offline"));
+
+    await expect(configureNaylorExportPermissions(strapi)).resolves.toBeUndefined();
     expect(strapi.log.warn).toHaveBeenCalledOnce();
   });
 });

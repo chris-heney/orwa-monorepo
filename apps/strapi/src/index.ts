@@ -277,6 +277,37 @@ export const configureContestantLifecyclePermissions = async (strapi) => {
   }
 };
 
+// The Naylor directory file is built server-side
+// (GET /api/watersystems/naylor-export). Custom routes ship with no role
+// permission, so without this the member-manager "Naylor Export" 403s for
+// every user.
+export const NAYLOR_EXPORT_ACTIONS = [
+  'api::watersystem.watersystem.naylorExport',
+];
+
+/**
+ * Every role the directory export is granted to: Admin, and Staff — the
+ * memberships office that produces the directory and already reads water
+ * systems. The file is what ORWA prints publicly (opt-outs removed), so it
+ * exposes nothing those roles cannot already see. Never public/authenticated.
+ */
+export const NAYLOR_EXPORT_ROLE_GRANTS = [
+  { roleWhere: { type: 'admin' }, actions: NAYLOR_EXPORT_ACTIONS },
+  { roleWhere: { type: 'staff' }, actions: NAYLOR_EXPORT_ACTIONS },
+];
+
+export const configureNaylorExportPermissions = async (strapi) => {
+  try {
+    for (const { roleWhere, actions } of NAYLOR_EXPORT_ROLE_GRANTS) {
+      await ensureRolePermissions(strapi, roleWhere, actions);
+    }
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure Naylor export permissions: ${error.message}`,
+    );
+  }
+};
+
 // User impersonation ("test as user") is Admin-only. Never grant to
 // public/authenticated/staff — it mints a session token for any target user.
 const ADMIN_IMPERSONATION_ACTIONS = [
@@ -478,6 +509,7 @@ export default {
     await configureAdminRbacPermissions(strapi);
     await configureAdminImpersonationPermissions(strapi);
     await configureContestantLifecyclePermissions(strapi);
+    await configureNaylorExportPermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
     await configureAwardTypeApiTokenFind(strapi);
     await seedAwardTypeCatalog(strapi);
