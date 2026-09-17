@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { MenuItem } from '@mui/material';
 import {
   ConfigurableDatagridColumn,
+  RaRecord,
   useDataProvider,
   useListContext,
   useNotify,
@@ -14,6 +15,10 @@ import { defaultWatersystemExport } from '../helpers/defaultWatersystemExport';
 import { defaultAssociateExport } from '../helpers/defaultAssociateExport';
 
 type ExportType = 'default' | 'naylor';
+
+/** Records per export request, and a hard stop so a bad `total` cannot spin. */
+const EXPORT_PAGE_SIZE = 1000;
+const EXPORT_MAX_PAGES = 50;
 
 const TITLES: Record<string, string> = {
   watersystems: 'Watersystems',
@@ -47,14 +52,36 @@ export const MembershipExportAction = () => {
     const title = TITLES[resource] ?? resource;
     const fileName = `${title}-${new Date().toLocaleDateString()}`;
     try {
-      const { data: records } = await dataProvider.getList(resource, {
-        pagination: { page: 1, perPage: 1000 },
-        sort: { field: 'id', order: 'ASC' },
-        filter: type === 'default' ? filterValues ?? {} : {},
-        ...(resource === 'watersystems'
-          ? { meta: { raw: true, populate: ['contacts'] } }
-          : {}),
-      });
+      // Every export runs its OWN query, never the grid's rows. The Default
+      // export honours the user's filters; the Naylor file is the published
+      // directory, so it ignores the grid's filters, sort and columns entirely
+      // and always re-reads every record.
+      const records: RaRecord[] = [];
+      let expected: number | undefined;
+      for (let page = 1; page <= EXPORT_MAX_PAGES; page += 1) {
+        const { data, total } = await dataProvider.getList(resource, {
+          pagination: { page, perPage: EXPORT_PAGE_SIZE },
+          sort: { field: 'id', order: 'ASC' },
+          filter: type === 'default' ? filterValues ?? {} : {},
+          ...(resource === 'watersystems'
+            ? { meta: { raw: true, populate: ['contacts'] } }
+            : {}),
+        });
+        records.push(...data);
+        if (typeof total === 'number') expected = total;
+        const done =
+          data.length === 0 ||
+          (expected !== undefined
+            ? records.length >= expected
+            : data.length < EXPORT_PAGE_SIZE);
+        if (done) break;
+      }
+      // A directory that silently stops at the page size is worse than no file.
+      if (expected !== undefined && records.length < expected) {
+        throw new Error(
+          `only ${records.length} of ${expected} ${title} could be read`
+        );
+      }
 
       if (type === 'default') {
         if (resource === 'watersystems') {
@@ -75,13 +102,7 @@ export const MembershipExportAction = () => {
           );
         }
       } else if (resource === 'watersystems') {
-        await NaylorExportWaterSystem(
-          records as never,
-          availableColumns,
-          columnIds,
-          fileName,
-          dataProvider
-        );
+        await NaylorExportWaterSystem(records as never, fileName, dataProvider);
       } else {
         await NaylorExportAssociate(records as never, fileName, dataProvider);
       }

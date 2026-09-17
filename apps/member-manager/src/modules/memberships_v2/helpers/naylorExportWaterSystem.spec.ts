@@ -12,16 +12,19 @@ vi.mock("jsonexport/dist", () => ({
 }));
 vi.mock("react-admin", () => ({ downloadCSV: () => undefined }));
 
-import { NaylorExportWaterSystem } from "./naylorExportWaterSystem";
-
-const COLUMNS = [
-  { index: "0", source: "name", label: "Name" },
-  { index: "1", source: "email", label: "Office Email" },
-] as never;
+import {
+  NAYLOR_SYSTEM_FIELDS,
+  NaylorExportWaterSystem,
+  naylorCell,
+  naylorColumnLabels,
+} from "./naylorExportWaterSystem";
 
 type Contact = Record<string, unknown>;
 
-const system = (contacts: Contact[]) => ({
+const system = (
+  contacts: Contact[],
+  overrides: Record<string, unknown> = {}
+) => ({
   id: "docidaaaaaaaaaaaaaaaa",
   entityId: 11,
   name: "Testville RWD",
@@ -29,6 +32,7 @@ const system = (contacts: Contact[]) => ({
   payment_last_date: null,
   payment_previous_date: null,
   contacts,
+  ...overrides,
 });
 
 /** getList stub: only the opt-out sweep of `contacts` is ever called. */
@@ -41,15 +45,112 @@ const providerWith = (optedOutRows: Contact[]) => ({
 
 const run = async (contacts: Contact[], optedOutRows: Contact[] = []) => {
   const dp = providerWith(optedOutRows);
-  await NaylorExportWaterSystem(
-    [system(contacts)] as never,
-    COLUMNS,
-    [],
-    "probe",
-    dp as never
-  );
+  await NaylorExportWaterSystem([system(contacts)] as never, "probe", dp as never);
   return { row: captured[captured.length - 1][0], dp };
 };
+
+/** Export whole systems (no contacts) and return every captured row. */
+const runSystems = async (systems: Record<string, unknown>[]) => {
+  await NaylorExportWaterSystem(systems as never, "probe", providerWith([]) as never);
+  return captured[captured.length - 1];
+};
+
+const FULL_SYSTEM = {
+  name: "Adair Co RWD #2",
+  county: "Adair",
+  office_hours: "8:00 - 4:30 Mon-Fri",
+  meters: 412,
+  url: "adairrwd2.org",
+  board_meeting: "2nd Tuesday 6pm",
+  orwaag: true,
+  address_physical_line1: "100 Main St",
+  address_physical_city: "Stilwell",
+  address_physical_state: "Oklahoma",
+  address_physical_zip: "74960",
+  address_mailing_pobox: "PO Box 9",
+  address_mailing_city: "Stilwell",
+  address_mailing_state: "Oklahoma",
+  address_mailing_zip: "74960",
+  system_type_dirty: "Purchased",
+  email: "office@adairrwd2.org",
+  phone: "(918) 555-0100",
+  fax: "(918) 555-0101",
+};
+
+describe("NaylorExportWaterSystem — system columns", () => {
+  it("fills every directory column from the record, whatever the grid shows", async () => {
+    // Regression (2026-09-17): the exporter walked the user's VISIBLE grid
+    // columns, so hiding Office Hours / Meters / Website / … in the grid blanked
+    // them in the directory file. It now takes no column information at all.
+    expect(NaylorExportWaterSystem.length).toBe(3);
+
+    const [row] = await runSystems([system([], FULL_SYSTEM)]);
+    expect(row).toMatchObject({
+      "System Name": "Adair Co RWD #2",
+      County: "Adair",
+      "Office Hours": "8:00 - 4:30 Mon-Fri",
+      "# Meters": "412",
+      Website: "adairrwd2.org",
+      "Board Meeting": "2nd Tuesday 6pm",
+      ORWAAG: "+",
+      "Physical Address": "100 Main St",
+      "Physical City": "Stilwell",
+      "Physical State": "Oklahoma",
+      "Physical Zip": "74960",
+      "Mailing Address": "PO Box 9",
+      "Mailing City": "Stilwell",
+      "Mailing State": "Oklahoma",
+      "Mailing Zip": "74960",
+      "System Type": "Purchased",
+      Email: "office@adairrwd2.org",
+      Phone: "(918) 555-0100",
+      Fax: "(918) 555-0101",
+    });
+  });
+
+  it("emits the contractual header, in order, even for an empty record", async () => {
+    const [row] = await runSystems([system([], { email: null })]);
+    expect(Object.keys(row)).toEqual(naylorColumnLabels());
+    expect(Object.keys(row).slice(0, NAYLOR_SYSTEM_FIELDS.length)).toEqual([
+      "System Name", "County", "Office Hours", "# Meters", "Website",
+      "Board Meeting", "ORWAAG", "Physical Address", "Physical City",
+      "Physical State", "Physical Zip", "Mailing Address", "Mailing City",
+      "Mailing State", "Mailing Zip", "System Type", "Email", "Phone", "Fax",
+    ]);
+    expect(row["Office Hours"]).toBe("");
+    expect(row.Email).toBe("");
+  });
+
+  it("stars current members and leaves lapsed ones plain", async () => {
+    const recent = new Date().toISOString().slice(0, 10);
+    const rows = await runSystems([
+      system([], { name: "Paid RWD", payment_last_date: recent }),
+      system([], { name: "Lapsed RWD", payment_last_date: "2019-01-01" }),
+    ]);
+    const names = rows.map((r) => r["System Name"]);
+    expect(names).toContain("*Paid RWD");
+    expect(names).toContain("Lapsed RWD");
+  });
+
+  it("sorts by county, then district number, then name", async () => {
+    const rows = await runSystems([
+      system([], { name: "Zeta RWD #10", county: "Adair" }),
+      system([], { name: "Alpha PWA", county: "Adair" }),
+      system([], { name: "Zeta RWD #2", county: "Adair" }),
+      system([], { name: "Anything", county: "Atoka" }),
+    ]);
+    expect(rows.map((r) => r["System Name"])).toEqual([
+      "Zeta RWD #2", "Zeta RWD #10", "Alpha PWA", "Anything",
+    ]);
+  });
+
+  it("keeps a multi-line cell on one row", () => {
+    expect(naylorCell("Mon-Thu 8-5\r\n  Fri 8-12\n")).toBe("Mon-Thu 8-5; Fri 8-12");
+    expect(naylorCell(false)).toBe(" ");
+    expect(naylorCell(0)).toBe("0");
+    expect(naylorCell(null)).toBe("");
+  });
+});
 
 beforeEach(() => {
   captured.length = 0;
@@ -141,7 +242,7 @@ describe("NaylorExportWaterSystem — directory contacts", () => {
       getList: vi.fn().mockRejectedValue(new Error("network")),
     } as never;
     await expect(
-      NaylorExportWaterSystem([system([{ id: 1, first: "Ada" }])] as never, COLUMNS, [], "probe", dp)
+      NaylorExportWaterSystem([system([{ id: 1, first: "Ada" }])] as never, "probe", dp)
     ).rejects.toThrow("network");
   });
 });
