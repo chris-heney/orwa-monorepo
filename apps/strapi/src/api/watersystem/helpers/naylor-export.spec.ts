@@ -23,9 +23,6 @@ const system = (
   name: 'Testville RWD',
   county: 'Adair',
   email: 'office@testville.org',
-  // A current member at NOW — only members are published.
-  payment_last_date: '2026-03-01',
-  payment_previous_date: null,
   contacts,
   ...overrides,
 });
@@ -128,25 +125,24 @@ describe('Naylor export — system columns', () => {
   });
 });
 
-describe('Naylor export — current members only', () => {
-  it('publishes active members and leaves out lapsed and never-paid systems', () => {
+describe('Naylor export — membership star', () => {
+  it('stars a system whose membership has not expired, and still lists the rest', () => {
     const rows = buildNaylorRows(
       [
         system([], { name: 'Paid RWD', payment_last_date: '2026-03-01' }),
         system([], { name: 'Lapsed RWD', payment_last_date: '2019-01-01' }),
-        system([], { name: 'Never Paid RWD', payment_last_date: null }),
+        system([], { name: 'Never Paid RWD' }),
         system([], { name: 'Paid Yesterday RWD', payment_last_date: '2026-09-16' }),
       ],
       [],
       NOW
     );
-    // Plain names: the old `*` member mark is gone now that every row is a member.
     expect(rows.map((r) => r['System Name']).sort()).toEqual([
-      'Paid RWD', 'Paid Yesterday RWD',
+      '*Paid RWD', '*Paid Yesterday RWD', 'Lapsed RWD', 'Never Paid RWD',
     ]);
   });
 
-  it('keeps a member who renewed early, exactly as the grid shows them Active', () => {
+  it('stars a member who renewed early, exactly as the grid shows them Active', () => {
     // Last payment 2025-08-01 is more than a year before NOW, but it was made 60
     // days before the previous period ended, so the membership runs to 2026-09-30.
     const earlyRenewal = system([], {
@@ -155,8 +151,14 @@ describe('Naylor export — current members only', () => {
       payment_last_date: '2025-08-01',
     });
     expect(membershipExpiration('2024-09-30', '2025-08-01')?.format('YYYY-MM-DD')).toBe('2026-09-30');
-    expect(buildNaylorRows([earlyRenewal], [], NOW)).toHaveLength(1);
-    expect(buildNaylorRows([earlyRenewal], [], new Date('2026-10-01T12:00:00Z'))).toHaveLength(0);
+    expect(buildNaylorRows([earlyRenewal], [], NOW)[0]['System Name']).toBe(
+      '*Early Renewal RWD'
+    );
+    expect(
+      buildNaylorRows([earlyRenewal], [], new Date('2026-10-01T12:00:00Z'))[0][
+        'System Name'
+      ]
+    ).toBe('Early Renewal RWD');
   });
 
   it('extends the period by the overlap when they renewed early', () => {
@@ -281,7 +283,7 @@ describe('Naylor export — directory contacts', () => {
 
   it('tolerates a system with no contacts relation at all', () => {
     const [row] = buildNaylorRows(
-      [{ name: 'Bare', payment_last_date: '2026-03-01', contacts: null }],
+      [{ name: 'Bare', contacts: null }],
       [],
       NOW
     );

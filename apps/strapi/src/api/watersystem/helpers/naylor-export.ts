@@ -2,14 +2,13 @@
  * The Naylor directory file for water systems — built entirely on the server.
  *
  *   GET /api/watersystems/naylor-export
- *     query water systems (+ contacts)  →  active members  →  rows  →  CSV
+ *     query every water system (+ contacts)  →  rows  →  CSV download
  *
  * This file is the contract with Naylor (the directory publisher): which
- * columns exist, in what order, which systems count as current members,
- * which contacts print and in which slot. It used to be assembled in
- * member-manager, where it walked the user's visible grid columns — hiding
- * "Office Hours" in the grid blanked "Office Hours" in the published
- * directory (2026-09-17). Nothing about
+ * columns exist, in what order, how a system is starred, which contacts print
+ * and in which slot. It used to be assembled in member-manager, where it
+ * walked the user's visible grid columns — hiding "Office Hours" in the grid
+ * blanked "Office Hours" in the published directory (2026-09-17). Nothing about
  * a user's view (columns, filters, sort, saved preferences, page size) can reach
  * it from here. Every function below is pure; the controller does the two
  * queries and hands the rows in.
@@ -61,7 +60,7 @@ export const NAYLOR_CONTACT_FIELDS: Array<{
 ];
 
 // ---------------------------------------------------------------------------
-// Membership: only current members are published in the directory.
+// Membership: a leading `*` marks a current member in the printed directory.
 // ---------------------------------------------------------------------------
 
 const parsePaymentDate = (value: unknown): Dayjs | null => {
@@ -111,18 +110,22 @@ export const isMembershipActive = (
 // Columns
 // ---------------------------------------------------------------------------
 
-/**
- * The system columns, in print order, each read straight off the record.
- *
- * The name is printed plain. It used to carry a leading `*` for current
- * members, back when the file listed every system; the file is members-only
- * now (see `buildNaylorRows`), so the mark would be on every row.
- */
+/** The system columns, in print order, each read straight off the record. */
 export const NAYLOR_SYSTEM_FIELDS: Array<{
   label: string;
-  value: (system: NaylorSystem) => unknown;
+  value: (system: NaylorSystem, now: Date) => unknown;
 }> = [
-  { label: 'System Name', value: (system) => system.name },
+  {
+    label: 'System Name',
+    value: (system, now) =>
+      isMembershipActive(
+        system.payment_previous_date,
+        system.payment_last_date,
+        now
+      )
+        ? `*${system.name ?? ''}`
+        : `${system.name ?? ''}`,
+  },
   { label: 'County', value: (system) => system.county },
   { label: 'Office Hours', value: (system) => system.office_hours },
   { label: '# Meters', value: (system) => system.meters },
@@ -295,12 +298,10 @@ const compareRows = (
 };
 
 /**
- * @param systems every water system, with `contacts` populated (members are
- *   selected here, not by the caller)
+ * @param systems every water system, with `contacts` populated
  * @param optedOutContacts contacts rows flagged `directory_opt_out`
- * @param now injectable clock for the membership test (tests)
- * @returns one row per ACTIVE member system, keyed by column label, in
- *   directory order
+ * @param now injectable clock for the membership star (tests)
+ * @returns one row per system, keyed by column label, in directory order
  */
 export const buildNaylorRows = (
   systems: NaylorSystem[],
@@ -309,22 +310,13 @@ export const buildNaylorRows = (
 ): Array<Record<string, string>> => {
   const optOutEmails = collectOptOutEmails(optedOutContacts);
 
-  // The published directory is current members only (ORWA, 2026-09-17).
-  // "Active" is exactly what the member-manager grid's Active badge means:
-  // paid within the last year, extended by the overlap when they renewed early
-  // — so a system staff see as Active is never missing from the directory.
-  const members = systems.filter((system) =>
-    isMembershipActive(
-      system.payment_previous_date,
-      system.payment_last_date,
-      now
-    )
-  );
-
+  // Every system is published. Current members (the same overlap-aware
+  // Active badge as the member-manager grid) get a leading `*` on System
+  // Name — that is the mark Naylor uses, not a filter (ORWA, 2026-09-18).
   // Every contact goes on the system's own row (ORWA, 2026-09-17): the file
   // carries as many contact slots as the busiest system needs, never fewer
   // than NAYLOR_CONTACT_SLOTS so the header does not shrink between exports.
-  const withContacts = members.map((system) => ({
+  const withContacts = systems.map((system) => ({
     system,
     contacts: publishableContacts(system, optOutEmails),
   }));
@@ -335,7 +327,7 @@ export const buildNaylorRows = (
   const rows = withContacts.map(({ system, contacts }) => {
     const row: Record<string, string> = {};
     for (const { label, value } of NAYLOR_SYSTEM_FIELDS) {
-      row[label] = naylorCell(value(system));
+      row[label] = naylorCell(value(system, now));
     }
     for (let slot = 1; slot <= slots; slot += 1) {
       const contact = contacts[slot - 1];
