@@ -226,8 +226,34 @@ describe('Naylor export — directory contacts', () => {
     );
     expect(row['Contact 1: First Name']).toBe('Vera');
     expect(row['Contact 2: First Name']).toBe('Dana');
-    // Only three slots print; Bob (Bookkeeper) falls off the end.
     expect(row['Contact 3: First Name']).toBe('Opal');
+    // Nobody falls off the end: the row grows to fit every published contact.
+    expect(row['Contact 4: First Name']).toBe('Bob');
+    expect(row).not.toHaveProperty('Contact 5: First Name');
+  });
+
+  it('puts every contact on the system row, widening the whole file to the busiest system', () => {
+    const five = Array.from({ length: 5 }, (_, i) => ({ id: i + 1, first: `P${i + 1}`, last: 'Five', title: 'Operator' }));
+    const rows = buildNaylorRows(
+      [system(five, { name: 'Busy RWD' }), system([{ id: 9, first: 'Solo', last: 'One' }], { name: 'Quiet RWD' })],
+      [],
+      NOW
+    );
+    const busy = rows.find((r) => r['System Name'] === 'Busy RWD')!;
+    const quiet = rows.find((r) => r['System Name'] === 'Quiet RWD')!;
+    expect(busy['Contact 5: First Name']).toBe('P5');
+    // The quiet system carries the same columns, blank, so every row has the same shape.
+    expect(Object.keys(quiet)).toEqual(Object.keys(busy));
+    expect(quiet['Contact 5: First Name']).toBe('');
+    const header = toNaylorCsv(rows).split('\r\n')[0].split('","');
+    expect(header).toHaveLength(NAYLOR_SYSTEM_FIELDS.length + 5 * 3);
+    expect(header[header.length - 1]).toBe('Contact 5: Last Name"');
+  });
+
+  it('never prints fewer than three contact slots', () => {
+    const rows = buildNaylorRows([system([{ id: 1, first: 'Only', last: 'One' }])], [], NOW);
+    expect(Object.keys(rows[0]).filter((k) => k.startsWith('Contact '))).toHaveLength(9);
+    expect(toNaylorCsv(rows).split('\r\n')[0].split('","')).toHaveLength(28);
   });
 
   it('keeps link order among contacts that share a rank, untitled last', () => {

@@ -16,8 +16,16 @@
  */
 import dayjs, { Dayjs } from 'dayjs';
 
-/** Directory contact slots printed per system. */
+/**
+ * MINIMUM directory contact slots printed per system. Every contact a system
+ * has goes on its own row, so the file grows past this when any published
+ * system has more (a few have 4–5); it never shrinks below it.
+ */
 export const NAYLOR_CONTACT_SLOTS = 3;
+
+/** Slots for an export: the busiest system's count, but at least the minimum. */
+export const naylorContactSlots = (countsPerSystem: number[]): number =>
+  Math.max(NAYLOR_CONTACT_SLOTS, ...countsPerSystem, 0);
 
 export type NaylorContact = {
   id?: number | string;
@@ -136,9 +144,11 @@ export const NAYLOR_SYSTEM_FIELDS: Array<{
 ];
 
 /** `Contact 1: Title` … in the order they are printed. */
-export const naylorContactColumnLabels = (): string[] => {
+export const naylorContactColumnLabels = (
+  slots: number = NAYLOR_CONTACT_SLOTS
+): string[] => {
   const labels: string[] = [];
-  for (let slot = 1; slot <= NAYLOR_CONTACT_SLOTS; slot += 1) {
+  for (let slot = 1; slot <= slots; slot += 1) {
     for (const { label } of NAYLOR_CONTACT_FIELDS) {
       labels.push(`Contact ${slot}: ${label}`);
     }
@@ -147,9 +157,11 @@ export const naylorContactColumnLabels = (): string[] => {
 };
 
 /** Every column of the file, in print order. */
-export const naylorColumnLabels = (): string[] => [
+export const naylorColumnLabels = (
+  slots: number = NAYLOR_CONTACT_SLOTS
+): string[] => [
   ...NAYLOR_SYSTEM_FIELDS.map(({ label }) => label),
-  ...naylorContactColumnLabels(),
+  ...naylorContactColumnLabels(slots),
 ];
 
 /**
@@ -309,13 +321,23 @@ export const buildNaylorRows = (
     )
   );
 
-  const rows = members.map((system) => {
+  // Every contact goes on the system's own row (ORWA, 2026-09-17): the file
+  // carries as many contact slots as the busiest system needs, never fewer
+  // than NAYLOR_CONTACT_SLOTS so the header does not shrink between exports.
+  const withContacts = members.map((system) => ({
+    system,
+    contacts: publishableContacts(system, optOutEmails),
+  }));
+  const slots = naylorContactSlots(
+    withContacts.map(({ contacts }) => contacts.length)
+  );
+
+  const rows = withContacts.map(({ system, contacts }) => {
     const row: Record<string, string> = {};
     for (const { label, value } of NAYLOR_SYSTEM_FIELDS) {
       row[label] = naylorCell(value(system));
     }
-    const contacts = publishableContacts(system, optOutEmails);
-    for (let slot = 1; slot <= NAYLOR_CONTACT_SLOTS; slot += 1) {
+    for (let slot = 1; slot <= slots; slot += 1) {
       const contact = contacts[slot - 1];
       for (const { label, field } of NAYLOR_CONTACT_FIELDS) {
         row[`Contact ${slot}: ${label}`] = naylorCell(contact?.[field]);
@@ -327,6 +349,21 @@ export const buildNaylorRows = (
   return rows.sort(compareRows);
 };
 
+/** How many contact slots a set of rows was built with (from their keys). */
+export const naylorSlotsInRows = (
+  rows: Array<Record<string, string>>
+): number => {
+  let slots = NAYLOR_CONTACT_SLOTS;
+  for (const row of rows) {
+    for (const key of Object.keys(row)) {
+      const match = key.match(/^Contact (\d+): /);
+      if (match) slots = Math.max(slots, parseInt(match[1], 10));
+    }
+    break; // every row carries the same keys
+  }
+  return slots;
+};
+
 const csvCell = (value: string): string => `"${value.replace(/"/g, '""')}"`;
 
 /**
@@ -335,7 +372,7 @@ const csvCell = (value: string): string => `"${value.replace(/"/g, '""')}"`;
  * per-cell rules.
  */
 export const toNaylorCsv = (rows: Array<Record<string, string>>): string => {
-  const labels = naylorColumnLabels();
+  const labels = naylorColumnLabels(naylorSlotsInRows(rows));
   const lines = [
     labels.map(csvCell).join(','),
     ...rows.map((row) =>
