@@ -28,6 +28,16 @@ import PublicOffIcon from '@mui/icons-material/PublicOff';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 
+/**
+ * `setFilters` takes a `{ source: true }` map of which filter inputs are
+ * visible — never a saved-query record. Passing the record persisted its
+ * `name`/`user`/`documentId` fields into `<resource>.listParams`.
+ */
+const displayedFiltersFor = (
+  filters: Record<string, unknown>
+): Record<string, boolean> =>
+  Object.fromEntries(Object.keys(filters).map((source) => [source, true]));
+
 const SavedFilters = ({
   resource,
   savingQuery,
@@ -130,14 +140,14 @@ const SavedFilters = ({
   // 🔹 Apply a saved filter
   const applyFilter = (selectedFilter: FilterPayload) => {
     if (selectedFilter === undefined) {
-      setFilters([], {});
+      setFilters({}, {});
       return;
-    } else {
-      setFilters(selectedFilter.filters, {
-        ...filterValues,
-        ...selectedFilter,
-      });
     }
+    const filters =
+      selectedFilter.filters && typeof selectedFilter.filters === 'object'
+        ? selectedFilter.filters
+        : {};
+    setFilters(filters, displayedFiltersFor(filters));
   };
 
   // 🔹 Update filter name
