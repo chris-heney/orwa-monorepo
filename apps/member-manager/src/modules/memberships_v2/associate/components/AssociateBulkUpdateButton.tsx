@@ -1,6 +1,6 @@
 import { Box, Button, Grid, MenuItem, Modal, Select, Typography } from '@mui/material'
 import React, { useState } from 'react'
-import { AutocompleteArrayInput, AutocompleteInput, BooleanInput, ConfigurableDatagridColumn, DateInput, List, NumberInput, ReferenceArrayInput, ReferenceInput, SelectInput, SimpleForm, SimpleList, TextInput, useNotify, useStore, useUpdateMany } from 'react-admin'
+import { AutocompleteArrayInput, AutocompleteInput, BooleanInput, ConfigurableDatagridColumn, DateInput, Identifier, List, NumberInput, ReferenceArrayInput, ReferenceInput, SelectInput, SimpleForm, SimpleList, TextInput, useNotify, useStore, useUpdateMany } from 'react-admin'
 import { FieldValues } from 'react-hook-form'
 import CustomSecondaryHeader from '../../../_components/CustomSecondaryHeader'
 import { AssociateMemberTypeChoices, StateChoices, associateTypeOptions, paymentOptions, reportType } from '../../../../helpers/Data'
@@ -10,13 +10,19 @@ import { isMembershipActiveByExpiration } from '../../../_helpers/getExpirationD
 
 const AssociateBulkUpdateButton = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const watersystemIds = useStore('associates.selectedIds')
-  const sources = useStore('preferences.associates.datagrid.availableColumns')
-  const sourceOptions = sources[0].map((source: ConfigurableDatagridColumn) => source.source)
-  const labelOptions = sources[0].map((source: ConfigurableDatagridColumn) => source.label)
-  const [selectedField, setSelectedField] = useState(sourceOptions[0])
-  const [index, setIndex] = useState(0)
-  const selectedIds = watersystemIds[0]
+  const [selectedIds = []] = useStore<Identifier[]>('associates.selectedIds', [])
+  // DatagridConfigurable writes availableColumns in an effect AFTER its first
+  // render; this button mounts in that same first pass whenever the role is
+  // already known, so the key can legitimately be absent here.
+  const [sources = []] = useStore<ConfigurableDatagridColumn[]>(
+    'preferences.associates.datagrid.availableColumns',
+    []
+  )
+  const sourceOptions = sources.map((source) => source.source)
+  const labelOptions = sources.map((source) => source.label ?? source.source ?? '')
+  const [chosenField, setSelectedField] = useState<string | undefined>()
+  const selectedField = chosenField ?? sourceOptions[0]
+  const index = Math.max(0, sourceOptions.indexOf(selectedField))
 
   const notify = useNotify()
   const [updateMany] = useUpdateMany()
@@ -64,11 +70,8 @@ const AssociateBulkUpdateButton = () => {
                   size='small'
                   variant='filled'
                   fullWidth
-                  onChange={(event) => {
-                    setSelectedField(event.target.value as string)
-                    setIndex(labelOptions.indexOf(event.target.value as string))
-                  }}
-                  value={selectedField}
+                  onChange={(event) => setSelectedField(event.target.value as string)}
+                  value={selectedField ?? ''}
                 >
                   {labelOptions.map((label: string, index: number) => (
                     <MenuItem key={index} value={sourceOptions[index]}>
