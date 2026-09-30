@@ -17,12 +17,12 @@ describe("contestantFormDefaults", () => {
     expect(contestantCreateDefaults({})).toEqual({});
   });
 
-  it("strips locked relations but preserves unchanged lifecycle defaults for full-record edit submits", () => {
+  it("strips the locked conference but keeps the ticket and lifecycle defaults for full-record edit submits", () => {
     expect(
       contestantUpdatePayload({
         id: "contestant-1",
         conference: { id: 3, documentId: "conf-doc" },
-        conference_ticket: { id: 37, documentId: "ticket-doc" },
+        conference_ticket: "ticket-doc",
         status: "active",
         cancelled_at: null,
         cancelled_reason: null,
@@ -31,6 +31,7 @@ describe("contestantFormDefaults", () => {
       })
     ).toEqual({
       id: "contestant-1",
+      conference_ticket: "ticket-doc",
       status: "active",
       cancelled_at: null,
       cancelled_reason: null,

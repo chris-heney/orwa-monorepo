@@ -141,30 +141,31 @@ const ContestantFormFields = ({ isEditing = false }: { isEditing?: boolean }) =>
           />
         </Grid>
         <Grid item xs={12} md={6} lg={4}>
+          {/* Editable on existing contestants too: Strapi's updateContestant
+              settles golf capacity for the swap (Golfer ↔ non-Golfer) and
+              refuses tickets from another conference or a sold-out swap. */}
           <ReferenceInput
-            filter={
-              filterConferenceId != null
+            filter={{
+              context: 'Contestant',
+              ...(filterConferenceId != null
                 ? { conferences: [filterConferenceId] }
-                : {}
-            }
+                : {}),
+            }}
             source="conference_ticket"
             reference="conference-tickets"
-            label="Title"
             fullWidth
-            helperText={false}
-            disabled={isEditing}
           >
             <AutocompleteInput
+              label="Ticket"
               optionText={'name'}
-              helperText={false}
+              helperText={
+                isEditing
+                  ? 'Changing the ticket updates Available Golf Contestants automatically.'
+                  : false
+              }
               validate={required('Conference Ticket is required')}
-              disabled={isEditing}
             />
           </ReferenceInput>
-          {/* <SelectInput source="type" label='Type' fullWidth choices={[
-            {id: 'Golfer', name: 'Golfer'},
-            {id: 'Fisher', name: 'Fisher'},
-          ]} /> */}
         </Grid>
         <Grid item xs={12} md={6} lg={4}>
           <NumberInput source="fee" label="Fee" fullWidth />

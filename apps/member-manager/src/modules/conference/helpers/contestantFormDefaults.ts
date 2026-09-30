@@ -7,11 +7,15 @@ export const contestantCreateDefaults = (
   return defaults;
 };
 
+/**
+ * The conference is locked after create (cancel + re-add to move someone),
+ * so it never rides along on the PUT. The ticket does: Strapi's update path
+ * re-checks conference membership and settles golf capacity for a swap.
+ */
 export const contestantUpdatePayload = <T extends Record<string, unknown>>(
   formData: T
-): Omit<T, "conference" | "conference_ticket"> => {
-  const { conference, conference_ticket, ...editable } = formData;
+): Omit<T, "conference"> => {
+  const { conference, ...editable } = formData;
   void conference;
-  void conference_ticket;
   return editable;
 };
