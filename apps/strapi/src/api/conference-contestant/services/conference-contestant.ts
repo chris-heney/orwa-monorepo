@@ -9,7 +9,10 @@ import {
 } from "../../conference-webhook/helpers/contestant-capacity";
 import { conferenceCycleYear } from "../../conference-webhook/helpers/conference-cycle-year";
 import { findOneById } from "../../../utils/document-compat";
-import { withContestantRestCreate } from "./contestant-lifecycle-context";
+import {
+  withContestantRestCreate,
+  withContestantTicketChange,
+} from "./contestant-lifecycle-context";
 import {
   badRequest,
   notFound,
@@ -26,11 +29,14 @@ const LIFECYCLE_FIELDS = [
   "cancelled_reason",
   "cancelled_by",
 ];
-const RELATION_CHANGE_FIELDS = ["conference", "conference_ticket"];
 const LIFECYCLE_MESSAGE =
   "Conference contestant lifecycle fields must be changed through cancel/restore actions.";
 const RELATION_CHANGE_MESSAGE =
-  "Cancel and create a new contestant to change conference or ticket.";
+  "Cancel and create a new contestant to change conference.";
+const TICKET_REQUIRED_MESSAGE =
+  "Conference contestants must keep a ticket. Choose a different ticket instead of clearing it.";
+const TICKET_CONFERENCE_MISMATCH_MESSAGE =
+  "Selected ticket does not belong to the contestant's conference.";
 
 type WriteInput = {
   data: Record<string, unknown>;
@@ -80,16 +86,31 @@ const rejectLifecycleChanges = (
   }
 };
 
-const rejectRelationChanges = (
+const rejectConferenceChange = (
   data: Record<string, unknown>,
   existing: Record<string, unknown>
 ) => {
-  const attempted = RELATION_CHANGE_FIELDS.filter((field) => hasOwn(data, field));
-  for (const field of attempted) {
-    if (!sameRelation(data[field], existing[field])) {
-      throw badRequest(RELATION_CHANGE_MESSAGE);
-    }
+  if (!hasOwn(data, "conference")) return;
+  if (!sameRelation(data.conference, existing.conference)) {
+    throw badRequest(RELATION_CHANGE_MESSAGE);
   }
+};
+
+/**
+ * The documentId of a different ticket the caller wants this contestant on,
+ * or null when the payload leaves the ticket alone. Clearing is refused: a
+ * contestant with no ticket has no type, no fee basis, and no capacity rule.
+ */
+const requestedTicketChange = (
+  data: Record<string, unknown>,
+  existing: Record<string, unknown>
+): string | null => {
+  if (!hasOwn(data, "conference_ticket")) return null;
+  if (isExplicitRelationClear(data.conference_ticket)) {
+    throw badRequest(TICKET_REQUIRED_MESSAGE);
+  }
+  if (sameRelation(data.conference_ticket, existing.conference_ticket)) return null;
+  return relationDocumentId(data.conference_ticket);
 };
 
 const relationDocumentId = (value: unknown): string | null => {
@@ -301,12 +322,97 @@ export const updateContestant = async (
     throw badRequest("Cancelled conference contestants are read-only.");
   }
   rejectLifecycleChanges(data, existing);
-  rejectRelationChanges(data, existing);
+  rejectConferenceChange(data, existing);
 
-  return strapi.documents(CONTESTANT_UID).update({
-    documentId: input.documentId,
-    data,
-    populate: "*",
+  const nextTicketId = requestedTicketChange(data, existing);
+  if (nextTicketId == null) {
+    return strapi.documents(CONTESTANT_UID).update({
+      documentId: input.documentId,
+      data,
+      populate: "*",
+    });
+  }
+
+  return changeContestantTicket(strapi, input.documentId, existing, data, nextTicketId);
+};
+
+type ExistingContestant = {
+  conference?: { id?: string | number | null; documentId?: string | null } | null;
+  conference_ticket?: { name?: string | null; context?: string | null } | null;
+};
+
+/**
+ * Move an active contestant onto another ticket of the same conference and
+ * keep "Available Golf Contestants" honest: Golfer → non-Golfer frees a slot,
+ * non-Golfer → Golfer takes one (and is refused when none remain), and a swap
+ * between two golf tickets leaves the counter alone. Same lock/transaction
+ * discipline as create, cancel, and restore.
+ */
+const changeContestantTicket = async (
+  strapi: any,
+  documentId: string,
+  existing: ExistingContestant,
+  data: Record<string, unknown>,
+  nextTicketId: string
+): Promise<unknown> => {
+  const conferenceDocumentId = existing.conference?.documentId ?? null;
+  if (!conferenceDocumentId) {
+    throw badRequest(
+      "Conference contestant is missing a conference; cancel and create a new contestant."
+    );
+  }
+
+  const ticket = await loadRelation<{
+    documentId?: string | null;
+    name?: string | null;
+    context?: string | null;
+    conferences?: Array<{ id?: string | number | null; documentId?: string | null }>;
+  }>(strapi, TICKET_UID, nextTicketId, { conferences: true });
+  if (!ticket) {
+    throw notFound("Selected conference ticket was not found.");
+  }
+  if (!ticketBelongsToConference(ticket, conferenceDocumentId)) {
+    throw badRequest(TICKET_CONFERENCE_MISMATCH_MESSAGE);
+  }
+
+  const freesGolfSlot =
+    ticketConsumesGolfCapacity(existing.conference_ticket ?? null) &&
+    !ticketConsumesGolfCapacity(ticket);
+  const takesGolfSlot =
+    ticketConsumesGolfCapacity(ticket) &&
+    !ticketConsumesGolfCapacity(existing.conference_ticket ?? null);
+
+  return strapi.db.transaction(async ({ trx }: { trx: unknown }) => {
+    if (takesGolfSlot || freesGolfSlot) {
+      const conference = await lockConference(strapi, trx, conferenceDocumentId);
+      if (takesGolfSlot) {
+        assertGolfCapacity(conference.available_contestants, 1);
+      }
+    }
+
+    const updated = await withContestantTicketChange(() =>
+      strapi.documents(CONTESTANT_UID).update({
+        documentId,
+        data,
+        populate: "*",
+      })
+    );
+
+    if (takesGolfSlot) {
+      await strapi.db
+        .connection(CONFERENCE_TABLE)
+        .where({ document_id: conferenceDocumentId })
+        .decrement("available_contestants", 1)
+        .transacting(trx);
+    } else if (freesGolfSlot) {
+      await strapi.db
+        .connection(CONFERENCE_TABLE)
+        .where({ document_id: conferenceDocumentId })
+        .increment("available_contestants", 1)
+        .transacting(trx);
+    }
+
+    return updated;
   });
 };
 

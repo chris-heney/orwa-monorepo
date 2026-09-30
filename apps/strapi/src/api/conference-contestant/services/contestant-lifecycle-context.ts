@@ -2,7 +2,8 @@ import { AsyncLocalStorage } from "node:async_hooks";
 
 type ContestantLifecycleContext = {
   allowLifecycleTransition?: boolean;
-  allowRelationRepoint?: boolean;
+  /** Ticket swaps are only legal from `updateContestant`, which settles golf capacity. */
+  allowTicketChange?: boolean;
   allowHardDelete?: boolean;
   allowRestCreate?: boolean;
 };
@@ -20,6 +21,9 @@ export const withContestantHardDelete = <T>(callback: () => T): T =>
 
 export const withContestantRestCreate = <T>(callback: () => T): T =>
   withContext({ allowRestCreate: true }, callback);
+
+export const withContestantTicketChange = <T>(callback: () => T): T =>
+  withContext({ allowTicketChange: true }, callback);
 
 export const contestantLifecycleContext = (): ContestantLifecycleContext =>
   storage.getStore() ?? {};

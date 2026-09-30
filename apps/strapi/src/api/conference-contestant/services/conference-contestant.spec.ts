@@ -30,18 +30,24 @@ describe("conference contestant REST write service", () => {
   let strapi: any;
   let conferences: Record<string, ConferenceRecord>;
   let tickets: Record<string, TicketRecord>;
-  let contestants: Record<string, {
+  let     contestants: Record<string, {
     documentId: string;
     status: string;
     cancelled_at?: string | null;
     cancelled_reason?: string | null;
     cancelled_by?: string | null;
     conference?: { id?: number; documentId?: string };
-    conference_ticket?: { id?: number; documentId?: string };
+    conference_ticket?: {
+      id?: number;
+      documentId?: string;
+      name?: string;
+      context?: string | null;
+    };
   }>;
   let created: any[];
   let updated: any[];
   let decrements: number;
+  let increments: number;
   let locks: string[];
 
   beforeEach(() => {
@@ -105,6 +111,12 @@ describe("conference contestant REST write service", () => {
         context: "Contestant",
         conferences: [{ documentId: "conf-1" }],
       },
+      "other-conf-golfer": {
+        documentId: "other-conf-golfer",
+        name: "Golfer",
+        context: "Contestant",
+        conferences: [{ documentId: "conf-2" }],
+      },
     };
     contestants = {
       "active-1": {
@@ -114,13 +126,26 @@ describe("conference contestant REST write service", () => {
         cancelled_reason: null,
         cancelled_by: null,
         conference: { id: 3, documentId: "conf-1" },
-        conference_ticket: { id: 37, documentId: "golfer" },
+        conference_ticket: { id: 37, documentId: "golfer", name: "Golfer", context: "Contestant" },
+      },
+      "fisher-1": {
+        documentId: "fisher-1",
+        status: "active",
+        conference: { id: 3, documentId: "conf-1" },
+        conference_ticket: { documentId: "fisher", name: "Fisher", context: "Contestant" },
+      },
+      "sold-out-fisher": {
+        documentId: "sold-out-fisher",
+        status: "active",
+        conference: { documentId: "sold-out-conf" },
+        conference_ticket: { documentId: "fisher", name: "Fisher", context: "Contestant" },
       },
       "cancelled-1": { documentId: "cancelled-1", status: "cancelled" },
     };
     created = [];
     updated = [];
     decrements = 0;
+    increments = 0;
     locks = [];
 
     const makeBuilder = (table: string) => {
@@ -144,6 +169,11 @@ describe("conference contestant REST write service", () => {
         decrement: vi.fn((_column: string, amount = 1) => {
           decrements += amount;
           conferences[String(criteria.document_id)].available_contestants! -= amount;
+          return builder;
+        }),
+        increment: vi.fn((_column: string, amount = 1) => {
+          increments += amount;
+          conferences[String(criteria.document_id)].available_contestants! += amount;
           return builder;
         }),
       };
@@ -217,14 +247,86 @@ describe("conference contestant REST write service", () => {
     expect(updated).toHaveLength(0);
   });
 
-  it("rejects relation changes on update with a cancel-and-create instruction", async () => {
+  it("rejects conference changes on update with a cancel-and-create instruction", async () => {
     await expect(
       updateContestant(strapi, {
         documentId: "active-1",
-        data: { conference_ticket: "fisher" },
+        data: { conference: "conf-2", conference_ticket: "golfer" },
       })
     ).rejects.toThrow("Cancel and create");
     expect(updated).toHaveLength(0);
+  });
+
+  it("moves a golfer onto a non-golf ticket and frees one golf slot", async () => {
+    await updateContestant(strapi, {
+      documentId: "active-1",
+      data: { conference_ticket: "fisher", fee: 100 },
+    });
+
+    expect(updated).toEqual([
+      expect.objectContaining({ documentId: "active-1", conference_ticket: "fisher", fee: 100 }),
+    ]);
+    expect(increments).toBe(1);
+    expect(decrements).toBe(0);
+    expect(conferences["conf-1"].available_contestants).toBe(3);
+    expect(locks).toContain("conferences:conf-1");
+  });
+
+  it("moves a non-golfer onto a golf ticket and takes one golf slot", async () => {
+    await updateContestant(strapi, {
+      documentId: "fisher-1",
+      data: { conference_ticket: { set: [{ documentId: "golfer" }] } },
+    });
+
+    expect(updated).toHaveLength(1);
+    expect(decrements).toBe(1);
+    expect(increments).toBe(0);
+    expect(conferences["conf-1"].available_contestants).toBe(1);
+    expect(locks).toContain("conferences:conf-1");
+  });
+
+  it("refuses a swap onto a golf ticket when the tournament is sold out", async () => {
+    await expect(
+      updateContestant(strapi, {
+        documentId: "sold-out-fisher",
+        data: { conference_ticket: "golfer" },
+      })
+    ).rejects.toThrow("sold out");
+    expect(updated).toHaveLength(0);
+    expect(decrements).toBe(0);
+    expect(conferences["sold-out-conf"].available_contestants).toBe(0);
+  });
+
+  it("swaps between two golf tickets without touching capacity", async () => {
+    await updateContestant(strapi, {
+      documentId: "active-1",
+      data: { conference_ticket: "standalone" },
+    });
+
+    expect(updated).toHaveLength(1);
+    expect(decrements).toBe(0);
+    expect(increments).toBe(0);
+    expect(conferences["conf-1"].available_contestants).toBe(2);
+    expect(locks).toEqual([]);
+  });
+
+  it("rejects a ticket that is not sold for the contestant's conference", async () => {
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference_ticket: "other-conf-golfer" },
+      })
+    ).rejects.toThrow("does not belong to the contestant's conference");
+
+    await expect(
+      updateContestant(strapi, {
+        documentId: "active-1",
+        data: { conference_ticket: "missing-ticket-doc" },
+      })
+    ).rejects.toThrow("ticket was not found");
+    expect(updated).toHaveLength(0);
+    expect(increments).toBe(0);
+    expect(decrements).toBe(0);
   });
 
   it("allows unchanged lifecycle and relation fields from a react-admin full-record update", async () => {
@@ -253,7 +355,7 @@ describe("conference contestant REST write service", () => {
     ]);
   });
 
-  it("rejects actual lifecycle transitions and relation repoints on update", async () => {
+  it("rejects actual lifecycle transitions and conference repoints on update", async () => {
     await expect(
       updateContestant(strapi, {
         documentId: "active-1",
@@ -273,7 +375,7 @@ describe("conference contestant REST write service", () => {
         documentId: "active-1",
         data: { conference_ticket: 999 },
       })
-    ).rejects.toThrow("Cancel and create");
+    ).rejects.toThrow("ticket was not found");
     expect(updated).toHaveLength(0);
   });
 
@@ -290,7 +392,7 @@ describe("conference contestant REST write service", () => {
         documentId: "active-1",
         data: { conference_ticket: { set: [] } },
       })
-    ).rejects.toThrow("Cancel and create");
+    ).rejects.toThrow("must keep a ticket");
     await expect(
       updateContestant(strapi, {
         documentId: "active-1",
@@ -302,7 +404,7 @@ describe("conference contestant REST write service", () => {
         documentId: "active-1",
         data: { conference_ticket: { set: null } },
       })
-    ).rejects.toThrow("Cancel and create");
+    ).rejects.toThrow("must keep a ticket");
     expect(updated).toHaveLength(0);
   });
 

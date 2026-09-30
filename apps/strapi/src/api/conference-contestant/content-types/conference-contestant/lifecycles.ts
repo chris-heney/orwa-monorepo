@@ -115,12 +115,17 @@ const loadCurrentContestant = async (
   });
 };
 
+const guardedRelationFields = (): readonly (typeof RELATION_FIELDS)[number][] =>
+  contestantLifecycleContext().allowTicketChange
+    ? RELATION_FIELDS.filter((field) => field !== "conference_ticket")
+    : RELATION_FIELDS;
+
 const assertNoRelationRepoint = async (
   event: { params?: { data?: Record<string, unknown>; where?: Record<string, unknown> } },
   currentOverride?: Record<string, unknown> | null
 ) => {
   const data = dataFromEvent(event);
-  const attempted = RELATION_FIELDS.filter((field) => hasOwn(data, field));
+  const attempted = guardedRelationFields().filter((field) => hasOwn(data, field));
   if (attempted.length === 0) return;
 
   const current = currentOverride ?? await loadCurrentContestant(event);
@@ -152,7 +157,7 @@ export default {
     const data = dataFromEvent(event);
     const context = contestantLifecycleContext();
     const lifecycleAttempted = LIFECYCLE_FIELDS.some((field) => hasOwn(data, field));
-    const relationAttempted = RELATION_FIELDS.some((field) => hasOwn(data, field));
+    const relationAttempted = guardedRelationFields().some((field) => hasOwn(data, field));
     const where = event.params?.where ?? {};
     if (
       lifecycleAttempted &&
@@ -167,9 +172,7 @@ export default {
       relationAttempted || (lifecycleAttempted && !context.allowLifecycleTransition);
     const current = needsCurrent ? await loadCurrentContestant(event) : null;
     assertNoLifecycleBypass(event, current);
-    if (!context.allowRelationRepoint) {
-      await assertNoRelationRepoint(event, current);
-    }
+    await assertNoRelationRepoint(event, current);
   },
 
   async beforeDelete() {

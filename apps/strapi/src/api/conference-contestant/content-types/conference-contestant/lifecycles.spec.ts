@@ -13,6 +13,7 @@ import {
   withContestantHardDelete,
   withContestantLifecycleTransition,
   withContestantRestCreate,
+  withContestantTicketChange,
 } from "../../services/contestant-lifecycle-context";
 
 const event = (data: Record<string, unknown> = {}, where: Record<string, unknown> = {}) => ({
@@ -100,6 +101,34 @@ describe("conference contestant lifecycle guard", () => {
     await expect(
       lifecycles.beforeUpdate(
         event({ conference: "other-conference" }, { documentId: "contestant-1" }) as never
+      )
+    ).rejects.toThrow("Cancel and create");
+  });
+
+  it("allows ticket repoints only inside the guarded ticket-change context", async () => {
+    findOneById.mockResolvedValue({
+      documentId: "contestant-1",
+      conference: { id: 3, documentId: "conf-doc" },
+      conference_ticket: { id: 37, documentId: "ticket-doc" },
+    });
+
+    await expect(
+      withContestantTicketChange(() =>
+        lifecycles.beforeUpdate(
+          event({ conference_ticket: "other-ticket", fee: 100 }, { documentId: "contestant-1" }) as never
+        )
+      )
+    ).resolves.toBeUndefined();
+
+    // The context is for tickets only; the conference stays locked.
+    await expect(
+      withContestantTicketChange(() =>
+        lifecycles.beforeUpdate(
+          event(
+            { conference: "other-conference", conference_ticket: "other-ticket" },
+            { documentId: "contestant-1" }
+          ) as never
+        )
       )
     ).rejects.toThrow("Cancel and create");
   });
