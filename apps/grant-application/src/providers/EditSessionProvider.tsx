@@ -10,6 +10,7 @@ import {
   clearStoredEditToken,
   getEditTokenFromUrl,
   getStoredEditToken,
+  replaceEditTokenInUrl,
   storeEditToken,
 } from "../helpers/editTokenStorage";
 import { IGrantApplicationFormPayload } from "../types/types";
@@ -33,6 +34,8 @@ interface EditSessionContext {
   isLoadingSession: boolean;
   /** Message shown on the verify view when a token was rejected. */
   sessionError: string | null;
+  /** Shown on the form when a locked link opened a different application. */
+  sessionNotice: string | null;
   startNewApplication: () => void;
   /** "Modify Existing": use stored token if present, else email verification. */
   beginModify: () => void;
@@ -50,6 +53,7 @@ const EditSession = createContext<EditSessionContext>({
   isEditMode: false,
   isLoadingSession: false,
   sessionError: null,
+  sessionNotice: null,
   startNewApplication: () => {},
   beginModify: () => {},
   rememberEditToken: () => {},
@@ -58,8 +62,11 @@ const EditSession = createContext<EditSessionContext>({
 
 export const useEditSession = () => useContext(EditSession);
 
-const LOCKED_MESSAGE =
-  "Your application is already being processed and cannot be modified at this time.";
+export const lockedApplicationMessage = (status?: string | null) =>
+  status
+    ? `This application is "${status}" and can no longer be modified.`
+    : "Your application is already being processed and cannot be modified at this time.";
+
 const INVALID_MESSAGE =
   "Your edit link is no longer valid. Please verify your email to receive a new one.";
 
@@ -70,6 +77,7 @@ const EditSessionProvider = ({ children }: PropsWithChildren) => {
     useState<IGrantApplicationFormPayload | null>(null);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
 
   const startEditSession = async (token: string) => {
     setIsLoadingSession(true);
@@ -78,18 +86,24 @@ const EditSessionProvider = ({ children }: PropsWithChildren) => {
       const response = await fetchEditSession(token);
 
       if (response.code === "ok" && response.application) {
-        storeEditToken(token);
-        setEditToken(token);
+        const activeToken = response.editToken || token;
+        storeEditToken(activeToken);
+        replaceEditTokenInUrl(activeToken);
+        setEditToken(activeToken);
         setEditPayload(
           response.application as unknown as IGrantApplicationFormPayload
         );
+        setSessionNotice(response.notice ?? null);
         setView("form");
       } else {
         clearStoredEditToken();
         setEditToken(null);
         setEditPayload(null);
+        setSessionNotice(null);
         setSessionError(
-          response.code === "locked" ? LOCKED_MESSAGE : INVALID_MESSAGE
+          response.code === "locked"
+            ? lockedApplicationMessage(response.status)
+            : INVALID_MESSAGE
         );
         setView("verify");
       }
@@ -116,6 +130,7 @@ const EditSessionProvider = ({ children }: PropsWithChildren) => {
     setEditToken(null);
     setEditPayload(null);
     setSessionError(null);
+    setSessionNotice(null);
     setView("form");
   };
 
@@ -125,6 +140,7 @@ const EditSessionProvider = ({ children }: PropsWithChildren) => {
       startEditSession(storedToken);
     } else {
       setSessionError(null);
+      setSessionNotice(null);
       setView("verify");
     }
   };
@@ -138,6 +154,7 @@ const EditSessionProvider = ({ children }: PropsWithChildren) => {
     clearStoredEditToken();
     setEditToken(null);
     setEditPayload(null);
+    setSessionNotice(null);
     setSessionError(message);
     setView("verify");
   };
@@ -152,6 +169,7 @@ const EditSessionProvider = ({ children }: PropsWithChildren) => {
         isEditMode: editToken !== null && editPayload !== null,
         isLoadingSession,
         sessionError,
+        sessionNotice,
         startNewApplication,
         beginModify,
         rememberEditToken,

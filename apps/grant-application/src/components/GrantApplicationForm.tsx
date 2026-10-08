@@ -36,7 +36,7 @@ const GrantApplicationForm = () => {
   const payload = useContext(PayloadProvider);
   const { entryPayload } = useEntryPayload();
   const { isAdminView, isLoggedIn } = useUserContext();
-  const { isEditMode, editPayload } = useEditSession();
+  const { isEditMode, editPayload, sessionNotice } = useEditSession();
 
   const [showPreviousSessionModal, setShowPreviousSessionModal] =
     useState(false);
@@ -126,6 +126,14 @@ const GrantApplicationForm = () => {
       />
       <main className="flex min-h-0 flex-col text-left">
         <FormStepper stepIndex={stepIndex} setStepIndex={setStepIndex} />
+
+        {sessionNotice && (
+          <div className="mx-auto mt-4 max-w-6xl px-4">
+            <p className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              {sessionNotice}
+            </p>
+          </div>
+        )}
 
         <section className="min-h-96 flex-1">
           <Form

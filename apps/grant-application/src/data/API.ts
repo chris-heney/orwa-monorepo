@@ -44,7 +44,9 @@ const _submitApplication = async (resource: string, data: IGrantApplicationFormP
 }
 
 /** Ask the backend to email a tokenized edit link for the given address. */
-export const requestEditLink = async (email: string): Promise<{ code: string }> => {
+export const requestEditLink = async (
+  email: string
+): Promise<{ code: string; status?: string | null }> => {
   return fetch(`${API_ENDPOINT}/grant-application/request-edit`, {
     method: 'POST',
     body: JSON.stringify({ email }),
@@ -57,14 +59,26 @@ export const requestEditLink = async (email: string): Promise<{ code: string }> 
 }
 
 /** Validate an edit token and fetch the application shaped as a form payload. */
-export const fetchEditSession = async (token: string): Promise<{ code: string; application?: Record<string, unknown> }> => {
-  return fetch(`${API_ENDPOINT}/grant-application/edit-session?token=${encodeURIComponent(token)}`, {
-    method: 'GET',
-    headers: {
+export const fetchEditSession = async (
+  token: string
+): Promise<{
+  code: string;
+  application?: Record<string, unknown>;
+  /** Set when the link's application is locked and a sibling was opened. */
+  editToken?: string;
+  notice?: string;
+  status?: string | null;
+}> => {
+  return fetch(
+    `${API_ENDPOINT}/grant-application/edit-session?token=${encodeURIComponent(token)}&switch=1`,
+    {
+      method: 'GET',
+      headers: {
         'Accept': 'application/json',
         'Authorization': `Bearer ${API_KEY}`
+      }
     }
-  }).then(httpResponse => httpResponse.json())
+  ).then(httpResponse => httpResponse.json())
 }
 
 /** Save changes to an existing application via its edit token. */

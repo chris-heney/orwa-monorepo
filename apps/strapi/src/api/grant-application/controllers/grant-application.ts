@@ -8,11 +8,32 @@ import { AdminOptions } from "../../membership-forms/types";
 import { IContactEntity, IGrantApplicationFormPayload } from "../types";
 import { findOneById, updateById } from "../../../utils/document-compat";
 import { coerceToSchema } from "../../../utils/coerce-to-schema";
+import {
+  contactEmails,
+  isNewApplicationStatus,
+  pickApplicationForEdit,
+  pickEditableSibling,
+  switchedApplicationNotice,
+} from "../helpers/edit-application-pick";
 
 const GRANT_APPLICATION_UID =
   "api::grant-application-final.grant-application-final" as const;
 
-const NEW_APPLICATION_STATUS = "New Application";
+const EDIT_SESSION_POPULATE = {
+  status: true,
+  grant: true,
+  point_of_contact: true,
+  chairman: true,
+  engineer: true,
+  additional_contacts: true,
+  selected_projects: true,
+  project_costs: true,
+  proposals: true,
+  uploaded_engineering_report: true,
+  uploaded_notice_of_violation: true,
+  uploaded_additional_files: true,
+  consent_order: true,
+};
 
 const EDIT_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -200,24 +221,28 @@ export default ({ strapi }) => {
     return ids;
   };
 
-  /** Most recent application where any contact matches the given email. */
+  const contactEmailClauses = (email: string) => [
+    { point_of_contact: { email: { $eqi: email } } },
+    { chairman: { email: { $eqi: email } } },
+    { engineer: { email: { $eqi: email } } },
+    { additional_contacts: { email: { $eqi: email } } },
+  ];
+
+  /**
+   * Newest application this email can still modify. When every match has
+   * left "New Application", returns the newest match so the caller can
+   * respond "locked" instead of "not found".
+   */
   const findApplicationByContactEmail = async (email: string) => {
     const applications = await strapi
       .documents(GRANT_APPLICATION_UID)
       .findMany({
-        filters: {
-          $or: [
-            { point_of_contact: { email: { $eqi: email } } },
-            { chairman: { email: { $eqi: email } } },
-            { engineer: { email: { $eqi: email } } },
-            { additional_contacts: { email: { $eqi: email } } },
-          ],
-        },
+        filters: { $or: contactEmailClauses(email) },
         sort: { createdAt: "desc" },
-        limit: 1,
+        limit: 100,
         populate: { status: true },
       });
-    return applications[0] ?? null;
+    return pickApplicationForEdit(applications);
   };
 
   const findApplicationByEditToken = async (token: string) => {
@@ -226,31 +251,47 @@ export default ({ strapi }) => {
       .findMany({
         filters: { edit_token: token },
         limit: 1,
-        populate: {
-          status: true,
-          grant: true,
-          point_of_contact: true,
-          chairman: true,
-          engineer: true,
-          additional_contacts: true,
-          selected_projects: true,
-          project_costs: true,
-          proposals: true,
-          uploaded_engineering_report: true,
-          uploaded_notice_of_violation: true,
-          uploaded_additional_files: true,
-          consent_order: true,
-        },
+        populate: EDIT_SESSION_POPULATE,
       });
     return applications[0] ?? null;
   };
+
+  /**
+   * Same legal entity, still "New Application", sharing a contact with the
+   * application the link was issued for.
+   */
+  const findEditableSibling = async (locked) => {
+    const entity = locked.legal_entity_name?.trim();
+    const emails = contactEmails(locked);
+    if (!entity || emails.length === 0) return null;
+
+    const applications = await strapi
+      .documents(GRANT_APPLICATION_UID)
+      .findMany({
+        filters: {
+          $and: [
+            { legal_entity_name: { $eqi: entity } },
+            { $or: emails.flatMap((email) => contactEmailClauses(email)) },
+          ],
+        },
+        sort: { createdAt: "desc" },
+        limit: 100,
+        populate: EDIT_SESSION_POPULATE,
+      });
+    return pickEditableSibling(locked, applications);
+  };
+
+  const lockedBody = (application) => ({
+    code: "locked",
+    status: application?.status?.name ?? null,
+  });
 
   const isTokenExpired = (application) =>
     !application.edit_token_expires ||
     new Date(application.edit_token_expires).getTime() < Date.now();
 
   const isNewApplication = (application) =>
-    application.status?.name === NEW_APPLICATION_STATUS;
+    isNewApplicationStatus(application);
 
   const newEditToken = () => crypto.randomBytes(32).toString("hex");
 
@@ -777,7 +818,8 @@ export default ({ strapi }) => {
      * POST /grant-application/request-edit  { email }
      *
      * Emails a tokenized edit link when the address matches any contact on
-     * an application still in "New Application" status.
+     * an application still in "New Application" status. When the address is
+     * on more than one application, the newest one still in that status wins.
      */
     requestEdit: async (ctx) => {
       try {
@@ -797,7 +839,7 @@ export default ({ strapi }) => {
         }
 
         if (!isNewApplication(application)) {
-          ctx.body = { code: "locked" };
+          ctx.body = lockedBody(application);
           return;
         }
 
@@ -837,8 +879,27 @@ export default ({ strapi }) => {
         }
 
         if (!isNewApplication(application)) {
+          // `switch=1` is sent only by the form that will store the sibling
+          // token. Older bundles ignore editToken and would display one
+          // application while saving against the locked link.
+          const allowSwitch =
+            ctx.query?.switch === "1" || ctx.query?.switch === "true";
+          const sibling = allowSwitch
+            ? await findEditableSibling(application)
+            : null;
+          if (sibling && isNewApplication(sibling)) {
+            const tokenForSibling = await ensureEditToken(sibling);
+            ctx.body = {
+              code: "ok",
+              application: toFormPayload(sibling),
+              editToken: tokenForSibling,
+              notice: switchedApplicationNotice(application, sibling),
+            };
+            return;
+          }
+
           ctx.status = 409;
-          ctx.body = { code: "locked" };
+          ctx.body = lockedBody(application);
           return;
         }
 
@@ -878,7 +939,7 @@ export default ({ strapi }) => {
 
         if (!isNewApplication(application)) {
           ctx.status = 409;
-          ctx.body = { code: "locked" };
+          ctx.body = lockedBody(application);
           return;
         }
 

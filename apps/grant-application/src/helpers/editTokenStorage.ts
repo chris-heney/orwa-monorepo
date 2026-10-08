@@ -32,3 +32,15 @@ export const getEditTokenFromUrl = (): string | null => {
     return null;
   }
 };
+
+/** Keep the address bar on the token the session is actually editing. */
+export const replaceEditTokenInUrl = (token: string): void => {
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.get("edit_token") === token) return;
+    url.searchParams.set("edit_token", token);
+    window.history.replaceState({}, "", url);
+  } catch (error) {
+    console.warn("Failed to update edit token in the URL:", error);
+  }
+};

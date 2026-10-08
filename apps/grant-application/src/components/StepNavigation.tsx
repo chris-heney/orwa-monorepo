@@ -19,7 +19,10 @@ import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import { clearSavedFormData } from "../helpers/formPersistence";
 import { fileCache } from "../helpers/fileCache";
 import { useUserContext } from "../providers/UserContextProvider";
-import { useEditSession } from "../providers/EditSessionProvider";
+import {
+  lockedApplicationMessage,
+  useEditSession,
+} from "../providers/EditSessionProvider";
 import {
   mapFormErrorsToValidationFields,
   useValidationHighlight,
@@ -168,7 +171,7 @@ const StepNavigation = () => {
         setIsSubmitting(false);
         invalidateSession(
           response.code === "locked"
-            ? "Your application is already being processed and cannot be modified at this time."
+            ? lockedApplicationMessage(response.status)
             : "Your edit link is no longer valid. Please verify your email to receive a new one."
         );
       } else {

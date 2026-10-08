@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { CircularProgress } from "@mui/material";
 import { requestEditLink } from "../data/API";
-import { useEditSession } from "../providers/EditSessionProvider";
+import {
+  lockedApplicationMessage,
+  useEditSession,
+} from "../providers/EditSessionProvider";
 
 const MESSAGES: Record<string, { text: string; tone: "success" | "error" }> = {
   not_found: {
@@ -9,7 +12,7 @@ const MESSAGES: Record<string, { text: string; tone: "success" | "error" }> = {
     tone: "error",
   },
   locked: {
-    text: "Your application is already being processed and cannot be modified at this time.",
+    text: lockedApplicationMessage(),
     tone: "error",
   },
   sent: {
@@ -34,10 +37,12 @@ const EmailVerificationView = () => {
     try {
       const response = await requestEditLink(email.trim());
       setResult(
-        MESSAGES[response.code] ?? {
-          text: "Something went wrong. Please try again later.",
-          tone: "error",
-        }
+        response.code === "locked"
+          ? { text: lockedApplicationMessage(response.status), tone: "error" }
+          : (MESSAGES[response.code] ?? {
+              text: "Something went wrong. Please try again later.",
+              tone: "error",
+            })
       );
     } catch (error) {
       console.error("Email verification failed:", error);
