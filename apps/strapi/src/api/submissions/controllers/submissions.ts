@@ -28,7 +28,7 @@ import {
   singleMedia,
   validationErrorMessage,
 } from "../helpers";
-import { resolveCycleYear } from "../cycle-year";
+import { nextAnnualConferenceYear } from "../cycle-year";
 import {
   sendAwardNominationEmails,
   sendScholarshipApplicationEmails,
@@ -239,6 +239,22 @@ export default ({ strapi }) => {
   const shouldCreateRecord = (adminOptions?: AdminOptions) =>
     !adminOptions || Boolean(adminOptions.resubmit);
 
+  /**
+   * `scholarship_year` / `award_year` are server-authoritative: every record
+   * created by these endpoints is stamped with the cycle year computed from
+   * the server clock, and the client-sent value is ignored on EVERY path.
+   *
+   * There is deliberately no admin override. Both routes are reachable with
+   * the same static API token the public wizards ship with, and the awards
+   * "Resubmit Entry" sidebar (apps/awards EntryListSidebar) only toggles
+   * `adminOptions.{resubmit,notifications}` — it has no year picker, it just
+   * replays the originally logged payload. So a year in a resubmit body is
+   * a stale draft value, not an intentional admin choice, and
+   * `adminOptions.resubmit` is an unauthenticated body flag anyone can set.
+   * A different year must be set by staff in Member Manager after the fact.
+   */
+  const authoritativeCycleYear = () => nextAnnualConferenceYear();
+
   const lookupWatersystem = async (raw: unknown) => {
     const documentId = await resolveRelation(WATERSYSTEM_UID, raw);
     if (!documentId) return null;
@@ -395,10 +411,12 @@ export default ({ strapi }) => {
             applicantContact.documentId ||
             (await resolveDocumentId(CONTACT_UID, applicantContact.id));
 
+          const scholarshipYear = authoritativeCycleYear();
+
           const data = coerceToSchema(SCHOLARSHIP_UID, {
             contact: contactDocumentId,
             watersystem: watersystem?.documentId ?? null,
-            scholarship_year: resolveCycleYear(body.scholarship_year),
+            scholarship_year: scholarshipYear,
             relationship: body.relationship,
             eligible_participant_name: body.eligible_participant_name,
             eligible_participant_title: body.eligible_participant_title,
@@ -488,7 +506,11 @@ export default ({ strapi }) => {
 
           const pdfFile = await resolveFile(body.applicant_pdf);
           await sendScholarshipApplicationEmails(strapi, {
-            payload: body as unknown as Record<string, unknown>,
+            // Emails must show the year the record was stored with.
+            payload: {
+              ...(body as unknown as Record<string, unknown>),
+              scholarship_year: scholarshipYear,
+            },
             adminOptions,
             attachment: pdfFile
               ? {
@@ -600,6 +622,8 @@ export default ({ strapi }) => {
             nominatorContact.documentId ||
             (await resolveDocumentId(CONTACT_UID, nominatorContact.id));
 
+          const awardYear = authoritativeCycleYear();
+
           const data = coerceToSchema(AWARD_UID, {
             contact: contactDocumentId,
             nominee_name: body.nominee_name,
@@ -645,7 +669,7 @@ export default ({ strapi }) => {
             board_members: body.board_members ?? null,
             supporting_documents: await mediaIds(body.supporting_documents),
             nomination_pdf: await mediaId(body.nomination_pdf),
-            award_year: resolveCycleYear(body.award_year),
+            award_year: awardYear,
             nomination_status: "Submitted",
             submission_date: new Date().toISOString(),
           });
@@ -676,7 +700,11 @@ export default ({ strapi }) => {
 
           const pdfFile = await resolveFile(body.nomination_pdf);
           await sendAwardNominationEmails(strapi, {
-            payload: body as unknown as Record<string, unknown>,
+            // Emails must show the year the record was stored with.
+            payload: {
+              ...(body as unknown as Record<string, unknown>),
+              award_year: awardYear,
+            },
             adminOptions,
             attachment: pdfFile
               ? {

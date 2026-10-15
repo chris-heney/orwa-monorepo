@@ -14,7 +14,7 @@ describe("nextAnnualConferenceYear", () => {
   });
 });
 
-describe("resolveCycleYear", () => {
+describe("resolveCycleYear (email display only — storage uses nextAnnualConferenceYear)", () => {
   const now = new Date("2026-10-15T12:00:00");
 
   it("keeps a sane client-sent year (number or numeric string)", () => {

@@ -38,7 +38,11 @@ export interface IScholarshipApplicationPayload {
   watersystem?: number | string | null;
   watersystem_id?: number | string | null;
   system_name?: string;
-  /** Cycle year (next Annual Conference); server defaults it when absent. */
+  /**
+   * Cycle year (next Annual Conference). Display-only on the client: the
+   * server always stamps the authoritative cycle year from its own clock and
+   * ignores this value.
+   */
   scholarship_year?: number | string | null;
   relationship: "Self" | "DependentChild" | "DependentGrandchild";
   eligible_participant_name?: ScholarshipName;

@@ -5,9 +5,10 @@
  * January deadline. So: Jan–Apr → this calendar year, May–Dec → next.
  *
  * Keep in sync with `nextConferenceYear.ts` in apps/awards and
- * apps/scholarship-application (the public forms stamp the same value into
- * `award_year` / `scholarship_year`; this is the server-side default when a
- * client omits it).
+ * apps/scholarship-application. The public forms show the same value, but it
+ * is display-only there: the submissions controller stores
+ * `nextAnnualConferenceYear()` from the server clock and ignores whatever
+ * `award_year` / `scholarship_year` the client sent (stale drafts, tampering).
  */
 
 /** First month (0-based) that belongs to the NEXT conference cycle. */
@@ -18,7 +19,12 @@ export const nextAnnualConferenceYear = (now: Date = new Date()): number =>
     ? now.getFullYear() + 1
     : now.getFullYear();
 
-/** Coerce a client-sent year; fall back to the computed cycle year. */
+/**
+ * Display helper for email variables (`form-email.ts`): echo a sane year from
+ * the payload, else the computed cycle year. NOT used for storage — the
+ * controller stamps the authoritative year into the payload before building
+ * emails, so for created records this echoes the stored value.
+ */
 export const resolveCycleYear = (
   raw: unknown,
   now: Date = new Date()
