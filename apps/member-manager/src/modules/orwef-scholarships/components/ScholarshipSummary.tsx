@@ -105,7 +105,7 @@ const ScholarshipSummary = () => {
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
         <CountCard
           label="Applications"
-          caption={year === "all" ? "All years" : `Calendar year ${year}`}
+          caption={year === "all" ? "All years" : `Scholarship year ${year}`}
           count={metrics.total}
           color={T.water}
         />

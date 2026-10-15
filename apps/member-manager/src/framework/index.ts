@@ -56,4 +56,10 @@ export {
 } from './prefetch';
 export { lazyPanel } from './lazyPanel';
 export * from './actions';
+export {
+  bulkDeleteAction,
+  bulkDeleteActionComponent,
+  bulkDeleteConfirmCopy,
+} from './BulkDeleteAction';
+export type { BulkDeleteOptions } from './BulkDeleteAction';
 export * from './PageLocalState';

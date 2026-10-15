@@ -13,8 +13,11 @@ import { WATER_SYSTEM_REGIONS, calendarYearChoices } from "../helpers/listFilter
 import {
   useScholarshipRegion,
   useScholarshipSearch,
+  useScholarshipSubmittedFrom,
+  useScholarshipSubmittedTo,
   useScholarshipYear,
 } from "../helpers/orwefStore";
+import SubmittedDateRangeFields from "../../_components/SubmittedDateRangeFields";
 
 /**
  * Filters drawer body for the Applications tab. Values live in the legacy
@@ -24,6 +27,8 @@ const OrwefFilterSidebar = () => {
   const [search, setSearch] = useScholarshipSearch();
   const [region, setRegion] = useScholarshipRegion();
   const [year, setYear] = useScholarshipYear();
+  const [submittedFrom, setSubmittedFrom] = useScholarshipSubmittedFrom();
+  const [submittedTo, setSubmittedTo] = useScholarshipSubmittedTo();
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -55,6 +60,13 @@ const OrwefFilterSidebar = () => {
           ))}
         </RadioGroup>
       </FormControl>
+      <SubmittedDateRangeFields
+        ariaPrefix="Applications"
+        from={submittedFrom}
+        to={submittedTo}
+        onFromChange={setSubmittedFrom}
+        onToChange={setSubmittedTo}
+      />
       <FormControl fullWidth>
         <FormLabel>Year</FormLabel>
         <TextField

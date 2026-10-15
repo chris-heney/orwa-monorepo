@@ -1,6 +1,5 @@
-import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { embedPrintFonts, type PrintFonts } from "../../../helpers/printBrandFonts";
-import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
 // Import the pure helpers directly: the review-packet barrel also re-exports
 // React/MUI components, which a PDF helper (and its Node tests) should not load.
 import { asDateString } from "../../_components/review-packet/dateStrings";
@@ -11,27 +10,38 @@ import {
   formatMoney,
   formatPersonName,
 } from "../../_components/review-packet/formatters";
+import {
+  appendPacketAttachments,
+  type AppendixOutcome,
+  type PacketMediaFetcher,
+} from "../../_components/review-packet/packetAppendix";
+import {
+  attachmentTypeLabel,
+  orderPacketAttachments,
+  type AttachmentSlot,
+  type MediaEmbedResult,
+  type OrderedAttachment,
+  type PacketMediaFile,
+} from "../../_components/review-packet/packetAttachments";
 import { listFinancialResources } from "./financialResources";
-import { resolveMediaUrl } from "./resolveMediaUrl";
 import {
   ORWEF_LEGAL_NAME,
   SCHOLARSHIP_FOOTER_AWARD,
   SCHOLARSHIP_TITLE,
   drawLetterFooters,
   drawScholarshipApplicationForm,
+  scholarshipRunningTitle,
   stackLines,
   type PrintCard,
   type PrintField,
   type ScholarshipPrintModel,
 } from "./scholarshipPrintForm";
-import { scholarshipPacketFilename } from "./scholarshipPacketFilename";
-import { yearOf } from "./metrics";
+import {
+  scholarshipPacketFilename,
+  scholarshipPacketYear,
+} from "./scholarshipPacketFilename";
 
-export type ScholarshipMediaFile = {
-  url?: string | null;
-  name?: string | null;
-  mime?: string | null;
-} | null;
+export type ScholarshipMediaFile = PacketMediaFile;
 
 export type ScholarshipPacketRecord = Record<string, unknown> & {
   applicant_first_name?: string | null;
@@ -45,6 +55,8 @@ export type ScholarshipPacketRecord = Record<string, unknown> & {
   applicant_zip?: string | null;
   submission_date?: string | null;
   createdAt?: string | null;
+  /** Cycle year stamped on submit; NULL on applications from before the field. */
+  scholarship_year?: number | string | null;
   system_name?: string | null;
   relationship?: string | null;
   eligible_participant_name?: { first?: string | null; last?: string | null } | null;
@@ -97,41 +109,35 @@ export type ScholarshipPacketRecord = Record<string, unknown> & {
   applicant_pdf?: ScholarshipMediaFile;
 };
 
-export type MediaEmbedResult = "embedded" | "merged" | "linked" | "skipped";
+export type { MediaEmbedResult };
 
-export const SCHOLARSHIP_MEDIA_SLOTS: Array<{
-  key: keyof ScholarshipPacketRecord;
-  label: string;
-}> = [
-  { key: "photograph", label: "Photograph" },
+/**
+ * Upload fields in the order the public form asks for them
+ * (`apps/scholarship-application` steps: High School Data → Recommendations →
+ * Essay → Biography → Photo). The appendix renders attachments in this order.
+ * `applicant_pdf` is the PDF Strapi generated at submit time — it repeats this
+ * form, so it is excluded unless the caller asks for it.
+ */
+export const SCHOLARSHIP_MEDIA_SLOTS: ReadonlyArray<
+  AttachmentSlot<keyof ScholarshipPacketRecord & string>
+> = [
   { key: "transcript", label: "High School Transcript" },
   { key: "test_scores", label: "SAT/ACT Score File" },
   { key: "recommendation_letter_1", label: "Recommendation Letter 1" },
   { key: "recommendation_letter_2", label: "Recommendation Letter 2" },
   { key: "essay", label: "Essay" },
   { key: "biography", label: "Biography" },
-  { key: "applicant_pdf", label: "Submitted Application PDF" },
+  { key: "photograph", label: "Photograph" },
+  { key: "applicant_pdf", label: "Submitted Application PDF", system: true },
 ];
 
-const authHeaders = (): HeadersInit => {
-  try {
-    const token = CookieStore.getCookie("token");
-    if (token) return { Authorization: `Bearer ${token}` };
-  } catch {
-    // Node / unit tests have no `document`.
-  }
-  const apiKey = import.meta.env.VITE_API_KEY;
-  if (apiKey) return { Authorization: `Bearer ${apiKey}` };
-  return {};
-};
-
-const asMediaItems = (
-  file: ScholarshipMediaFile | ScholarshipMediaFile[] | undefined
-): NonNullable<ScholarshipMediaFile>[] =>
-  (Array.isArray(file) ? file : [file]).filter(
-    (item): item is NonNullable<ScholarshipMediaFile> =>
-      item != null && Boolean(item.url)
-  );
+export const orderScholarshipAttachments = (
+  record: ScholarshipPacketRecord,
+  options: { includeSubmissionPdf?: boolean } = {}
+): OrderedAttachment[] =>
+  orderPacketAttachments(record, SCHOLARSHIP_MEDIA_SLOTS, {
+    includeSystem: options.includeSubmissionPdf,
+  });
 
 const display = (value: unknown): string => {
   if (value === undefined || value === null || value === "") return "—";
@@ -166,17 +172,11 @@ const applicantName = (record: ScholarshipPacketRecord) =>
     .join(" ")
     .trim() || "Applicant";
 
-const cycleYear = (record: ScholarshipPacketRecord) =>
-  String(
-    yearOf({
-      id: "print",
-      submission_date: record.submission_date,
-      createdAt: record.createdAt,
-    }) || new Date().getFullYear()
-  );
+export { scholarshipPacketYear };
 
 export const buildScholarshipPrintModel = (
-  record: ScholarshipPacketRecord
+  record: ScholarshipPacketRecord,
+  attachments: ReadonlyArray<OrderedAttachment> = orderScholarshipAttachments(record)
 ): ScholarshipPrintModel => {
   const financialResources = listFinancialResources(record);
   const financialFields: PrintField[] =
@@ -186,17 +186,16 @@ export const buildScholarshipPrintModel = (
           contact(row.institution || "—", formatMoney(row.amount))
         );
 
-  const presentAttachments = SCHOLARSHIP_MEDIA_SLOTS.map((slot) => {
-    const items = asMediaItems(
-      record[slot.key] as ScholarshipMediaFile | ScholarshipMediaFile[] | undefined
-    );
-    return kv(
-      slot.label,
-      items.length === 0 ? null : items.map((item) => item.name || "Attachment").join(", ")
-    );
-  }).filter((field) => field.kind === "kv" && field.value !== "—");
+  // Index of the appendix: "Attachment 1 · High School Transcript · file.pdf (PDF)".
   const attachmentFields: PrintField[] =
-    presentAttachments.length > 0 ? presentAttachments : [kv("Attachments", "None")];
+    attachments.length > 0
+      ? attachments.map((item) =>
+          kv(
+            `Attachment ${item.ordinal}`,
+            `${item.label}  ·  ${item.fileName} (${attachmentTypeLabel(item.mime, item.ext)})`
+          )
+        )
+      : [kv("Attachments", "None uploaded")];
 
   const cards: PrintCard[] = [
     {
@@ -301,7 +300,7 @@ export const buildScholarshipPrintModel = (
       fields: [{ kind: "body", text: record.awards?.trim() ? String(record.awards) : "—" }],
     },
     {
-      title: "Attached Documents",
+      title: `Attached Documents (${attachments.length})`,
       fields: attachmentFields,
     },
   ];
@@ -310,7 +309,7 @@ export const buildScholarshipPrintModel = (
 
   return {
     applicantName: applicantName(record),
-    cycleYear: cycleYear(record),
+    year: scholarshipPacketYear(record),
     cards,
     fullWidth,
   };
@@ -328,229 +327,88 @@ export const downloadBlob = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-const fetchMediaBytes = async (
-  file: NonNullable<ScholarshipMediaFile>
-): Promise<{ bytes: Uint8Array; href: string } | null> => {
-  const href = resolveMediaUrl(file.url);
-  if (!href) return null;
-  const response = await fetch(href, { headers: authHeaders() });
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${file.name || href} (${response.status})`);
-  }
-  const buffer = await response.arrayBuffer();
-  return { bytes: new Uint8Array(buffer), href };
+export type ScholarshipPrintOptions = {
+  /**
+   * Also append the PDF Strapi generated at submit time (`applicant_pdf`).
+   * Off by default: it repeats the form rendered above and was the source of
+   * the "application appears at the beginning and the end" report. The
+   * record's show page links to it.
+   */
+  includeSubmissionPdf?: boolean;
+  /** Test seam — defaults to an authenticated Strapi media fetch. */
+  fetchBytes?: PacketMediaFetcher;
 };
 
-const wrapLink = (text: string, font: PDFFont, size: number, maxWidth: number) => {
-  const words = text.split(/\s+/).filter(Boolean);
-  if (words.length === 0) return [""];
-  const lines: string[] = [];
-  let current = words[0];
-  for (let i = 1; i < words.length; i += 1) {
-    const next = `${current} ${words[i]}`;
-    if (font.widthOfTextAtSize(next, size) <= maxWidth) {
-      current = next;
-    } else {
-      lines.push(current);
-      current = words[i];
-    }
-  }
-  lines.push(current);
-  return lines;
-};
-
-const addLinkPage = (
-  pdfDoc: PDFDocument,
-  page: PDFPage,
-  fonts: PrintFonts,
-  label: string,
-  fileName: string,
-  href: string
-) => {
-  const { width, height } = page.getSize();
-  const margin = 54;
-  let y = height - 72;
-  page.drawText(label, {
-    x: margin,
-    y,
-    size: 14,
-    font: fonts.bold,
-    color: rgb(0.08, 0.2, 0.36),
-  });
-  y -= 24;
-  page.drawText(`File: ${fileName.slice(0, 90)}`, {
-    x: margin,
-    y,
-    size: 11,
-    font: fonts.regular,
-  });
-  y -= 18;
-  page.drawText("This file type cannot be embedded. Open it in Media Library or via:", {
-    x: margin,
-    y,
-    size: 11,
-    font: fonts.regular,
-  });
-  y -= 18;
-  const linkLines = wrapLink(href, fonts.regular, 9, width - margin * 2);
-  for (const row of linkLines.slice(0, 6)) {
-    page.drawText(row, {
-      x: margin,
-      y,
-      size: 9,
-      font: fonts.regular,
-      color: rgb(0.05, 0.25, 0.55),
-    });
-    y -= 12;
-  }
-};
-
-const appendImagePage = async (
-  pdfDoc: PDFDocument,
-  label: string,
-  bytes: Uint8Array,
-  mime: string,
-  fonts: PrintFonts
-): Promise<boolean> => {
-  let image;
-  try {
-    if (mime.includes("png")) {
-      image = await pdfDoc.embedPng(bytes);
-    } else if (mime.includes("jpeg") || mime.includes("jpg")) {
-      image = await pdfDoc.embedJpg(bytes);
-    } else {
-      return false;
-    }
-  } catch {
-    return false;
-  }
-
-  const page = pdfDoc.addPage([612, 792]);
-  const { width, height } = page.getSize();
-  const margin = 54;
-  page.drawText(label, {
-    x: margin,
-    y: height - margin,
-    size: 12,
-    font: fonts.bold,
-    color: rgb(0.08, 0.2, 0.36),
-  });
-  const maxW = width - margin * 2;
-  const maxH = height - margin * 2 - 24;
-  const scale = Math.min(maxW / image.width, maxH / image.height, 1);
-  const drawW = image.width * scale;
-  const drawH = image.height * scale;
-  page.drawImage(image, {
-    x: margin,
-    y: height - margin - 20 - drawH,
-    width: drawW,
-    height: drawH,
-  });
-  return true;
-};
-
+/** Append uploads in submission order (shared appendix renderer). */
 export const appendScholarshipMedia = async (
   pdfDoc: PDFDocument,
   record: ScholarshipPacketRecord,
-  fonts: PrintFonts
-): Promise<Record<string, MediaEmbedResult>> => {
-  const results: Record<string, MediaEmbedResult> = {};
-
+  fonts: PrintFonts,
+  options: ScholarshipPrintOptions & { model?: ScholarshipPrintModel } = {}
+): Promise<AppendixOutcome & { media: Record<string, MediaEmbedResult> }> => {
+  const attachments = orderScholarshipAttachments(record, {
+    includeSubmissionPdf: options.includeSubmissionPdf,
+  });
+  const model = options.model ?? buildScholarshipPrintModel(record, attachments);
+  const appendix = await appendPacketAttachments(pdfDoc, fonts, attachments, {
+    runningTitle: scholarshipRunningTitle(model),
+    fetchBytes: options.fetchBytes,
+  });
+  const media: Record<string, MediaEmbedResult> = {};
   for (const slot of SCHOLARSHIP_MEDIA_SLOTS) {
-    const items = asMediaItems(
-      record[slot.key] as ScholarshipMediaFile | ScholarshipMediaFile[] | undefined
-    );
-    if (items.length === 0) {
-      results[slot.key] = "skipped";
-      continue;
-    }
-
-    let outcome: MediaEmbedResult = "linked";
-    for (const item of items) {
-      const fetched = await fetchMediaBytes(item);
-      if (!fetched) {
-        outcome = "linked";
-        continue;
-      }
-      const mime = (item.mime || "").toLowerCase();
-      const fileName = item.name || "attachment";
-
-      if (mime.includes("pdf")) {
-        try {
-          const src = await PDFDocument.load(fetched.bytes, {
-            ignoreEncryption: true,
-          });
-          const copied = await pdfDoc.copyPages(src, src.getPageIndices());
-          for (const p of copied) pdfDoc.addPage(p);
-          outcome = "merged";
-          continue;
-        } catch {
-          const page = pdfDoc.addPage([612, 792]);
-          addLinkPage(pdfDoc, page, fonts, slot.label, fileName, fetched.href);
-          outcome = "linked";
-          continue;
-        }
-      }
-
-      if (mime.startsWith("image/")) {
-        const embedded = await appendImagePage(
-          pdfDoc,
-          slot.label,
-          fetched.bytes,
-          mime,
-          fonts
-        );
-        if (embedded) {
-          outcome = "embedded";
-          continue;
-        }
-      }
-
-      const page = pdfDoc.addPage([612, 792]);
-      addLinkPage(pdfDoc, page, fonts, slot.label, fileName, fetched.href);
-      outcome = "linked";
-    }
-    results[slot.key] = outcome;
+    if (slot.system && !options.includeSubmissionPdf) continue;
+    media[slot.key] = appendix.bySlot[slot.key] ?? "skipped";
   }
-
-  return results;
+  return { ...appendix, media };
 };
 
 /** Build a full scholarship packet PDF (form pages + uploaded media). */
 export const generateScholarshipPacketPdf = async (
-  record: ScholarshipPacketRecord
+  record: ScholarshipPacketRecord,
+  options: ScholarshipPrintOptions = {}
 ): Promise<{
   blob: Blob;
   filename: string;
   media: Record<string, MediaEmbedResult>;
+  attachments: AppendixOutcome["files"];
   fontFamily: PrintFonts["family"];
 }> => {
   const pdfDoc = await PDFDocument.create();
   const fonts = await embedPrintFonts(pdfDoc);
-  const model = buildScholarshipPrintModel(record);
+  const attachments = orderScholarshipAttachments(record, {
+    includeSubmissionPdf: options.includeSubmissionPdf,
+  });
+  const model = buildScholarshipPrintModel(record, attachments);
   const filename = scholarshipPacketFilename(record);
   pdfDoc.setTitle(`ORWEF Scholarship Application — ${model.applicantName}`);
   pdfDoc.setAuthor(ORWEF_LEGAL_NAME);
   pdfDoc.setSubject(SCHOLARSHIP_TITLE);
-  pdfDoc.setKeywords(["ORWEF", "Scholarship", model.cycleYear]);
+  pdfDoc.setKeywords(["ORWEF", "Scholarship", model.year]);
 
+  // The form, exactly once — then every upload behind its own divider.
   drawScholarshipApplicationForm(pdfDoc, fonts, model);
-  const media = await appendScholarshipMedia(pdfDoc, record, fonts);
+  const appendix = await appendScholarshipMedia(pdfDoc, record, fonts, {
+    ...options,
+    model,
+  });
   drawLetterFooters(pdfDoc, fonts, model.applicantName, SCHOLARSHIP_FOOTER_AWARD);
   const bytes = await pdfDoc.save();
   return {
     blob: new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
     filename,
-    media,
+    media: appendix.media,
+    attachments: appendix.files,
     fontFamily: fonts.family,
   };
 };
 
 export const printScholarshipPacket = async (
-  record: ScholarshipPacketRecord
+  record: ScholarshipPacketRecord,
+  options: ScholarshipPrintOptions = {}
 ) => {
   const { blob, filename, media, fontFamily } = await generateScholarshipPacketPdf(
-    record
+    record,
+    options
   );
   downloadBlob(blob, filename);
   return { filename, media, byteLength: blob.size, fontFamily };

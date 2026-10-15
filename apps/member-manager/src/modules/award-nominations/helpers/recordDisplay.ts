@@ -115,6 +115,12 @@ export const BOARD_LIST_METHOD_CHOICES = [
   { id: "Keyed In List", name: "Keyed In List" },
 ];
 
+/**
+ * Columns-picker indices (AgDatagrid registers RA-style index ids; `0` is the
+ * auto-prepended ID column): ID, Nominee, Email, System, Name as printed,
+ * Award, Year, Status, Submitted — the order of the first children of
+ * `AwardNominationList`.
+ */
 export const DEFAULT_AWARD_COLUMN_IDS = [
   "0",
   "1",
@@ -123,7 +129,31 @@ export const DEFAULT_AWARD_COLUMN_IDS = [
   "4",
   "5",
   "6",
+  "7",
+  "8",
 ];
+
+/**
+ * The default before Status / Submitted joined it. A user whose saved
+ * selection is still exactly this never customised the grid, so they get the
+ * new default instead of being frozen on the old one.
+ */
+export const LEGACY_AWARD_COLUMN_IDS = ["0", "1", "2", "3", "4", "5", "6"];
+
+const sameIds = (a: readonly string[], b: readonly string[]) =>
+  a.length === b.length && a.every((id, i) => id === b[i]);
+
+/**
+ * What the saved Columns selection should become on mount: the default when
+ * nothing (or only the legacy default) is saved, otherwise untouched (`null`).
+ */
+export const nextAwardColumnIds = (
+  saved: readonly string[] | undefined | null
+): string[] | null => {
+  if (saved == null) return DEFAULT_AWARD_COLUMN_IDS;
+  if (sameIds(saved, LEGACY_AWARD_COLUMN_IDS)) return DEFAULT_AWARD_COLUMN_IDS;
+  return null;
+};
 
 export const AWARD_COLUMNS_PREF_KEY =
   "preferences.award-nominations.datagrid.columns";

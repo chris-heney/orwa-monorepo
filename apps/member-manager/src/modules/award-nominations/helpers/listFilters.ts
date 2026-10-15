@@ -1,3 +1,12 @@
+import {
+  cycleYearChoices,
+  nextAnnualConferenceYear,
+} from "../../../helpers/conferenceCycleYear";
+import {
+  applySubmittedDateRange,
+  type SubmittedDateRange,
+} from "../../../helpers/submittedDateRange";
+
 export const AWARD_STATUSES = [
   { id: "Draft", name: "Draft" },
   { id: "Submitted", name: "Submitted" },
@@ -17,24 +26,26 @@ export const WATER_SYSTEM_REGIONS = [
 
 export type WaterSystemRegion = (typeof WATER_SYSTEM_REGIONS)[number];
 
-/** Award cycle year = next annual conference (calendar year + 1). */
+/**
+ * Award cycle year = the next annual conference, by the same May rollover the
+ * public form and Strapi stamp into `award_year` (`conferenceCycleYear.ts`).
+ */
 export const nominationCycleYear = (now: Date = new Date()): number =>
-  now.getFullYear() + 1;
+  nextAnnualConferenceYear(now);
 
-/** All years, then cycle (current+1), current calendar year, and 7 prior years. */
-export const calendarYearChoices = (now: Date = new Date()) => {
-  const current = now.getFullYear();
-  const cycle = nominationCycleYear(now);
-  const lookback = Array.from({ length: 8 }, (_, i) => current - i);
-  const years = [cycle, ...lookback.filter((year) => year !== cycle)];
-  return ["all" as const, ...years];
-};
+/** All years, then the upcoming cycle, current calendar year, and 7 prior years. */
+export const calendarYearChoices = (now: Date = new Date()) =>
+  cycleYearChoices(now);
+
+/** Strapi `datetime` the public submit stamps (`submissions` controller). */
+export const NOMINATION_SUBMITTED_FIELD = "submission_date";
 
 export const buildAwardListFilter = (
   search: string,
   year: number | "all",
   region: string = "all",
-  awardType: string = "all"
+  awardType: string = "all",
+  submitted?: SubmittedDateRange
 ) => {
   const filter: Record<string, unknown> = {};
   if (search.trim()) filter.q = search.trim();
@@ -45,5 +56,5 @@ export const buildAwardListFilter = (
   if (awardType && awardType !== "all") {
     filter.award_type = awardType;
   }
-  return filter;
+  return applySubmittedDateRange(filter, NOMINATION_SUBMITTED_FIELD, submitted);
 };

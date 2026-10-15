@@ -4,10 +4,18 @@ import {
   calendarYearChoices,
   nominationCycleYear,
 } from "./listFilters";
+import {
+  localDayEndIso,
+  localDayStartIso,
+} from "../../../helpers/submittedDateRange";
 
 describe("nominationCycleYear", () => {
-  it("is the next conference year (calendar year + 1)", () => {
+  it("is the next conference year (May–Dec → next calendar year)", () => {
     expect(nominationCycleYear(new Date("2026-08-27T12:00:00"))).toBe(2027);
+  });
+
+  it("stays on the conference year through its April (same rule as the public form / Strapi)", () => {
+    expect(nominationCycleYear(new Date("2027-02-10T12:00:00"))).toBe(2027);
   });
 });
 
@@ -52,5 +60,26 @@ describe("buildAwardListFilter", () => {
         award_type: "System of the Year",
       }
     );
+  });
+
+  it("adds a submitted from/to range on submission_date", () => {
+    expect(
+      buildAwardListFilter("", 2027, "all", "all", {
+        from: "2026-08-19",
+        to: "2026-08-26",
+      })
+    ).toEqual({
+      award_year: 2027,
+      submission_date: {
+        $gte: localDayStartIso("2026-08-19"),
+        $lte: localDayEndIso("2026-08-26"),
+      },
+    });
+  });
+
+  it("ignores an empty submitted range", () => {
+    expect(
+      buildAwardListFilter("", "all", "all", "all", { from: "", to: "" })
+    ).toEqual({});
   });
 });

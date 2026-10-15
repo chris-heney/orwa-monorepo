@@ -1,5 +1,29 @@
 export const blank = "—";
 
+/**
+ * Cycle-year rule (May rollover) lives in one place —
+ * `helpers/conferenceCycleYear.ts`. Re-exported here so the print paths keep
+ * importing it from the review-packet barrel. Use `cycleYearOf` only as the
+ * fallback for legacy rows where the stamped `award_year` / `scholarship_year`
+ * is NULL.
+ */
+export {
+  CYCLE_ROLLOVER_MONTH,
+  cycleYearOf,
+} from "../../../helpers/conferenceCycleYear";
+
+/**
+ * Year wording for printed packets (cover band, running header, index).
+ * Staff asked for "Year: 2027" — never "Cycle 2027". The value comes from the
+ * record (Awards `award_year`, ORWEF `scholarship_year`), not from the clock.
+ */
+export const formatPacketYear = (
+  year: number | string | null | undefined
+): string => {
+  const text = String(year ?? "").trim();
+  return `Year: ${text || blank}`;
+};
+
 export const displayText = (value: unknown): string => {
   if (value == null || value === "") return blank;
   if (typeof value === "number" && Number.isFinite(value)) return String(value);

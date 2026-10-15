@@ -1,9 +1,12 @@
 export { asDateString, dateInputProps } from "./dateStrings";
 export {
+  CYCLE_ROLLOVER_MONTH,
   blank,
+  cycleYearOf,
   displayText,
   formatAddress,
   formatMoney,
+  formatPacketYear,
   formatPersonName,
   EDUCATION_LABELS,
   RELATIONSHIP_LABELS,

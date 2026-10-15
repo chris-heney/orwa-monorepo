@@ -15,7 +15,11 @@ import {
   StatusChip,
 } from "../../_components/review-packet";
 import { useSummaryTokens } from "../../grant-manager/grants/components/summary/tokens";
-import { STATUS_META, ScholarshipStatus } from "../helpers/metrics";
+import {
+  STATUS_META,
+  ScholarshipStatus,
+  resolveScholarshipYear,
+} from "../helpers/metrics";
 import { listFinancialResources } from "../helpers/financialResources";
 import MediaLink from "./MediaLink";
 import PacketLetterhead from "./PacketLetterhead";
@@ -49,6 +53,11 @@ const ScholarshipShow = () => {
     asDateString(record?.submission_date) ||
     asDateString(record?.createdAt) ||
     null;
+  const scholarshipYear = resolveScholarshipYear({
+    scholarship_year: record?.scholarship_year,
+    submission_date: record?.submission_date,
+    createdAt: record?.createdAt,
+  });
 
   return (
     <PacketLayout
@@ -63,9 +72,28 @@ const ScholarshipShow = () => {
           }
           notes={record?.review_notes}
           extra={
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Submitted {submitted || "—"}
-            </Typography>
+            <>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                Submitted {submitted || "—"}
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 0.5 }}
+                data-testid="scholarship-year"
+              >
+                Scholarship Year {scholarshipYear.year ?? "—"}
+              </Typography>
+              {scholarshipYear.derived && scholarshipYear.year != null ? (
+                <Typography
+                  variant="caption"
+                  color="text.disabled"
+                  sx={{ display: "block", fontStyle: "italic" }}
+                >
+                  Derived from submission date
+                </Typography>
+              ) : null}
+            </>
           }
         />
       }

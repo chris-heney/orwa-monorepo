@@ -17,6 +17,8 @@ const asAmountNumber = (value: unknown): number | null => {
 
 const transformScholarship = (data: Record<string, unknown>) => ({
   ...data,
+  // Optional integer; a cleared NumberInput must reach Strapi as null, not "".
+  scholarship_year: asAmountNumber(data.scholarship_year),
   submission_date: asDateString(data.submission_date) || null,
   graduation_date: asDateString(data.graduation_date) || null,
   applicant_certification_date:

@@ -1,5 +1,11 @@
 import React, { useState } from "react";
-import { useDataProvider, useNotify, useStore } from "react-admin";
+import {
+  Button,
+  useDataProvider,
+  useNotify,
+  useRecordContext,
+  useStore,
+} from "react-admin";
 import {
   Alert,
   CircularProgress,
@@ -145,6 +151,38 @@ export const AwardPrintSelectedButton = () => {
           </IconButton>
         </span>
       </Tooltip>
+      {toastEl}
+    </>
+  );
+};
+
+/**
+ * Bar action of `awards.nominationShow` — same fetch + packet as Print Selected,
+ * scoped to the record on screen (mirrors ORWEF's `PrintScholarshipRecordAction`).
+ */
+export const AwardPrintRecordAction = () => {
+  const record = useRecordContext<AwardNominationPrintRecord>();
+  const { busy, printIds, toastEl } = usePrintNominations();
+  const id = record ? nominationRecordId(record) : null;
+
+  return (
+    <>
+      <Button
+        onClick={() => {
+          if (id == null) return;
+          void printIds([id]);
+        }}
+        disabled={busy || id == null}
+        label="Print"
+        title="Print nomination application"
+        sx={{ color: "white", minWidth: 0 }}
+      >
+        {busy ? (
+          <CircularProgress size={16} color="inherit" />
+        ) : (
+          <PrintIcon />
+        )}
+      </Button>
       {toastEl}
     </>
   );

@@ -80,6 +80,9 @@ const ScholarshipApplicationList = () => (
       />
       <TextField source="gpa" label="GPA" />
       <TextField source="application_status" label="Status" />
+      {/* Cycle year stamped on submit; blank on applications from before the
+          field existed (those file by submission calendar year). */}
+      <TextField source="scholarship_year" label="Year" />
       <DateField source="submission_date" label="Submitted" />
 
       <TextField source="applicant_first_name" label="First name" />

@@ -9,6 +9,7 @@ import type {
 import { lazyPanel } from "../../framework/lazyPanel";
 import { columnsAction, editRecordAction } from "../../framework/actions";
 import { pageView, tabRedirect } from "../../framework/registry";
+import { bulkDeleteAction } from "../../framework/BulkDeleteAction";
 import ScholarshipEdit from "./components/ScholarshipEdit";
 import ScholarshipShow, { applicantTitle } from "./components/ScholarshipShow";
 import OrwefFilterSidebar from "./components/OrwefFilterSidebar";
@@ -50,6 +51,11 @@ const printSelectedAction: ActionManifest = {
   component: PrintSelectedScholarshipsAction,
   order: 75,
 };
+
+/** Bulk delete — selection-scoped, RBAC `delete` on scholarship-applications. */
+const deleteSelectedAction = bulkDeleteAction("scholarship-applications", {
+  noun: "scholarship application",
+});
 
 const printRecordAction: ActionManifest = {
   id: "print",
@@ -115,7 +121,7 @@ export const scholarshipsModule: ModuleManifest = {
               meta: { populate: "*", raw: true },
               filterBody: OrwefFilterSidebar,
             },
-            actions: [printSelectedAction, columnsAction],
+            actions: [printSelectedAction, columnsAction, deleteSelectedAction],
             panel: lazyPanel(
               () => import("./components/ScholarshipApplicationList")
             ),

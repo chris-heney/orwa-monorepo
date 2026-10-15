@@ -8,6 +8,8 @@ import {
   SimpleForm,
   SimpleFormIterator,
   TextInput,
+  maxValue,
+  minValue,
   required,
   useRecordContext,
 } from "react-admin";
@@ -28,6 +30,10 @@ import {
 } from "../helpers/financialResources";
 
 const SCHOLARSHIP_BACK = "/orwef-scholarships/dashboard";
+
+/** Mirrors the Strapi `scholarship_year` integer bounds (min 2000, max 2100). */
+const SCHOLARSHIP_YEAR_MIN = 2000;
+const SCHOLARSHIP_YEAR_MAX = 2100;
 
 const statuses = [
   { id: "Draft", name: "Draft" },
@@ -73,7 +79,7 @@ const ScholarshipForm = () => {
           <Grid item xs={12}>
             <ReviewSectionCard title="Status / Review">
               <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <SelectInput
                     source="application_status"
                     label="Status"
@@ -83,13 +89,29 @@ const ScholarshipForm = () => {
                     sx={fullFieldSx}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid item xs={12} md={4}>
                   <DateInput
                     source="submission_date"
                     label="Submission date"
                     fullWidth
                     sx={fullFieldSx}
                     {...dateInputProps}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <NumberInput
+                    source="scholarship_year"
+                    label="Scholarship Year"
+                    min={SCHOLARSHIP_YEAR_MIN}
+                    max={SCHOLARSHIP_YEAR_MAX}
+                    step={1}
+                    validate={[
+                      minValue(SCHOLARSHIP_YEAR_MIN),
+                      maxValue(SCHOLARSHIP_YEAR_MAX),
+                    ]}
+                    helperText="Optional. Stamped on submit; applications from before this field existed may be blank and file by submission date."
+                    fullWidth
+                    sx={fullFieldSx}
                   />
                 </Grid>
                 <Grid item xs={12}>

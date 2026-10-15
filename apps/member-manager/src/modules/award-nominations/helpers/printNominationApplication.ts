@@ -1,27 +1,21 @@
-import {
-  PDFDocument,
-  rgb,
-  type PDFEmbeddedPage,
-  type PDFFont,
-  type PDFImage,
-  type PDFPage,
-} from "pdf-lib";
+import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { embedPrintFonts } from "../../../helpers/printBrandFonts";
-import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
-import { resolveMediaUrl } from "../../orwef-scholarships/helpers/resolveMediaUrl";
+import { formatPacketYear } from "../../_components/review-packet/formatters";
 import {
-  extractAttachmentText,
-  isDocxAttachment,
-  isPdfAttachment,
-  isPlainTextAttachment,
-  toWinAnsi,
-  type DocumentTextBlock,
-  type DocumentTextRun,
-} from "./documentText";
+  appendPacketAttachments,
+  type AppendixOutcome,
+  type PacketMediaFetcher,
+} from "../../_components/review-packet/packetAppendix";
+import {
+  attachmentTypeLabel,
+  packetText,
+  type MediaEmbedResult,
+  type OrderedAttachment,
+} from "../../_components/review-packet/packetAttachments";
 import { employeeTotal } from "./recordDisplay";
 import {
-  asMediaItems,
-  bestMediaUrl,
+  AWARD_ATTACHMENT_SLOTS,
+  boardMemberLines,
   countyRegion,
   displayValue,
   formatCount,
@@ -29,15 +23,16 @@ import {
   isPersonNomineeAward,
   isSystemOfTheYearAward,
   nominationApplicationFilename,
+  nominationPacketYear,
   nomineeAddressLines,
   nomineeNameAsPrinted,
   nominatorAddressLines,
   nominatorFullName,
+  orderAwardAttachments,
   printedAwardName,
   systemDisplayName,
   systemNameAsPrinted,
   type AwardNominationPrintRecord,
-  type AwardPrintMedia,
 } from "./nominationPrintModel";
 import {
   CARD_GAP,
@@ -62,7 +57,7 @@ import {
   type TextMetrics,
 } from "./printLayoutChrome";
 
-export type MediaEmbedResult = "embedded" | "merged" | "linked" | "skipped";
+export type { MediaEmbedResult };
 
 const NAVY = rgb(0.08, 0.2, 0.36);
 const GOLD = rgb(0.72, 0.55, 0.18);
@@ -83,7 +78,6 @@ const TEXT_X = MARGIN_LEFT;
 const CONTENT_INSET = 12;
 const LABEL_X = MARGIN_LEFT + CONTENT_INSET;
 const LABEL_COL = 168;
-const PRINT_MAX_EDGE = 1800;
 const LINE = 14;
 const COVER_BAND_H = 88;
 const COVER_GOLD_EDGE_H = 3;
@@ -97,10 +91,6 @@ const SECTION_BAR_H = 24;
 const IDENTITY_BAR_H = 30;
 const IDENTITY_LEFT_SIZE = 11;
 const IDENTITY_RIGHT_SIZE = 13;
-const SECTION_BAR_STACK = 8 + SECTION_BAR_H + 10;
-const PRINT_IMAGE_MAX_H = 280;
-const IMAGE_GAP = 12;
-const CAPTION_H = 16;
 const ACCENT_W = 3;
 const RULE_CLEARANCE = 3.5;
 const ROW_PAD_Y = 6;
@@ -129,25 +119,14 @@ export const baselineCentered = (
   return Math.max(raw, bandBottom + descent + 1);
 };
 
-const authHeaders = (): HeadersInit => {
-  try {
-    const token = CookieStore.getCookie("token");
-    if (token) return { Authorization: `Bearer ${token}` };
-  } catch {
-    // Node / unit tests have no `document`.
-  }
-  const apiKey = import.meta.env.VITE_API_KEY;
-  if (apiKey) return { Authorization: `Bearer ${apiKey}` };
-  return {};
-};
-
 export const wrapLines = (
   text: string,
   font: PDFFont,
   size: number,
   maxWidth: number
 ): string[] => {
-  const paragraphs = String(text || "").replace(/\r\n/g, "\n").split("\n");
+  // Latin-1 only: pasted smart quotes / emoji must never abort the print.
+  const paragraphs = packetText(text).replace(/\r\n/g, "\n").split("\n");
   const lines: string[] = [];
   for (const para of paragraphs) {
     const words = para.split(/\s+/).filter(Boolean);
@@ -240,7 +219,7 @@ const fitText = (
   size: number,
   maxWidth: number
 ): string => {
-  const value = String(text || "");
+  const value = packetText(text);
   if (font.widthOfTextAtSize(value, size) <= maxWidth) return value;
   let cut = value;
   while (cut.length > 1 && font.widthOfTextAtSize(`${cut}...`, size) > maxWidth) {
@@ -252,13 +231,7 @@ const fitText = (
 const drawRunningHeader = (layout: Layout) => {
   if (layout.isCover) return;
   const size = 8;
-  const title = [
-    systemNameAsPrinted(layout.record) || "Nomination",
-    layout.record.award_type,
-    layout.record.award_year,
-  ]
-    .filter((part) => part != null && String(part).trim() !== "")
-    .join("  ·  ");
+  const title = runningTitleFor(layout.record);
   const ascent = fontAscent(layout.regular, size);
   const baseline = layout.height - 18 - ascent;
   layout.page.drawText(
@@ -353,14 +326,14 @@ const drawCover = (layout: Layout) => {
     });
   }
 
-  const cycle = fitText(
-    `Cycle ${layout.record.award_year ?? "—"}`,
+  const yearText = fitText(
+    formatPacketYear(nominationPacketYear(layout.record)),
     bold,
     COVER_TITLE_SIZE,
     rightMax
   );
-  page.drawText(cycle, {
-    x: rightEdge - bold.widthOfTextAtSize(cycle, COVER_TITLE_SIZE),
+  page.drawText(yearText, {
+    x: rightEdge - bold.widthOfTextAtSize(yearText, COVER_TITLE_SIZE),
     y: titleBaseline,
     size: COVER_TITLE_SIZE,
     font: bold,
@@ -594,7 +567,6 @@ const narrativeBlock = (layout: Layout, heading: string, body: string) => {
 };
 
 const SOFT_HEAD_H = 20;
-const RULE_HEAD_H = 18;
 
 const drawSoftHeading = (layout: Layout, title: string, minFollow = 24) => {
   ensureSpace(layout, 8 + SOFT_HEAD_H + 8 + minFollow);
@@ -618,28 +590,6 @@ const drawSoftHeading = (layout: Layout, title: string, minFollow = 24) => {
     }
   );
   layout.y = bandBottom - 8;
-};
-
-const drawRuleHeading = (layout: Layout, title: string, minFollow = 20) => {
-  ensureSpace(layout, 10 + RULE_HEAD_H + minFollow);
-  layout.y -= 10;
-  const label = fitText(title.toUpperCase(), layout.bold, 8, layout.contentWidth);
-  layout.y -= fontAscent(layout.bold, 8);
-  layout.page.drawText(label, {
-    x: TEXT_X,
-    y: layout.y,
-    size: 8,
-    font: layout.bold,
-    color: MUTED,
-  });
-  layout.y -= 4;
-  layout.page.drawLine({
-    start: { x: TEXT_X, y: layout.y },
-    end: { x: contentRight(layout), y: layout.y },
-    thickness: 0.5,
-    color: RULE,
-  });
-  layout.y -= 8;
 };
 
 const drawSoftKvBar = (layout: Layout, label: string, value: string) => {
@@ -675,21 +625,6 @@ const drawSoftKvBar = (layout: Layout, label: string, value: string) => {
     color: INK,
   });
   layout.y = bandBottom - 6;
-};
-
-const headingKindFor = (label: string): "navy" | "rule" =>
-  /board|photograph|biography file/i.test(label) ? "rule" : "navy";
-
-const drawPrintHeading = (
-  layout: Layout,
-  label: string,
-  minFollow = MIN_ROW_H * 2
-) => {
-  if (headingKindFor(label) === "rule") {
-    drawRuleHeading(layout, label, minFollow);
-    return;
-  }
-  sectionBar(layout, label, undefined, minFollow);
 };
 
 const drawSystemOverview = (layout: Layout) => {
@@ -854,503 +789,6 @@ const drawFooters = (layout: Layout) => {
   });
 };
 
-const fetchMediaBytes = async (
-  file: NonNullable<AwardPrintMedia>
-): Promise<{ bytes: Uint8Array; href: string } | null> => {
-  const href = resolveMediaUrl(bestMediaUrl(file));
-  if (!href) return null;
-  try {
-    const response = await fetch(href, { headers: authHeaders() });
-    if (!response.ok) {
-      console.warn(
-        `Award print: skipped attachment ${file.name || href} (${response.status})`
-      );
-      return null;
-    }
-    return { bytes: new Uint8Array(await response.arrayBuffer()), href };
-  } catch (error) {
-    console.warn(`Award print: skipped attachment ${file.name || href}`, error);
-    return null;
-  }
-};
-
-const toPrintImage = async (
-  pdfDoc: PDFDocument,
-  bytes: Uint8Array,
-  mime: string
-): Promise<PDFImage | null> => {
-  const lower = (mime || "").toLowerCase();
-  const tryNative = async () => {
-    if (lower.includes("png")) return pdfDoc.embedPng(bytes);
-    if (lower.includes("jpeg") || lower.includes("jpg")) {
-      return pdfDoc.embedJpg(bytes);
-    }
-    return null;
-  };
-
-  try {
-    const native = await tryNative();
-    if (
-      native &&
-      native.width <= PRINT_MAX_EDGE &&
-      native.height <= PRINT_MAX_EDGE
-    ) {
-      return native;
-    }
-  } catch {
-    // Convert through canvas (WebP / oversize / odd encodings).
-  }
-
-  if (typeof createImageBitmap !== "function") return null;
-  try {
-    const blob = new Blob([bytes as BlobPart], {
-      type: mime || "application/octet-stream",
-    });
-    const bitmap = await createImageBitmap(blob);
-    const scale = Math.min(
-      PRINT_MAX_EDGE / bitmap.width,
-      PRINT_MAX_EDGE / bitmap.height,
-      1
-    );
-    const w = Math.max(1, Math.round(bitmap.width * scale));
-    const h = Math.max(1, Math.round(bitmap.height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, w, h);
-    ctx.drawImage(bitmap, 0, 0, w, h);
-    bitmap.close();
-    const jpeg = await new Promise<Blob | null>((resolve) =>
-      canvas.toBlob((part) => resolve(part), "image/jpeg", 0.82)
-    );
-    if (!jpeg) return null;
-    return pdfDoc.embedJpg(new Uint8Array(await jpeg.arrayBuffer()));
-  } catch {
-    return null;
-  }
-};
-
-const runFont = (layout: Layout, run: DocumentTextRun): PDFFont => {
-  if (run.bold && run.italic) return layout.boldItalic;
-  if (run.bold) return layout.bold;
-  if (run.italic) return layout.italic;
-  return layout.regular;
-};
-
-const wrapStyledRuns = (
-  layout: Layout,
-  runs: DocumentTextRun[],
-  size: number,
-  maxWidth: number
-): Array<Array<{ text: string; font: PDFFont }>> => {
-  const lines: Array<Array<{ text: string; font: PDFFont }>> = [];
-  let current: Array<{ text: string; font: PDFFont }> = [];
-  let width = 0;
-  const flush = () => {
-    if (current.length) lines.push(current);
-    current = [];
-    width = 0;
-  };
-  for (const run of runs) {
-    const font = runFont(layout, run);
-    const pieces = toWinAnsi(run.text).split(/(\s+)/);
-    for (const piece of pieces) {
-      if (!piece) continue;
-      const pieceW = font.widthOfTextAtSize(piece, size);
-      if (width + pieceW > maxWidth && current.length) {
-        flush();
-        if (/^\s+$/.test(piece)) continue;
-      }
-      current.push({ text: piece, font });
-      width += pieceW;
-    }
-  }
-  flush();
-  return lines.length ? lines : [[]];
-};
-
-const drawStyledRuns = (
-  layout: Layout,
-  runs: DocumentTextRun[],
-  size: number,
-  indent = 0
-) => {
-  const maxWidth = layout.contentWidth - indent;
-  const lines = wrapStyledRuns(layout, runs, size, maxWidth);
-  for (const line of lines) {
-    const ascent = Math.max(
-      fontAscent(layout.regular, size),
-      ...line.map((part) => fontAscent(part.font, size))
-    );
-    ensureSpace(layout, ascent + 4);
-    layout.y -= ascent;
-    let x = layout.contentLeft + indent;
-    for (const part of line) {
-      if (!part.text) continue;
-      layout.page.drawText(part.text, {
-        x,
-        y: layout.y,
-        size,
-        font: part.font,
-        color: INK,
-      });
-      x += part.font.widthOfTextAtSize(part.text, size);
-    }
-    layout.y -= 4;
-  }
-};
-
-const drawDocumentBlocks = (layout: Layout, blocks: DocumentTextBlock[]) => {
-  for (const block of blocks) {
-    if (block.kind === "heading") {
-      const size = block.level === 1 ? 13 : block.level === 2 ? 12 : 11;
-      layout.y -= 6;
-      drawStyledRuns(
-        layout,
-        block.runs.map((run) => ({ ...run, bold: true })),
-        size
-      );
-      layout.y -= 4;
-      continue;
-    }
-    if (block.kind === "list") {
-      block.items.forEach((item, index) => {
-        const marker = block.ordered ? `${index + 1}. ` : "- ";
-        const markerSize = 10;
-        const ascent = fontAscent(layout.regular, markerSize);
-        ensureSpace(layout, ascent + 4);
-        layout.y -= ascent;
-        layout.page.drawText(marker, {
-          x: layout.contentLeft,
-          y: layout.y,
-          size: markerSize,
-          font: layout.regular,
-          color: INK,
-        });
-        const markerW = layout.regular.widthOfTextAtSize(marker, markerSize);
-        const savedY = layout.y;
-        const lines = wrapStyledRuns(
-          layout,
-          item,
-          markerSize,
-          layout.contentWidth - markerW
-        );
-        let x = layout.contentLeft + markerW;
-        lines.forEach((line, lineIndex) => {
-          if (lineIndex > 0) {
-            const nextAscent = Math.max(
-              fontAscent(layout.regular, markerSize),
-              ...line.map((part) => fontAscent(part.font, markerSize))
-            );
-            ensureSpace(layout, nextAscent + 4);
-            layout.y -= nextAscent;
-            x = layout.contentLeft + markerW;
-          } else {
-            layout.y = savedY;
-          }
-          for (const part of line) {
-            layout.page.drawText(part.text, {
-              x,
-              y: layout.y,
-              size: markerSize,
-              font: part.font,
-              color: INK,
-            });
-            x += part.font.widthOfTextAtSize(part.text, markerSize);
-          }
-          layout.y -= 4;
-        });
-      });
-      layout.y -= 4;
-      continue;
-    }
-    drawStyledRuns(layout, block.runs, 10);
-    layout.y -= 6;
-  }
-};
-
-const drawCaption = (layout: Layout, caption: string) => {
-  if (!caption) return;
-  layout.page.drawText(toWinAnsi(caption).slice(0, 90), {
-    x: layout.contentLeft,
-    y: layout.y,
-    size: 9,
-    font: layout.regular,
-    color: MUTED,
-  });
-  layout.y -= CAPTION_H;
-};
-
-const addUnavailableNote = (
-  layout: Layout,
-  label: string | undefined,
-  fileName: string
-) => {
-  const captionH = fileName ? CAPTION_H : 0;
-  if (label) drawPrintHeading(layout, label, captionH + MIN_ROW_H + 4);
-  drawCaption(layout, fileName);
-  fieldRow(layout, "Note", "Attachment could not be included in print", {
-    alt: true,
-  });
-};
-
-const appendDocumentText = (
-  layout: Layout,
-  label: string | undefined,
-  fileName: string,
-  blocks: DocumentTextBlock[]
-) => {
-  const captionH = fileName ? CAPTION_H : 0;
-  if (label) {
-    drawPrintHeading(layout, label, captionH + fontAscent(layout.regular, 10) + 8);
-  } else {
-    ensureSpace(layout, captionH + fontAscent(layout.regular, 10) + 8);
-  }
-  drawCaption(layout, fileName);
-  drawDocumentBlocks(layout, blocks);
-};
-
-const appendImageOnPage = (
-  layout: Layout,
-  label: string | undefined,
-  image: PDFImage,
-  caption: string
-) => {
-  const captionH = caption ? CAPTION_H : 0;
-  const maxW = layout.contentWidth;
-  const widthLimitedH = image.height * Math.min(maxW / Math.max(image.width, 1), 1);
-  const printSafeH = Math.min(widthLimitedH, PRINT_IMAGE_MAX_H);
-  const headingH = label ? 8 + RULE_HEAD_H + 10 : 8;
-  const needed = headingH + captionH + printSafeH + IMAGE_GAP;
-  ensureSpace(layout, needed);
-  if (label) {
-    drawPrintHeading(layout, label, captionH + Math.min(printSafeH, 80));
-  } else {
-    layout.y -= 8;
-  }
-  drawCaption(layout, caption);
-  const availH = Math.max(40, remainingHeight(layout) - 8);
-  const scale = Math.min(
-    maxW / Math.max(image.width, 1),
-    printSafeH / Math.max(image.height, 1),
-    availH / Math.max(image.height, 1),
-    1
-  );
-  const drawW = image.width * scale;
-  const drawH = image.height * scale;
-  layout.page.drawImage(image, {
-    x: layout.contentLeft + (maxW - drawW) / 2,
-    y: layout.y - drawH,
-    width: drawW,
-    height: drawH,
-  });
-  layout.y -= drawH + IMAGE_GAP;
-};
-
-const pageHasContents = (page: PDFPage): boolean => {
-  try {
-    return Boolean(
-      page.node.Contents() || page.node.normalizedEntries().Contents
-    );
-  } catch {
-    return false;
-  }
-};
-
-const dropQueuedEmbeddedPage = (
-  doc: PDFDocument,
-  embedded: { ref?: unknown }
-) => {
-  const queued = (doc as unknown as { embeddedPages?: unknown[] })
-    .embeddedPages;
-  if (!Array.isArray(queued)) return;
-  const index = queued.indexOf(embedded);
-  if (index >= 0) queued.splice(index, 1);
-};
-
-const drawEmbeddedPageOnLetter = (
-  layout: Layout,
-  embedded: PDFEmbeddedPage,
-  label?: string
-) => {
-  newPage(layout, false);
-  drawRunningHeader(layout);
-  if (label) drawPrintHeading(layout, label);
-  const maxW = layout.contentWidth;
-  const boxTop = layout.y;
-  const boxBottom = MARGIN_BOTTOM + 8;
-  const maxH = Math.max(40, boxTop - boxBottom);
-  const scale = Math.min(
-    maxW / Math.max(embedded.width, 1),
-    maxH / Math.max(embedded.height, 1),
-    1
-  );
-  const drawW = embedded.width * scale;
-  const drawH = embedded.height * scale;
-  layout.page.drawPage(embedded, {
-    x: layout.contentLeft + (maxW - drawW) / 2,
-    y: boxBottom + (maxH - drawH) / 2,
-    width: drawW,
-    height: drawH,
-  });
-  layout.y = MARGIN_BOTTOM;
-};
-
-const appendPdfPages = async (
-  layout: Layout,
-  bytes: Uint8Array,
-  label?: string
-): Promise<boolean> => {
-  let src: PDFDocument;
-  try {
-    src = await PDFDocument.load(bytes, { ignoreEncryption: true });
-  } catch (error) {
-    console.warn("Award print: could not parse attached PDF", error);
-    return false;
-  }
-
-  const pages = src.getPages();
-  let added = 0;
-  for (let index = 0; index < pages.length; index += 1) {
-    const page = pages[index];
-    if (!pageHasContents(page)) {
-      console.warn(
-        `Award print: skipped empty PDF page ${index + 1} (no Contents stream)`
-      );
-      continue;
-    }
-
-    let queued: PDFEmbeddedPage | null = null;
-    try {
-      const [embedded] = await layout.doc.embedPages([page]);
-      queued = embedded;
-      // Force embed now — pdf-lib otherwise throws on save() for missing Contents.
-      await embedded.embed();
-      drawEmbeddedPageOnLetter(layout, embedded, label);
-      added += 1;
-      continue;
-    } catch (error) {
-      if (queued) dropQueuedEmbeddedPage(layout.doc, queued);
-      const message = error instanceof Error ? error.message : String(error);
-      if (/missing Contents/i.test(message)) {
-        console.warn(
-          `Award print: skipped empty PDF page ${index + 1}`,
-          error
-        );
-        continue;
-      }
-      try {
-        const [copied] = await layout.doc.copyPages(src, [index]);
-        layout.doc.addPage(copied);
-        added += 1;
-        console.warn(
-          `Award print: embedded page ${index + 1} failed (${message}); copied original page instead`
-        );
-      } catch (copyError) {
-        console.warn(
-          `Award print: skipped unreadable PDF page ${index + 1}`,
-          copyError
-        );
-      }
-    }
-  }
-  return added > 0;
-};
-
-const appendMediaSlot = async (
-  layout: Layout,
-  label: string,
-  files: AwardPrintMedia | AwardPrintMedia[] | undefined,
-  results: Record<string, MediaEmbedResult>
-): Promise<void> => {
-  const items = asMediaItems(files);
-  const key = label;
-  if (items.length === 0) {
-    results[key] = "skipped";
-    return;
-  }
-
-  let outcome: MediaEmbedResult = "skipped";
-  let headingDrawn = false;
-  const heading = () => {
-    if (headingDrawn) return undefined;
-    headingDrawn = true;
-    return label;
-  };
-  for (const item of items) {
-    try {
-      const fetched = await fetchMediaBytes(item);
-      if (!fetched) {
-        continue;
-      }
-      const mime = (item.mime || "").toLowerCase();
-      const fileName = item.name || "Attachment";
-      const ext = item.ext || fileName;
-
-      if (isPdfAttachment(mime, ext)) {
-        const merged = await appendPdfPages(
-          layout,
-          fetched.bytes,
-          headingDrawn ? undefined : label
-        );
-        if (merged) {
-          headingDrawn = true;
-          outcome = "merged";
-          continue;
-        }
-        const extracted = await extractAttachmentText(fetched.bytes, mime, ext);
-        if (extracted.ok) {
-          appendDocumentText(layout, heading(), fileName, extracted.blocks);
-          if (outcome !== "merged") outcome = "embedded";
-          continue;
-        }
-        console.warn(
-          `Award print: could not include PDF attachment ${fileName}`
-        );
-        addUnavailableNote(layout, heading(), fileName);
-        continue;
-      }
-
-      if (isDocxAttachment(mime, ext) || isPlainTextAttachment(mime, ext)) {
-        const extracted = await extractAttachmentText(fetched.bytes, mime, ext);
-        if (extracted.ok) {
-          appendDocumentText(layout, heading(), fileName, extracted.blocks);
-          if (outcome !== "merged") outcome = "embedded";
-          continue;
-        }
-        addUnavailableNote(layout, heading(), fileName);
-        continue;
-      }
-
-      if (mime.startsWith("image/") || !mime) {
-        const image = await toPrintImage(layout.doc, fetched.bytes, mime);
-        if (image) {
-          appendImageOnPage(layout, heading(), image, fileName);
-          if (outcome !== "merged") outcome = "embedded";
-          continue;
-        }
-      }
-
-      const extracted = await extractAttachmentText(fetched.bytes, mime, ext);
-      if (extracted.ok) {
-        appendDocumentText(layout, heading(), fileName, extracted.blocks);
-        if (outcome !== "merged") outcome = "embedded";
-        continue;
-      }
-      addUnavailableNote(layout, heading(), fileName);
-    } catch (error) {
-      console.warn(
-        `Award print: skipped attachment ${item.name || label}`,
-        error
-      );
-    }
-  }
-  results[key] = outcome;
-};
-
 const drawSectionOneAndTwo = (layout: Layout) => {
   drawCover(layout);
   drawLeadTitles(layout);
@@ -1366,25 +804,117 @@ const drawSectionOneAndTwo = (layout: Layout) => {
     "What makes the nominee deserving of this award?",
     String(layout.record.justification || "")
   );
-
 };
 
-const drawBiographyBlock = (layout: Layout) => {
-  drawSoftKvBar(
-    layout,
-    "Biography method",
-    displayValue(layout.record.biography_method)
+/** Body copy under a section bar (no extra heading band). */
+const drawParagraph = (layout: Layout, body: string) => {
+  const bodySize = 10;
+  const lines = wrapLines(
+    body?.trim() ? body : "—",
+    layout.regular,
+    bodySize,
+    layout.contentWidth - CONTENT_INSET
   );
-  if (
-    layout.record.biography_method === "Copy/Paste or Type Biography" ||
-    layout.record.biography_text
-  ) {
-    narrativeBlock(
-      layout,
-      "Biography",
-      String(layout.record.biography_text || "")
-    );
+  layout.y -= 4;
+  for (const line of lines) {
+    const ascent = fontAscent(layout.regular, bodySize);
+    ensureSpace(layout, ascent + 4);
+    layout.y -= ascent;
+    layout.page.drawText(line, {
+      x: LABEL_X,
+      y: layout.y,
+      size: bodySize,
+      font: layout.regular,
+      color: INK,
+    });
+    layout.y -= 4;
   }
+  layout.y -= 6;
+};
+
+/** "filename (type) — see Attachment n" rows for every file in a slot. */
+const fileRows = (
+  attachments: ReadonlyArray<OrderedAttachment>,
+  key: string
+): string[] =>
+  attachments
+    .filter((item) => item.key === key)
+    .map(
+      (item) =>
+        `${item.fileName} (${attachmentTypeLabel(item.mime, item.ext)})  —  see Attachment ${item.ordinal}`
+    );
+
+/**
+ * Board / Employee List — System of the Year only. Its own navy section so it
+ * can never run into the Biography that follows (the Sep 2026 "could not be
+ * included" note used to sit between a thin rule heading and the next bar).
+ */
+const drawBoardListSection = (
+  layout: Layout,
+  attachments: ReadonlyArray<OrderedAttachment>
+) => {
+  const record = layout.record;
+  sectionBar(layout, "Board / Employee List");
+  fieldRow(layout, "Provided via", displayValue(record.board_list_method));
+  const files = fileRows(attachments, "board_list_file");
+  const members = boardMemberLines(record.board_members);
+  if (files.length) {
+    fieldRow(layout, files.length > 1 ? "Files" : "File", files.join("\n"), { alt: true });
+  }
+  if (members.length) {
+    fieldRow(layout, `Members & employees (${members.length})`, members.join("\n"), {
+      alt: !files.length,
+    });
+  }
+  if (!files.length && !members.length) {
+    fieldRow(layout, "List", "None provided", { alt: true });
+  }
+  layout.y -= 6;
+};
+
+const drawBiographySection = (
+  layout: Layout,
+  attachments: ReadonlyArray<OrderedAttachment>
+) => {
+  const record = layout.record;
+  sectionBar(layout, "Biography");
+  fieldRow(layout, "Provided via", displayValue(record.biography_method));
+  const files = fileRows(attachments, "biography_file");
+  if (files.length) {
+    fieldRow(layout, files.length > 1 ? "Files" : "File", files.join("\n"), { alt: true });
+  }
+  const text = String(record.biography_text || "").trim();
+  if (text) {
+    drawParagraph(layout, text);
+  } else if (!files.length) {
+    fieldRow(layout, "Biography", "None provided", { alt: true });
+  }
+  layout.y -= 6;
+};
+
+const drawPhotographsSection = (
+  layout: Layout,
+  attachments: ReadonlyArray<OrderedAttachment>
+) => {
+  const files = fileRows(attachments, "photographs");
+  sectionBar(layout, `Photographs (${files.length})`, undefined, MIN_ROW_H + 4);
+  if (files.length) {
+    fieldRow(layout, files.length > 1 ? "Files" : "File", files.join("\n"), { alt: true });
+  } else {
+    fieldRow(layout, "Photographs", "None", { alt: true });
+  }
+  layout.y -= 6;
+};
+
+const drawSupportingDocumentsSection = (
+  layout: Layout,
+  attachments: ReadonlyArray<OrderedAttachment>
+) => {
+  const files = fileRows(attachments, "supporting_documents");
+  if (!files.length) return;
+  sectionBar(layout, `Supporting Documents (${files.length})`, undefined, MIN_ROW_H + 4);
+  fieldRow(layout, files.length > 1 ? "Files" : "File", files.join("\n"), { alt: true });
+  layout.y -= 6;
 };
 
 const drawSectionThree = (layout: Layout) => {
@@ -1421,16 +951,63 @@ const drawSectionThree = (layout: Layout) => {
   layout.y -= height + 8;
 };
 
+/** Index of what follows in the appendix (end of the form). */
+const drawAttachmentIndex = (
+  layout: Layout,
+  attachments: ReadonlyArray<OrderedAttachment>
+) => {
+  drawSoftHeading(layout, `Attachments (${attachments.length})`, MIN_ROW_H);
+  if (!attachments.length) {
+    fieldRow(layout, "Attachments", "None uploaded", { alt: true });
+    return;
+  }
+  attachments.forEach((item, index) => {
+    const slot =
+      item.slotCount > 1
+        ? `${item.label} (${item.indexInSlot + 1} of ${item.slotCount})`
+        : item.label;
+    fieldRow(
+      layout,
+      `Attachment ${item.ordinal}`,
+      `${slot}  ·  ${item.fileName} (${attachmentTypeLabel(item.mime, item.ext)})`,
+      { alt: index % 2 === 1 }
+    );
+  });
+};
+
+const runningTitleFor = (record: AwardNominationPrintRecord) =>
+  [
+    systemNameAsPrinted(record) || "Nomination",
+    record.award_type,
+    formatPacketYear(nominationPacketYear(record)),
+  ]
+    .filter((part) => part != null && String(part).trim() !== "")
+    .join("  ·  ");
+
+export type NominationPrintOptions = {
+  /**
+   * Also append the PDF Strapi generated at submit time (`nomination_pdf`).
+   * Off by default: it repeats the form rendered above and was the source of
+   * the "form appears twice" report. The record's show page links to it.
+   */
+  includeSubmissionPdf?: boolean;
+  /** Test seam — defaults to an authenticated Strapi media fetch. */
+  fetchBytes?: PacketMediaFetcher;
+};
+
 /** Build one nomination as its own PDF (never merged with siblings). */
 export const generateNominationApplicationPdf = async (
-  record: AwardNominationPrintRecord
+  record: AwardNominationPrintRecord,
+  options: NominationPrintOptions = {}
 ): Promise<{
   blob: Blob;
   filename: string;
   media: Record<string, MediaEmbedResult>;
+  attachments: AppendixOutcome["files"];
 }> => {
   const doc = await PDFDocument.create();
-  const { regular, bold, italic, boldItalic } = await embedPrintFonts(doc);
+  const fonts = await embedPrintFonts(doc);
+  const { regular, bold, italic, boldItalic } = fonts;
   const filename = nominationApplicationFilename(record);
   doc.setTitle(
     `ORWA Award Nomination — ${record.nominee_name || systemDisplayName(record) || "Nomination"}`
@@ -1439,7 +1016,7 @@ export const generateNominationApplicationPdf = async (
   doc.setSubject("Award Nomination Application");
   doc.setKeywords([
     String(record.award_type || "Award"),
-    String(record.award_year || ""),
+    String(nominationPacketYear(record)),
     String(record.system_name || ""),
   ]);
 
@@ -1460,62 +1037,30 @@ export const generateNominationApplicationPdf = async (
     isCover: true,
   };
 
+  const attachments = orderAwardAttachments(record, {
+    includeSubmissionPdf: options.includeSubmissionPdf,
+  });
+
+  // The form, exactly once.
   drawSectionOneAndTwo(layout);
-
-  const media: Record<string, MediaEmbedResult> = {};
   if (isSystemOfTheYearAward(record.award_type)) {
-    if (asMediaItems(record.board_list_file).length > 0) {
-      await appendMediaSlot(
-        layout,
-        "Board / employee list",
-        record.board_list_file,
-        media
-      );
-    } else {
-      drawRuleHeading(layout, "Board / employee list");
-      if (record.board_list_method) {
-        drawSoftKvBar(
-          layout,
-          "Board / employee list via",
-          displayValue(record.board_list_method)
-        );
-      }
-    }
+    drawBoardListSection(layout, attachments);
   }
-  drawBiographyBlock(layout);
-  if (asMediaItems(record.biography_file).length > 0) {
-    await appendMediaSlot(layout, "Biography file", record.biography_file, media);
-  }
-  const photoCount = asMediaItems(record.photographs).length;
-  if (photoCount > 0) {
-    await appendMediaSlot(
-      layout,
-      `Photographs (${photoCount})`,
-      record.photographs,
-      media
-    );
-  } else {
-    media.Photographs = "skipped";
-    drawSoftKvBar(layout, "Photographs", "None");
-  }
-
+  drawBiographySection(layout, attachments);
+  drawPhotographsSection(layout, attachments);
+  drawSupportingDocumentsSection(layout, attachments);
   drawSectionThree(layout);
+  drawAttachmentIndex(layout, attachments);
 
-  if (asMediaItems(record.supporting_documents).length > 0) {
-    await appendMediaSlot(
-      layout,
-      "Appendix  ·  Supporting documents",
-      record.supporting_documents,
-      media
-    );
-  }
-  if (asMediaItems(record.nomination_pdf).length > 0) {
-    await appendMediaSlot(
-      layout,
-      "Appendix  ·  Original submitted packet",
-      record.nomination_pdf,
-      media
-    );
+  // Then every upload, in submission order, each behind its own divider.
+  const appendix = await appendPacketAttachments(doc, fonts, attachments, {
+    runningTitle: runningTitleFor(record),
+    fetchBytes: options.fetchBytes,
+  });
+  const media: Record<string, MediaEmbedResult> = {};
+  for (const slot of AWARD_ATTACHMENT_SLOTS) {
+    if (slot.system && !options.includeSubmissionPdf) continue;
+    media[slot.key] = appendix.bySlot[slot.key] ?? "skipped";
   }
 
   drawFooters(layout);
@@ -1524,6 +1069,7 @@ export const generateNominationApplicationPdf = async (
     blob: new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
     filename,
     media,
+    attachments: appendix.files,
   };
 };
 

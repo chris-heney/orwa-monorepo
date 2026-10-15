@@ -1,3 +1,5 @@
+import { cycleYearOf } from "../../../helpers/conferenceCycleYear";
+
 export type ScholarshipStatus =
   | "Draft"
   | "Submitted"
@@ -8,6 +10,8 @@ export type ScholarshipStatus =
 export type ScholarshipApplication = {
   id: string | number;
   application_status?: ScholarshipStatus | null;
+  /** Cycle year stamped on submit; `null` on applications from before the field. */
+  scholarship_year?: number | string | null;
   submission_date?: string | null;
   createdAt?: string | null;
   system_name?: string | null;
@@ -59,12 +63,35 @@ export const STATUS_META: Record<
   },
 };
 
-export const yearOf = (application: ScholarshipApplication) => {
-  const raw = application.submission_date || application.createdAt;
-  if (!raw) return null;
-  const year = new Date(raw).getFullYear();
-  return Number.isFinite(year) ? year : null;
+export type ResolvedScholarshipYear = {
+  year: number | null;
+  /** True when `scholarship_year` was blank and the year came from the submission date. */
+  derived: boolean;
 };
+
+/**
+ * Same rule as the Applications list filter (`scholarshipYearFilter`): the
+ * stamped `scholarship_year`, else the conference cycle year of
+ * `submission_date` (or `createdAt`) by the May rollover (`cycleYearOf`).
+ */
+export const resolveScholarshipYear = (
+  application: Pick<
+    ScholarshipApplication,
+    "scholarship_year" | "submission_date" | "createdAt"
+  >
+): ResolvedScholarshipYear => {
+  const stamped = Number(application.scholarship_year);
+  if (application.scholarship_year != null && Number.isInteger(stamped)) {
+    return { year: stamped, derived: false };
+  }
+  const raw = application.submission_date || application.createdAt;
+  if (!raw) return { year: null, derived: true };
+  const year = cycleYearOf(raw);
+  return { year: Number.isFinite(year) ? year : null, derived: true };
+};
+
+export const yearOf = (application: ScholarshipApplication) =>
+  resolveScholarshipYear(application).year;
 
 export const buildScholarshipMetrics = (
   applications: ScholarshipApplication[],

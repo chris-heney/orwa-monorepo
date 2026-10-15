@@ -1,15 +1,15 @@
+import {
+  asPacketMediaItems,
+  bestPacketMediaUrl,
+  orderPacketAttachments,
+  type AttachmentSlot,
+  type OrderedAttachment,
+  type PacketMediaFile,
+} from "../../_components/review-packet/packetAttachments";
+import { cycleYearOf } from "../../_components/review-packet/formatters";
 import { boardMembersSummary, employeeTotal } from "./recordDisplay";
 
-export type AwardPrintMedia = {
-  url?: string | null;
-  name?: string | null;
-  mime?: string | null;
-  ext?: string | null;
-  formats?: {
-    large?: { url?: string | null };
-    medium?: { url?: string | null };
-  } | null;
-} | null;
+export type AwardPrintMedia = PacketMediaFile;
 
 export type AwardPrintWatersystem = {
   name?: string | null;
@@ -35,6 +35,7 @@ export type AwardNominationPrintRecord = Record<string, unknown> & {
   award_year?: number | null;
   nomination_status?: string | null;
   submission_date?: string | null;
+  createdAt?: string | null;
   operation_start_date?: string | null;
   employment_date?: string | null;
   beginning_members?: number | null;
@@ -83,6 +84,43 @@ export const AWARD_PRINT_POPULATE = {
   contact: true,
 };
 
+/**
+ * Upload fields in the order the public form asks for them
+ * (`apps/awards` steps: Nominee Data → Biography → Photographs). The appendix
+ * renders attachments in this order. `supporting_documents` is a legacy field
+ * no step collects anymore; it prints last when present. `nomination_pdf` is
+ * the PDF Strapi generated at submit time — it repeats this form, so it is
+ * excluded unless the caller asks for it.
+ */
+export const AWARD_ATTACHMENT_SLOTS: ReadonlyArray<AttachmentSlot> = [
+  { key: "board_list_file", label: "Board / Employee List" },
+  { key: "biography_file", label: "Biography" },
+  { key: "photographs", label: "Photographs" },
+  { key: "supporting_documents", label: "Supporting Documents" },
+  { key: "nomination_pdf", label: "Submitted Nomination PDF", system: true },
+];
+
+export const orderAwardAttachments = (
+  record: AwardNominationPrintRecord,
+  options: { includeSubmissionPdf?: boolean } = {}
+): OrderedAttachment[] =>
+  orderPacketAttachments(record, AWARD_ATTACHMENT_SLOTS, {
+    includeSystem: options.includeSubmissionPdf,
+  });
+
+/** Keyed-in board members & employees → one printable line each. */
+export const boardMemberLines = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return (value as Array<{ first?: string; last?: string; title?: string }>)
+    .map((member) => {
+      const name = joinPresent([member?.first, member?.last]);
+      const title = String(member?.title || "").trim();
+      if (!name && !title) return "";
+      return title ? `${name || "—"} — ${title}` : name;
+    })
+    .filter(Boolean);
+};
+
 export const isSystemOfTheYearAward = (
   awardType: string | null | undefined
 ): boolean =>
@@ -106,18 +144,34 @@ const sanitizeFilename = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 64);
 
+/**
+ * Year printed on the packet: the stamped `award_year`, else the cycle year
+ * of the submission (`cycleYearOf`, same rule Strapi uses to stamp it).
+ */
+export const nominationPacketYear = (
+  record?: Pick<
+    AwardNominationPrintRecord,
+    "award_year" | "submission_date" | "createdAt"
+  > | null
+): number => {
+  if (record?.award_year) return Number(record.award_year);
+  const derived = cycleYearOf(
+    record?.submission_date ?? record?.createdAt ?? new Date()
+  );
+  return Number.isNaN(derived) ? cycleYearOf(new Date()) : derived;
+};
+
 export const nominationApplicationFilename = (
   record?: Pick<
     AwardNominationPrintRecord,
-    "nominee_name" | "system_name" | "award_year"
+    "nominee_name" | "system_name" | "award_year" | "submission_date" | "createdAt"
   > | null
 ): string => {
   const who =
     sanitizeFilename(String(record?.nominee_name || "").trim()) ||
     sanitizeFilename(String(record?.system_name || "").trim()) ||
     "Nomination";
-  const year = record?.award_year || new Date().getFullYear();
-  return `ORWA-Award-Nomination-${who}-${year}.pdf`;
+  return `ORWA-Award-Nomination-${who}-${nominationPacketYear(record)}.pdf`;
 };
 
 export const systemDisplayName = (
@@ -397,26 +451,10 @@ export const nominatorRows = (
 
 export const asMediaItems = (
   file: AwardPrintMedia | AwardPrintMedia[] | undefined
-): NonNullable<AwardPrintMedia>[] => {
-  if (file == null) return [];
-  const raw = Array.isArray(file)
-    ? file
-    : typeof file === "object" &&
-        file !== null &&
-        Array.isArray((file as { data?: unknown }).data)
-      ? ((file as { data: unknown[] }).data as unknown[])
-      : [file];
-  return raw.filter((item): item is NonNullable<AwardPrintMedia> => {
-    if (item == null || typeof item !== "object") return false;
-    const media = item as AwardPrintMedia;
-    return Boolean(
-      media?.url || media?.formats?.large?.url || media?.formats?.medium?.url
-    );
-  });
-};
+): NonNullable<AwardPrintMedia>[] => asPacketMediaItems(file);
 
 export const bestMediaUrl = (file: NonNullable<AwardPrintMedia>): string | null =>
-  file.formats?.large?.url || file.formats?.medium?.url || file.url || null;
+  bestPacketMediaUrl(file) || null;
 
 export const nominationRecordId = (
   record: AwardNominationPrintRecord

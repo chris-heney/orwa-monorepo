@@ -1,5 +1,6 @@
 import { useStore } from "react-admin";
 import type { PageCtx } from "../../../framework/manifest";
+import type { SubmittedDateRange } from "../../../helpers/submittedDateRange";
 import { buildAwardListFilter, nominationCycleYear } from "./listFilters";
 
 export type AwardYear = number | "all";
@@ -15,6 +16,9 @@ export const AWARD_STORE_KEYS = {
   search: "orwa-awards-nomination-search",
   region: "orwa-awards-nomination-region",
   awardType: "orwa-awards-nomination-award-type",
+  /** Filters drawer "Submitted" range (`YYYY-MM-DD` or ""). */
+  submittedFrom: "orwa-awards-nomination-submitted-from",
+  submittedTo: "orwa-awards-nomination-submitted-to",
 } as const;
 
 export const AWARD_WATCH_KEYS = [
@@ -22,6 +26,8 @@ export const AWARD_WATCH_KEYS = [
   AWARD_STORE_KEYS.search,
   AWARD_STORE_KEYS.region,
   AWARD_STORE_KEYS.awardType,
+  AWARD_STORE_KEYS.submittedFrom,
+  AWARD_STORE_KEYS.submittedTo,
 ];
 
 export const useAwardYear = () =>
@@ -29,6 +35,15 @@ export const useAwardYear = () =>
 export const useAwardSearch = () => useStore(AWARD_STORE_KEYS.search, "");
 export const useAwardRegion = () => useStore(AWARD_STORE_KEYS.region, "all");
 export const useAwardType = () => useStore(AWARD_STORE_KEYS.awardType, "all");
+export const useAwardSubmittedFrom = () =>
+  useStore(AWARD_STORE_KEYS.submittedFrom, "");
+export const useAwardSubmittedTo = () =>
+  useStore(AWARD_STORE_KEYS.submittedTo, "");
+
+const submittedRangeFromCtx = (ctx: PageCtx): SubmittedDateRange => ({
+  from: ctx.store(AWARD_STORE_KEYS.submittedFrom, ""),
+  to: ctx.store(AWARD_STORE_KEYS.submittedTo, ""),
+});
 
 export const awardYearLabel = (year: AwardYear) =>
   year === "all" ? "All Years" : String(year);
@@ -38,13 +53,14 @@ export const awardYearLabel = (year: AwardYear) =>
 export const awardYearFromCtx = (ctx: PageCtx): AwardYear =>
   ctx.store<AwardYear>(AWARD_STORE_KEYS.year, nominationCycleYear());
 
-/** Permanent filter of the Nominations tab (search / year / region / type). */
+/** Permanent filter of the Nominations tab (search / year / region / type / submitted range). */
 export const nominationFilterFromCtx = (ctx: PageCtx) =>
   buildAwardListFilter(
     ctx.store(AWARD_STORE_KEYS.search, ""),
     awardYearFromCtx(ctx),
     ctx.store(AWARD_STORE_KEYS.region, "all"),
-    ctx.store(AWARD_STORE_KEYS.awardType, "all")
+    ctx.store(AWARD_STORE_KEYS.awardType, "all"),
+    submittedRangeFromCtx(ctx)
   );
 
 /** Permanent filter of the Winners tab (year only). */

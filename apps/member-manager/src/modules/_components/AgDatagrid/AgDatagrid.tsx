@@ -77,7 +77,10 @@ const AgDatagrid = ({
   const raColumnsKey = columnsPreferenceKey || `${resource}.datagrid`;
   const [prefs, setPrefs] = useStore<AgDatagridPrefs>(storeKey, {});
   const selectedIdsKey = selectionStoreKey || `${resource}.selectedIds`;
-  const [, setSelectedIds] = useStore<(string | number)[]>(selectedIdsKey, []);
+  const [selectedIdsInStore, setSelectedIds] = useStore<(string | number)[]>(
+    selectedIdsKey,
+    []
+  );
 
   // Same preference shape as DatagridConfigurable so the black-bar
   // SelectColumnsButton (show/hide + reorder) drives this grid.
@@ -336,6 +339,17 @@ const AgDatagrid = ({
     if (!rowSelection) return;
     setSelectedIds([]);
   }, [data, rowSelection, setSelectedIds]);
+
+  // Mirror an external clear (RA `onUnselectItems`, the data effect above)
+  // into the grid, so a row that survives a refetch — e.g. after a failed
+  // bulk delete — is not left ticked while the bar already shows no selection.
+  useEffect(() => {
+    if (!rowSelection || selectedIdsInStore.length > 0) return;
+    const api = gridRef.current?.api;
+    // Only when something is ticked: deselectAll() re-emits selectionChanged,
+    // which writes [] to the store again — an unconditional call would loop.
+    if (api && api.getSelectedNodes().length > 0) api.deselectAll();
+  }, [rowSelection, selectedIdsInStore]);
 
   const agTheme = useMemo(
     () =>

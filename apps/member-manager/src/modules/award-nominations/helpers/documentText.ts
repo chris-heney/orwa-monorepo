@@ -204,25 +204,53 @@ const unescapePdfLiteral = (value: string): string =>
       String.fromCharCode(parseInt(oct, 8) || 32)
     );
 
+/** `<48656C6C6F>` → "Hello" (single-byte encodings only; glyph-id subsets stay opaque). */
+const decodePdfHexString = (hex: string): string => {
+  const clean = hex.replace(/\s+/g, "");
+  let out = "";
+  for (let i = 0; i < clean.length; i += 2) {
+    const pair = clean.slice(i, i + 2).padEnd(2, "0");
+    const code = parseInt(pair, 16);
+    if (Number.isFinite(code)) out += String.fromCharCode(code);
+  }
+  return out;
+};
+
+/** One `(literal)` or `<hex>` string operand → decoded text. */
+const PDF_STRING_OPERAND = /\(((?:\\.|[^\\)])*)\)|<([0-9a-fA-F\s]*)>/g;
+
+const decodePdfStringOperand = (literal?: string, hex?: string): string =>
+  literal !== undefined ? unescapePdfLiteral(literal) : decodePdfHexString(hex || "");
+
+const isPrintableRun = (value: string) =>
+  // Glyph-id subsets decode to control characters / mojibake; keep only
+  // runs that are mostly printable Latin text.
+  /[A-Za-z0-9]/.test(value) &&
+  value.replace(/[\u0020-\u007e\u00a0-\u00ff]/g, "").length <= value.length / 4;
+
+/** Text operands of `Tj` / `TJ` operators — pdf-lib writes hex strings, most other producers literals. */
 const stringsFromPdfContent = (content: string): string[] => {
   const out: string[] = [];
-  const tj = /\(((?:\\.|[^\\)])*)\)\s*Tj/g;
+  const tj = /(\((?:\\.|[^\\)])*\)|<[0-9a-fA-F\s]*>)\s*Tj/g;
   let match: RegExpExecArray | null;
   while ((match = tj.exec(content))) {
-    const text = unescapePdfLiteral(match[1]).trim();
-    if (text) out.push(text);
+    PDF_STRING_OPERAND.lastIndex = 0;
+    const operand = PDF_STRING_OPERAND.exec(match[1]);
+    if (!operand) continue;
+    const text = decodePdfStringOperand(operand[1], operand[2]).trim();
+    if (text && isPrintableRun(text)) out.push(text);
   }
   const tjArray = /\[([\s\S]*?)\]\s*TJ/g;
   while ((match = tjArray.exec(content))) {
     const inner = match[1];
-    const parts = /\(((?:\\.|[^\\)])*)\)/g;
+    const parts = new RegExp(PDF_STRING_OPERAND.source, "g");
     let part: RegExpExecArray | null;
     const row: string[] = [];
     while ((part = parts.exec(inner))) {
-      row.push(unescapePdfLiteral(part[1]));
+      row.push(decodePdfStringOperand(part[1], part[2]));
     }
     const joined = row.join("").trim();
-    if (joined) out.push(joined);
+    if (joined && isPrintableRun(joined)) out.push(joined);
   }
   return out;
 };

@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts } from "pdf-lib";
+import { setPrintFontLoader } from "../../../helpers/printBrandFonts";
 import { extractPdfPlainText } from "./documentText";
 import {
   baselineCentered,
@@ -19,6 +20,19 @@ const seedPacket = resolve(
   here,
   "../../../../../../apps/strapi/public/uploads/pqijsnre_awd_8_a04654c691.pdf"
 );
+
+// Force pdf-lib's built-in Helvetica: with the embedded Liberation Sans subset,
+// text is written as glyph ids and `extractPdfPlainText` cannot read it back.
+beforeAll(() => {
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  setPrintFontLoader(async () => {
+    throw new Error("spec: use the Helvetica fallback so page text is extractable");
+  });
+});
+afterAll(() => {
+  setPrintFontLoader();
+  vi.restoreAllMocks();
+});
 
 const fakeFont = {
   widthOfTextAtSize: (text: string) => text.length * 6,
@@ -91,7 +105,8 @@ describe("generateNominationApplicationPdf", () => {
     });
 
     expect(filename).toBe("ORWA-Award-Nomination-JIMMY-E-SEAGO-2027.pdf");
-    expect(media.Photographs).toBe("skipped");
+    expect(media.photographs).toBe("skipped");
+    expect(media).not.toHaveProperty("nomination_pdf");
     expect(blob.type).toBe("application/pdf");
     expect(blob.size).toBeGreaterThan(1000);
 
@@ -161,7 +176,7 @@ describe("generateNominationApplicationPdf", () => {
         name: "pqijsnre-awd-8.pdf",
         ext: ".pdf",
       },
-    });
+    }, { includeSubmissionPdf: true });
 
     const person = await generateNominationApplicationPdf({
       nominee_name: "Jensen E2E Seed pqijsnre Hodkiewicz",
@@ -192,9 +207,7 @@ describe("generateNominationApplicationPdf", () => {
     }
     expect(systemDoc.getPageCount()).toBeGreaterThanOrEqual(2);
 
-    expect(system.media["Original submitted packet"] || system.media["Appendix  ·  Original submitted packet"]).toBe(
-      "merged"
-    );
+    expect(system.media.nomination_pdf).toBe("merged");
 
     await mkdir(tmpDir, { recursive: true });
     await writeFile(
@@ -245,11 +258,10 @@ describe("generateNominationApplicationPdf", () => {
         name: "blank-no-contents.pdf",
         ext: ".pdf",
       },
-    });
+    }, { includeSubmissionPdf: true });
 
-    expect(blankOnly.media["Appendix  ·  Original submitted packet"]).toBe(
-      "skipped"
-    );
+    // Nothing printable in the PDF → explicit note page, not a silent skip.
+    expect(blankOnly.media.nomination_pdf).toBe("unavailable");
     const blankDoc = await PDFDocument.load(await blankOnly.blob.arrayBuffer());
     expect(blankDoc.getPageCount()).toBeGreaterThanOrEqual(1);
     expect(blankDoc.getPages().every((page) => page.getSize().width === 612)).toBe(
@@ -267,11 +279,9 @@ describe("generateNominationApplicationPdf", () => {
         name: "mixed-packet.pdf",
         ext: ".pdf",
       },
-    });
+    }, { includeSubmissionPdf: true });
 
-    expect(mixedPrint.media["Appendix  ·  Original submitted packet"]).toBe(
-      "merged"
-    );
+    expect(mixedPrint.media.nomination_pdf).toBe("merged");
     const mixedDoc = await PDFDocument.load(await mixedPrint.blob.arrayBuffer());
     expect(mixedDoc.getPages().every((page) => page.getSize().width === 612)).toBe(
       true
@@ -385,14 +395,35 @@ describe("generateNominationApplicationPdf", () => {
       },
     });
 
-    expect(achille.media["Board / employee list"]).toBe("embedded");
-    expect(achille.media["Biography file"]).toBe("embedded");
-    expect(achille.media["Photographs (2)"]).toBe("embedded");
-    expect(achille.media["Appendix  ·  Original submitted packet"]).toBe("merged");
+    expect(achille.media.board_list_file).toBe("embedded");
+    expect(achille.media.biography_file).toBe("embedded");
+    expect(achille.media.photographs).toBe("embedded");
+    // The submit-time PDF is not an upload: excluded by default (no duplicate form).
+    expect(achille.media).not.toHaveProperty("nomination_pdf");
+    expect(fetchMock.mock.calls.some((call) => String(call[0]).includes("JIMMY"))).toBe(false);
+    // Appendix order follows the public form: board list → biography → photographs.
+    expect(achille.attachments.map((item) => item.attachment.key)).toEqual([
+      "board_list_file",
+      "biography_file",
+      "photographs",
+      "photographs",
+    ]);
 
     const achilleBytes = Buffer.from(await achille.blob.arrayBuffer());
     const achilleDoc = await PDFDocument.load(achilleBytes);
-    expect(achilleDoc.getPageCount()).toBeLessThan(6);
+    // 1-2 form pages + 4 attachment pages (one per upload).
+    expect(achilleDoc.getPageCount()).toBeGreaterThanOrEqual(5);
+    expect(achilleDoc.getPageCount()).toBeLessThanOrEqual(6);
+    const achilleText = await extractPdfPlainText(achilleBytes);
+    if (achilleText) {
+      expect(achilleText).toMatch(/Year: 2027/);
+      expect(achilleText).not.toMatch(/Cycle 2027/);
+      expect(achilleText).toMatch(/Board \/ Employee List/);
+      expect(achilleText).toMatch(/Attachment 1 of 4/);
+      expect(achilleText).toMatch(/Attachment 4 of 4/);
+      // The submit-time PDF's body text must not appear anywhere.
+      expect(achilleText).not.toMatch(/Submitted Nomination PDF/);
+    }
 
     await mkdir(tmpDir, { recursive: true });
     await writeFile(
@@ -412,7 +443,54 @@ describe("generateNominationApplicationPdf", () => {
         ext: ".pdf",
       },
     });
-    expect(kept.media["Board / employee list"]).toBe("merged");
+    expect(kept.media.board_list_file).toBe("merged");
+  });
+});
+
+describe("board / employee list section", () => {
+  it("prints a keyed-in list in its own section, separated from the biography", async () => {
+    const { blob } = await generateNominationApplicationPdf({
+      nominee_name: "Keyed System",
+      system_name: "Keyed System",
+      award_type: "System of the Year",
+      award_year: 2027,
+      board_list_method: "Keyed In List",
+      board_members: [
+        { first: "Jane", last: "Doe", title: "Chair" },
+        { first: "", last: "", title: "" },
+        { first: "Sam", last: "Roe", title: "Operator" },
+      ],
+      biography_method: "Copy/Paste or Type Biography",
+      biography_text: "Keyed System biography text.",
+    });
+    const text = await extractPdfPlainText(new Uint8Array(await blob.arrayBuffer()));
+    expect(text).toMatch(/Board \/ Employee List/);
+    expect(text).toMatch(/Keyed In List/);
+    expect(text).toMatch(/Members & employees \(2\)/);
+    expect(text).toMatch(/Jane Doe . Chair/);
+    expect(text).toMatch(/Sam Roe . Operator/);
+    // Separate sections: board list, then biography, each with its own "Provided via".
+    const board = text.indexOf("Board / Employee List");
+    const bio = text.indexOf("Biography");
+    expect(board).toBeGreaterThan(-1);
+    expect(bio).toBeGreaterThan(board);
+    expect(text.match(/Provided via/g)?.length).toBe(2);
+    expect(text).not.toMatch(/could not be/);
+  });
+
+  it("is omitted for individual awards (not a System of the Year field)", async () => {
+    const { blob } = await generateNominationApplicationPdf({
+      nominee_name: "Pat Operator",
+      system_name: "Ada City of",
+      award_type: "Excellence in Operations",
+      award_year: 2027,
+      biography_text: "Pat keeps the plant running.",
+    });
+    const text = await extractPdfPlainText(new Uint8Array(await blob.arrayBuffer()));
+    expect(text).not.toMatch(/Board \/ Employee List/);
+    expect(text).toMatch(/Biography/);
+    expect(text).toMatch(/Photographs \(0\)/);
+    expect(text).toMatch(/None uploaded/);
   });
 });
 

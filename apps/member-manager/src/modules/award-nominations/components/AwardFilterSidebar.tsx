@@ -16,9 +16,12 @@ import { awardTypeChoices, type AwardTypeRecord } from "../helpers/awardTypes";
 import {
   useAwardRegion,
   useAwardSearch,
+  useAwardSubmittedFrom,
+  useAwardSubmittedTo,
   useAwardType,
   useAwardYear,
 } from "../helpers/awardStore";
+import SubmittedDateRangeFields from "../../_components/SubmittedDateRangeFields";
 
 /**
  * Filters drawer body for the Awards dashboard (Nominations + Winners tabs).
@@ -31,6 +34,8 @@ const AwardFilterSidebar = () => {
   const [year, setYear] = useAwardYear();
   const [region, setRegion] = useAwardRegion();
   const [awardType, setAwardType] = useAwardType();
+  const [submittedFrom, setSubmittedFrom] = useAwardSubmittedFrom();
+  const [submittedTo, setSubmittedTo] = useAwardSubmittedTo();
   const notify = useNotify();
   const nominations = tab !== "winners";
   const { data, isError } = useGetList<AwardTypeRecord>(
@@ -102,6 +107,13 @@ const AwardFilterSidebar = () => {
               ))}
             </RadioGroup>
           </FormControl>
+          <SubmittedDateRangeFields
+            ariaPrefix="Nominations"
+            from={submittedFrom}
+            to={submittedTo}
+            onFromChange={setSubmittedFrom}
+            onToChange={setSubmittedTo}
+          />
         </>
       ) : null}
       <FormControl fullWidth>

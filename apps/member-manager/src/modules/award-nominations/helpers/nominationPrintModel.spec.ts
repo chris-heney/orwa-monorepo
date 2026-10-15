@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  AWARD_ATTACHMENT_SLOTS,
+  boardMemberLines,
   countyRegion,
   formatCount,
   formatEstablishedDate,
@@ -7,6 +9,7 @@ import {
   nominationApplicationFilename,
   nominationRecordId,
   nomineeNameAsPrinted,
+  orderAwardAttachments,
   printedAwardName,
   printedNameLabel,
   systemDisplayName,
@@ -53,6 +56,24 @@ describe("nominationApplicationFilename", () => {
     expect(nominationApplicationFilename({})).toMatch(
       /^ORWA-Award-Nomination-Nomination-\d{4}\.pdf$/
     );
+  });
+
+  it("falls back to the submission cycle year when award_year is missing", () => {
+    // Aug 2026 submission → 2027 conference.
+    expect(
+      nominationApplicationFilename({
+        system_name: "Legacy PUA",
+        award_year: null,
+        submission_date: "2026-08-19",
+      })
+    ).toBe("ORWA-Award-Nomination-Legacy-PUA-2027.pdf");
+    // Jan 2027 createdAt → 2027 conference.
+    expect(
+      nominationApplicationFilename({
+        system_name: "Legacy PUA",
+        createdAt: "2027-01-05T10:00:00.000Z",
+      })
+    ).toBe("ORWA-Award-Nomination-Legacy-PUA-2027.pdf");
   });
 });
 
@@ -113,5 +134,54 @@ describe("countyRegion / ids", () => {
     );
     expect(nominationRecordId(seago)).toBe("v9kv0s9tlw0dd5h9z2smdodh");
     expect(Number.isNaN(Number("v9kv0s9tlw0dd5h9z2smdodh"))).toBe(true);
+  });
+});
+
+describe("award attachment order", () => {
+  it("follows the public form: board list → biography → photographs → (legacy) supporting docs", () => {
+    expect(AWARD_ATTACHMENT_SLOTS.map((slot) => slot.key)).toEqual([
+      "board_list_file",
+      "biography_file",
+      "photographs",
+      "supporting_documents",
+      "nomination_pdf",
+    ]);
+    expect(AWARD_ATTACHMENT_SLOTS.filter((slot) => slot.system).map((slot) => slot.key)).toEqual([
+      "nomination_pdf",
+    ]);
+    const record = {
+      ...seago,
+      photographs: [
+        { url: "/uploads/p1.png", name: "p1.png", mime: "image/png" },
+        { url: "/uploads/p2.png", name: "p2.png", mime: "image/png" },
+      ],
+      biography_file: { url: "/uploads/bio.docx", name: "bio.docx" },
+      board_list_file: { url: "/uploads/board.xlsx", name: "board.xlsx" },
+      nomination_pdf: { url: "/uploads/system.pdf", name: "system.pdf", mime: "application/pdf" },
+    };
+    expect(orderAwardAttachments(record).map((item) => `${item.ordinal}:${item.fileName}`)).toEqual([
+      "1:board.xlsx",
+      "2:bio.docx",
+      "3:p1.png",
+      "4:p2.png",
+    ]);
+    expect(
+      orderAwardAttachments(record, { includeSubmissionPdf: true }).map((item) => item.key)
+    ).toContain("nomination_pdf");
+  });
+});
+
+describe("boardMemberLines", () => {
+  it("prints keyed-in members as 'First Last — Title' and drops blank template rows", () => {
+    expect(
+      boardMemberLines([
+        { first: "Jane", last: "Doe", title: "Chair" },
+        { first: "", last: "", title: "" },
+        { first: "Sam", last: "Roe" },
+        { title: "Operator" },
+      ])
+    ).toEqual(["Jane Doe — Chair", "Sam Roe", "— — Operator"]);
+    expect(boardMemberLines(null)).toEqual([]);
+    expect(boardMemberLines("not a list")).toEqual([]);
   });
 });

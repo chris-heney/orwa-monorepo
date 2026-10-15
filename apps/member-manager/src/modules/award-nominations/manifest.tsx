@@ -21,6 +21,8 @@ import {
   exportAction,
 } from "../../framework/actions";
 import { pageView, tabRedirect } from "../../framework/registry";
+import { bulkDeleteAction } from "../../framework/BulkDeleteAction";
+import CustomExportFunction from "../../helpers/custom-export-function";
 import AwardEdit from "./components/AwardEdit";
 import AwardWinnerEdit from "./components/AwardWinnerEdit";
 import AwardWinnerCreate from "./components/AwardWinnerCreate";
@@ -29,7 +31,10 @@ import AwardTypeEdit from "./components/AwardTypeEdit";
 import AwardShow, { nomineeTitle } from "./components/AwardShow";
 import AwardFilterSidebar from "./components/AwardFilterSidebar";
 import { AwardYearSelectAction } from "./components/AwardYearSelect";
-import { AwardPrintSelectedButton } from "./components/AwardPrintButton";
+import {
+  AwardPrintRecordAction,
+  AwardPrintSelectedButton,
+} from "./components/AwardPrintButton";
 import { NOMINATION_LIST_POPULATE } from "./components/AwardNominationList";
 import { WINNER_LIST_POPULATE } from "./components/AwardWinnerList";
 import {
@@ -40,6 +45,12 @@ import {
   nominationFilterFromCtx,
   winnerFilterFromCtx,
 } from "./helpers/awardStore";
+import { nominationBulkDeleteWarnings } from "./helpers/bulkDeleteWarnings";
+import {
+  NOMINATION_EXPORT_TITLE,
+  nominationColumnPrefs,
+  nominationExportRows,
+} from "./helpers/exportNominations";
 
 const DASHBOARD = "/orwa-awards/dashboard";
 
@@ -104,6 +115,12 @@ const printSelectedAction: ActionManifest = {
   component: PrintSelectedComponent,
   order: 95,
 };
+
+/** Bulk delete — selection-scoped, RBAC `delete` on award-nominations. */
+const deleteSelectedAction = bulkDeleteAction("award-nominations", {
+  noun: "award nomination",
+  warnings: nominationBulkDeleteWarnings,
+});
 
 /**
  * ORWA Awards — proposal §5 step 6 ("rest").
@@ -170,8 +187,26 @@ export const awardsModule: ModuleManifest = {
               perPage: 50,
               meta: { populate: NOMINATION_LIST_POPULATE, raw: true },
               filterBody: AwardFilterSidebar,
+              // Without an exporter ListScope hands ExportButton `false` and
+              // the bar's Export silently did nothing. CSV follows the
+              // Columns picker (incl. Submitted, rendered as a date).
+              exporter: (records, ctx, { dataProvider }) => {
+                const prefs = nominationColumnPrefs(ctx);
+                return CustomExportFunction(
+                  nominationExportRows(records),
+                  prefs.available,
+                  prefs.selected,
+                  NOMINATION_EXPORT_TITLE,
+                  dataProvider
+                );
+              },
             },
-            actions: [exportAction, columnsAction, printSelectedAction],
+            actions: [
+              exportAction,
+              columnsAction,
+              printSelectedAction,
+              deleteSelectedAction,
+            ],
             panel: lazyPanel(() => import("./components/AwardNominationList")),
           },
           {
@@ -213,7 +248,18 @@ export const awardsModule: ModuleManifest = {
         appBarTitle: "ORWA Award Nomination",
         back: DASHBOARD,
       },
-      actions: [editRecordAction("award-nominations", { label: "Review" })],
+      actions: [
+        // Print this nomination's packet — same generator as Print Selected.
+        {
+          id: "print",
+          label: "Print",
+          icon: PrintIcon,
+          scope: "record",
+          component: AwardPrintRecordAction,
+          order: 5,
+        },
+        editRecordAction("award-nominations", { label: "Review" }),
+      ],
       body: AwardShow,
     },
   ],

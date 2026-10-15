@@ -77,6 +77,9 @@ const AwardNominationList = () => {
         <TextField source="award_type" label="Award" />
         <TextField source="award_year" label="Year" />
         <TextField source="nomination_status" label="Status" />
+        {/* Column order here is the Columns picker's index space — keep the
+            default set (DEFAULT_AWARD_COLUMN_IDS) at the front. */}
+        <DateField source="submission_date" label="Submitted" />
         <FunctionField
           label="County"
           source="watersystem.county"
@@ -226,7 +229,6 @@ const AwardNominationList = () => {
           sortable={false}
         />
 
-        <DateField source="submission_date" label="Submitted" />
         <FunctionField
           label="Review Notes"
           source="review_notes"

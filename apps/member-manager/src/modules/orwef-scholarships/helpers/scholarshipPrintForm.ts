@@ -1,5 +1,6 @@
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { PrintFonts } from "../../../helpers/printBrandFonts";
+import { formatPacketYear } from "../../_components/review-packet/formatters";
 
 export const ORWEF_LEGAL_NAME = "Oklahoma Rural Water Enrichment Foundation";
 export const ORWEF_KICKER = "OKLAHOMA RURAL WATER ENRICHMENT FOUNDATION";
@@ -141,7 +142,8 @@ export type PrintCard = {
 
 export type ScholarshipPrintModel = {
   applicantName: string;
-  cycleYear: string;
+  /** Application year as text (submission year) — printed as "Year: 2026". */
+  year: string;
   cards: PrintCard[];
   fullWidth: PrintCard[];
 };
@@ -159,6 +161,18 @@ type Layout = {
 };
 
 const contentRight = (layout: Layout) => layout.width - MARGIN_RIGHT;
+
+/** "Applicant · ORWEF Scholarship · Year: 2026" — running header and appendix header. */
+export const scholarshipRunningTitle = (
+  model: Pick<ScholarshipPrintModel, "applicantName" | "year">
+) =>
+  [
+    model.applicantName || "Applicant",
+    SCHOLARSHIP_FOOTER_AWARD,
+    model.year ? formatPacketYear(model.year) : null,
+  ]
+    .filter((part) => part != null && String(part).trim() !== "")
+    .join("  ·  ");
 
 const columnWidth = (layout: Layout) =>
   (layout.contentWidth - COL_GAP) / 2;
@@ -185,9 +199,7 @@ const remainingHeight = (layout: Layout) => layout.y - MARGIN_BOTTOM;
 const drawRunningHeader = (layout: Layout) => {
   if (layout.isCover) return;
   const size = 8;
-  const title = [layout.model.applicantName || "Applicant", SCHOLARSHIP_FOOTER_AWARD, layout.model.cycleYear]
-    .filter((part) => part != null && String(part).trim() !== "")
-    .join("  ·  ");
+  const title = scholarshipRunningTitle(layout.model);
   const ascent = fontAscent(layout.fonts.regular, size);
   const baseline = layout.height - 18 - ascent;
   layout.page.drawText(fitText(title, layout.fonts.regular, size, layout.contentWidth), {
@@ -259,14 +271,14 @@ const drawCover = (layout: Layout) => {
     color: WHITE,
   });
 
-  const cycle = fitText(
-    `Cycle ${layout.model.cycleYear}`,
+  const yearText = fitText(
+    formatPacketYear(layout.model.year),
     fonts.bold,
     COVER_TITLE_SIZE,
     rightMax
   );
-  page.drawText(cycle, {
-    x: rightEdge - fonts.bold.widthOfTextAtSize(cycle, COVER_TITLE_SIZE),
+  page.drawText(yearText, {
+    x: rightEdge - fonts.bold.widthOfTextAtSize(yearText, COVER_TITLE_SIZE),
     y: titleBaseline,
     size: COVER_TITLE_SIZE,
     font: fonts.bold,
