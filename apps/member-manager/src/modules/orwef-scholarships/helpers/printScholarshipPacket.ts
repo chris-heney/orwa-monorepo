@@ -1,14 +1,16 @@
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { embedPrintFonts, type PrintFonts } from "../../../helpers/printBrandFonts";
 import CookieStore from "../../../helpers/ra-strapi-data-provider/src/CookieStore";
+// Import the pure helpers directly: the review-packet barrel also re-exports
+// React/MUI components, which a PDF helper (and its Node tests) should not load.
+import { asDateString } from "../../_components/review-packet/dateStrings";
 import {
   EDUCATION_LABELS,
   RELATIONSHIP_LABELS,
-  asDateString,
   formatAddress,
   formatMoney,
   formatPersonName,
-} from "../../_components/review-packet";
+} from "../../_components/review-packet/formatters";
 import { listFinancialResources } from "./financialResources";
 import { resolveMediaUrl } from "./resolveMediaUrl";
 import {

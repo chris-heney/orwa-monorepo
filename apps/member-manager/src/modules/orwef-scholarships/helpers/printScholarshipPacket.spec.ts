@@ -1,8 +1,9 @@
-import { describe, expect, it } from "vitest";
-import { mkdir, writeFile } from "node:fs/promises";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
+import { setPrintFontLoader } from "../../../helpers/printBrandFonts";
 import { extractPdfPlainText } from "../../award-nominations/helpers/documentText";
 import {
   buildScholarshipPrintModel,
@@ -12,6 +13,12 @@ import {
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tmpDir = resolve(here, "../../../../../../tmp");
+
+// Node's fetch rejects file: URLs; read the vendored Liberation Sans TTFs from disk.
+beforeAll(() =>
+  setPrintFontLoader(async (url) => new Uint8Array(await readFile(fileURLToPath(url))))
+);
+afterAll(() => setPrintFontLoader());
 
 const sampleRecord = (): ScholarshipPacketRecord => ({
   applicant_first_name: "Jordan",
@@ -84,7 +91,7 @@ describe("generateScholarshipPacketPdf", () => {
       sampleRecord()
     );
     expect(filename).toBe("ORWEF-Scholarship-Harper-2026.pdf");
-    expect(["Arial", "Helvetica"]).toContain(fontFamily);
+    expect(fontFamily).toBe("Liberation Sans");
 
     const bytes = new Uint8Array(await blob.arrayBuffer());
     const loaded = await PDFDocument.load(bytes);
