@@ -30,6 +30,8 @@ import {
   sendAwardNominationEmails,
   sendScholarshipApplicationEmails,
 } from "../form-email";
+import { findActiveMembershipWatersystem } from "../../../utils/active-membership";
+import { checkNominatableAwardType } from "../../../utils/nominatable-award-type";
 
 const SCHOLARSHIP_UID =
   "api::scholarship-application.scholarship-application" as const;
@@ -243,6 +245,71 @@ export default ({ strapi }) => {
     });
   };
 
+  /**
+   * Public forms only list watersystems with an active ORWA membership, but
+   * that select is UX only. Before a record is created, re-resolve the
+   * submitted watersystem (documentId or legacy numeric id) and apply the same
+   * rule server-side. Sets a 400 on `ctx` and returns null when rejected.
+   */
+  const requireActiveMembershipWatersystem = async (
+    ctx,
+    raw: unknown
+  ) => {
+    if (raw == null || raw === "") {
+      ctx.badRequest(
+        "Please select your water system from the list. Only water systems with an active ORWA membership are eligible.",
+        { field: "watersystem", code: "WATERSYSTEM_REQUIRED" }
+      );
+      return null;
+    }
+
+    const watersystem = await lookupWatersystem(raw);
+    if (!watersystem) {
+      ctx.badRequest(
+        "The selected water system could not be found. Please choose your water system from the list.",
+        { field: "watersystem", code: "WATERSYSTEM_NOT_FOUND" }
+      );
+      return null;
+    }
+
+    const active = await findActiveMembershipWatersystem(
+      watersystem.documentId
+    );
+    if (!active) {
+      ctx.badRequest(
+        `${watersystem.name || "The selected water system"} does not have an active ORWA membership. Only water systems with a current membership are eligible — please ask the system to renew its ORWA membership, or contact ORWA at office@orwa.org for help.`,
+        {
+          field: "watersystem",
+          code: "WATERSYSTEM_MEMBERSHIP_INACTIVE",
+          watersystem: watersystem.name,
+        }
+      );
+      return null;
+    }
+
+    return watersystem;
+  };
+
+  /** Only `award-type` rows with `nominatable = true` may be submitted. */
+  const requireNominatableAwardType = async (ctx, name: string) => {
+    const check = await checkNominatableAwardType(name);
+    if (check.status === "not_found") {
+      ctx.badRequest(
+        `"${name}" is not a recognized award type. Please choose an award from the list.`,
+        { field: "award_type", code: "AWARD_TYPE_NOT_FOUND" }
+      );
+      return null;
+    }
+    if (check.status === "not_nominatable") {
+      ctx.badRequest(
+        `"${name}" is not currently accepting nominations. Please choose an award from the list.`,
+        { field: "award_type", code: "AWARD_TYPE_NOT_NOMINATABLE" }
+      );
+      return null;
+    }
+    return check.awardType;
+  };
+
   return {
     createScholarshipApplication: async (ctx) => {
       try {
@@ -258,6 +325,14 @@ export default ({ strapi }) => {
             ctx.body = { message: "Missing required fields." };
             return;
           }
+
+          // Authoritative eligibility check — runs before any contact/user
+          // side effects so a rejected submission leaves nothing behind.
+          const watersystem = await requireActiveMembershipWatersystem(
+            ctx,
+            body.watersystem ?? body.watersystem_id
+          );
+          if (!watersystem) return;
 
           const applicantContact = await getContact(
             body.applicant_email,
@@ -297,9 +372,6 @@ export default ({ strapi }) => {
             );
           }
 
-          const watersystem = await lookupWatersystem(
-            body.watersystem ?? body.watersystem_id
-          );
           const systemName = resolveSystemName({
             system_name: body.system_name,
             watersystemName: watersystem?.name,
@@ -467,6 +539,27 @@ export default ({ strapi }) => {
             return;
           }
 
+          // Legacy label still sent by old drafts; the catalog name is the
+          // normalized one, so validate (and store) that.
+          const awardTypeName =
+            body.award_type === "Water/Wastewater System of the Year"
+              ? "System of the Year"
+              : String(body.award_type).trim();
+
+          // Authoritative eligibility checks — run before any contact/user
+          // side effects so a rejected submission leaves nothing behind.
+          const awardType = await requireNominatableAwardType(
+            ctx,
+            awardTypeName
+          );
+          if (!awardType) return;
+
+          const watersystem = await requireActiveMembershipWatersystem(
+            ctx,
+            body.watersystem ?? body.watersystem_id
+          );
+          if (!watersystem) return;
+
           const nameParts = String(body.nominee_name).trim().split(/\s+/);
           const nominatorEmail = body.nominator_email || body.email;
           const nominatorContact = await getContact(
@@ -489,10 +582,6 @@ export default ({ strapi }) => {
               email: nominatorEmail,
               password: btoa(nominatorEmail),
             }
-          );
-
-          const watersystem = await lookupWatersystem(
-            body.watersystem ?? body.watersystem_id
           );
 
           const contactDocumentId =
@@ -534,10 +623,7 @@ export default ({ strapi }) => {
             ),
             management_employees: emptyToNull(body.management_employees),
             justification: body.justification || body.nomination_description,
-            award_type:
-              body.award_type === "Water/Wastewater System of the Year"
-                ? "System of the Year"
-                : body.award_type,
+            award_type: awardType.name,
             biography_method: emptyToNull(body.biography_method),
             biography_text: emptyToNull(body.biography_text),
             biography_file: await mediaId(body.biography_file),
