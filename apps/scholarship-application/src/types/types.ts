@@ -60,6 +60,8 @@ export interface IScholarshipApplicationPayload {
 
   system_name: string;
   watersystem?: Identifier | null;
+  /** Cycle year (next Annual Conference) this application is for. */
+  scholarship_year: number | "";
   relationship: "Self" | "DependentChild" | "DependentGrandchild" | "";
   eligible_participant_name: ScholarshipName;
   eligible_participant_title: string;

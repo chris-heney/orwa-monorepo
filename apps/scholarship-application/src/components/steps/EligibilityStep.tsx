@@ -8,11 +8,13 @@ import { RadioGroupInput } from "../_components/RadioGroupInput";
 import WatersystemAutocomplete from "../_components/WatersystemAutocomplete";
 import FormSection from "../_components/FormSection";
 import { stateOptions } from "../../data/stateOptions";
+import { nextConferenceYear } from "../../helpers/nextConferenceYear";
 
 const EligibilityStep = () => {
-  const { watch } = useFormContext();
+  const { watch, register } = useFormContext();
   const relationship = watch("relationship");
   const isSelf = relationship === "Self";
+  const scholarshipYear = watch("scholarship_year") || nextConferenceYear();
 
   const relationshipOptions = [
     { value: "Self", label: "Self (Water System Employee or Director)" },
@@ -26,6 +28,25 @@ const EligibilityStep = () => {
       description="Eligible participant: Member System employees, directors or their dependent children or grandchildren. Not eligible for schools, fire depts or police depts."
     >
       <Grid container spacing={3}>
+        <Grid size={{ xs: 12 }}>
+          <div
+            className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-left"
+            data-testid="scholarship-year"
+          >
+            <p className="text-sm font-semibold text-blue-900">
+              Scholarship Year: {scholarshipYear}
+            </p>
+            <p className="text-xs text-blue-800">
+              This application is for the {scholarshipYear} ORWEF scholarship
+              cycle (awarded at the {scholarshipYear} ORWA Annual Conference).
+            </p>
+            <input
+              type="hidden"
+              {...register("scholarship_year", { valueAsNumber: true })}
+            />
+          </div>
+        </Grid>
+
         <Grid size={{ xs: 12 }}>
           <WatersystemAutocomplete
             name="system_name"
@@ -43,6 +64,16 @@ const EligibilityStep = () => {
             required
           />
         </Grid>
+
+        {isSelf && (
+          <Grid size={{ xs: 12 }}>
+            <p className="text-sm text-gray-600 text-left">
+              You are the eligible participant — your name, email, phone and
+              mailing address from the Personal Data step will be used as the
+              participant&apos;s contact details.
+            </p>
+          </Grid>
+        )}
 
         {!isSelf && (
           <>

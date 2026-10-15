@@ -1,6 +1,8 @@
 import { IScholarshipApplicationPayload } from "../types/types";
+import { nextConferenceYear } from "./nextConferenceYear";
 
 export const scholarshipDefaultPayload: IScholarshipApplicationPayload = {
+  scholarship_year: nextConferenceYear(),
   applicant_first_name: "",
   applicant_middle_name: "",
   applicant_last_name: "",

@@ -18,10 +18,21 @@ import { loadWizardDraft } from "../helpers/wizardPersistence";
 import { ValidationHighlightProvider } from "../helpers/validationHighlight";
 import { scholarshipDefaultPayload } from "../helpers/scholarshipDefaultPayload";
 import { hydrateFinancialResources } from "../helpers/mapScholarshipPayload";
+import { nextConferenceYear } from "../helpers/nextConferenceYear";
 
 const withFinancialResources = (payload: Record<string, any>) => ({
   ...payload,
   financial_resources: hydrateFinancialResources(payload),
+});
+
+/**
+ * Restored drafts / saved sessions may carry a stale cycle year; a public
+ * submission is always for the upcoming conference cycle. (Admin-opened
+ * entries keep their stored `scholarship_year`.)
+ */
+const withCurrentCycleYear = (payload: Record<string, any>) => ({
+  ...payload,
+  scholarship_year: nextConferenceYear(),
 });
 
 const ScholarshipApplicationForm = () => {
@@ -55,10 +66,12 @@ const ScholarshipApplicationForm = () => {
       const wizardDraft = loadWizardDraft("orwef-scholarship", "online");
       if (wizardDraft?.values) {
         setFormDefaultValues(
-          withFinancialResources({
-            ...scholarshipDefaultPayload,
-            ...wizardDraft.values,
-          })
+          withCurrentCycleYear(
+            withFinancialResources({
+              ...scholarshipDefaultPayload,
+              ...wizardDraft.values,
+            })
+          )
         );
       }
       const savedData = getSavedFormData();
@@ -75,13 +88,17 @@ const ScholarshipApplicationForm = () => {
       try {
         // Restore files from cache before setting form data
         const restoredData = await restoreFilesFromCache(savedData.data);
-        setFormDefaultValues(withFinancialResources(restoredData));
+        setFormDefaultValues(
+          withCurrentCycleYear(withFinancialResources(restoredData))
+        );
         setStepIndex(savedData.stepIndex || 0);
         setFormKey(prev => prev + 1); // Force form re-render with new data
       } catch (error) {
         console.warn('Failed to restore files from cache:', error);
         // Fallback to data without files
-        setFormDefaultValues(withFinancialResources(savedData.data));
+        setFormDefaultValues(
+          withCurrentCycleYear(withFinancialResources(savedData.data))
+        );
         setStepIndex(savedData.stepIndex || 0);
         setFormKey(prev => prev + 1);
       }

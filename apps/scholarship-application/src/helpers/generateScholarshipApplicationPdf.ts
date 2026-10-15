@@ -1,6 +1,10 @@
 import { PDFDocument } from "pdf-lib";
 import { IScholarshipApplicationPayload } from "../types/types";
-import { asFinancialResources } from "./mapScholarshipPayload";
+import {
+  asFinancialResources,
+  withSelfEligibleParticipant,
+} from "./mapScholarshipPayload";
+import { nextConferenceYear } from "./nextConferenceYear";
 import { embedPrintFonts } from "./printBrandFonts";
 import {
   ORWEF_LEGAL_NAME,
@@ -56,9 +60,15 @@ const RELATIONSHIP_LABELS: Record<string, string> = {
   DependentGrandchild: "Dependent Grandchild",
 };
 
-const buildModel = (
-  payload: IScholarshipApplicationPayload
+export const buildModel = (
+  rawPayload: IScholarshipApplicationPayload
 ): ScholarshipPrintModel => {
+  // Same Self rule as the submitted payload so the PDF matches the record.
+  const payload = withSelfEligibleParticipant(rawPayload);
+  const year = Number(payload.scholarship_year);
+  const cycleYear = String(
+    Number.isInteger(year) && year > 2000 ? year : nextConferenceYear()
+  );
   const applicantName =
     [
       payload.applicant_first_name,
@@ -190,7 +200,7 @@ const buildModel = (
 
   return {
     applicantName,
-    cycleYear: String(new Date().getFullYear()),
+    cycleYear,
     cards,
     fullWidth: [],
   };

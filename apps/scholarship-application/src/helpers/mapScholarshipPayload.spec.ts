@@ -1,8 +1,66 @@
 import { describe, expect, it } from "vitest";
-import { mapScholarshipPayload } from "./mapScholarshipPayload";
+import {
+  mapScholarshipPayload,
+  withSelfEligibleParticipant,
+} from "./mapScholarshipPayload";
+import { nextConferenceYear } from "./nextConferenceYear";
 import { scholarshipDefaultPayload } from "./scholarshipDefaultPayload";
 
 describe("mapScholarshipPayload", () => {
+  it("fills eligible participant contact from the applicant for Self", () => {
+    const mapped = mapScholarshipPayload({
+      ...scholarshipDefaultPayload,
+      relationship: "Self",
+      applicant_first_name: "Hunter",
+      applicant_last_name: "Breitenberg",
+      applicant_email: "hunter@example.org",
+      applicant_phone: "(405) 555-0101",
+      applicant_street: "1 Test St",
+      applicant_city: "Ada",
+      applicant_state: "Oklahoma",
+      applicant_zip: "74820",
+      eligible_participant_title: "Operator",
+    } as any);
+
+    expect(mapped.eligible_participant_name).toEqual({
+      first: "Hunter",
+      last: "Breitenberg",
+    });
+    expect(mapped.eligible_participant_email).toBe("hunter@example.org");
+    expect(mapped.eligible_participant_phone).toBe("(405) 555-0101");
+    expect(mapped.eligible_participant_address).toEqual({
+      street: "1 Test St",
+      city: "Ada",
+      state: "Oklahoma",
+      zip: "74820",
+    });
+    expect(mapped.eligible_participant_title).toBe("Operator");
+  });
+
+  it("leaves dependent applications' participant fields alone", () => {
+    const input = {
+      ...scholarshipDefaultPayload,
+      relationship: "DependentChild",
+      applicant_email: "kid@example.org",
+      eligible_participant_email: "parent@example.org",
+    };
+    expect(withSelfEligibleParticipant(input as any)).toBe(input);
+    expect(mapScholarshipPayload(input as any).eligible_participant_email).toBe(
+      "parent@example.org"
+    );
+  });
+
+  it("sends the cycle year and defaults it when blank", () => {
+    expect(
+      mapScholarshipPayload({ ...scholarshipDefaultPayload, scholarship_year: 2027 } as any)
+        .scholarship_year
+    ).toBe(2027);
+    expect(
+      mapScholarshipPayload({ ...scholarshipDefaultPayload, scholarship_year: "" } as any)
+        .scholarship_year
+    ).toBe(nextConferenceYear());
+  });
+
   it("maps leftover grant-era field names onto schema keys", () => {
     const mapped = mapScholarshipPayload({
       ...scholarshipDefaultPayload,

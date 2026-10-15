@@ -4,8 +4,72 @@ import {
   ScholarshipFinancialResource,
   ScholarshipName,
 } from "../types/types";
+import { nextConferenceYear } from "./nextConferenceYear";
 
 export const MAX_FINANCIAL_RESOURCES = 10;
+
+const blank = (value: unknown) =>
+  value == null || (typeof value === "string" && value.trim() === "");
+
+/**
+ * "Self" applicants (member-system employee/director applying for themselves)
+ * are their own eligible participant. The Eligibility step only asks for the
+ * participant's title in that case, so fill name / email / phone / address
+ * from the applicant. Strapi applies the same rule authoritatively
+ * (`applySelfEligibleParticipant`); doing it here too keeps the generated PDF
+ * and the submitted payload identical. Dependent applications are untouched.
+ */
+export const withSelfEligibleParticipant = <
+  T extends Pick<
+    IScholarshipApplicationPayload,
+    | "relationship"
+    | "applicant_first_name"
+    | "applicant_last_name"
+    | "applicant_email"
+    | "applicant_phone"
+    | "applicant_street"
+    | "applicant_city"
+    | "applicant_state"
+    | "applicant_zip"
+  > &
+    Partial<
+      Pick<
+        IScholarshipApplicationPayload,
+        | "eligible_participant_name"
+        | "eligible_participant_email"
+        | "eligible_participant_phone"
+        | "eligible_participant_address"
+      >
+    >,
+>(
+  payload: T
+): T => {
+  if (payload.relationship !== "Self") return payload;
+  const next: T = { ...payload };
+  const name = payload.eligible_participant_name;
+  if (!name || (blank(name.first) && blank(name.last))) {
+    next.eligible_participant_name = {
+      first: payload.applicant_first_name || "",
+      last: payload.applicant_last_name || "",
+    };
+  }
+  if (blank(payload.eligible_participant_email)) {
+    next.eligible_participant_email = payload.applicant_email;
+  }
+  if (blank(payload.eligible_participant_phone)) {
+    next.eligible_participant_phone = payload.applicant_phone;
+  }
+  const address = payload.eligible_participant_address;
+  if (!address || (blank(address.street) && blank(address.city) && blank(address.zip))) {
+    next.eligible_participant_address = {
+      street: payload.applicant_street || "",
+      city: payload.applicant_city || "",
+      state: payload.applicant_state || "",
+      zip: payload.applicant_zip || "",
+    };
+  }
+  return next;
+};
 
 const emptyToUndefined = (value: unknown) =>
   value === "" || value === undefined ? undefined : value;
@@ -104,8 +168,16 @@ export const hydrateFinancialResources = (
  * Dates stay YYYY-MM-DD strings.
  */
 export const mapScholarshipPayload = (
+  rawPayload: IScholarshipApplicationPayload & Record<string, unknown>
+) => {
+  const payload = withSelfEligibleParticipant(rawPayload);
+  return mapResolvedScholarshipPayload(payload);
+};
+
+const mapResolvedScholarshipPayload = (
   payload: IScholarshipApplicationPayload & Record<string, unknown>
 ) => ({
+  scholarship_year: asNumber(payload.scholarship_year) ?? nextConferenceYear(),
   applicant_first_name: payload.applicant_first_name,
   applicant_middle_name: emptyToUndefined(payload.applicant_middle_name),
   applicant_last_name: payload.applicant_last_name,
