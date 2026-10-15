@@ -24,6 +24,11 @@
       "target": "api::watersystem.watersystem",
       "inversedBy": "scholarship_applications"
     },
+    "scholarship_year": {
+      "type": "integer",
+      "min": 2000,
+      "max": 2100
+    },
     "application_status": {
       "type": "enumeration",
       "default": "Draft",

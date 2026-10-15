@@ -28,6 +28,7 @@ import {
   singleMedia,
   validationErrorMessage,
 } from "../helpers";
+import { resolveCycleYear } from "../cycle-year";
 import {
   sendAwardNominationEmails,
   sendScholarshipApplicationEmails,
@@ -397,6 +398,7 @@ export default ({ strapi }) => {
           const data = coerceToSchema(SCHOLARSHIP_UID, {
             contact: contactDocumentId,
             watersystem: watersystem?.documentId ?? null,
+            scholarship_year: resolveCycleYear(body.scholarship_year),
             relationship: body.relationship,
             eligible_participant_name: body.eligible_participant_name,
             eligible_participant_title: body.eligible_participant_title,
@@ -643,7 +645,7 @@ export default ({ strapi }) => {
             board_members: body.board_members ?? null,
             supporting_documents: await mediaIds(body.supporting_documents),
             nomination_pdf: await mediaId(body.nomination_pdf),
-            award_year: body.award_year || new Date().getFullYear(),
+            award_year: resolveCycleYear(body.award_year),
             nomination_status: "Submitted",
             submission_date: new Date().toISOString(),
           });

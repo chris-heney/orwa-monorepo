@@ -6,6 +6,7 @@
  */
 
 import { resolveFinancialResources } from "./helpers";
+import { resolveCycleYear } from "./cycle-year";
 
 export const OFFICE_EMAIL = "office@orwa.org";
 export const WEBSITE_FROM_EMAIL = "website@orwa.org";
@@ -224,6 +225,11 @@ export const resolveNotificationPlan = (
 export const scholarshipAllFieldsRows = (
   payload: Record<string, unknown>
 ): AllFieldsRow[] => [
+  {
+    section: "Application",
+    label: "Year",
+    value: resolveCycleYear(payload.scholarship_year),
+  },
   {
     section: "Applicant",
     label: "First name",
@@ -463,7 +469,11 @@ export const awardAllFieldsRows = (
     value: payload.award_name_printed || payload.system_name,
   },
   { section: "Nominee", label: "Award", value: payload.award_type },
-  { section: "Nominee", label: "Year", value: payload.award_year },
+  {
+    section: "Nominee",
+    label: "Year",
+    value: resolveCycleYear(payload.award_year),
+  },
   { section: "Nominee", label: "Email", value: payload.email },
   { section: "Nominee", label: "Phone", value: payload.daytime_phone },
   {
@@ -606,11 +616,19 @@ const scalarVariables = (payload: Record<string, unknown>) => {
   return variables;
 };
 
+/**
+ * `{currentYear}` / `{year}` / `{cycleYear}` in email templates resolve to
+ * the scholarship cycle year (the next Annual Conference), not the calendar
+ * year the form happened to be submitted in — the seeded office subject is
+ * "New Scholarship Application - {currentYear}".
+ */
 export const buildScholarshipVariables = (
   payload: Record<string, unknown>,
   options?: { currentYear?: number }
 ) => {
-  const year = String(options?.currentYear ?? new Date().getFullYear());
+  const year = String(
+    options?.currentYear ?? resolveCycleYear(payload.scholarship_year)
+  );
   const applicantFirst = String(payload.applicant_first_name || "");
   const applicantLast = String(payload.applicant_last_name || "");
   const eligibleName = (payload.eligible_participant_name || {}) as NameLike;
@@ -620,6 +638,9 @@ export const buildScholarshipVariables = (
   return {
     ...scalarVariables(payload),
     currentYear: year,
+    year,
+    cycleYear: year,
+    scholarship_year: year,
     all_fields: buildAllFieldsHtml(scholarshipAllFieldsRows(payload)),
     form_title: SCHOLARSHIP_FORM_TITLE,
     "Applicant first name": escapeHtml(applicantFirst),
@@ -641,12 +662,15 @@ export const buildAwardVariables = (
   options?: { currentYear?: number }
 ) => {
   const year = String(
-    options?.currentYear ?? payload.award_year ?? new Date().getFullYear()
+    options?.currentYear ?? resolveCycleYear(payload.award_year)
   );
 
   return {
     ...scalarVariables(payload),
     currentYear: year,
+    year,
+    cycleYear: year,
+    award_year: year,
     all_fields: buildAllFieldsHtml(awardAllFieldsRows(payload)),
     form_title: AWARD_FORM_TITLE,
   };

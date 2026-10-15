@@ -142,6 +142,35 @@ describe("all_fields HTML", () => {
   });
 });
 
+describe("cycle year in email variables", () => {
+  it("scholarship {currentYear} and the Year row follow scholarship_year, never the calendar year", () => {
+    const variables = buildScholarshipVariables({
+      ...scholarshipPayload,
+      scholarship_year: 2027,
+    });
+    expect(variables.currentYear).toBe("2027");
+    expect(variables.year).toBe("2027");
+    expect(variables.cycleYear).toBe("2027");
+    expect(variables.all_fields).toContain(">Year</td>");
+    expect(variables.all_fields).toContain(">2027</td>");
+    expect(variables.all_fields).not.toContain("Cycle");
+    expect(
+      interpolate("New Scholarship Application - {currentYear}", variables)
+    ).toBe("New Scholarship Application - 2027");
+  });
+
+  it("award {currentYear} follows award_year", () => {
+    const variables = buildAwardVariables({
+      nominee_name: "Alex Rivera",
+      award_type: "Excellence in Operations",
+      award_year: 2027,
+    });
+    expect(variables.currentYear).toBe("2027");
+    expect(variables.all_fields).toContain(">2027</td>");
+    expect(variables.all_fields).not.toContain("Cycle");
+  });
+});
+
 describe("shouldSendEligibleParticipantEmail", () => {
   it("skips when the applicant is the eligible participant (Self)", () => {
     expect(

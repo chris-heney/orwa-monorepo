@@ -38,6 +38,8 @@ export interface IScholarshipApplicationPayload {
   watersystem?: number | string | null;
   watersystem_id?: number | string | null;
   system_name?: string;
+  /** Cycle year (next Annual Conference); server defaults it when absent. */
+  scholarship_year?: number | string | null;
   relationship: "Self" | "DependentChild" | "DependentGrandchild";
   eligible_participant_name?: ScholarshipName;
   eligible_participant_title: string;

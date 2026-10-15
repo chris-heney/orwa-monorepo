@@ -3443,6 +3443,14 @@ export interface ApiScholarshipApplicationScholarshipApplication
         },
         number
       >;
+    scholarship_year: Schema.Attribute.Integer &
+      Schema.Attribute.SetMinMax<
+        {
+          max: 2100;
+          min: 2000;
+        },
+        number
+      >;
     school_address: Schema.Attribute.Component<'scholarship.address', false>;
     school_name: Schema.Attribute.String & Schema.Attribute.Required;
     submission_date: Schema.Attribute.DateTime;
