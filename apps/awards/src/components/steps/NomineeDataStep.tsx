@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Card, CardContent, Typography, Button } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button } from "@mui/material";
 import Grid from "@mui/material/GridLegacy";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { TextInput } from "../_components/TextInput";
@@ -31,6 +31,7 @@ const NomineeDataStep: React.FC = () => {
   const { watch, control, register, setValue } = useFormContext();
   const { entryPayload } = useEntryPayload();
   const awardType = watch("award_type");
+  const awardYear = watch("award_year") || nextConferenceYear();
   const boardListMethod = watch("board_list_method");
   const showBoardList = isSystemOfTheYearAward(awardType);
   const showPrintedNomineeName = !isSystemOfTheYearAward(awardType);
@@ -64,6 +65,27 @@ const NomineeDataStep: React.FC = () => {
               placeholder="Enter nominee's full name"
             />
             <AwardNamePrintedField visible={showPrintedNomineeName} />
+            <Box
+              data-testid="award-year"
+              sx={{
+                mt: 1,
+                px: 2,
+                py: 1.5,
+                borderRadius: 1,
+                border: "1px solid",
+                borderColor: "primary.light",
+                bgcolor: "rgba(25, 118, 210, 0.06)",
+                textAlign: "left",
+              }}
+            >
+              <Typography variant="subtitle2" color="primary.dark">
+                Award Year: {awardYear}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                This nomination is for the {awardYear} awards, presented at the{" "}
+                {awardYear} ORWA Annual Conference.
+              </Typography>
+            </Box>
             <input type="hidden" {...register("award_year", { valueAsNumber: true })} />
           </Grid>
 

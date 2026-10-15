@@ -1,7 +1,11 @@
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { IAwardNominationPayload } from "../types/types";
 import { isSystemOfTheYearAward } from "./awardType";
+import { nextConferenceYear } from "./nextConferenceYear";
 import { embedPrintFonts, type PrintFonts } from "./printBrandFonts";
+
+/** Cover-band year label, e.g. "Year: 2027". Member Manager's packet must match. */
+export const COVER_YEAR_LABEL = "Year:";
 
 const NAVY = rgb(0.08, 0.2, 0.36);
 const GOLD = rgb(0.72, 0.55, 0.18);
@@ -160,8 +164,9 @@ const drawCover = (layout: Layout, payload: IAwardNominationPayload) => {
     font: fonts.bold,
     color: WHITE,
   });
+  // Cover label wording is a user requirement ("Year: 2027", never "Cycle").
   const cycle = fitText(
-    `Cycle ${payload.award_year ?? "—"}`,
+    `${COVER_YEAR_LABEL} ${payload.award_year ?? nextConferenceYear()}`,
     fonts.bold,
     COVER_TITLE_SIZE,
     rightMax
@@ -370,7 +375,7 @@ export async function generateAwardNominationPDF(payload: IAwardNominationPayloa
   fieldRow(layout, "Name", payload.nominee_name, true);
   fieldRow(layout, "Name as printed", payload.award_name_printed || payload.system_name);
   fieldRow(layout, "Award", payload.award_type, true);
-  fieldRow(layout, "Year", payload.award_year);
+  fieldRow(layout, "Year", payload.award_year ?? nextConferenceYear());
   fieldRow(layout, "Email", payload.email, true);
   fieldRow(layout, "Phone", payload.daytime_phone);
   fieldRow(
