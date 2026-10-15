@@ -1,12 +1,99 @@
 import { describe, expect, it } from "vitest";
 import {
+  applySelfEligibleParticipant,
   emptyToNull,
   manyMedia,
   resolveFinancialResources,
   resolveGpa,
   resolveSystemName,
   singleMedia,
+  validationErrorMessage,
 } from "./helpers";
+
+describe("applySelfEligibleParticipant", () => {
+  const applicant = {
+    applicant_first_name: "Hunter",
+    applicant_last_name: "Breitenberg",
+    applicant_email: "hunter@example.org",
+    applicant_phone: "(405) 555-0101",
+    applicant_street: "1 Test St",
+    applicant_city: "Ada",
+    applicant_state: "Oklahoma",
+    applicant_zip: "74820",
+  };
+
+  it("fills participant contact fields from the applicant for Self", () => {
+    const result = applySelfEligibleParticipant({
+      ...applicant,
+      relationship: "Self",
+      eligible_participant_name: { first: "", last: "" },
+      eligible_participant_email: "",
+      eligible_participant_phone: "",
+      eligible_participant_address: { street: "", city: "", state: "Oklahoma", zip: "" },
+    });
+    expect(result.eligible_participant_name).toEqual({
+      first: "Hunter",
+      last: "Breitenberg",
+    });
+    expect(result.eligible_participant_email).toBe("hunter@example.org");
+    expect(result.eligible_participant_phone).toBe("(405) 555-0101");
+    expect(result.eligible_participant_address).toEqual({
+      street: "1 Test St",
+      city: "Ada",
+      state: "Oklahoma",
+      zip: "74820",
+    });
+  });
+
+  it("also handles fields that were never sent (undefined)", () => {
+    const result = applySelfEligibleParticipant({
+      ...applicant,
+      relationship: "Self",
+    });
+    expect(result.eligible_participant_email).toBe("hunter@example.org");
+    expect(result.eligible_participant_name?.first).toBe("Hunter");
+  });
+
+  it("keeps values the client did send", () => {
+    const result = applySelfEligibleParticipant({
+      ...applicant,
+      relationship: "Self",
+      eligible_participant_email: "work@example.org",
+    });
+    expect(result.eligible_participant_email).toBe("work@example.org");
+  });
+
+  it("leaves dependent applications untouched", () => {
+    const input = {
+      ...applicant,
+      relationship: "DependentChild",
+      eligible_participant_email: "",
+    };
+    expect(applySelfEligibleParticipant(input)).toBe(input);
+  });
+});
+
+describe("validationErrorMessage", () => {
+  it("lists field paths from a Strapi/yup ValidationError", () => {
+    const err = Object.assign(new Error("2 errors occurred"), {
+      name: "ValidationError",
+      details: {
+        errors: [
+          { path: ["eligible_participant_phone"], message: "eligible_participant_phone must be defined." },
+          { path: ["eligible_participant_email"], message: "This attribute must be unique" },
+        ],
+      },
+    });
+    expect(validationErrorMessage(err)).toBe(
+      "Please check the following: eligible_participant_phone must be defined.; eligible_participant_email: This attribute must be unique."
+    );
+  });
+
+  it("returns null for non-validation errors", () => {
+    expect(validationErrorMessage(new Error("boom"))).toBeNull();
+    expect(validationErrorMessage(null)).toBeNull();
+  });
+});
 
 describe("submissions helpers", () => {
   it("emptyToNull turns blank strings into null and keeps real values", () => {

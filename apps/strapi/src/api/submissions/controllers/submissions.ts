@@ -18,6 +18,7 @@ import {
 } from "../../scholarship-application/types";
 import { AdminOptions } from "../../membership-forms/types";
 import {
+  applySelfEligibleParticipant,
   emptyToNull,
   isDocumentId,
   manyMedia,
@@ -25,6 +26,7 @@ import {
   resolveGpa,
   resolveSystemName,
   singleMedia,
+  validationErrorMessage,
 } from "../helpers";
 import {
   sendAwardNominationEmails,
@@ -313,7 +315,12 @@ export default ({ strapi }) => {
   return {
     createScholarshipApplication: async (ctx) => {
       try {
-        const body = ctx.request.body as IScholarshipApplicationPayload;
+        // "Self" applicants are their own eligible participant; the wizard
+        // does not re-ask for their contact details, but the schema requires
+        // participant email/phone — derive them server-side (authoritative).
+        const body = applySelfEligibleParticipant(
+          ctx.request.body as IScholarshipApplicationPayload
+        );
         const { adminOptions } = body;
 
         if (shouldCreateRecord(adminOptions)) {
@@ -511,11 +518,14 @@ export default ({ strapi }) => {
 
         ctx.body = { message: "success" };
       } catch (err) {
-        strapi.log.error(`Scholarship Application Error: ${err.message}`);
-        ctx.status = 500;
+        const validation = validationErrorMessage(err);
+        strapi.log.error(
+          `Scholarship Application Error: ${validation || err.message}`
+        );
+        ctx.status = validation ? 400 : 500;
         ctx.body = {
           message: "error",
-          error: err.message,
+          error: validation || err.message,
         };
       }
     },
@@ -696,11 +706,14 @@ export default ({ strapi }) => {
 
         ctx.body = { message: "success" };
       } catch (err) {
-        strapi.log.error(`Award Nomination Error: ${err.message}`);
-        ctx.status = 500;
+        const validation = validationErrorMessage(err);
+        strapi.log.error(
+          `Award Nomination Error: ${validation || err.message}`
+        );
+        ctx.status = validation ? 400 : 500;
         ctx.body = {
           message: "error",
-          error: err.message,
+          error: validation || err.message,
         };
       }
     },
