@@ -4,6 +4,7 @@ import {
   FormSubmittedContext,
   IScholarshipApplicationPayload,
   ScholarshipApplicationPayloadContext,
+  SubmittedApplicationSummary,
 } from "../types/types";
 import DefaultScholarshipFormSteps, {
   IFormStep,
@@ -26,6 +27,8 @@ export const PayloadProvider =
 export const FormSubbmited = createContext<FormSubmittedContext>({
   isFormSubmitted: false,
   setIsFormSubmitted: () => {},
+  submittedApplication: null,
+  setSubmittedApplication: () => {},
 });
 
 export const useFormSubmittedContext = () => useContext(FormSubbmited);
@@ -45,6 +48,8 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
   );
   const [stepIndex, setStepIndex] = useState<number>(0);
   const [isFormSubmitted, setIsFormSubmitted] = useState<boolean>(false);
+  const [submittedApplication, setSubmittedApplication] =
+    useState<SubmittedApplicationSummary | null>(null);
   const [entryPayload, setEntryPayload] =
     useState<IScholarshipApplicationPayload | null>(null);
 
@@ -63,6 +68,8 @@ const AppContextProvider = ({ children }: PropsWithChildren) => {
             value={{
               isFormSubmitted,
               setIsFormSubmitted,
+              submittedApplication,
+              setSubmittedApplication,
             }}
           >
             {children}

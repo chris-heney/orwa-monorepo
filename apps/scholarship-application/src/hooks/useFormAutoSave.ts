@@ -19,6 +19,12 @@ export const useFormAutoSave = ({
   useEffect(() => {
     if (!enabled || isAdminView) return;
 
+    // Step 1 is where a fresh (or just-reset / just-submitted) wizard mounts.
+    // Its defaults (`applicant_state`, `scholarship_year`, …) are non-empty,
+    // so snapshotting here made every reload offer a "Previous Session".
+    // Nothing is worth saving until the applicant has clicked Next.
+    if (stepIndex === 0) return;
+
     // if watersystem name is empty, don't save meaning they havent yet clicked continue
     if (getValues('legal_entity_name') === '') return;
 

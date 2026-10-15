@@ -13,10 +13,12 @@ import {
   saveWizardDraft,
   setStepKeyInUrl,
 } from "../helpers/wizardPersistence";
+import {
+  SCHOLARSHIP_WIZARD_FORM_ID as FORM_ID,
+  SCHOLARSHIP_WIZARD_SOURCE as SOURCE,
+} from "../helpers/draftReset";
 
 const SAVE_DEBOUNCE_MS = 250;
-const FORM_ID = "orwef-scholarship";
-const SOURCE = "online";
 
 const WizardStateSync = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
@@ -85,7 +87,9 @@ const WizardStateSync = () => {
   ]);
 
   useEffect(() => {
-    if (entryPayload) return;
+    // Never re-persist a submitted application on pagehide/beforeunload —
+    // that would resurrect the draft the submit just cleared.
+    if (entryPayload || isFormSubmitted) return;
     const flush = () => {
       const stepKey =
         (hasRestoredStep && currentStepKey) ||
@@ -103,7 +107,7 @@ const WizardStateSync = () => {
       window.removeEventListener("pagehide", flush);
       window.removeEventListener("beforeunload", flush);
     };
-  }, [currentStepKey, entryPayload, getValues, hasRestoredStep]);
+  }, [currentStepKey, entryPayload, getValues, hasRestoredStep, isFormSubmitted]);
 
   useEffect(() => {
     if (!isFormSubmitted) return;

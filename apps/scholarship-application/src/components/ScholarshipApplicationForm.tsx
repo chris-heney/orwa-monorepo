@@ -6,15 +6,22 @@ import WizardStateSync from "./WizardStateSync";
 import {
   FormSteps,
   useEntryPayload,
+  useFormSubmittedContext,
 } from "../providers/AppContextProvider";
 import { useUserContext } from "../providers/UserContextProvider";
 import PreviousSessionModal from "./PreviousSessionModal";
+import SubmissionSuccess from "./SubmissionSuccess";
 import {
   getSavedFormData,
   clearSavedFormData,
   restoreFilesFromCache,
 } from "../helpers/formPersistence";
 import { loadWizardDraft } from "../helpers/wizardPersistence";
+import {
+  clearScholarshipDrafts,
+  SCHOLARSHIP_WIZARD_FORM_ID,
+  SCHOLARSHIP_WIZARD_SOURCE,
+} from "../helpers/draftReset";
 import { ValidationHighlightProvider } from "../helpers/validationHighlight";
 import { scholarshipDefaultPayload } from "../helpers/scholarshipDefaultPayload";
 import { hydrateFinancialResources } from "../helpers/mapScholarshipPayload";
@@ -38,7 +45,13 @@ const withCurrentCycleYear = (payload: Record<string, any>) => ({
 const ScholarshipApplicationForm = () => {
   const { steps, setStepIndex, stepIndex } = useContext(FormSteps);
   const { entryPayload } = useEntryPayload();
-  const { isAdminView, isLoggedIn } = useUserContext();
+  const { isAdminView } = useUserContext();
+  const {
+    isFormSubmitted,
+    setIsFormSubmitted,
+    submittedApplication,
+    setSubmittedApplication,
+  } = useFormSubmittedContext();
   
   const [showPreviousSessionModal, setShowPreviousSessionModal] = useState(false);
   const [savedTimestamp, setSavedTimestamp] = useState<number>(0);
@@ -63,7 +76,10 @@ const ScholarshipApplicationForm = () => {
 
     // Only check for saved data if we're not in admin view and no entryPayload exists
     if (!isAdminView && !entryPayload) {
-      const wizardDraft = loadWizardDraft("orwef-scholarship", "online");
+      const wizardDraft = loadWizardDraft(
+        SCHOLARSHIP_WIZARD_FORM_ID,
+        SCHOLARSHIP_WIZARD_SOURCE
+      );
       if (wizardDraft?.values) {
         setFormDefaultValues(
           withCurrentCycleYear(
@@ -116,6 +132,31 @@ const ScholarshipApplicationForm = () => {
     setStepIndex(0);
     setFormKey(prev => prev + 1); // Force form re-render with fresh data
   };
+
+  /**
+   * "Start another application" from the success screen: forget every trace
+   * of the submitted application on this device (session draft, auto-save
+   * snapshot, cached uploads, `?step=`) and remount a blank wizard on step 1.
+   */
+  const handleStartAnother = async () => {
+    await clearScholarshipDrafts();
+    setSubmittedApplication(null);
+    setFormDefaultValues(
+      withCurrentCycleYear(withFinancialResources(scholarshipDefaultPayload))
+    );
+    setStepIndex(0);
+    setFormKey((prev) => prev + 1);
+    setIsFormSubmitted(false);
+  };
+
+  if (isFormSubmitted) {
+    return (
+      <SubmissionSuccess
+        summary={submittedApplication}
+        onStartAnother={handleStartAnother}
+      />
+    );
+  }
 
   return (
     <>

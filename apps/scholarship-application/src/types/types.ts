@@ -142,9 +142,22 @@ export interface ScholarshipApplicationPayloadContext {
   >;
 }
 
+/** What the post-submit success screen shows about the accepted application. */
+export interface SubmittedApplicationSummary {
+  applicantName: string;
+  applicantEmail: string;
+  scholarshipYear: number;
+  /** Strapi `documentId` of the created record, when the server returned one. */
+  documentId: string | null;
+}
+
 export interface FormSubmittedContext {
   isFormSubmitted: boolean;
   setIsFormSubmitted: Dispatch<SetStateAction<boolean>>;
+  submittedApplication: SubmittedApplicationSummary | null;
+  setSubmittedApplication: Dispatch<
+    SetStateAction<SubmittedApplicationSummary | null>
+  >;
 }
 
 export interface EmailPayload {

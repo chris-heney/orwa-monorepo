@@ -10,7 +10,8 @@ interface FileCacheReference {
   timestamp: number;
 }
 
-const FORM_STORAGE_KEY = 'grant_application_form_data';
+export const SAVED_FORM_STORAGE_KEY = 'grant_application_form_data';
+const FORM_STORAGE_KEY = SAVED_FORM_STORAGE_KEY;
 
 // File field names that should be excluded from persistence
 const FILE_FIELDS = [

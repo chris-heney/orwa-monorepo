@@ -3,13 +3,12 @@ import { useFormContext } from "react-hook-form";
 import { FormSteps } from "../providers/AppContextProvider";
 import { useNotify } from "../NotificationProvider";
 import { useFormSubmittedContext } from "../providers/AppContextProvider";
-import { fileCache } from "../helpers/fileCache";
-import { clearSavedFormData } from "../helpers/formPersistence";
 import { submitApplication } from "../data/API";
 import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import { mapScholarshipPayload } from "../helpers/mapScholarshipPayload";
-import { clearWizardDraft, setStepKeyInUrl } from "../helpers/wizardPersistence";
+import { clearScholarshipDrafts } from "../helpers/draftReset";
+import { summarizeSubmittedApplication } from "../helpers/submittedApplicationSummary";
 import { submissionErrorMessage } from "../helpers/submissionErrorMessage";
 import {
   mapFormErrorsToValidationFields,
@@ -22,7 +21,8 @@ const SimpleStepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
   const { trigger, getValues, formState } = useFormContext();
   const { notify } = useNotify();
-  const { setIsFormSubmitted } = useFormSubmittedContext();
+  const { setIsFormSubmitted, setSubmittedApplication } =
+    useFormSubmittedContext();
   const { showInvalid } = useValidationHighlight();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -110,15 +110,13 @@ const SimpleStepNavigation = () => {
       );
 
       if (response && response.message === "success") {
+        // Forget the draft before swapping to the success screen so a reload
+        // can never land back on a pre-filled final step.
+        await clearScholarshipDrafts();
+        setSubmittedApplication(
+          summarizeSubmittedApplication(formPayload, response)
+        );
         setIsFormSubmitted(true);
-        clearSavedFormData();
-        clearWizardDraft("orwef-scholarship", "online");
-        setStepKeyInUrl(null);
-        try {
-          await fileCache.clearCache();
-        } catch (error) {
-          console.warn("Failed to clear file cache:", error);
-        }
         notify("Application submitted successfully!", "success");
       } else {
         // Server-side eligibility rejections (inactive membership) arrive as
