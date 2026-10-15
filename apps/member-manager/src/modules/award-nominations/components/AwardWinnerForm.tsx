@@ -1,18 +1,24 @@
 import React from "react";
 import {
+  AutocompleteInput,
   BooleanInput,
   ImageField,
   ImageInput,
   NumberInput,
+  ReferenceInput,
   SelectInput,
   SimpleForm,
   TextInput,
   required,
   useGetList,
+  useGetOne,
   useNotify,
   useRecordContext,
 } from "react-admin";
-import { Box, Grid, Typography } from "@mui/material";
+import { useFormContext, useWatch } from "react-hook-form";
+import { Link as RouterLink } from "react-router-dom";
+import { Box, Button, Grid, Typography } from "@mui/material";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import FormHeadingBar from "./FormHeadingBar";
 import {
   fullFieldSx,
@@ -21,18 +27,64 @@ import {
   reviewFormSx,
 } from "../../_components/review-packet";
 import { nominationCycleYear } from "../helpers/listFilters";
-import { winnerImageUrl, type AwardWinnerRecord } from "../helpers/winnerImage";
+import {
+  winnerImageUrl,
+  type AwardWinnerRecord,
+  type AwardWinnerRow,
+} from "../helpers/winnerImage";
 import {
   awardTypeChoices,
   type AwardTypeRecord,
 } from "../helpers/awardTypes";
+import {
+  nominationOptionText,
+  winnerPrefillFromNomination,
+  type LinkableNomination,
+  type WinnerDraft,
+} from "../helpers/winnerLink";
 
 const AWARD_BACK = "/orwa-awards/dashboard";
 
-/** Shows the image already saved, whether uploaded to Strapi or linked to orwa.org. */
+/** Relations the nomination picker / prefill read. */
+const NOMINATION_PICK_META = {
+  populate: { watersystem: true, contact: true },
+  raw: true,
+} as const;
+
+/**
+ * ImageInput preview value. The stored upload arrives as a bare numeric id
+ * (see `useRawWinner`); react-admin's default formatter would hand that
+ * number to FileInputPreview. Only objects are previewable — the id itself
+ * stays in the form value, so saving without a new upload keeps the photo.
+ */
+const formatPhotoInput = (value: unknown) => {
+  if (typeof File !== "undefined" && value instanceof File) {
+    return { rawFile: value, src: URL.createObjectURL(value), title: value.name };
+  }
+  return value && typeof value === "object" ? value : null;
+};
+
+/**
+ * Edit loads the record through the RA formatter (relations collapsed to
+ * ids so the inputs work), which leaves `photo` as a bare upload id. Fetch
+ * the same winner raw once for display-only pieces (current photo).
+ */
+const useRawWinner = (record: AwardWinnerRecord | undefined) =>
+  useGetOne<AwardWinnerRow>(
+    "award-winners",
+    { id: record?.id as string, meta: { populate: { photo: true }, raw: true } },
+    { enabled: record?.id != null && typeof record?.photo !== "object" }
+  );
+
+/** Shows the image already saved — uploaded `photo` first, legacy URLs second. */
 const CurrentPhoto = () => {
   const record = useRecordContext<AwardWinnerRecord>();
-  const url = winnerImageUrl(record, "thumbnail");
+  const { data: raw } = useRawWinner(record);
+  const source =
+    record && typeof record.photo === "object" && record.photo
+      ? record
+      : raw ?? record;
+  const url = winnerImageUrl(source, "thumbnail");
   if (!url) return null;
 
   return (
@@ -47,6 +99,83 @@ const CurrentPhoto = () => {
         sx={{ display: "block", mt: 0.5, maxWidth: 280, borderRadius: 1 }}
       />
     </Box>
+  );
+};
+
+/**
+ * Nomination picker + one-shot prefill. When staff pick a nomination, the
+ * blank Award / Recipient / Water System / Year fields are filled from it —
+ * anything already typed is left alone. Must render inside the form.
+ */
+const NominationLink = () => {
+  const record = useRecordContext<AwardWinnerRecord>();
+  const { setValue, getValues } = useFormContext();
+  const nominationId = useWatch({ name: "award_nomination" }) as
+    | string
+    | number
+    | null
+    | undefined;
+  const awardYear = useWatch({ name: "award_year" }) as number | null | undefined;
+  const appliedFor = React.useRef<string | number | null | undefined>(
+    (record as { award_nomination?: string | number | null } | undefined)?.award_nomination ?? null
+  );
+
+  const { data: nomination } = useGetOne<LinkableNomination & { id: string | number }>(
+    "award-nominations",
+    { id: nominationId as string, meta: NOMINATION_PICK_META },
+    { enabled: nominationId != null && nominationId !== "" }
+  );
+
+  React.useEffect(() => {
+    if (!nomination || nominationId == null || nominationId === "") return;
+    if (appliedFor.current === nominationId) return;
+    appliedFor.current = nominationId;
+    const patch = winnerPrefillFromNomination(nomination, getValues() as WinnerDraft);
+    (Object.keys(patch) as (keyof WinnerDraft)[]).forEach((key) => {
+      setValue(key, patch[key], { shouldDirty: true, shouldTouch: true });
+    });
+  }, [nomination, nominationId, getValues, setValue]);
+
+  const yearFilter =
+    typeof awardYear === "number" && Number.isFinite(awardYear)
+      ? { award_year: awardYear }
+      : {};
+
+  return (
+    <>
+      <ReferenceInput
+        source="award_nomination"
+        reference="award-nominations"
+        filter={yearFilter}
+        sort={{ field: "nominee_name", order: "ASC" }}
+        perPage={50}
+        queryOptions={{ meta: NOMINATION_PICK_META }}
+      >
+        <AutocompleteInput
+          label="Linked nomination"
+          optionText={nominationOptionText}
+          filterToQuery={(q: string) => ({ q })}
+          fullWidth
+          sx={fullFieldSx}
+          helperText={
+            yearFilter.award_year
+              ? `Nominations for ${yearFilter.award_year}. Picking one fills the blank fields below.`
+              : "Picking a nomination fills the blank fields below."
+          }
+        />
+      </ReferenceInput>
+      {nominationId ? (
+        <Button
+          component={RouterLink}
+          to={`/award-nominations/${nominationId}/show`}
+          size="small"
+          startIcon={<OpenInNewIcon />}
+          sx={{ mt: -1, mb: 1 }}
+        >
+          Open nomination
+        </Button>
+      ) : null}
+    </>
   );
 };
 
@@ -89,6 +218,12 @@ const AwardWinnerForm = () => {
       <Box sx={{ width: 1, px: { xs: 1, sm: 2 }, pb: 2 }}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
+            <ReviewSectionCard title="Nomination">
+              <NominationLink />
+            </ReviewSectionCard>
+          </Grid>
+
+          <Grid item xs={12}>
             <ReviewSectionCard title="Award">
               <Grid container spacing={2}>
                 <Grid item xs={12} md={3}>
@@ -129,6 +264,31 @@ const AwardWinnerForm = () => {
                     sx={fullFieldSx}
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  {/*
+                    Keyed by numeric PK: the data provider's media heuristic
+                    (`url != null`) treats watersystem rows as uploads and
+                    collapses the relation to its numeric id on read, so a
+                    documentId-keyed picker would never show the saved value.
+                    Numeric relation ids are accepted on write.
+                  */}
+                  <ReferenceInput
+                    source="watersystem"
+                    reference="watersystems"
+                    sort={{ field: "name", order: "ASC" }}
+                    perPage={50}
+                  >
+                    <AutocompleteInput
+                      label="Water system"
+                      optionText="name"
+                      optionValue="entityId"
+                      filterToQuery={(q: string) => ({ q })}
+                      fullWidth
+                      sx={fullFieldSx}
+                      helperText="Optional — the member system this recipient represents"
+                    />
+                  </ReferenceInput>
+                </Grid>
               </Grid>
             </ReviewSectionCard>
           </Grid>
@@ -141,6 +301,7 @@ const AwardWinnerForm = () => {
                 label=""
                 accept="image/png,image/jpeg,image/webp"
                 helperText="Upload to replace the current photo."
+                format={formatPhotoInput}
                 fullWidth
                 sx={{
                   "& .RaFileInput-dropZone": {
@@ -164,7 +325,7 @@ const AwardWinnerForm = () => {
                   <TextInput
                     source="photo_url"
                     label="Photo URL (fallback)"
-                    helperText="Used when no photo is uploaded — e.g. an orwa.org image."
+                    helperText="Used only when no photo is uploaded — e.g. an orwa.org image."
                     fullWidth
                     sx={fullFieldSx}
                   />

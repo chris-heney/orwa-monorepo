@@ -12,8 +12,11 @@ import {
   useNotify,
   useRecordContext,
 } from "react-admin";
+import { useWatch } from "react-hook-form";
 import { Box, Grid, Typography } from "@mui/material";
 import FormHeadingBar from "./FormHeadingBar";
+import NominationWinnerPanel from "./NominationWinnerPanel";
+import type { LinkableNomination } from "../helpers/winnerLink";
 import {
   dateInputProps,
   emailFieldSx,
@@ -37,6 +40,17 @@ import {
 import { AWARD_STATUSES } from "../helpers/listFilters";
 
 const AWARD_BACK = "/orwa-awards/dashboard";
+
+/** Winners-gallery bridge driven by the live status select (must sit inside the form). */
+const WinnerBridge = ({ record }: { record: Record<string, unknown> | undefined }) => {
+  const pendingStatus = useWatch({ name: "nomination_status" }) as string | undefined;
+  return (
+    <NominationWinnerPanel
+      record={record as LinkableNomination | undefined}
+      pendingStatus={pendingStatus ?? null}
+    />
+  );
+};
 
 const AwardForm = () => {
   const record = useRecordContext<Record<string, unknown>>();
@@ -115,6 +129,9 @@ const AwardForm = () => {
                     fullWidth
                     sx={fullFieldSx}
                   />
+                </Grid>
+                <Grid item xs={12}>
+                  <WinnerBridge record={record} />
                 </Grid>
               </Grid>
             </ReviewSectionCard>

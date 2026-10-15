@@ -31,6 +31,7 @@ import AwardFilterSidebar from "./components/AwardFilterSidebar";
 import { AwardYearSelectAction } from "./components/AwardYearSelect";
 import { AwardPrintSelectedButton } from "./components/AwardPrintButton";
 import { NOMINATION_LIST_POPULATE } from "./components/AwardNominationList";
+import { WINNER_LIST_POPULATE } from "./components/AwardWinnerList";
 import {
   AWARD_STORE_KEYS,
   AWARD_WATCH_KEYS,
@@ -119,8 +120,16 @@ export const awardsModule: ModuleManifest = {
   icon: EmojiEventsIcon,
   menu: { label: "ORWA Awards", to: DASHBOARD },
   permissions: {
-    pathPrefixes: ["/orwa-awards", "/award-nominations", "/award-winners"],
-    resources: ["award-nominations", "award-winners"],
+    pathPrefixes: [
+      "/orwa-awards",
+      "/award-nominations",
+      "/award-winners",
+      "/award-types",
+    ],
+    // `award-types` is edited from the Settings tab (and /award-types/* create
+    // / edit routes); listing it here puts those routes and RequireCan
+    // fallbacks under the awards module permission.
+    resources: ["award-nominations", "award-winners", "award-types"],
   },
   resources: {
     "award-nominations": awardNominationsResource,
@@ -176,7 +185,7 @@ export const awardsModule: ModuleManifest = {
               filter: winnerFilterFromCtx,
               sort: { field: "award_year", order: "DESC" },
               perPage: 50,
-              meta: { populate: { photo: true }, raw: true },
+              meta: { populate: WINNER_LIST_POPULATE, raw: true },
               filterBody: AwardFilterSidebar,
             },
             actions: [createAction("award-winners", { label: "Add Winner" })],

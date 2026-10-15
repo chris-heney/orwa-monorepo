@@ -11,7 +11,12 @@ const AwardWinnerEdit = () => (
     redirect={false}
     mutationMode="pessimistic"
     sx={formPageSx}
-    queryOptions={{ meta: { populate: { photo: true } } }}
+    // RA-formatted read: relations collapse to ids so the Reference inputs
+    // (nomination, water system) get a value; `photo` becomes a bare upload
+    // id, which the form re-fetches raw for display.
+    queryOptions={{
+      meta: { populate: { photo: true, award_nomination: true, watersystem: true } },
+    }}
   >
     <AwardWinnerForm />
   </Edit>

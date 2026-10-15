@@ -11,6 +11,7 @@ import {
 } from "../../_components/review-packet";
 import { NOMINATION_META, NominationStatus } from "../helpers/metrics";
 import MediaLink from "../../orwef-scholarships/components/MediaLink";
+import NominationWinnerPanel from "./NominationWinnerPanel";
 import {
   boardMembersSummary,
   contactSummary,
@@ -34,7 +35,12 @@ export type AwardRecord = Record<string, unknown> & {
   submission_date?: string | null;
   system_name?: string;
   award_name_printed?: string;
-  watersystem?: { name?: string; county?: string | null } | null;
+  watersystem?: {
+    id?: string | number;
+    documentId?: string;
+    name?: string;
+    county?: string | null;
+  } | null;
   operation_start_date?: string | null;
   employment_date?: string | null;
   current_members?: number | null;
@@ -108,6 +114,7 @@ const AwardShow = () => {
                   ? ` · Submitted ${asDateString(record.submission_date)}`
                   : ""}
               </Typography>
+              <NominationWinnerPanel record={record} />
             </>
           }
         />
