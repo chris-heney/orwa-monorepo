@@ -8,6 +8,9 @@ import WarningIcon from '@mui/icons-material/Warning';
 
 type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
+const DEFAULT_VISIBLE_MS = 2500;
+const ERROR_VISIBLE_MS = 10000;
+
 export interface INotifyContext {
   notify: (message: string, type?: NotificationType) => void;
 }
@@ -31,9 +34,14 @@ export const NotifyProvider = ({ children }: { children: React.ReactNode }) => {
     open: false,
   });
 
+  // Errors (e.g. server-side eligibility rejections) carry a sentence or two
+  // and the user base skews older — keep them on screen long enough to read.
   const notify = (message: string, type: NotificationType = 'info') => {
     setNotification({ message, type, open: true });
-    setTimeout(() => setNotification(prev => ({ ...prev, open: false })), 2500);
+    setTimeout(
+      () => setNotification(prev => ({ ...prev, open: false })),
+      type === 'error' ? ERROR_VISIBLE_MS : DEFAULT_VISIBLE_MS
+    );
   };
 
   const handleClose = () => {
@@ -60,7 +68,7 @@ export const NotifyProvider = ({ children }: { children: React.ReactNode }) => {
       {children}
       <Snackbar
         open={notification.open}
-        autoHideDuration={3000}
+        autoHideDuration={notification.type === 'error' ? ERROR_VISIBLE_MS : DEFAULT_VISIBLE_MS}
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >

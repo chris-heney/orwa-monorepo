@@ -8,6 +8,7 @@ import { uploadNominationPDF } from "../../helpers/uploadNominationPdf";
 import { mapAwardNominationPayload } from "../../helpers/mapAwardNominationPayload";
 import { submitAwardNomination } from "../../data/API";
 import { clearWizardDraft, setStepKeyInUrl } from "../../helpers/wizardPersistence";
+import { submissionErrorMessage } from "../../helpers/submissionErrorMessage";
 import { fileCache } from "../../helpers/fileCache";
 import {
   mapFormErrorsToValidationFields,
@@ -99,9 +100,13 @@ const SimpleStepNavigation = () => {
         }
         notify("Award nomination submitted successfully!", "success");
       } else {
+        // Server-side eligibility rejections (inactive membership, closed
+        // award type) arrive as 400s — show the server's message verbatim.
         notify(
-          response?.error ||
-            "Error submitting award nomination. Please try again later.",
+          submissionErrorMessage(
+            response,
+            "Error submitting award nomination. Please try again later."
+          ),
           "error"
         );
       }

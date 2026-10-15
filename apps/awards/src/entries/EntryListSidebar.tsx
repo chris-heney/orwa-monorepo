@@ -8,6 +8,7 @@ import { IAwardNominationPayload } from "../types/types";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import { fileCache } from "../helpers/fileCache";
 import { submitAwardNomination } from "../data/API";
+import { submissionErrorMessage } from "../helpers/submissionErrorMessage";
 
 const EntryListSidebar = () => {
   const formContext = (() => {
@@ -67,7 +68,10 @@ const EntryListSidebar = () => {
         setViewingEntries(true);
       } else {
         notify(
-          "Error submitting application. Please try again later.",
+          submissionErrorMessage(
+            response,
+            "Error submitting application. Please try again later."
+          ),
           "error"
         );
       }
