@@ -19,6 +19,15 @@ import {
 } from "../../award-nominations/helpers/documentText";
 import { resolveMediaUrl } from "../../orwef-scholarships/helpers/resolveMediaUrl";
 import {
+  extractLegacyDocText,
+  extractWorkbookBlocks,
+  isLegacyWordAttachment,
+  isSpreadsheetAttachment,
+  linesToBlocks,
+  rtfToText,
+  sniffBinaryContainer,
+} from "./legacyOffice";
+import {
   attachmentDividerTitle,
   attachmentTypeLabel,
   combineEmbedResults,
@@ -36,8 +45,9 @@ import {
  * form, in submission order, each under a divider naming the field it came
  * from and its filename. PDFs are embedded page by page (scaled to fit),
  * images are embedded (converted through a canvas when pdf-lib cannot read
- * them natively), DOCX / CSV / text / XLSX are rendered as text, and anything
- * else gets an explicit "could not be embedded" note instead of a blank page.
+ * them natively), Word (DOC / DOCX / RTF), Excel (XLS / XLSX), CSV and text
+ * are rendered as extracted text, and anything else gets an explicit "could
+ * not be embedded" note instead of a blank page.
  */
 
 const NAVY = rgb(0.08, 0.2, 0.36);
@@ -458,7 +468,7 @@ const appendImage = (
   layout.y -= drawH + 12;
 };
 
-/* ---------- text (DOCX / CSV / TXT / XLSX) ---------- */
+/* ---------- text (DOC / DOCX / RTF / CSV / TXT / XLS / XLSX) ---------- */
 
 const runFont = (fonts: PrintFonts, run: DocumentTextRun): PDFFont => {
   if (run.bold && run.italic) return fonts.boldItalic;
@@ -588,46 +598,90 @@ const appendTextBlocks = (
   drawDocumentBlocks({ layout, attachment, pageNo: 1 }, blocks);
 };
 
-const isXlsxAttachment = (mime: string, ext: string) =>
-  mime.includes("spreadsheetml") || ext === ".xlsx";
+type TextOutcome =
+  | { ok: true; blocks: DocumentTextBlock[] }
+  | { ok: false; detail: string };
 
-/** Workbook → "Sheet" headings + one paragraph per row (exceljs is loaded lazily). */
-const extractXlsxBlocks = async (bytes: Uint8Array): Promise<DocumentTextBlock[]> => {
-  const mod = await import("exceljs");
-  const ExcelJS = (mod as unknown as { default?: typeof mod }).default ?? mod;
-  const workbook = new ExcelJS.Workbook();
-  const buffer = new ArrayBuffer(bytes.byteLength);
-  new Uint8Array(buffer).set(bytes);
-  await workbook.xlsx.load(buffer);
-  const blocks: DocumentTextBlock[] = [];
-  workbook.eachSheet((sheet) => {
-    const rows: string[] = [];
-    sheet.eachRow({ includeEmpty: false }, (row) => {
-      const cells = (row.values as unknown[])
-        .slice(1)
-        .map((cell) => {
-          if (cell == null) return "";
-          if (typeof cell === "object") {
-            const rich = cell as { richText?: Array<{ text: string }>; text?: string; result?: unknown };
-            if (rich.richText) return rich.richText.map((part) => part.text).join("");
-            if (rich.text) return rich.text;
-            if (rich.result != null) return String(rich.result);
-            if (cell instanceof Date) return cell.toISOString().slice(0, 10);
-            return "";
-          }
-          return String(cell);
-        })
-        .map((cell) => cell.trim());
-      while (cells.length && !cells[cells.length - 1]) cells.pop();
-      if (cells.some(Boolean)) rows.push(cells.join("   "));
-    });
-    if (rows.length === 0) return;
-    if (workbook.worksheets.length > 1) {
-      blocks.push({ kind: "heading", level: 2, runs: [{ text: sheet.name }] });
+const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+const looksLikePlainText = (bytes: Uint8Array): boolean => {
+  const sample = bytes.subarray(0, 2048);
+  if (sample.length === 0) return false;
+  let odd = 0;
+  for (let i = 0; i < sample.length; i += 1) {
+    const byte = sample[i];
+    if (byte === 0 || (byte < 0x20 && byte !== 0x09 && byte !== 0x0a && byte !== 0x0d)) odd += 1;
+  }
+  return odd <= sample.length / 50;
+};
+
+/**
+ * `.doc` uploads: a real Word 97-2003 binary goes through the MS-DOC reader;
+ * DOCX / RTF / plain text saved under the wrong name are routed by their
+ * magic bytes so they still render.
+ */
+const legacyWordBlocks = async (
+  attachment: OrderedAttachment,
+  bytes: Uint8Array
+): Promise<TextOutcome> => {
+  const container = sniffBinaryContainer(bytes);
+  if (container === "zip") {
+    const extracted = await extractAttachmentText(bytes, DOCX_MIME, ".docx");
+    if (extracted.ok) return { ok: true, blocks: extracted.blocks };
+    return {
+      ok: false,
+      detail:
+        extracted.reason === "empty"
+          ? "The document contains no printable text."
+          : "The document could not be read.",
+    };
+  }
+  if (container === "rtf") {
+    const blocks = linesToBlocks(rtfToText(new TextDecoder("latin1").decode(bytes)));
+    if (blocks.length) return { ok: true, blocks };
+    return { ok: false, detail: "The document contains no printable text." };
+  }
+  if (container === "ole") {
+    const result = await extractLegacyDocText(bytes);
+    if (result.ok) {
+      const blocks = linesToBlocks(result.text);
+      if (blocks.length) return { ok: true, blocks };
+      return { ok: false, detail: "The document contains no printable text." };
     }
-    for (const row of rows) blocks.push({ kind: "paragraph", runs: [{ text: row }] });
-  });
-  return blocks;
+    console.warn(`Packet print: legacy Word ${attachment.fileName} not embedded (${result.reason})`);
+    const details: Record<typeof result.reason, string> = {
+      encrypted: "The document is password-protected and cannot be read.",
+      "not-word": "The file is not a Word document.",
+      empty: "The document contains no printable text.",
+      failed: "The document could not be read.",
+    };
+    return { ok: false, detail: details[result.reason] };
+  }
+  if (container === "unknown" && looksLikePlainText(bytes)) {
+    const blocks = linesToBlocks(new TextDecoder("utf-8").decode(bytes));
+    if (blocks.length) return { ok: true, blocks };
+  }
+  return { ok: false, detail: "The document could not be read (unrecognised format)." };
+};
+
+/** `.xls` / `.xlsx` / CSV-as-xls uploads through SheetJS (lazy). */
+const spreadsheetBlocks = async (
+  attachment: OrderedAttachment,
+  bytes: Uint8Array
+): Promise<TextOutcome> => {
+  try {
+    const result = await extractWorkbookBlocks(bytes);
+    if (result.ok) return { ok: true, blocks: result.blocks };
+    const details: Record<typeof result.reason, string> = {
+      encrypted: "The workbook is password-protected and cannot be read.",
+      empty: "The workbook has no cell values.",
+      failed: "The workbook could not be read.",
+    };
+    return { ok: false, detail: details[result.reason] };
+  } catch (error) {
+    console.warn(`Packet print: could not read workbook ${attachment.fileName}`, error);
+    return { ok: false, detail: "The workbook could not be read." };
+  }
 };
 
 /* ---------- fallback note ---------- */
@@ -759,18 +813,30 @@ export const appendPacketAttachments = async (
               : "The document could not be read.";
           appendUnavailableNote(layout, attachment, detail);
         }
-      } else if (isXlsxAttachment(attachment.mime, attachment.ext)) {
-        let blocks: DocumentTextBlock[] = [];
-        try {
-          blocks = await extractXlsxBlocks(bytes);
-        } catch (error) {
-          console.warn(`Packet print: could not read workbook ${attachment.fileName}`, error);
+      } else if (
+        isLegacyWordAttachment(attachment.mime, attachment.ext) &&
+        sniffBinaryContainer(bytes) === "pdf"
+      ) {
+        // A PDF renamed to .doc: merge its pages like any other PDF.
+        const pdf = await appendPdf(layout, attachment, bytes);
+        if (pdf === "merged") {
+          result = "merged";
+        } else {
+          detail = pdf === "empty" ? "The PDF has no printable pages." : "The PDF could not be read.";
+          appendUnavailableNote(layout, attachment, detail);
         }
-        if (blocks.length) {
-          appendTextBlocks(layout, attachment, blocks);
+      } else if (
+        isLegacyWordAttachment(attachment.mime, attachment.ext) ||
+        isSpreadsheetAttachment(attachment.mime, attachment.ext)
+      ) {
+        const outcome = isLegacyWordAttachment(attachment.mime, attachment.ext)
+          ? await legacyWordBlocks(attachment, bytes)
+          : await spreadsheetBlocks(attachment, bytes);
+        if (outcome.ok) {
+          appendTextBlocks(layout, attachment, outcome.blocks);
           result = "embedded";
         } else {
-          detail = "The workbook could not be read or has no cell values.";
+          detail = outcome.detail;
           appendUnavailableNote(layout, attachment, detail);
         }
       } else if (attachment.mime.startsWith("image/") || !attachment.mime) {
@@ -783,7 +849,7 @@ export const appendPacketAttachments = async (
           appendUnavailableNote(layout, attachment, detail);
         }
       } else {
-        detail = "Only PDF, Word (DOCX), Excel (XLSX), CSV, text and JPEG / PNG / GIF / WebP images can be embedded.";
+        detail = "Only PDF, Word (DOC / DOCX), Excel (XLS / XLSX), CSV, text and JPEG / PNG / GIF / WebP images can be embedded.";
         appendUnavailableNote(layout, attachment, detail);
       }
     } catch (error) {

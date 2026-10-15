@@ -29,10 +29,10 @@
     "@types/react-input-mask": "^3.0.5",
     "ag-grid-community": "^36.0.2",
     "ag-grid-react": "^36.0.2",
+    "cfb": "1.2.2",
     "chart.js": "^4.4.1",
     "dayjs": "^1.11.10",
     "dayjs-ext": "^2.2.0",
-    "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "highcharts": "^12.0.1",
     "highcharts-react-official": "^3.2.1",
@@ -59,7 +59,8 @@
     "react-signature-canvas": "^1.0.6",
     "react-to-pdf": "^1.0.1",
     "save-svg-as-png": "^1.4.17",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "xlsx": "0.18.5"
   },
   "devDependencies": {
     "@strapi/types": "^4.15.0",

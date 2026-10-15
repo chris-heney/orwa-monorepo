@@ -107,7 +107,6 @@ export default defineConfig(async ({ command, mode }) => {
       // external: ["exceljs", "file-saver"],
       output: {
         globals: {
-          exceljs: "ExcelJS",
           "file-saver": "FileSaver",
         },
       },

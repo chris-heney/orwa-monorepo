@@ -143,9 +143,12 @@ export const attachmentTypeLabel = (
   const e = String(ext || "").toLowerCase().replace(/^\./, "");
   if (m.includes("pdf") || e === "pdf") return "PDF";
   if (m.includes("wordprocessingml") || e === "docx") return "Word document (DOCX)";
-  if (m === "application/msword" || e === "doc") return "Word 97-2003 document (DOC)";
-  if (m.includes("spreadsheetml") || e === "xlsx") return "Excel workbook (XLSX)";
+  if (m === "application/msword" || e === "doc" || e === "dot") return "Word 97-2003 document (DOC)";
+  if (m === "application/rtf" || m === "text/rtf" || e === "rtf") return "Rich Text document (RTF)";
+  if (m.includes("spreadsheetml") || e === "xlsx" || e === "xlsm") return "Excel workbook (XLSX)";
   if (m === "application/vnd.ms-excel" || e === "xls") return "Excel 97-2003 workbook (XLS)";
+  if (m.includes("presentationml") || e === "pptx") return "PowerPoint presentation (PPTX)";
+  if (m === "application/vnd.ms-powerpoint" || e === "ppt") return "PowerPoint 97-2003 presentation (PPT)";
   if (m === "text/csv" || m === "application/csv" || e === "csv") return "CSV";
   if (m.startsWith("text/") || e === "txt" || e === "md") return "Text";
   if (m.startsWith("image/")) {

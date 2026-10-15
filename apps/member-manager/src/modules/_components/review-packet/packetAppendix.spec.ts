@@ -1,10 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { PDFDocument } from "pdf-lib";
 import { embedPrintFonts, setPrintFontLoader } from "../../../helpers/printBrandFonts";
 import { extractPdfPlainText } from "../../award-nominations/helpers/documentText";
+import { encryptedVariantOf, loadVoucherDoc, makeDocx, makeWorkbook } from "./__fixtures__/legacyOfficeFixtures";
 import { appendPacketAttachments } from "./packetAppendix";
 import { orderPacketAttachments, type AttachmentSlot } from "./packetAttachments";
 
@@ -41,17 +42,6 @@ const makePdf = async (texts: string[]) => {
   return doc.save();
 };
 
-const makeXlsx = async () => {
-  const mod = await import("exceljs");
-  const ExcelJS = (mod as unknown as { default?: typeof mod }).default ?? mod;
-  const workbook = new ExcelJS.Workbook();
-  const sheet = workbook.addWorksheet("Board");
-  sheet.addRow(["Name", "Position"]);
-  sheet.addRow(["Jane Doe", "Chair"]);
-  sheet.addRow(["John Roe", "Operator"]);
-  return new Uint8Array(await workbook.xlsx.writeBuffer());
-};
-
 const slots: AttachmentSlot[] = [
   { key: "board_list_file", label: "Board / Employee List" },
   { key: "biography_file", label: "Biography" },
@@ -61,22 +51,29 @@ const slots: AttachmentSlot[] = [
 
 describe("appendPacketAttachments", () => {
   it("renders every upload behind a divider, in order, and notes what cannot embed", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const boardPdf = await makePdf(["Board page A", "Board page B"]);
-    const xlsx = await makeXlsx();
+    const boardDoc = await loadVoucherDoc();
+    const bioPdf = await makePdf(["Bio page A", "Bio page B"]);
     const bytesByName: Record<string, Uint8Array | null> = {
-      "board.pdf": boardPdf,
-      "bio.doc": new TextEncoder().encode("legacy word binary"),
+      "Travel Voucher.doc": boardDoc,
+      "bio.pdf": bioPdf,
       "photo.png": PNG_1X1,
-      "staff.xlsx": xlsx,
+      "staff.xls": await makeWorkbook("xls"),
+      "staff.xlsx": await makeWorkbook("xlsx"),
       "notes.csv": new TextEncoder().encode("name,role\nAda,Clerk\n"),
       "missing.pdf": null,
+      "slides.ppt": new TextEncoder().encode("\u0000\u0001not really a presentation\u0000\u0002"),
     };
     const record = {
-      board_list_file: { url: "/uploads/board.pdf", name: "board.pdf", mime: "application/pdf" },
-      biography_file: { url: "/uploads/bio.doc", name: "bio.doc", mime: "application/msword" },
+      board_list_file: {
+        url: "/uploads/Travel_Voucher_1fd702c6db.doc",
+        name: "Travel Voucher.doc",
+        mime: "application/msword",
+        ext: ".doc",
+      },
+      biography_file: { url: "/uploads/bio.pdf", name: "bio.pdf", mime: "application/pdf" },
       photographs: [{ url: "/uploads/photo.png", name: "photo.png", mime: "image/png" }],
       supporting_documents: [
+        { url: "/uploads/staff.xls", name: "staff.xls", mime: "application/vnd.ms-excel", ext: ".xls" },
         {
           url: "/uploads/staff.xlsx",
           name: "staff.xlsx",
@@ -84,59 +81,110 @@ describe("appendPacketAttachments", () => {
         },
         { url: "/uploads/notes.csv", name: "notes.csv", mime: "text/csv" },
         { url: "/uploads/missing.pdf", name: "missing.pdf", mime: "application/pdf" },
+        { url: "/uploads/slides.ppt", name: "slides.ppt", mime: "application/vnd.ms-powerpoint", ext: ".ppt" },
       ],
     };
     const attachments = orderPacketAttachments(record, slots);
-    expect(attachments).toHaveLength(6);
+    expect(attachments).toHaveLength(8);
 
     const doc = await PDFDocument.create();
     const fonts = await embedPrintFonts(doc);
     doc.addPage([612, 792]).drawText("Form page", { x: 72, y: 700, size: 14, font: fonts.bold });
 
     const outcome = await appendPacketAttachments(doc, fonts, attachments, {
-      runningTitle: "Test System  ·  System of the Year  ·  Year: 2027",
+      runningTitle: "Adair Co RWD #2  ·  System of the Year  ·  Year: 2027",
       fetchBytes: async (file) => bytesByName[String(file.name)] ?? null,
     });
 
     expect(outcome.files.map((item) => item.result)).toEqual([
-      "merged", // board.pdf (2 pages)
-      "unavailable", // bio.doc — legacy Word cannot be parsed
+      "embedded", // Travel Voucher.doc — Word 97-2003 text via the MS-DOC reader
+      "merged", // bio.pdf (2 pages)
       "embedded", // photo.png
-      "embedded", // staff.xlsx via exceljs
+      "embedded", // staff.xls — BIFF8 via SheetJS
+      "embedded", // staff.xlsx — OOXML via SheetJS
       "embedded", // notes.csv as text
       "unavailable", // missing.pdf — download failed
+      "unavailable", // slides.ppt — no reader
     ]);
     expect(outcome.bySlot).toEqual({
-      board_list_file: "merged",
-      biography_file: "unavailable",
+      board_list_file: "embedded",
+      biography_file: "merged",
       photographs: "embedded",
       supporting_documents: "embedded",
     });
 
-    // 1 form page + 2 (pdf) + 1 (doc note) + 1 (png) + 1 (xlsx) + 1 (csv) + 1 (missing note)
-    expect(doc.getPageCount()).toBe(8);
+    // 1 form + 1 (doc text) + 2 (pdf) + 1 (png) + 1 (xls) + 1 (xlsx) + 1 (csv) + 1 (missing note) + 1 (ppt note)
+    expect(doc.getPageCount()).toBe(10);
     expect(doc.getPages().every((page) => page.getSize().width === 612)).toBe(true);
 
     const bytes = await doc.save();
     const text = await extractPdfPlainText(bytes);
-    expect(text).toMatch(/Attachment 1 of 6\s+[·-]\s+Board \/ Employee List/);
-    expect(text).toMatch(/board\.pdf\s+[·-]\s+page 1 of 2/);
-    expect(text).toMatch(/board\.pdf\s+[·-]\s+page 2 of 2/);
-    expect(text).toMatch(
-      /Biography: bio\.doc \(Word 97-2003 document \(DOC\)\) could not be embedded in this packet - open it from the record\./
-    );
-    expect(text).toMatch(/Attachment 3 of 6\s+[·-]\s+Photographs/);
-    expect(text).toMatch(/Jane Doe\s+Chair/);
+    expect(text).toMatch(/Attachment 1 of 8\s+[·-]\s+Board \/ Employee List/);
+    expect(text).toMatch(/Travel Voucher\.doc\s+[·-]\s+text rendered from the uploaded document/);
+    expect(text).toContain("TRAVEL EXPENSE REIMBURSEMENT VOUCHER");
+    expect(text).toContain("Oklahoma City, OK 73129");
+    expect(text).toContain("TOTAL AMOUNT OF REIMBURSEMENT");
+    expect(text).toContain("Make check payable to:");
+    expect(text).not.toMatch(/Travel Voucher\.doc \(Word 97-2003 document \(DOC\)\) could not be embedded/);
+    expect(text).toMatch(/bio\.pdf\s+[·-]\s+page 1 of 2/);
+    expect(text).toMatch(/bio\.pdf\s+[·-]\s+page 2 of 2/);
+    expect(text).toMatch(/Attachment 3 of 8\s+[·-]\s+Photographs/);
+    // Both workbooks: sheet headings + rows.
+    expect(text.match(/Board\s+Name\s+Position\s+Years\s+Jane Doe\s+Chair\s+12/g)).toHaveLength(2);
+    expect(text.match(/Staff\s+Employee\s+Role\s+Ada Lovelace\s+Clerk/g)).toHaveLength(2);
     expect(text).toMatch(/Ada,Clerk/);
     expect(text).toMatch(/Supporting Documents: missing\.pdf \(PDF\) could not be embedded/);
     expect(text).toMatch(/could not be downloaded/);
+    expect(text).toMatch(/slides\.ppt \(PowerPoint 97-2003 presentation \(PPT\)\) could not be embedded/);
+    expect(text).toMatch(/Only PDF, Word \(DOC \/ DOCX\), Excel \(XLS \/ XLSX\), CSV, text and JPEG/);
     // Order check: dividers appear in ordinal order.
-    const positions = [1, 2, 3, 4, 5, 6].map((n) => text.indexOf(`Attachment ${n} of 6`));
+    const positions = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => text.indexOf(`Attachment ${n} of 8`));
     expect(positions.every((pos) => pos >= 0)).toBe(true);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
 
     await mkdir(tmpDir, { recursive: true });
     await writeFile(resolve(tmpDir, "packet-appendix-spec.pdf"), Buffer.from(bytes));
+  });
+
+  it("routes mislabelled .doc uploads by content and explains password-protected ones", async () => {
+    const voucher = await loadVoucherDoc();
+    const bytesByName: Record<string, Uint8Array | null> = {
+      "really-docx.doc": await makeDocx("Modern Word text saved with the wrong extension."),
+      "rtf.doc": new TextEncoder().encode("{\\rtf1\\ansi\\pard Rich text body\\par second line\\par}"),
+      "locked.doc": encryptedVariantOf(voucher),
+      "plain.doc": new TextEncoder().encode("Just a text file\nwith two lines\n"),
+    };
+    const record = {
+      supporting_documents: Object.keys(bytesByName).map((name) => ({
+        url: `/uploads/${name}`,
+        name,
+        mime: "application/msword",
+        ext: ".doc",
+      })),
+    };
+    const attachments = orderPacketAttachments(record, slots);
+    const doc = await PDFDocument.create();
+    const fonts = await embedPrintFonts(doc);
+    doc.addPage([612, 792]);
+    const outcome = await appendPacketAttachments(doc, fonts, attachments, {
+      runningTitle: "Mislabelled",
+      fetchBytes: async (file) => bytesByName[String(file.name)] ?? null,
+    });
+    expect(outcome.files.map((item) => item.result)).toEqual([
+      "embedded",
+      "embedded",
+      "unavailable",
+      "embedded",
+    ]);
+    expect(outcome.files[2].detail).toBe("The document is password-protected and cannot be read.");
+
+    const text = await extractPdfPlainText(await doc.save());
+    expect(text).toContain("Modern Word text saved with the wrong extension.");
+    expect(text).toContain("Rich text body");
+    expect(text).toContain("second line");
+    expect(text).toMatch(/locked\.doc \(Word 97-2003 document \(DOC\)\) could not be embedded/);
+    expect(text).toContain("password-protected");
+    expect(text).toContain("Just a text file");
   });
 
   it("returns an empty outcome without adding pages when nothing is attached", async () => {
