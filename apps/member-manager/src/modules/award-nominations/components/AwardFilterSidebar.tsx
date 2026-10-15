@@ -11,17 +11,23 @@ import {
 } from "@mui/material";
 import { useGetList, useNotify } from "react-admin";
 import { usePageManifest } from "../../../framework/PageContext";
-import { calendarYearChoices, WATER_SYSTEM_REGIONS } from "../helpers/listFilters";
+import {
+  calendarYearChoices,
+  NOMINATION_STATUS_VALUES,
+  WATER_SYSTEM_REGIONS,
+} from "../helpers/listFilters";
 import { awardTypeChoices, type AwardTypeRecord } from "../helpers/awardTypes";
 import {
   useAwardRegion,
   useAwardSearch,
+  useAwardStatuses,
   useAwardSubmittedFrom,
   useAwardSubmittedTo,
   useAwardType,
   useAwardYear,
 } from "../helpers/awardStore";
 import SubmittedDateRangeFields from "../../_components/SubmittedDateRangeFields";
+import StatusCheckboxFilter from "./StatusCheckboxFilter";
 
 /**
  * Filters drawer body for the Awards dashboard (Nominations + Winners tabs).
@@ -36,6 +42,7 @@ const AwardFilterSidebar = () => {
   const [awardType, setAwardType] = useAwardType();
   const [submittedFrom, setSubmittedFrom] = useAwardSubmittedFrom();
   const [submittedTo, setSubmittedTo] = useAwardSubmittedTo();
+  const [statuses, setStatuses] = useAwardStatuses();
   const notify = useNotify();
   const nominations = tab !== "winners";
   const { data, isError } = useGetList<AwardTypeRecord>(
@@ -73,6 +80,12 @@ const AwardFilterSidebar = () => {
               fullWidth
             />
           </FormControl>
+          <StatusCheckboxFilter
+            ariaPrefix="Nominations"
+            options={NOMINATION_STATUS_VALUES}
+            value={statuses}
+            onChange={setStatuses}
+          />
           <FormControl>
             <FormLabel>Region</FormLabel>
             <RadioGroup

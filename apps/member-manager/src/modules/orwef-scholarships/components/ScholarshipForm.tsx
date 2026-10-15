@@ -28,20 +28,13 @@ import {
   MAX_FINANCIAL_RESOURCES,
   listFinancialResources,
 } from "../helpers/financialResources";
+import { SCHOLARSHIP_STATUSES } from "../helpers/listFilters";
 
 const SCHOLARSHIP_BACK = "/orwef-scholarships/dashboard";
 
 /** Mirrors the Strapi `scholarship_year` integer bounds (min 2000, max 2100). */
 const SCHOLARSHIP_YEAR_MIN = 2000;
 const SCHOLARSHIP_YEAR_MAX = 2100;
-
-const statuses = [
-  { id: "Draft", name: "Draft" },
-  { id: "Submitted", name: "Submitted" },
-  { id: "Under Review", name: "Under Review" },
-  { id: "Approved", name: "Approved" },
-  { id: "Denied", name: "Denied" },
-];
 
 const relationships = [
   { id: "Self", name: "Self" },
@@ -83,7 +76,7 @@ const ScholarshipForm = () => {
                   <SelectInput
                     source="application_status"
                     label="Status"
-                    choices={statuses}
+                    choices={SCHOLARSHIP_STATUSES}
                     validate={required()}
                     fullWidth
                     sx={fullFieldSx}

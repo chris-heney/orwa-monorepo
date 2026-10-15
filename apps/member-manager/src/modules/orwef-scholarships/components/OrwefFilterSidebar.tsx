@@ -9,15 +9,21 @@ import {
   RadioGroup,
   TextField,
 } from "@mui/material";
-import { WATER_SYSTEM_REGIONS, calendarYearChoices } from "../helpers/listFilters";
+import {
+  SCHOLARSHIP_STATUS_VALUES,
+  WATER_SYSTEM_REGIONS,
+  calendarYearChoices,
+} from "../helpers/listFilters";
 import {
   useScholarshipRegion,
   useScholarshipSearch,
+  useScholarshipStatuses,
   useScholarshipSubmittedFrom,
   useScholarshipSubmittedTo,
   useScholarshipYear,
 } from "../helpers/orwefStore";
 import SubmittedDateRangeFields from "../../_components/SubmittedDateRangeFields";
+import StatusCheckboxFilter from "../../award-nominations/components/StatusCheckboxFilter";
 
 /**
  * Filters drawer body for the Applications tab. Values live in the legacy
@@ -29,6 +35,7 @@ const OrwefFilterSidebar = () => {
   const [year, setYear] = useScholarshipYear();
   const [submittedFrom, setSubmittedFrom] = useScholarshipSubmittedFrom();
   const [submittedTo, setSubmittedTo] = useScholarshipSubmittedTo();
+  const [statuses, setStatuses] = useScholarshipStatuses();
 
   return (
     <Box sx={{ p: 2, display: "flex", flexDirection: "column", gap: 2.5 }}>
@@ -43,6 +50,12 @@ const OrwefFilterSidebar = () => {
           fullWidth
         />
       </FormControl>
+      <StatusCheckboxFilter
+        ariaPrefix="Applications"
+        options={SCHOLARSHIP_STATUS_VALUES}
+        value={statuses}
+        onChange={setStatuses}
+      />
       <FormControl>
         <FormLabel>Region</FormLabel>
         <RadioGroup

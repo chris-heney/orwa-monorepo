@@ -10,13 +10,32 @@ import {
   type SubmittedDateRange,
 } from "../../../helpers/submittedDateRange";
 
-export const SCHOLARSHIP_STATUSES = [
-  { id: "Draft", name: "Draft" },
-  { id: "Submitted", name: "Submitted" },
-  { id: "Under Review", name: "Under Review" },
-  { id: "Approved", name: "Approved" },
-  { id: "Denied", name: "Denied" },
-];
+/** Strapi field holding the review status (`scholarship-application` schema). */
+export const APPLICATION_STATUS_FIELD = "application_status";
+
+/**
+ * `scholarship-application.application_status` enum, verbatim from the
+ * Strapi schema. The single source for the review form's Status select, the
+ * Filters drawer's Status checkboxes and the `ScholarshipStatus` type.
+ */
+export const SCHOLARSHIP_STATUS_VALUES = [
+  "Draft",
+  "Submitted",
+  "Under Review",
+  "Approved",
+  "Denied",
+] as const;
+
+export type ScholarshipStatus = (typeof SCHOLARSHIP_STATUS_VALUES)[number];
+
+export const isScholarshipStatus = (value: unknown): value is ScholarshipStatus =>
+  (SCHOLARSHIP_STATUS_VALUES as readonly unknown[]).includes(value);
+
+/** react-admin choice shape of the enum (review form Status select). */
+export const SCHOLARSHIP_STATUSES = SCHOLARSHIP_STATUS_VALUES.map((id) => ({
+  id,
+  name: id,
+}));
 
 /** Watersystem.region enum — filter applications via the linked system. */
 export const WATER_SYSTEM_REGIONS = [
@@ -82,17 +101,28 @@ export const scholarshipYearFilter = (year: number) => {
   };
 };
 
+/**
+ * @param statuses Filters drawer Status multi-select. Empty = no status
+ *   filter; otherwise `application_status: { $in: [...] }` (the serializer
+ *   emits `filters[application_status][$in][]=…`). Values outside the schema
+ *   enum (stale prefs) are dropped rather than sent.
+ */
 export const buildScholarshipListFilter = (
   search: string,
   year: number | "all",
   region = "all",
-  submitted?: SubmittedDateRange
+  submitted?: SubmittedDateRange,
+  statuses: readonly string[] = []
 ) => {
   const filter: Record<string, unknown> = {};
   if (search.trim()) filter.q = search.trim();
   if (year !== "all") Object.assign(filter, scholarshipYearFilter(year));
   if (region && region !== "all") {
     filter.watersystem = { region };
+  }
+  const selectedStatuses = statuses.filter(isScholarshipStatus);
+  if (selectedStatuses.length > 0) {
+    filter[APPLICATION_STATUS_FIELD] = { $in: selectedStatuses };
   }
   return applySubmittedDateRange(filter, APPLICATION_SUBMITTED_FIELD, submitted);
 };

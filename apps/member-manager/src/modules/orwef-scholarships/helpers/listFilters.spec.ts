@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   buildScholarshipListFilter,
   calendarYearChoices,
+  SCHOLARSHIP_STATUS_VALUES,
+  SCHOLARSHIP_STATUSES,
   scholarshipCycleYear,
   scholarshipYearFilter,
   watersystemRegion,
@@ -83,10 +85,58 @@ describe("buildScholarshipListFilter", () => {
     expect(inWindow(2027, may1Early)).toBe(true);
   });
 
-  it("does not apply an application_status filter", () => {
+  // Previously asserted the drawer could NOT filter by status; the Status
+  // multi-select now maps to `application_status: { $in }`. Empty = no filter.
+  it("omits application_status when no status is selected", () => {
     expect(buildScholarshipListFilter("", "all", "all")).not.toHaveProperty(
       "application_status"
     );
+    expect(
+      buildScholarshipListFilter("", "all", "all", undefined, [])
+    ).not.toHaveProperty("application_status");
+  });
+
+  it("filters a single status with $in", () => {
+    expect(
+      buildScholarshipListFilter("", "all", "all", undefined, ["Approved"])
+    ).toEqual({ application_status: { $in: ["Approved"] } });
+  });
+
+  it("ORs several statuses with $in, alongside the year window", () => {
+    expect(
+      buildScholarshipListFilter("", 2027, "all", undefined, [
+        "Submitted",
+        "Under Review",
+      ])
+    ).toEqual({
+      ...yearWindow(2027),
+      application_status: { $in: ["Submitted", "Under Review"] },
+    });
+  });
+
+  it("drops values that are not in the schema enum (stale prefs)", () => {
+    expect(
+      buildScholarshipListFilter("", "all", "all", undefined, [
+        "Winner",
+        "Denied",
+      ])
+    ).toEqual({ application_status: { $in: ["Denied"] } });
+    expect(
+      buildScholarshipListFilter("", "all", "all", undefined, ["Winner"])
+    ).toEqual({});
+  });
+
+  it("exposes the schema enum once, in schema order", () => {
+    expect(SCHOLARSHIP_STATUS_VALUES).toEqual([
+      "Draft",
+      "Submitted",
+      "Under Review",
+      "Approved",
+      "Denied",
+    ]);
+    expect(SCHOLARSHIP_STATUSES.map((choice) => choice.id)).toEqual([
+      ...SCHOLARSHIP_STATUS_VALUES,
+    ]);
   });
 
   it("nests region on the linked watersystem (enum string, not an id)", () => {

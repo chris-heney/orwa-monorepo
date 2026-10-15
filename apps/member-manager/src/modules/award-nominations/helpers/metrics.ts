@@ -1,10 +1,6 @@
-export type NominationStatus =
-  | "Draft"
-  | "Submitted"
-  | "Under Review"
-  | "Winner"
-  | "Runner Up"
-  | "Not Selected";
+import type { NominationStatus } from "./listFilters";
+
+export type { NominationStatus };
 
 export type AwardNomination = {
   id: string | number;

@@ -19,6 +19,8 @@ export const AWARD_STORE_KEYS = {
   /** Filters drawer "Submitted" range (`YYYY-MM-DD` or ""). */
   submittedFrom: "orwa-awards-nomination-submitted-from",
   submittedTo: "orwa-awards-nomination-submitted-to",
+  /** Filters drawer Status multi-select (`nomination_status` enum values, [] = all). */
+  status: "orwa-awards-nomination-status",
 } as const;
 
 export const AWARD_WATCH_KEYS = [
@@ -28,7 +30,10 @@ export const AWARD_WATCH_KEYS = [
   AWARD_STORE_KEYS.awardType,
   AWARD_STORE_KEYS.submittedFrom,
   AWARD_STORE_KEYS.submittedTo,
+  AWARD_STORE_KEYS.status,
 ];
+
+const NO_STATUSES: string[] = [];
 
 export const useAwardYear = () =>
   useStore<AwardYear>(AWARD_STORE_KEYS.year, nominationCycleYear());
@@ -39,6 +44,8 @@ export const useAwardSubmittedFrom = () =>
   useStore(AWARD_STORE_KEYS.submittedFrom, "");
 export const useAwardSubmittedTo = () =>
   useStore(AWARD_STORE_KEYS.submittedTo, "");
+export const useAwardStatuses = () =>
+  useStore<string[]>(AWARD_STORE_KEYS.status, NO_STATUSES);
 
 const submittedRangeFromCtx = (ctx: PageCtx): SubmittedDateRange => ({
   from: ctx.store(AWARD_STORE_KEYS.submittedFrom, ""),
@@ -53,14 +60,15 @@ export const awardYearLabel = (year: AwardYear) =>
 export const awardYearFromCtx = (ctx: PageCtx): AwardYear =>
   ctx.store<AwardYear>(AWARD_STORE_KEYS.year, nominationCycleYear());
 
-/** Permanent filter of the Nominations tab (search / year / region / type / submitted range). */
+/** Permanent filter of the Nominations tab (search / year / region / type / submitted range / status). */
 export const nominationFilterFromCtx = (ctx: PageCtx) =>
   buildAwardListFilter(
     ctx.store(AWARD_STORE_KEYS.search, ""),
     awardYearFromCtx(ctx),
     ctx.store(AWARD_STORE_KEYS.region, "all"),
     ctx.store(AWARD_STORE_KEYS.awardType, "all"),
-    submittedRangeFromCtx(ctx)
+    submittedRangeFromCtx(ctx),
+    ctx.store<string[]>(AWARD_STORE_KEYS.status, NO_STATUSES)
   );
 
 /** Permanent filter of the Winners tab (year only). */

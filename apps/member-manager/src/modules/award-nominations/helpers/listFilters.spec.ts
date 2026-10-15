@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  AWARD_STATUSES,
   buildAwardListFilter,
   calendarYearChoices,
+  NOMINATION_STATUS_VALUES,
   nominationCycleYear,
 } from "./listFilters";
 import {
@@ -42,10 +44,59 @@ describe("buildAwardListFilter", () => {
     expect(buildAwardListFilter("", "all")).toEqual({});
   });
 
-  it("does not apply a nomination_status filter", () => {
+  // Previously asserted the drawer could NOT filter by status; the Status
+  // multi-select now maps to `nomination_status: { $in }`. Empty = no filter.
+  it("omits nomination_status when no status is selected", () => {
     expect(buildAwardListFilter("", "all", "all", "all")).not.toHaveProperty(
       "nomination_status"
     );
+    expect(
+      buildAwardListFilter("", "all", "all", "all", undefined, [])
+    ).not.toHaveProperty("nomination_status");
+  });
+
+  it("filters a single status with $in", () => {
+    expect(
+      buildAwardListFilter("", "all", "all", "all", undefined, ["Winner"])
+    ).toEqual({ nomination_status: { $in: ["Winner"] } });
+  });
+
+  it("ORs several statuses with $in, alongside the year", () => {
+    expect(
+      buildAwardListFilter("", 2027, "all", "all", undefined, [
+        "Submitted",
+        "Under Review",
+      ])
+    ).toEqual({
+      award_year: 2027,
+      nomination_status: { $in: ["Submitted", "Under Review"] },
+    });
+  });
+
+  it("drops values that are not in the schema enum (stale prefs)", () => {
+    expect(
+      buildAwardListFilter("", "all", "all", "all", undefined, [
+        "Approved",
+        "Winner",
+      ])
+    ).toEqual({ nomination_status: { $in: ["Winner"] } });
+    expect(
+      buildAwardListFilter("", "all", "all", "all", undefined, ["Approved"])
+    ).toEqual({});
+  });
+
+  it("exposes the schema enum once, in schema order", () => {
+    expect(NOMINATION_STATUS_VALUES).toEqual([
+      "Draft",
+      "Submitted",
+      "Under Review",
+      "Winner",
+      "Runner Up",
+      "Not Selected",
+    ]);
+    expect(AWARD_STATUSES.map((choice) => choice.id)).toEqual([
+      ...NOMINATION_STATUS_VALUES,
+    ]);
   });
 
   it("nests region on the linked watersystem (enum string, not an id)", () => {

@@ -18,6 +18,8 @@ export const ORWEF_STORE_KEYS = {
   /** Filters drawer "Submitted" range (`YYYY-MM-DD` or ""). */
   submittedFrom: "orwef-application-submitted-from",
   submittedTo: "orwef-application-submitted-to",
+  /** Filters drawer Status multi-select (`application_status` enum values, [] = all). */
+  status: "orwef-application-status",
 } as const;
 
 export const ORWEF_WATCH_KEYS = [
@@ -26,7 +28,10 @@ export const ORWEF_WATCH_KEYS = [
   ORWEF_STORE_KEYS.region,
   ORWEF_STORE_KEYS.submittedFrom,
   ORWEF_STORE_KEYS.submittedTo,
+  ORWEF_STORE_KEYS.status,
 ];
+
+const NO_STATUSES: string[] = [];
 
 /**
  * Default year = the upcoming conference cycle — the `scholarship_year` the
@@ -46,17 +51,20 @@ export const useScholarshipSubmittedFrom = () =>
   useStore(ORWEF_STORE_KEYS.submittedFrom, "");
 export const useScholarshipSubmittedTo = () =>
   useStore(ORWEF_STORE_KEYS.submittedTo, "");
+export const useScholarshipStatuses = () =>
+  useStore<string[]>(ORWEF_STORE_KEYS.status, NO_STATUSES);
 
 const submittedRangeFromCtx = (ctx: PageCtx): SubmittedDateRange => ({
   from: ctx.store(ORWEF_STORE_KEYS.submittedFrom, ""),
   to: ctx.store(ORWEF_STORE_KEYS.submittedTo, ""),
 });
 
-/** Permanent filter of the Applications tab (search / year / region / submitted range). */
+/** Permanent filter of the Applications tab (search / year / region / submitted range / status). */
 export const applicationFilterFromCtx = (ctx: PageCtx) =>
   buildScholarshipListFilter(
     ctx.store(ORWEF_STORE_KEYS.search, ""),
     ctx.store<ScholarshipYear>(ORWEF_STORE_KEYS.year, defaultScholarshipYear()),
     ctx.store(ORWEF_STORE_KEYS.region, "all"),
-    submittedRangeFromCtx(ctx)
+    submittedRangeFromCtx(ctx),
+    ctx.store<string[]>(ORWEF_STORE_KEYS.status, NO_STATUSES)
   );

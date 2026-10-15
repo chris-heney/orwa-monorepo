@@ -1,11 +1,7 @@
 import { cycleYearOf } from "../../../helpers/conferenceCycleYear";
+import type { ScholarshipStatus } from "./listFilters";
 
-export type ScholarshipStatus =
-  | "Draft"
-  | "Submitted"
-  | "Under Review"
-  | "Approved"
-  | "Denied";
+export type { ScholarshipStatus };
 
 export type ScholarshipApplication = {
   id: string | number;
