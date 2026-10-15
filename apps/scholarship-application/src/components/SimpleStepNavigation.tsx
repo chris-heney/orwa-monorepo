@@ -10,6 +10,7 @@ import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
 import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
 import { mapScholarshipPayload } from "../helpers/mapScholarshipPayload";
 import { clearWizardDraft, setStepKeyInUrl } from "../helpers/wizardPersistence";
+import { submissionErrorMessage } from "../helpers/submissionErrorMessage";
 import {
   mapFormErrorsToValidationFields,
   useValidationHighlight,
@@ -120,9 +121,13 @@ const SimpleStepNavigation = () => {
         }
         notify("Application submitted successfully!", "success");
       } else {
+        // Server-side eligibility rejections (inactive membership) arrive as
+        // 400s — show the server's message verbatim.
         notify(
-          response?.error ||
-            "Error submitting application. Please try again later.",
+          submissionErrorMessage(
+            response,
+            "Error submitting application. Please try again later."
+          ),
           "error"
         );
       }
