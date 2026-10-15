@@ -128,6 +128,7 @@
     "@mui/material": "^7.3.2",
     "@mui/x-data-grid": "^8.11.1",
     "@mui/x-date-pickers": "^8.11.1",
+    "@pdf-lib/fontkit": "^1.1.1",
     "@react-admin/ra-ai": "file:vendor-tarballs/ra-ai-5.3.4.tgz",
     "@react-admin/ra-editable-datagrid": "file:vendor-tarballs/ra-editable-datagrid-5.2.2.tgz",
     "@react-admin/ra-form-layout": "file:vendor-tarballs/ra-form-layout-5.17.0.tgz",

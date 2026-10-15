@@ -59,6 +59,9 @@ importers:
       '@mui/x-date-pickers':
         specifier: ^8.11.1
         version: 8.29.2(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@mui/material@7.3.11(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(@mui/system@7.3.11(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react@19.0.0)(supports-color@8.1.1))(@types/react@19.0.0)(react@19.0.0))(@types/react@19.0.0)(date-fns@3.6.0)(dayjs@1.11.21)(luxon@3.7.2)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@pdf-lib/fontkit':
+        specifier: ^1.1.1
+        version: 1.1.1
       '@react-admin/ra-ai':
         specifier: file:vendor-tarballs/ra-ai-5.3.4.tgz
         version: file:vendor-tarballs/ra-ai-5.3.4.tgz(04b1e9d744028017d3581d865a2abffe)
@@ -3422,6 +3425,9 @@ packages:
   '@parcel/watcher@2.6.0':
     resolution: {integrity: sha512-7FNeNl8NCE7aINx7WXiKQrPYZWC/hvrTsmk6zmxbI7LTXE7hVek/n8AfVgpe2y82zl3w0HvCHN0bVKMBoJcC0w==}
     engines: {node: '>= 10.0.0'}
+
+  '@pdf-lib/fontkit@1.1.1':
+    resolution: {integrity: sha512-KjMd7grNapIWS/Dm0gvfHEilSyAmeLvrEGVcqLGi0VYebuqqzTbgF29efCx7tvx+IEbG3zQciRSWl3GkUSvjZg==}
 
   '@pdf-lib/standard-fonts@1.0.0':
     resolution: {integrity: sha512-hU30BK9IUN/su0Mn9VdlVKsWBS6GyhVfqjwl1FjZN4TxP6cCw0jP2w7V3Hf5uX7M0AZJ16vey9yE0ny7Sa59ZA==}
@@ -7345,6 +7351,7 @@ packages:
   eslint@9.39.5:
     resolution: {integrity: sha512-DgZS62aPLXKlnxILS/AYCoRvHaZeXceIzlXPkkGGzJWSow1aEk0lbTlxUSlyjC8jcaKxAdOnTDz+o1JFSBsyjw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'
@@ -16484,6 +16491,10 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.6.0
       '@parcel/watcher-win32-x64': 2.6.0
     optional: true
+
+  '@pdf-lib/fontkit@1.1.1':
+    dependencies:
+      pako: 1.0.11
 
   '@pdf-lib/standard-fonts@1.0.0':
     dependencies:

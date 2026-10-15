@@ -1,6 +1,26 @@
 import path from 'path'
+import { createRequire } from 'module'
+import { pathToFileURL } from 'url'
 import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
+import localReact from '@vitejs/plugin-react'
+
+/**
+ * Two copies of @vitejs/plugin-react are installed: v2 in
+ * apps/member-manager/node_modules (pairs with the app's own Vite 3 used by
+ * `npx vite build` from this directory) and v4 at the workspace root (pairs
+ * with the root Vite 7 that Vitest runs on). v2's virtual `react/jsx-dev-runtime`
+ * module self-imports under vite-node, so every JSX test — anything that
+ * transitively touches a component — failed to collect with
+ * "(0, jsxDEV) is not a function". Pick the plugin that matches the Vite
+ * actually running this config.
+ */
+async function loadReactPlugin(): Promise<typeof localReact> {
+  if (!process.env.VITEST) return localReact
+  const rootRequire = createRequire(path.resolve(__dirname, '../../package.json'))
+  const entry = rootRequire.resolve('@vitejs/plugin-react')
+  const mod = await import(pathToFileURL(entry).href)
+  return (mod.default?.default ?? mod.default ?? mod) as typeof localReact
+}
 
 /**
  * member-manager's VITE_API_ENDPOINT is the Strapi HOST ROOT; the code appends
@@ -33,19 +53,22 @@ function assertApiEndpoint(mode: string) {
 }
 
 // https://vitejs.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(async ({ command, mode }) => {
   if (command === 'build') assertApiEndpoint(mode)
+  const react = await loadReactPlugin()
 
   return {
   plugins: [react({
     // Add this to improve Fast Refresh reliability. Off under Vitest: the
     // refresh runtime expects a browser preamble that jsdom never injects, so
     // leaving it on makes every component test fail to collect.
+    // (plugin-react v4 ignores this option and skips refresh when hmr is off.)
     fastRefresh: !process.env.VITEST,
   })],
   resolve: {
     alias: {
       '@orwa/terms-gate': path.resolve(__dirname, '../../libs/terms-gate/src/index.ts'),
+      '@orwa/print-fonts': path.resolve(__dirname, '../../libs/print-fonts/src/index.ts'),
       '@orwa/entity-id': path.resolve(__dirname, 'src/fields/index.ts'),
     },
   },

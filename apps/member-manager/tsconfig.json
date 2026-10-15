@@ -23,8 +23,9 @@
     "baseUrl": ".",
     "paths": {
       "@orwa/terms-gate": ["../../libs/terms-gate/src/index.ts"],
+      "@orwa/print-fonts": ["../../libs/print-fonts/src/index.ts"],
       "@orwa/entity-id": ["src/fields/index.ts"]
     }
   },
-  "include": ["src", "../../libs/terms-gate/src"]
+  "include": ["src", "../../libs/terms-gate/src", "../../libs/print-fonts/src"]
 }

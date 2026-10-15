@@ -14,6 +14,7 @@ export default defineConfig(() => ({
     alias: {
       '@orwa/terms-gate': path.resolve(__dirname, '../../libs/terms-gate/src/index.ts'),
       '@orwa/public-form': path.resolve(__dirname, '../../libs/public-form/src/index.ts'),
+      '@orwa/print-fonts': path.resolve(__dirname, '../../libs/print-fonts/src/index.ts'),
     },
   },
   server: {

@@ -1,0 +1,7 @@
+{
+  "name": "print-fonts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/print-fonts/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:util"]
+}
