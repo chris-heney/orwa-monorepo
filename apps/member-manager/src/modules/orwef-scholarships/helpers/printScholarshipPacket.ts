@@ -12,8 +12,10 @@ import {
 } from "../../_components/review-packet/formatters";
 import {
   appendPacketAttachments,
+  relayAppendixProgress,
+  throwIfAborted,
   type AppendixOutcome,
-  type PacketMediaFetcher,
+  type PacketBuildOptions,
 } from "../../_components/review-packet/packetAppendix";
 import {
   attachmentTypeLabel,
@@ -315,29 +317,12 @@ export const buildScholarshipPrintModel = (
   };
 };
 
-export const downloadBlob = (blob: Blob, filename: string) => {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.rel = "noopener";
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-};
-
-export type ScholarshipPrintOptions = {
-  /**
-   * Also append the PDF Strapi generated at submit time (`applicant_pdf`).
-   * Off by default: it repeats the form rendered above and was the source of
-   * the "application appears at the beginning and the end" report. The
-   * record's show page links to it.
-   */
-  includeSubmissionPdf?: boolean;
-  /** Test seam — defaults to an authenticated Strapi media fetch. */
-  fetchBytes?: PacketMediaFetcher;
-};
+/**
+ * `includeSubmissionPdf` appends `applicant_pdf` (the PDF Strapi generated at
+ * submit time) — off by default, it repeats the form rendered here (the
+ * "application appears at the beginning and the end" report).
+ */
+export type ScholarshipPrintOptions = PacketBuildOptions;
 
 /** Append uploads in submission order (shared appendix renderer). */
 export const appendScholarshipMedia = async (
@@ -353,6 +338,8 @@ export const appendScholarshipMedia = async (
   const appendix = await appendPacketAttachments(pdfDoc, fonts, attachments, {
     runningTitle: scholarshipRunningTitle(model),
     fetchBytes: options.fetchBytes,
+    onProgress: relayAppendixProgress(options.onProgress),
+    signal: options.signal,
   });
   const media: Record<string, MediaEmbedResult> = {};
   for (const slot of SCHOLARSHIP_MEDIA_SLOTS) {
@@ -368,11 +355,14 @@ export const generateScholarshipPacketPdf = async (
   options: ScholarshipPrintOptions = {}
 ): Promise<{
   blob: Blob;
+  bytes: Uint8Array;
   filename: string;
   media: Record<string, MediaEmbedResult>;
   attachments: AppendixOutcome["files"];
   fontFamily: PrintFonts["family"];
 }> => {
+  throwIfAborted(options.signal);
+  options.onProgress?.({ stage: "form" });
   const pdfDoc = await PDFDocument.create();
   const fonts = await embedPrintFonts(pdfDoc);
   const attachments = orderScholarshipAttachments(record, {
@@ -391,25 +381,16 @@ export const generateScholarshipPacketPdf = async (
     ...options,
     model,
   });
+  throwIfAborted(options.signal);
+  options.onProgress?.({ stage: "finishing" });
   drawLetterFooters(pdfDoc, fonts, model.applicantName, SCHOLARSHIP_FOOTER_AWARD);
   const bytes = await pdfDoc.save();
   return {
     blob: new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
+    bytes,
     filename,
     media: appendix.media,
     attachments: appendix.files,
     fontFamily: fonts.family,
   };
-};
-
-export const printScholarshipPacket = async (
-  record: ScholarshipPacketRecord,
-  options: ScholarshipPrintOptions = {}
-) => {
-  const { blob, filename, media, fontFamily } = await generateScholarshipPacketPdf(
-    record,
-    options
-  );
-  downloadBlob(blob, filename);
-  return { filename, media, byteLength: blob.size, fontFamily };
 };

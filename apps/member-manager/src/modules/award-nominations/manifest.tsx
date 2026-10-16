@@ -6,7 +6,6 @@ import MilitaryTechIcon from "@mui/icons-material/MilitaryTech";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CategoryIcon from "@mui/icons-material/Category";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import PrintIcon from "@mui/icons-material/Print";
 import type {
   ActionManifest,
   ModuleManifest,
@@ -22,6 +21,10 @@ import {
 } from "../../framework/actions";
 import { pageView, tabRedirect } from "../../framework/registry";
 import { bulkDeleteAction } from "../../framework/BulkDeleteAction";
+import {
+  printRecordAction,
+  printSelectedAction,
+} from "../../framework/PrintPacketAction";
 import CustomExportFunction from "../../helpers/custom-export-function";
 import AwardEdit from "./components/AwardEdit";
 import AwardWinnerEdit from "./components/AwardWinnerEdit";
@@ -31,10 +34,7 @@ import AwardTypeEdit from "./components/AwardTypeEdit";
 import AwardShow, { nomineeTitle } from "./components/AwardShow";
 import AwardFilterSidebar from "./components/AwardFilterSidebar";
 import { AwardYearSelectAction } from "./components/AwardYearSelect";
-import {
-  AwardPrintRecordAction,
-  AwardPrintSelectedButton,
-} from "./components/AwardPrintButton";
+import { awardPrintAdapter } from "./components/AwardPrintButton";
 import { NOMINATION_LIST_POPULATE } from "./components/AwardNominationList";
 import { WINNER_LIST_POPULATE } from "./components/AwardWinnerList";
 import {
@@ -103,18 +103,11 @@ const yearSelectAction: ActionManifest = {
   order: 85,
 };
 
-const PrintSelectedComponent = () => <AwardPrintSelectedButton />;
-
-/** Bulk print — only while nominations are selected (AgDatagrid → RA selection). */
-const printSelectedAction: ActionManifest = {
-  id: "print-selected",
-  label: "Print Selected",
-  icon: PrintIcon,
-  scope: "selection",
-  requiresList: true,
-  component: PrintSelectedComponent,
-  order: 95,
-};
+/** Bulk print — shared Print packet dialog over the ticked rows (RBAC `find`). */
+const printNominationsAction = printSelectedAction(
+  "award-nominations",
+  awardPrintAdapter
+);
 
 /** Bulk delete — selection-scoped, RBAC `delete` on award-nominations. */
 const deleteSelectedAction = bulkDeleteAction("award-nominations", {
@@ -204,7 +197,7 @@ export const awardsModule: ModuleManifest = {
             actions: [
               exportAction,
               columnsAction,
-              printSelectedAction,
+              printNominationsAction,
               deleteSelectedAction,
             ],
             panel: lazyPanel(() => import("./components/AwardNominationList")),
@@ -249,15 +242,8 @@ export const awardsModule: ModuleManifest = {
         back: DASHBOARD,
       },
       actions: [
-        // Print this nomination's packet — same generator as Print Selected.
-        {
-          id: "print",
-          label: "Print",
-          icon: PrintIcon,
-          scope: "record",
-          component: AwardPrintRecordAction,
-          order: 5,
-        },
+        // Print this nomination's packet — same dialog as Print Selected.
+        printRecordAction("award-nominations", awardPrintAdapter),
         editRecordAction("award-nominations", { label: "Review" }),
       ],
       body: AwardShow,

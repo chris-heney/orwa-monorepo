@@ -3,8 +3,10 @@ import { embedPrintFonts } from "../../../helpers/printBrandFonts";
 import { formatPacketYear } from "../../_components/review-packet/formatters";
 import {
   appendPacketAttachments,
+  relayAppendixProgress,
+  throwIfAborted,
   type AppendixOutcome,
-  type PacketMediaFetcher,
+  type PacketBuildOptions,
 } from "../../_components/review-packet/packetAppendix";
 import {
   attachmentTypeLabel,
@@ -984,27 +986,28 @@ const runningTitleFor = (record: AwardNominationPrintRecord) =>
     .filter((part) => part != null && String(part).trim() !== "")
     .join("  ·  ");
 
-export type NominationPrintOptions = {
-  /**
-   * Also append the PDF Strapi generated at submit time (`nomination_pdf`).
-   * Off by default: it repeats the form rendered above and was the source of
-   * the "form appears twice" report. The record's show page links to it.
-   */
-  includeSubmissionPdf?: boolean;
-  /** Test seam — defaults to an authenticated Strapi media fetch. */
-  fetchBytes?: PacketMediaFetcher;
-};
+/**
+ * `includeSubmissionPdf` appends `nomination_pdf` (the PDF Strapi generated at
+ * submit time) — off by default, it repeats the form rendered here.
+ */
+export type NominationPrintOptions = PacketBuildOptions;
 
-/** Build one nomination as its own PDF (never merged with siblings). */
+/**
+ * Build one nomination as its own PDF. Multi-record printing merges the
+ * finished packets (`framework/printPacket.ts`), never the layouts.
+ */
 export const generateNominationApplicationPdf = async (
   record: AwardNominationPrintRecord,
   options: NominationPrintOptions = {}
 ): Promise<{
   blob: Blob;
+  bytes: Uint8Array;
   filename: string;
   media: Record<string, MediaEmbedResult>;
   attachments: AppendixOutcome["files"];
 }> => {
+  throwIfAborted(options.signal);
+  options.onProgress?.({ stage: "form" });
   const doc = await PDFDocument.create();
   const fonts = await embedPrintFonts(doc);
   const { regular, bold, italic, boldItalic } = fonts;
@@ -1056,6 +1059,8 @@ export const generateNominationApplicationPdf = async (
   const appendix = await appendPacketAttachments(doc, fonts, attachments, {
     runningTitle: runningTitleFor(record),
     fetchBytes: options.fetchBytes,
+    onProgress: relayAppendixProgress(options.onProgress),
+    signal: options.signal,
   });
   const media: Record<string, MediaEmbedResult> = {};
   for (const slot of AWARD_ATTACHMENT_SLOTS) {
@@ -1063,147 +1068,15 @@ export const generateNominationApplicationPdf = async (
     media[slot.key] = appendix.bySlot[slot.key] ?? "skipped";
   }
 
+  throwIfAborted(options.signal);
+  options.onProgress?.({ stage: "finishing" });
   drawFooters(layout);
   const bytes = await doc.save();
   return {
     blob: new Blob([new Uint8Array(bytes)], { type: "application/pdf" }),
+    bytes,
     filename,
     media,
     attachments: appendix.files,
   };
-};
-
-/** Chromium iframe `afterprint` often fires as the dialog opens — ignore that. */
-export const PRINT_AFTERPRINT_IGNORE_MS = 600;
-/** Blocked or dismissed dialogs must not leave Print Selected spinning. */
-export const PRINT_DIALOG_TIMEOUT_MS = 180_000;
-export const PRINT_NEXT_JOB_GAP_MS = 300;
-
-const delay = (ms: number) =>
-  new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
-
-/**
- * Open one PDF in a hidden iframe and invoke the browser print dialog.
- * Resolves only after the dialog closes (`afterprint` / window `focus`)
- * or the timeout fires, so the next job can call `print()` safely.
- */
-export const printPdfBlob = (blob: Blob): Promise<void> =>
-  new Promise((resolve, reject) => {
-    if (typeof document === "undefined") {
-      reject(new Error("Print preview requires a browser"));
-      return;
-    }
-    const url = URL.createObjectURL(blob);
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("title", "Print nomination application");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText =
-      "position:fixed;inset:0;width:1px;height:1px;opacity:0;border:0;pointer-events:none;";
-
-    let settled = false;
-    let openedAt = 0;
-    let timeoutId = 0;
-    let win: Window | null = null;
-
-    const dialogLikelyClosed = () =>
-      openedAt > 0 && Date.now() - openedAt >= PRINT_AFTERPRINT_IGNORE_MS;
-
-    const cleanup = () => {
-      window.clearTimeout(timeoutId);
-      window.removeEventListener("afterprint", onCloseSignal);
-      window.removeEventListener("focus", onCloseSignal);
-      win?.removeEventListener("afterprint", onCloseSignal);
-      iframe.remove();
-      URL.revokeObjectURL(url);
-    };
-
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      resolve();
-    };
-
-    const fail = (message: string) => {
-      if (settled) return;
-      settled = true;
-      cleanup();
-      reject(new Error(message));
-    };
-
-    const onCloseSignal = () => {
-      if (dialogLikelyClosed()) finish();
-    };
-
-    iframe.onload = () => {
-      if (settled) return;
-      win = iframe.contentWindow;
-      if (!win) {
-        fail("Print preview failed to load");
-        return;
-      }
-      win.addEventListener("afterprint", onCloseSignal);
-      window.addEventListener("afterprint", onCloseSignal);
-      window.addEventListener("focus", onCloseSignal);
-      openedAt = Date.now();
-      try {
-        win.focus();
-        win.print();
-      } catch {
-        finish();
-      }
-    };
-    iframe.onerror = () => {
-      fail("Print preview failed to load");
-    };
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    timeoutId = window.setTimeout(finish, PRINT_DIALOG_TIMEOUT_MS);
-  });
-
-/** One print job per nomination — do not concatenate into a single PDF. */
-export const printNominationApplication = async (
-  record: AwardNominationPrintRecord
-) => {
-  const { blob, filename, media } = await generateNominationApplicationPdf(
-    record
-  );
-  await printPdfBlob(blob);
-  return { filename, media, byteLength: blob.size };
-};
-
-export type PrintQueueResult = {
-  printed: string[];
-  failed: Array<{ filename: string; message: string }>;
-};
-
-/** One print job per nomination — do not concatenate into a single PDF. */
-export const printNominationApplications = async (
-  records: AwardNominationPrintRecord[],
-  printOne: (
-    record: AwardNominationPrintRecord
-  ) => Promise<{ filename: string }> = printNominationApplication
-): Promise<PrintQueueResult> => {
-  const printed: string[] = [];
-  const failed: PrintQueueResult["failed"] = [];
-  for (let index = 0; index < records.length; index += 1) {
-    const record = records[index];
-    try {
-      const result = await printOne(record);
-      printed.push(result.filename);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.warn("Award print: job failed", error);
-      failed.push({
-        filename: nominationApplicationFilename(record),
-        message,
-      });
-    }
-    if (index < records.length - 1) {
-      await delay(PRINT_NEXT_JOB_GAP_MS);
-    }
-  }
-  return { printed, failed };
 };

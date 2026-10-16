@@ -26,6 +26,8 @@ Design document: `tmp/member-manager-layout-framework-proposal.md`.
 | `Drawers.tsx` | `RightDrawer` per manifest, auto Filters drawer/action |
 | `prefetch.ts` | RA 4 query keys (`prefetch.spec.ts` guards the shape) |
 | `actions.tsx` | presets: `exportAction`, `columnsAction`, `createAction(res)`, `searchAction`, `editRecordAction`, … |
+| `BulkDeleteAction.tsx` | `bulkDeleteAction(res, { noun })` — selection-scoped, `delete`-gated confirm + `deleteMany` |
+| `PrintPacketAction.tsx` / `printPacket.ts` / `printPdfBlob.ts` | `printSelectedAction(res, adapter)` / `printRecordAction(res, adapter)` / `PrintPacketRowButton` — ONE Print dialog (progress, Cancel/abort, Download / Print / Open in new tab, merged multi-record PDF, "Include original submission PDF") over a module adapter (`fetchRecords`, `buildPacket`, `packetYearLabel`); Awards + ORWEF use it |
 | `lazyPanel.ts` | `panel: lazyPanel(() => import('./Panel'))` |
 
 ## Writing a module

@@ -187,6 +187,66 @@ describe("appendPacketAttachments", () => {
     expect(text).toContain("Just a text file");
   });
 
+  it("reports each attachment to onProgress before rendering it, in appendix order", async () => {
+    const record = {
+      biography_file: { url: "/uploads/bio.pdf", name: "bio.pdf", mime: "application/pdf" },
+      photographs: [
+        { url: "/uploads/a.png", name: "a.png", mime: "image/png" },
+        { url: "/uploads/b.png", name: "b.png", mime: "image/png" },
+      ],
+    };
+    const attachments = orderPacketAttachments(record, slots);
+    const doc = await PDFDocument.create();
+    const fonts = await embedPrintFonts(doc);
+    doc.addPage([612, 792]);
+    const seen: string[] = [];
+    const fetched: string[] = [];
+    await appendPacketAttachments(doc, fonts, attachments, {
+      runningTitle: "Progress",
+      fetchBytes: async (file) => {
+        fetched.push(String(file.name));
+        return String(file.name).endsWith(".pdf") ? makePdf(["Bio"]) : PNG_1X1;
+      },
+      onProgress: (progress) => {
+        // Progress fires before the fetch of the same attachment.
+        expect(fetched).toHaveLength(progress.index - 1);
+        seen.push(`${progress.index}/${progress.total} ${progress.attachment.fileName}`);
+      },
+    });
+    expect(seen).toEqual(["1/3 bio.pdf", "2/3 a.png", "3/3 b.png"]);
+  });
+
+  it("stops at the next attachment once the signal aborts and rethrows AbortError", async () => {
+    const record = {
+      photographs: [
+        { url: "/uploads/a.png", name: "a.png", mime: "image/png" },
+        { url: "/uploads/b.png", name: "b.png", mime: "image/png" },
+        { url: "/uploads/c.png", name: "c.png", mime: "image/png" },
+      ],
+    };
+    const attachments = orderPacketAttachments(record, slots);
+    const doc = await PDFDocument.create();
+    const fonts = await embedPrintFonts(doc);
+    doc.addPage([612, 792]);
+    const controller = new AbortController();
+    const fetched: string[] = [];
+    const pending = appendPacketAttachments(doc, fonts, attachments, {
+      runningTitle: "Abort",
+      signal: controller.signal,
+      fetchBytes: async (file, _url, signal) => {
+        fetched.push(String(file.name));
+        expect(signal).toBe(controller.signal);
+        // Cancel while the second file is "downloading".
+        if (file.name === "b.png") controller.abort();
+        return PNG_1X1;
+      },
+    });
+    await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+    // a.png embedded, b.png fetched then dropped, c.png never requested.
+    expect(fetched).toEqual(["a.png", "b.png"]);
+    expect(doc.getPageCount()).toBe(2);
+  });
+
   it("returns an empty outcome without adding pages when nothing is attached", async () => {
     const doc = await PDFDocument.create();
     const fonts = await embedPrintFonts(doc);

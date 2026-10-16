@@ -1,34 +1,22 @@
-import React, { useState } from "react";
+import React from "react";
+import type { DataProvider, Identifier } from "react-admin";
 import {
-  Button,
-  useDataProvider,
-  useNotify,
-  useRecordContext,
-  useStore,
-} from "react-admin";
-import {
-  Alert,
-  CircularProgress,
-  IconButton,
-  Snackbar,
-  Tooltip,
-  useTheme,
-} from "@mui/material";
-import PrintIcon from "@mui/icons-material/Print";
+  PrintPacketRowButton,
+  type PrintPacketAdapter,
+} from "../../../framework/PrintPacketAction";
 import {
   AWARD_PRINT_POPULATE,
-  nominationRecordId,
+  nominationPacketYear,
   type AwardNominationPrintRecord,
 } from "../helpers/nominationPrintModel";
-import { printNominationApplications } from "../helpers/printNominationApplication";
+import { generateNominationApplicationPdf } from "../helpers/printNominationApplication";
 
+/** RaStore key the grid writes its ticks to (same key RA's ListBase reads). */
 export const AWARD_SELECTED_IDS_KEY = "award-nominations.selectedIds";
 
-const EMPTY_SELECTION_TOAST = "Select at least one nomination to print";
-
 const fetchNomination = async (
-  dataProvider: ReturnType<typeof useDataProvider>,
-  id: string | number
+  dataProvider: DataProvider,
+  id: Identifier
 ): Promise<AwardNominationPrintRecord> => {
   const { data } = await dataProvider.getOne("award-nominations", {
     id,
@@ -37,193 +25,38 @@ const fetchNomination = async (
   return data as AwardNominationPrintRecord;
 };
 
-const usePrintNominations = () => {
-  const dataProvider = useDataProvider();
-  const notify = useNotify();
-  const [busy, setBusy] = useState(false);
-  const [toast, setToast] = useState<{
-    text: string;
-    severity: "info" | "warning";
-  } | null>(null);
-
-  const showToast = (text: string, severity: "info" | "warning") => {
-    setToast({ text, severity });
-    notify(text, { type: severity });
-  };
-
-  const printIds = async (ids: Array<string | number>) => {
-    if (ids.length === 0) {
-      showToast(EMPTY_SELECTION_TOAST, "warning");
-      return;
-    }
-    setBusy(true);
-    try {
-      const records: AwardNominationPrintRecord[] = [];
-      for (const id of ids) {
-        records.push(await fetchNomination(dataProvider, id));
-      }
-      const { printed, failed } = await printNominationApplications(records);
-      const parts: string[] = [];
-      if (printed.length === 1) {
-        parts.push("Print dialog opened");
-      } else if (printed.length > 1) {
-        parts.push(`${printed.length} print jobs sent`);
-      }
-      if (failed.length === 1) {
-        parts.push(failed[0].message);
-      } else if (failed.length > 1) {
-        parts.push(`${failed.length} nominations could not be printed`);
-      }
-      if (parts.length > 0) {
-        showToast(parts.join(" · "), failed.length > 0 ? "warning" : "info");
-      } else {
-        showToast("Could not generate the application PDF", "warning");
-      }
-    } catch (error) {
-      console.error(error);
-      showToast(
-        error instanceof Error
-          ? error.message
-          : "Could not generate the application PDF",
-        "warning"
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const toastEl = (
-    <Snackbar
-      open={Boolean(toast)}
-      autoHideDuration={5000}
-      onClose={() => setToast(null)}
-      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-    >
-      <Alert
-        severity={toast?.severity || "info"}
-        variant="filled"
-        onClose={() => setToast(null)}
-        sx={{ width: "100%" }}
-      >
-        {toast?.text}
-      </Alert>
-    </Snackbar>
-  );
-
-  return { busy, printIds, toastEl };
-};
-
-/** Subheader icon — immediately to the right of Filter. */
-export const AwardPrintSelectedButton = () => {
-  const [selectedIds] = useStore<(string | number)[]>(
-    AWARD_SELECTED_IDS_KEY,
-    []
-  );
-  const { busy, printIds, toastEl } = usePrintNominations();
-  const empty = selectedIds.length === 0;
-
-  return (
-    <>
-      <Tooltip
-        title={
-          empty ? "Select one or more nominations to print" : "Print Selected"
-        }
-      >
-        <span>
-          <IconButton
-            onClick={() => {
-              void printIds(selectedIds);
-            }}
-            size="small"
-            color="primary"
-            aria-label="Print Selected"
-            disabled={busy}
-            sx={{
-              opacity: empty && !busy ? 0.45 : 1,
-              "&:hover": { color: "white" },
-            }}
-          >
-            {busy ? (
-              <CircularProgress size={16} sx={{ color: "white" }} />
-            ) : (
-              <PrintIcon fontSize="small" sx={{ color: "white" }} />
-            )}
-          </IconButton>
-        </span>
-      </Tooltip>
-      {toastEl}
-    </>
-  );
-};
-
 /**
- * Bar action of `awards.nominationShow` — same fetch + packet as Print Selected,
- * scoped to the record on screen (mirrors ORWEF's `PrintScholarshipRecordAction`).
+ * Awards' half of the shared Print packet preset (`framework/PrintPacketAction`):
+ * fresh populated fetch, the nomination generator, and the packet year label.
  */
-export const AwardPrintRecordAction = () => {
-  const record = useRecordContext<AwardNominationPrintRecord>();
-  const { busy, printIds, toastEl } = usePrintNominations();
-  const id = record ? nominationRecordId(record) : null;
-
-  return (
-    <>
-      <Button
-        onClick={() => {
-          if (id == null) return;
-          void printIds([id]);
-        }}
-        disabled={busy || id == null}
-        label="Print"
-        title="Print nomination application"
-        sx={{ color: "white", minWidth: 0 }}
-      >
-        {busy ? (
-          <CircularProgress size={16} color="inherit" />
-        ) : (
-          <PrintIcon />
-        )}
-      </Button>
-      {toastEl}
-    </>
-  );
+export const awardPrintAdapter: PrintPacketAdapter<AwardNominationPrintRecord> = {
+  noun: "award nomination",
+  mergedFilenamePrefix: "ORWA-Award-Nominations",
+  fetchRecords: async (ids, dataProvider) => {
+    const records: AwardNominationPrintRecord[] = [];
+    for (const id of ids) records.push(await fetchNomination(dataProvider, id));
+    return records;
+  },
+  buildPacket: async (record, options) => {
+    const { bytes, filename, attachments } = await generateNominationApplicationPdf(
+      record,
+      options
+    );
+    return { bytes, filename, attachments };
+  },
+  // Single conference year ("2027") — Awards never use the split label.
+  packetYearLabel: (record) => String(nominationPacketYear(record)),
 };
 
+/** Row action in the Nominations grid — same dialog as the bar's Print. */
 export const AwardRowPrintButton = ({
   record,
 }: {
   record: AwardNominationPrintRecord | Record<string, unknown>;
-}) => {
-  const theme = useTheme();
-  const { busy, printIds, toastEl } = usePrintNominations();
-  const id = nominationRecordId(record as AwardNominationPrintRecord);
-
-  return (
-    <>
-      <Tooltip title="Print application">
-        <span data-ag-skip-row-click="">
-          <IconButton
-            size="small"
-            aria-label="Print application"
-            disabled={busy || id == null}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (id == null) return;
-              void printIds([id]);
-            }}
-            sx={{
-              color: theme.palette.mode === "dark" ? "grey.100" : "grey.800",
-              "&:hover": { color: "primary.main" },
-            }}
-          >
-            {busy ? (
-              <CircularProgress size={16} color="inherit" />
-            ) : (
-              <PrintIcon fontSize="small" />
-            )}
-          </IconButton>
-        </span>
-      </Tooltip>
-      {toastEl}
-    </>
-  );
-};
+}) => (
+  <PrintPacketRowButton
+    record={record as Record<string, unknown>}
+    adapter={awardPrintAdapter}
+    label="Print nomination packet"
+  />
+);

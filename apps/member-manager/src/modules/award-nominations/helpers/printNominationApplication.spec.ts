@@ -9,10 +9,8 @@ import {
   baselineCentered,
   fontAscent,
   generateNominationApplicationPdf,
-  printNominationApplications,
   wrapLines,
 } from "./printNominationApplication";
-import type { AwardNominationPrintRecord } from "./nominationPrintModel";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const tmpDir = resolve(here, "../../../../../../tmp");
@@ -491,34 +489,5 @@ describe("board / employee list section", () => {
     expect(text).toMatch(/Biography/);
     expect(text).toMatch(/Photographs \(0\)/);
     expect(text).toMatch(/None uploaded/);
-  });
-});
-
-describe("printNominationApplications", () => {
-  it("prints each nomination as its own job and continues after a failure", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => undefined);
-    const order: string[] = [];
-    const printOne = async (record: AwardNominationPrintRecord) => {
-      order.push(String(record.nominee_name));
-      if (record.nominee_name === "Two") {
-        throw new Error("PDF failed");
-      }
-      return { filename: `${record.nominee_name}.pdf` };
-    };
-
-    const result = await printNominationApplications(
-      [
-        { nominee_name: "One", award_year: 2027 },
-        { nominee_name: "Two", award_year: 2027 },
-        { nominee_name: "Three", award_year: 2027 },
-      ],
-      printOne
-    );
-
-    expect(order).toEqual(["One", "Two", "Three"]);
-    expect(result.printed).toEqual(["One.pdf", "Three.pdf"]);
-    expect(result.failed).toHaveLength(1);
-    expect(result.failed[0].message).toBe("PDF failed");
-    expect(result.failed[0].filename).toContain("Two");
   });
 });

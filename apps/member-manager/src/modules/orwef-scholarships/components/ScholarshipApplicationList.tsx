@@ -18,7 +18,10 @@ import { formatScholarshipYear } from "../../../helpers/conferenceCycleYear";
 import { listFinancialResources } from "../helpers/financialResources";
 import { watersystemRegion } from "../helpers/listFilters";
 import { SCHOLARSHIP_LIST_OMIT } from "../helpers/scholarshipListColumns";
-import { SCHOLARSHIP_SELECTED_IDS_KEY } from "./ScholarshipPrintButton";
+import {
+  SCHOLARSHIP_SELECTED_IDS_KEY,
+  ScholarshipRowPrintButton,
+} from "./ScholarshipPrintActions";
 import MediaLink from "./MediaLink";
 
 export const AG_PREFS_KEY = "agGrid.scholarship-applications";
@@ -55,6 +58,7 @@ const ScholarshipApplicationList = () => (
       rowSelection
       selectionStoreKey={SCHOLARSHIP_SELECTED_IDS_KEY}
       omit={SCHOLARSHIP_LIST_OMIT}
+      rowActions={(record) => <ScholarshipRowPrintButton record={record} />}
     >
       <FunctionField
         label="Applicant"

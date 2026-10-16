@@ -1,8 +1,6 @@
 import SchoolIcon from "@mui/icons-material/School";
 import DashboardIcon from "@mui/icons-material/Dashboard";
-import PrintIcon from "@mui/icons-material/Print";
 import type {
-  ActionManifest,
   ModuleManifest,
   ResourceDefinition,
 } from "../../framework/manifest";
@@ -10,13 +8,14 @@ import { lazyPanel } from "../../framework/lazyPanel";
 import { columnsAction, editRecordAction } from "../../framework/actions";
 import { pageView, tabRedirect } from "../../framework/registry";
 import { bulkDeleteAction } from "../../framework/BulkDeleteAction";
+import {
+  printRecordAction,
+  printSelectedAction,
+} from "../../framework/PrintPacketAction";
 import ScholarshipEdit from "./components/ScholarshipEdit";
 import ScholarshipShow, { applicantTitle } from "./components/ScholarshipShow";
 import OrwefFilterSidebar from "./components/OrwefFilterSidebar";
-import {
-  PrintScholarshipRecordAction,
-  PrintSelectedScholarshipsAction,
-} from "./components/ScholarshipPrintActions";
+import { scholarshipPrintAdapter } from "./components/ScholarshipPrintActions";
 import {
   ORWEF_STORE_KEYS,
   ORWEF_WATCH_KEYS,
@@ -41,30 +40,22 @@ export const scholarshipApplicationsResource: ResourceDefinition = {
 
 /* ---------- actions ---------- */
 
-/** Bulk print — only while applications are selected (AgDatagrid → RA selection). */
-const printSelectedAction: ActionManifest = {
-  id: "print-selected",
-  label: "Print Selected",
-  icon: PrintIcon,
-  scope: "selection",
-  requiresList: true,
-  component: PrintSelectedScholarshipsAction,
-  order: 75,
-};
+/** Bulk print — shared Print packet dialog over the ticked rows (RBAC `find`). */
+const printApplicationsAction = printSelectedAction(
+  "scholarship-applications",
+  scholarshipPrintAdapter
+);
 
 /** Bulk delete — selection-scoped, RBAC `delete` on scholarship-applications. */
 const deleteSelectedAction = bulkDeleteAction("scholarship-applications", {
   noun: "scholarship application",
 });
 
-const printRecordAction: ActionManifest = {
-  id: "print",
-  label: "Print",
-  icon: PrintIcon,
-  scope: "record",
-  component: PrintScholarshipRecordAction,
-  order: 5,
-};
+/** Print this application's packet — same dialog as Print Selected. */
+const printApplicationAction = printRecordAction(
+  "scholarship-applications",
+  scholarshipPrintAdapter
+);
 
 /**
  * ORWEF Scholarships — proposal §5 step 6 ("rest").
@@ -121,7 +112,7 @@ export const scholarshipsModule: ModuleManifest = {
               meta: { populate: "*", raw: true },
               filterBody: OrwefFilterSidebar,
             },
-            actions: [printSelectedAction, columnsAction, deleteSelectedAction],
+            actions: [printApplicationsAction, columnsAction, deleteSelectedAction],
             panel: lazyPanel(
               () => import("./components/ScholarshipApplicationList")
             ),
@@ -142,7 +133,7 @@ export const scholarshipsModule: ModuleManifest = {
         back: DASHBOARD,
       },
       actions: [
-        printRecordAction,
+        printApplicationAction,
         editRecordAction("scholarship-applications", { label: "Review" }),
       ],
       body: ScholarshipShow,

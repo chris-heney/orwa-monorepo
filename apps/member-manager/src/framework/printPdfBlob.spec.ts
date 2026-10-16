@@ -5,7 +5,7 @@ import {
   PRINT_AFTERPRINT_IGNORE_MS,
   PRINT_DIALOG_TIMEOUT_MS,
   printPdfBlob,
-} from "./printNominationApplication";
+} from "./printPdfBlob";
 
 type FakeWin = {
   focus: () => void;

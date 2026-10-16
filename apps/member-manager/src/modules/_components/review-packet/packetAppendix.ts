@@ -158,15 +158,31 @@ const authHeaders = (): HeadersInit => {
 
 export type PacketMediaFetcher = (
   file: NonNullable<PacketMediaFile>,
-  url: string
+  url: string,
+  /** Cancel (Print dialog's Cancel); an aborted fetch must rethrow, not return null. */
+  signal?: AbortSignal
 ) => Promise<Uint8Array | null>;
 
-/** Default fetcher: Strapi media with the signed-in user's token. Never throws. */
-export const fetchPacketMedia: PacketMediaFetcher = async (file, url) => {
+/** `DOMException` name a cancelled build throws — the dialog closes without a toast. */
+export const ABORT_ERROR_NAME = "AbortError";
+
+export const isAbortError = (error: unknown): boolean =>
+  (error as { name?: string } | null)?.name === ABORT_ERROR_NAME;
+
+/** Throw the standard abort error when `signal` has fired (no-op otherwise). */
+export const throwIfAborted = (signal?: AbortSignal | null) => {
+  if (!signal?.aborted) return;
+  throw typeof DOMException === "function"
+    ? new DOMException("Packet build cancelled", ABORT_ERROR_NAME)
+    : Object.assign(new Error("Packet build cancelled"), { name: ABORT_ERROR_NAME });
+};
+
+/** Default fetcher: Strapi media with the signed-in user's token. Never throws (except on abort). */
+export const fetchPacketMedia: PacketMediaFetcher = async (file, url, signal) => {
   const href = resolveMediaUrl(url);
   if (!href) return null;
   try {
-    const response = await fetch(href, { headers: authHeaders() });
+    const response = await fetch(href, { headers: authHeaders(), signal });
     if (!response.ok) {
       console.warn(
         `Packet print: could not download ${file.name || href} (${response.status})`
@@ -175,6 +191,7 @@ export const fetchPacketMedia: PacketMediaFetcher = async (file, url) => {
     }
     return new Uint8Array(await response.arrayBuffer());
   } catch (error) {
+    if (isAbortError(error)) throw error;
     console.warn(`Packet print: could not download ${file.name || href}`, error);
     return null;
   }
@@ -744,10 +761,56 @@ export type AppendixOutcome = {
   files: Array<{ attachment: OrderedAttachment; result: MediaEmbedResult; detail?: string }>;
 };
 
+/** Fired before each attachment is fetched/rendered: `index` is 1-based. */
+export type AppendixProgress = {
+  index: number;
+  total: number;
+  attachment: OrderedAttachment;
+};
+
+/** Coarse build progress a packet generator reports to the Print dialog. */
+export type PacketBuildProgress =
+  | { stage: "form" }
+  | { stage: "attachments"; index: number; total: number; fileName: string }
+  | { stage: "finishing" };
+
+/** Options every packet generator (Awards, ORWEF) accepts. */
+export type PacketBuildOptions = {
+  /**
+   * Also append the PDF the system generated at submit time. Off by default:
+   * it repeats the form rendered by the generator (the "form appears twice"
+   * report). The record's show page links to it.
+   */
+  includeSubmissionPdf?: boolean;
+  /** Test seam — defaults to an authenticated Strapi media fetch. */
+  fetchBytes?: PacketMediaFetcher;
+  onProgress?: (progress: PacketBuildProgress) => void;
+  /** Cancel from the Print dialog. */
+  signal?: AbortSignal;
+};
+
+/** Adapt a generator's `onProgress` to the appendix's per-attachment callback. */
+export const relayAppendixProgress = (
+  onProgress?: (progress: PacketBuildProgress) => void
+): AppendixOptions["onProgress"] =>
+  onProgress
+    ? (progress) =>
+        onProgress({
+          stage: "attachments",
+          index: progress.index,
+          total: progress.total,
+          fileName: progress.attachment.fileName,
+        })
+    : undefined;
+
 export type AppendixOptions = {
   /** Running-header title, e.g. "Achille PUA · System of the Year · Year: 2027". */
   runningTitle: string;
   fetchBytes?: PacketMediaFetcher;
+  /** Progress for the Print dialog ("Rendering attachments 2 of 7 · file.pdf"). */
+  onProgress?: (progress: AppendixProgress) => void;
+  /** Cancel: checked before every attachment and passed to the media fetch. */
+  signal?: AbortSignal;
 };
 
 /**
@@ -761,6 +824,7 @@ export const appendPacketAttachments = async (
   options: AppendixOptions
 ): Promise<AppendixOutcome> => {
   const fetchBytes = options.fetchBytes ?? fetchPacketMedia;
+  const { signal } = options;
   const layout: AppendixLayout = {
     doc,
     fonts,
@@ -774,10 +838,17 @@ export const appendPacketAttachments = async (
   const perSlot = new Map<string, MediaEmbedResult[]>();
 
   for (const attachment of attachments) {
+    throwIfAborted(signal);
+    options.onProgress?.({
+      index: attachment.ordinal,
+      total: attachments.length,
+      attachment,
+    });
     let result: MediaEmbedResult = "unavailable";
     let detail: string | undefined;
     try {
-      const bytes = await fetchBytes(attachment.file, attachment.url);
+      const bytes = await fetchBytes(attachment.file, attachment.url, signal);
+      throwIfAborted(signal);
       if (!bytes) {
         detail = "The file could not be downloaded from the media library.";
         appendUnavailableNote(layout, attachment, detail);
@@ -853,6 +924,8 @@ export const appendPacketAttachments = async (
         appendUnavailableNote(layout, attachment, detail);
       }
     } catch (error) {
+      // Cancel is not an attachment failure — unwind the whole build.
+      if (isAbortError(error)) throw error;
       console.warn(`Packet print: attachment ${attachment.fileName} failed`, error);
       detail = error instanceof Error ? error.message : String(error);
       try {
