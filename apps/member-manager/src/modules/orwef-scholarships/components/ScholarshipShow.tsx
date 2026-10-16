@@ -21,6 +21,7 @@ import {
   resolveScholarshipYear,
 } from "../helpers/metrics";
 import { listFinancialResources } from "../helpers/financialResources";
+import { formatScholarshipYear } from "../../../helpers/conferenceCycleYear";
 import MediaLink from "./MediaLink";
 import PacketLetterhead from "./PacketLetterhead";
 import type { ScholarshipPacketRecord } from "../helpers/printScholarshipPacket";
@@ -82,7 +83,10 @@ const ScholarshipShow = () => {
                 sx={{ mt: 0.5 }}
                 data-testid="scholarship-year"
               >
-                Scholarship Year {scholarshipYear.year ?? "—"}
+                Scholarship Year{" "}
+                {scholarshipYear.year != null
+                  ? formatScholarshipYear(scholarshipYear.year)
+                  : "—"}
               </Typography>
               {scholarshipYear.derived && scholarshipYear.year != null ? (
                 <Typography

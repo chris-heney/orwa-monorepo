@@ -1,4 +1,5 @@
 import { cycleYearOf } from "../../_components/review-packet/formatters";
+import { formatScholarshipYear } from "../../../helpers/conferenceCycleYear";
 import type { ScholarshipPacketRecord } from "./printScholarshipPacket";
 
 type YearSource = Pick<
@@ -27,11 +28,11 @@ const sanitize = (value: string) =>
     .replace(/^-+|-+$/g, "")
     .slice(0, 64);
 
-/** `ORWEF-Scholarship-{last}-{year}.pdf` — same year as the packet cover. */
+/** `ORWEF-Scholarship-{last}-{start}-{end}.pdf` — same split year as the packet cover. */
 export const scholarshipPacketFilename = (
   record?: (YearSource & { applicant_last_name?: string | null }) | null
 ): string => {
   const last =
     sanitize(String(record?.applicant_last_name || "").trim()) || "Applicant";
-  return `ORWEF-Scholarship-${last}-${scholarshipPacketYear(record)}.pdf`;
+  return `ORWEF-Scholarship-${last}-${formatScholarshipYear(scholarshipPacketYear(record))}.pdf`;
 };

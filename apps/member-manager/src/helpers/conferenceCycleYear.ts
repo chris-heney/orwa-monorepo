@@ -38,6 +38,21 @@ export const cycleYearOf = (dateLike: Date | string | number): number => {
     : date.getFullYear();
 };
 
+/**
+ * ORWEF scholarships span an academic year: the stored START year
+ * (`scholarship_year` = 2027, still an integer everywhere it is stored,
+ * filtered or sorted) is displayed as "2027-2028". ORWA Awards are a single
+ * conference year and must NOT use this. The only body of that label rule in
+ * member-manager; mirrors Strapi `cycle-year.ts` and the public form.
+ * Non-integer input is echoed untouched rather than rendering "NaN-NaN".
+ */
+export const formatScholarshipYear = (start: number | string): string => {
+  const text = String(start ?? "").trim();
+  const year = Number(text);
+  if (!text || !Number.isInteger(year)) return text;
+  return `${year}-${year + 1}`;
+};
+
 /** Cycle year new submissions arrive under right now. */
 export const nextAnnualConferenceYear = (now: Date = new Date()): number =>
   cycleYearOf(now);

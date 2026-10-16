@@ -4,6 +4,7 @@ import {
   cycleYearChoices,
   cycleYearOf,
   cycleYearWindow,
+  formatScholarshipYear,
   nextAnnualConferenceYear,
 } from "./conferenceCycleYear";
 
@@ -79,5 +80,18 @@ describe("cycleYearChoices", () => {
     const choices = cycleYearChoices(new Date("2027-02-10T12:00:00"));
     expect(choices.slice(0, 3)).toEqual(["all", 2027, 2026]);
     expect(new Set(choices).size).toBe(choices.length);
+  });
+});
+
+describe("formatScholarshipYear (ORWEF split academic year)", () => {
+  it("renders the stored start year as START-END", () => {
+    expect(formatScholarshipYear(2027)).toBe("2027-2028");
+    expect(formatScholarshipYear(1999)).toBe("1999-2000");
+    expect(formatScholarshipYear("2027")).toBe("2027-2028");
+  });
+
+  it("echoes non-integer input instead of NaN-NaN", () => {
+    expect(formatScholarshipYear("abc")).toBe("abc");
+    expect(formatScholarshipYear("")).toBe("");
   });
 });

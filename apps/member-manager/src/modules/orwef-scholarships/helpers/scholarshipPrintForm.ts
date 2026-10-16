@@ -1,6 +1,6 @@
 import { PDFDocument, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import type { PrintFonts } from "../../../helpers/printBrandFonts";
-import { formatPacketYear } from "../../_components/review-packet/formatters";
+import { formatScholarshipPacketYear } from "../../_components/review-packet/formatters";
 
 export const ORWEF_LEGAL_NAME = "Oklahoma Rural Water Enrichment Foundation";
 export const ORWEF_KICKER = "OKLAHOMA RURAL WATER ENRICHMENT FOUNDATION";
@@ -142,7 +142,7 @@ export type PrintCard = {
 
 export type ScholarshipPrintModel = {
   applicantName: string;
-  /** Application year as text (submission year) — printed as "Year: 2026". */
+  /** Stored start year as text ("2027") — printed split as "Year: 2027-2028". */
   year: string;
   cards: PrintCard[];
   fullWidth: PrintCard[];
@@ -162,14 +162,14 @@ type Layout = {
 
 const contentRight = (layout: Layout) => layout.width - MARGIN_RIGHT;
 
-/** "Applicant · ORWEF Scholarship · Year: 2026" — running header and appendix header. */
+/** "Applicant · ORWEF Scholarship · Year: 2027-2028" — running header and appendix header. */
 export const scholarshipRunningTitle = (
   model: Pick<ScholarshipPrintModel, "applicantName" | "year">
 ) =>
   [
     model.applicantName || "Applicant",
     SCHOLARSHIP_FOOTER_AWARD,
-    model.year ? formatPacketYear(model.year) : null,
+    model.year ? formatScholarshipPacketYear(model.year) : null,
   ]
     .filter((part) => part != null && String(part).trim() !== "")
     .join("  ·  ");
@@ -272,7 +272,7 @@ const drawCover = (layout: Layout) => {
   });
 
   const yearText = fitText(
-    formatPacketYear(layout.model.year),
+    formatScholarshipPacketYear(layout.model.year),
     fonts.bold,
     COVER_TITLE_SIZE,
     rightMax

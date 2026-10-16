@@ -171,7 +171,7 @@ describe("generateScholarshipPacketPdf", () => {
     const { blob, filename, fontFamily } = await generateScholarshipPacketPdf(
       sampleRecord()
     );
-    expect(filename).toBe("ORWEF-Scholarship-Harper-2027.pdf");
+    expect(filename).toBe("ORWEF-Scholarship-Harper-2027-2028.pdf");
     expect(fontFamily).toBe("Liberation Sans");
 
     const bytes = new Uint8Array(await blob.arrayBuffer());

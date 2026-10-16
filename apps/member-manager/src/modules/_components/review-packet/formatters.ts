@@ -11,17 +11,30 @@ export {
   CYCLE_ROLLOVER_MONTH,
   cycleYearOf,
 } from "../../../helpers/conferenceCycleYear";
+import { formatScholarshipYear } from "../../../helpers/conferenceCycleYear";
 
 /**
  * Year wording for printed packets (cover band, running header, index).
  * Staff asked for "Year: 2027" — never "Cycle 2027". The value comes from the
  * record (Awards `award_year`, ORWEF `scholarship_year`), not from the clock.
+ * Awards packets use this as-is (single conference year).
  */
 export const formatPacketYear = (
   year: number | string | null | undefined
 ): string => {
   const text = String(year ?? "").trim();
   return `Year: ${text || blank}`;
+};
+
+/**
+ * ORWEF variant: the stored start year prints as the split academic year —
+ * "Year: 2027-2028". Blank stays "Year: —".
+ */
+export const formatScholarshipPacketYear = (
+  startYear: number | string | null | undefined
+): string => {
+  const text = String(startYear ?? "").trim();
+  return formatPacketYear(text ? formatScholarshipYear(text) : null);
 };
 
 export const displayText = (value: unknown): string => {

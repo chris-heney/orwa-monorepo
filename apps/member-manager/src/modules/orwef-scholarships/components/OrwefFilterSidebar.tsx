@@ -13,6 +13,7 @@ import {
   SCHOLARSHIP_STATUS_VALUES,
   WATER_SYSTEM_REGIONS,
   calendarYearChoices,
+  scholarshipYearLabel,
 } from "../helpers/listFilters";
 import {
   useScholarshipRegion,
@@ -94,7 +95,7 @@ const OrwefFilterSidebar = () => {
         >
           {calendarYearChoices().map((value) => (
             <MenuItem key={String(value)} value={value}>
-              {value === "all" ? "All years" : value}
+              {scholarshipYearLabel(value)}
             </MenuItem>
           ))}
         </TextField>

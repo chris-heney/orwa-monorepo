@@ -1,6 +1,7 @@
 import {
   cycleYearChoices,
   cycleYearWindow,
+  formatScholarshipYear,
   nextAnnualConferenceYear,
 } from "../../../helpers/conferenceCycleYear";
 import {
@@ -56,9 +57,17 @@ export type WaterSystemRegion = (typeof WATER_SYSTEM_REGIONS)[number];
 export const scholarshipCycleYear = (now: Date = new Date()): number =>
   nextAnnualConferenceYear(now);
 
-/** All years, then the upcoming cycle, current calendar year, and 7 prior years. */
+/** All years, then the upcoming cycle, current calendar year, and 7 prior years (integer values). */
 export const calendarYearChoices = (now: Date = new Date()) =>
   cycleYearChoices(now);
+
+/**
+ * Option / caption label for a `calendarYearChoices` value: ORWEF shows the
+ * split academic year ("2027-2028"); the stored / filtered value stays the
+ * integer start year. (Awards keep plain years — do not reuse this there.)
+ */
+export const scholarshipYearLabel = (value: number | "all"): string =>
+  value === "all" ? "All years" : formatScholarshipYear(value);
 
 export const watersystemRegion = (record: {
   watersystem?: { region?: string | null } | null;

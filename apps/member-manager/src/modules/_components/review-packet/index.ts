@@ -8,6 +8,7 @@ export {
   formatMoney,
   formatPacketYear,
   formatPersonName,
+  formatScholarshipPacketYear,
   EDUCATION_LABELS,
   RELATIONSHIP_LABELS,
 } from "./formatters";

@@ -14,6 +14,7 @@ import {
   formatAddress,
   formatPersonName,
 } from "../../_components/review-packet";
+import { formatScholarshipYear } from "../../../helpers/conferenceCycleYear";
 import { listFinancialResources } from "../helpers/financialResources";
 import { watersystemRegion } from "../helpers/listFilters";
 import { SCHOLARSHIP_LIST_OMIT } from "../helpers/scholarshipListColumns";
@@ -80,9 +81,18 @@ const ScholarshipApplicationList = () => (
       />
       <TextField source="gpa" label="GPA" />
       <TextField source="application_status" label="Status" />
-      {/* Cycle year stamped on submit; blank on applications from before the
-          field existed (those file by submission calendar year). */}
-      <TextField source="scholarship_year" label="Year" />
+      {/* Start year stamped on submit, shown as the split academic year
+          ("2027-2028"); sorts on the integer. Blank on applications from
+          before the field existed (those file by submission calendar year). */}
+      <FunctionField
+        source="scholarship_year"
+        label="Year"
+        render={(record: { scholarship_year?: number | string | null }) =>
+          record.scholarship_year != null && record.scholarship_year !== ""
+            ? formatScholarshipYear(record.scholarship_year)
+            : ""
+        }
+      />
       <DateField source="submission_date" label="Submitted" />
 
       <TextField source="applicant_first_name" label="First name" />

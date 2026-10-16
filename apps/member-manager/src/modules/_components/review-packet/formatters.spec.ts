@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { CYCLE_ROLLOVER_MONTH, cycleYearOf, formatPacketYear } from "./formatters";
+import {
+  CYCLE_ROLLOVER_MONTH,
+  cycleYearOf,
+  formatPacketYear,
+  formatScholarshipPacketYear,
+} from "./formatters";
 
 describe("cycleYearOf", () => {
   it("rolls over in May (same rule as Strapi cycle-year.ts)", () => {
@@ -40,9 +45,23 @@ describe("cycleYearOf", () => {
 });
 
 describe("formatPacketYear", () => {
-  it("prefixes with Year: and blanks a missing value", () => {
+  it("prefixes with Year: and blanks a missing value (Awards — single year)", () => {
     expect(formatPacketYear(2027)).toBe("Year: 2027");
     expect(formatPacketYear("2027")).toBe("Year: 2027");
     expect(formatPacketYear(null)).toMatch(/^Year: /);
+  });
+});
+
+describe("formatScholarshipPacketYear", () => {
+  it("prints the ORWEF start year as the split academic year", () => {
+    expect(formatScholarshipPacketYear(2027)).toBe("Year: 2027-2028");
+    expect(formatScholarshipPacketYear("2027")).toBe("Year: 2027-2028");
+    expect(formatScholarshipPacketYear(1999)).toBe("Year: 1999-2000");
+  });
+
+  it("blanks a missing value like formatPacketYear and never says Cycle", () => {
+    expect(formatScholarshipPacketYear(null)).toBe("Year: —");
+    expect(formatScholarshipPacketYear("")).toBe("Year: —");
+    expect(formatScholarshipPacketYear(2027)).not.toMatch(/cycle/i);
   });
 });

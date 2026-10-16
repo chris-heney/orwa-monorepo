@@ -3,7 +3,8 @@ import { Box, MenuItem, Select, Typography } from "@mui/material";
 import { Loading, useGetList } from "react-admin";
 import { useSummaryTokens } from "../../grant-manager/grants/components/summary/tokens";
 import { useScholarshipYear } from "../helpers/orwefStore";
-import { calendarYearChoices } from "../helpers/listFilters";
+import { calendarYearChoices, scholarshipYearLabel } from "../helpers/listFilters";
+import { formatScholarshipYear } from "../../../helpers/conferenceCycleYear";
 import {
   buildScholarshipMetrics,
   ScholarshipApplication,
@@ -82,7 +83,7 @@ const ScholarshipSummary = () => {
           >
             {calendarYearChoices().map((value) => (
               <MenuItem key={String(value)} value={value}>
-                {value === "all" ? "All years" : value}
+                {scholarshipYearLabel(value)}
               </MenuItem>
             ))}
           </Select>
@@ -105,7 +106,11 @@ const ScholarshipSummary = () => {
       <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 3 }}>
         <CountCard
           label="Applications"
-          caption={year === "all" ? "All years" : `Scholarship year ${year}`}
+          caption={
+            year === "all"
+              ? "All years"
+              : `Scholarship year ${formatScholarshipYear(year)}`
+          }
           count={metrics.total}
           color={T.water}
         />
@@ -131,7 +136,10 @@ const ScholarshipSummary = () => {
         <Breakdown title="By water system" rows={systemRows} />
         <Breakdown
           title="By year"
-          rows={yearRows.map(([label, count]) => [String(label), count])}
+          rows={yearRows.map(([label, count]) => [
+            formatScholarshipYear(label),
+            count,
+          ])}
         />
       </Box>
       <ScholarshipGlossary

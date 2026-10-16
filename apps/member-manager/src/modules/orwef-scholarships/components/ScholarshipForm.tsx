@@ -102,7 +102,7 @@ const ScholarshipForm = () => {
                       minValue(SCHOLARSHIP_YEAR_MIN),
                       maxValue(SCHOLARSHIP_YEAR_MAX),
                     ]}
-                    helperText="Optional. Stamped on submit; applications from before this field existed may be blank and file by submission date."
+                    helperText="Optional. Enter the starting year, e.g. 2027 for 2027-2028. Stamped on submit; applications from before this field existed may be blank and file by submission date."
                     fullWidth
                     sx={fullFieldSx}
                   />

@@ -6,8 +6,25 @@ import {
   SCHOLARSHIP_STATUSES,
   scholarshipCycleYear,
   scholarshipYearFilter,
+  scholarshipYearLabel,
   watersystemRegion,
 } from "./listFilters";
+import { awardYearLabel } from "../../award-nominations/helpers/awardStore";
+
+describe("scholarshipYearLabel", () => {
+  it("labels integer choices as the split academic year while values stay integers", () => {
+    const choices = calendarYearChoices(new Date("2026-10-15T12:00:00"));
+    expect(choices[1]).toBe(2027);
+    expect(scholarshipYearLabel(choices[1])).toBe("2027-2028");
+    expect(scholarshipYearLabel(2026)).toBe("2026-2027");
+    expect(scholarshipYearLabel("all")).toBe("All years");
+  });
+
+  it("does not leak into the Awards year labels (single conference year)", () => {
+    expect(awardYearLabel(2027)).toBe("2027");
+    expect(awardYearLabel("all")).toBe("All Years");
+  });
+});
 import {
   localDayEndIso,
   localDayStartIso,
