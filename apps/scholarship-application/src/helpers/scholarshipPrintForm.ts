@@ -6,7 +6,7 @@ export const ORWEF_LEGAL_NAME = "Oklahoma Rural Water Enrichment Foundation";
 export const ORWEF_KICKER = "OKLAHOMA RURAL WATER ENRICHMENT FOUNDATION";
 export const SCHOLARSHIP_TITLE = "Scholarship Application";
 export const SCHOLARSHIP_FOOTER_AWARD = "ORWEF Scholarship";
-/** Cover-band year label, e.g. "Year: 2027". Member Manager's packet must match. */
+/** Cover-band year label, e.g. "Year: 2027-2028" (split academic year). Member Manager's packet must match. */
 export const COVER_YEAR_LABEL = "Year:";
 
 const NAVY = rgb(0.08, 0.2, 0.36);
@@ -262,7 +262,7 @@ const drawCover = (layout: Layout) => {
     color: WHITE,
   });
 
-  // Cover label wording is a user requirement ("Year: 2027", never "Cycle").
+  // Cover label wording is a user requirement ("Year: 2027-2028", never "Cycle").
   const cycle = fitText(
     `${COVER_YEAR_LABEL} ${layout.model.cycleYear}`,
     fonts.bold,

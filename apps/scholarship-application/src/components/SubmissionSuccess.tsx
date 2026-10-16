@@ -1,4 +1,5 @@
 import type { SubmittedApplicationSummary } from "../types/types";
+import { formatScholarshipYear } from "../helpers/nextConferenceYear";
 
 interface SubmissionSuccessProps {
   summary: SubmittedApplicationSummary | null;
@@ -77,7 +78,7 @@ const SubmissionSuccess = ({ summary, onStartAnother }: SubmissionSuccessProps) 
                     className="m-0 text-base font-semibold text-gray-900"
                     data-testid="success-year"
                   >
-                    Year: {year}
+                    Year: {formatScholarshipYear(year)}
                   </dd>
                 </div>
               )}

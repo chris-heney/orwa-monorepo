@@ -8,13 +8,18 @@ import { RadioGroupInput } from "../_components/RadioGroupInput";
 import WatersystemAutocomplete from "../_components/WatersystemAutocomplete";
 import FormSection from "../_components/FormSection";
 import { stateOptions } from "../../data/stateOptions";
-import { nextConferenceYear } from "../../helpers/nextConferenceYear";
+import {
+  formatScholarshipYear,
+  nextConferenceYear,
+} from "../../helpers/nextConferenceYear";
 
 const EligibilityStep = () => {
   const { watch, register } = useFormContext();
   const relationship = watch("relationship");
   const isSelf = relationship === "Self";
+  // Integer start year (what the hidden input submits); displayed split.
   const scholarshipYear = watch("scholarship_year") || nextConferenceYear();
+  const scholarshipYearLabel = formatScholarshipYear(scholarshipYear);
 
   const relationshipOptions = [
     { value: "Self", label: "Self (Water System Employee or Director)" },
@@ -34,11 +39,12 @@ const EligibilityStep = () => {
             data-testid="scholarship-year"
           >
             <p className="text-sm font-semibold text-blue-900">
-              Scholarship Year: {scholarshipYear}
+              Scholarship Year: {scholarshipYearLabel}
             </p>
             <p className="text-xs text-blue-800">
-              This application is for the {scholarshipYear} ORWEF scholarship
-              cycle (awarded at the {scholarshipYear} ORWA Annual Conference).
+              This application is for the {scholarshipYearLabel} ORWEF
+              scholarship year (awarded at the {scholarshipYear} ORWA Annual
+              Conference).
             </p>
             <input
               type="hidden"

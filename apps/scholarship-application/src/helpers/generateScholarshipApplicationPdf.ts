@@ -4,7 +4,7 @@ import {
   asFinancialResources,
   withSelfEligibleParticipant,
 } from "./mapScholarshipPayload";
-import { nextConferenceYear } from "./nextConferenceYear";
+import { formatScholarshipYear, nextConferenceYear } from "./nextConferenceYear";
 import { embedPrintFonts } from "./printBrandFonts";
 import {
   ORWEF_LEGAL_NAME,
@@ -66,7 +66,8 @@ export const buildModel = (
   // Same Self rule as the submitted payload so the PDF matches the record.
   const payload = withSelfEligibleParticipant(rawPayload);
   const year = Number(payload.scholarship_year);
-  const cycleYear = String(
+  // Split academic year ("2027-2028") for the cover band + running header.
+  const cycleYear = formatScholarshipYear(
     Number.isInteger(year) && year > 2000 ? year : nextConferenceYear()
   );
   const applicantName =
