@@ -37,3 +37,16 @@ export const resolveCycleYear = (
   }
   return nextAnnualConferenceYear(now);
 };
+
+/**
+ * ORWEF scholarships span an academic year, so the stored START year
+ * (`scholarship_year` = 2027) is displayed as "2027-2028". Awards are a
+ * single conference year and never use this. Non-integer input is echoed
+ * untouched so a bad value is visible rather than "NaN-NaN".
+ */
+export const formatScholarshipYear = (start: number | string): string => {
+  const text = String(start ?? "").trim();
+  const year = Number(text);
+  if (!text || !Number.isInteger(year)) return text;
+  return `${year}-${year + 1}`;
+};

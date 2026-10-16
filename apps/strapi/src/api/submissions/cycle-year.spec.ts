@@ -1,5 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { nextAnnualConferenceYear, resolveCycleYear } from "./cycle-year";
+import {
+  formatScholarshipYear,
+  nextAnnualConferenceYear,
+  resolveCycleYear,
+} from "./cycle-year";
+
+describe("formatScholarshipYear (ORWEF split academic year)", () => {
+  it("renders the stored start year as START-END", () => {
+    expect(formatScholarshipYear(2027)).toBe("2027-2028");
+    expect(formatScholarshipYear(1999)).toBe("1999-2000");
+    expect(formatScholarshipYear("2027")).toBe("2027-2028");
+  });
+
+  it("echoes non-integer input instead of NaN-NaN", () => {
+    expect(formatScholarshipYear("abc")).toBe("abc");
+    expect(formatScholarshipYear("")).toBe("");
+  });
+});
 
 describe("nextAnnualConferenceYear", () => {
   it("rolls to next year once the April conference has passed", () => {

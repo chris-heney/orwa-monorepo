@@ -143,30 +143,43 @@ describe("all_fields HTML", () => {
 });
 
 describe("cycle year in email variables", () => {
-  it("scholarship {currentYear} and the Year row follow scholarship_year, never the calendar year", () => {
+  it("scholarship {currentYear} and the Year row render the split academic year from scholarship_year, never the calendar year", () => {
     const variables = buildScholarshipVariables({
       ...scholarshipPayload,
       scholarship_year: 2027,
     });
-    expect(variables.currentYear).toBe("2027");
-    expect(variables.year).toBe("2027");
-    expect(variables.cycleYear).toBe("2027");
+    expect(variables.currentYear).toBe("2027-2028");
+    expect(variables.year).toBe("2027-2028");
+    expect(variables.cycleYear).toBe("2027-2028");
+    expect(variables.scholarship_year).toBe("2027-2028");
     expect(variables.all_fields).toContain(">Year</td>");
-    expect(variables.all_fields).toContain(">2027</td>");
+    expect(variables.all_fields).toContain(">2027-2028</td>");
+    expect(variables.all_fields).not.toContain(">2027</td>");
     expect(variables.all_fields).not.toContain("Cycle");
     expect(
       interpolate("New Scholarship Application - {currentYear}", variables)
-    ).toBe("New Scholarship Application - 2027");
+    ).toBe("New Scholarship Application - 2027-2028");
   });
 
-  it("award {currentYear} follows award_year", () => {
+  it("scholarship year falls back to the computed cycle start when the payload has none", () => {
+    const variables = buildScholarshipVariables(scholarshipPayload, {
+      currentYear: 1999,
+    });
+    expect(variables.currentYear).toBe("1999-2000");
+  });
+
+  it("award {currentYear} follows award_year and stays a single year (not split)", () => {
     const variables = buildAwardVariables({
       nominee_name: "Alex Rivera",
       award_type: "Excellence in Operations",
       award_year: 2027,
     });
     expect(variables.currentYear).toBe("2027");
+    expect(variables.year).toBe("2027");
+    expect(variables.cycleYear).toBe("2027");
+    expect(variables.award_year).toBe("2027");
     expect(variables.all_fields).toContain(">2027</td>");
+    expect(variables.all_fields).not.toContain("2027-2028");
     expect(variables.all_fields).not.toContain("Cycle");
   });
 });
@@ -314,7 +327,8 @@ describe("sendScholarshipApplicationEmails", () => {
       "jane@example.org",
       "pat@example.org",
     ]);
-    expect(sent[0].subject).toMatch(/^New Scholarship Application - \d{4}$/);
+    // Split academic year, e.g. "… - 2027-2028".
+    expect(sent[0].subject).toMatch(/^New Scholarship Application - \d{4}-\d{4}$/);
     expect(String(sent[1].html)).toContain("<p>Jane,</p>");
     expect(String(sent[2].html)).toContain("<p>Pat,</p>");
     expect(sent[0].attachment).toEqual([

@@ -6,7 +6,7 @@
  */
 
 import { resolveFinancialResources } from "./helpers";
-import { resolveCycleYear } from "./cycle-year";
+import { formatScholarshipYear, resolveCycleYear } from "./cycle-year";
 
 export const OFFICE_EMAIL = "office@orwa.org";
 export const WEBSITE_FROM_EMAIL = "website@orwa.org";
@@ -228,7 +228,7 @@ export const scholarshipAllFieldsRows = (
   {
     section: "Application",
     label: "Year",
-    value: resolveCycleYear(payload.scholarship_year),
+    value: formatScholarshipYear(resolveCycleYear(payload.scholarship_year)),
   },
   {
     section: "Applicant",
@@ -617,16 +617,18 @@ const scalarVariables = (payload: Record<string, unknown>) => {
 };
 
 /**
- * `{currentYear}` / `{year}` / `{cycleYear}` in email templates resolve to
- * the scholarship cycle year (the next Annual Conference), not the calendar
- * year the form happened to be submitted in — the seeded office subject is
- * "New Scholarship Application - {currentYear}".
+ * `{currentYear}` / `{year}` / `{cycleYear}` / `{scholarship_year}` in
+ * SCHOLARSHIP email templates resolve to the split academic year
+ * ("2027-2028") derived from the stored start year (the next Annual
+ * Conference), not the calendar year the form happened to be submitted in —
+ * the seeded office subject "New Scholarship Application - {currentYear}"
+ * renders "… - 2027-2028". Award placeholders stay single-year.
  */
 export const buildScholarshipVariables = (
   payload: Record<string, unknown>,
   options?: { currentYear?: number }
 ) => {
-  const year = String(
+  const year = formatScholarshipYear(
     options?.currentYear ?? resolveCycleYear(payload.scholarship_year)
   );
   const applicantFirst = String(payload.applicant_first_name || "");
