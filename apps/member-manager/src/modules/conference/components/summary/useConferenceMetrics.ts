@@ -13,6 +13,7 @@ import {
   buildContestantMetricsFilter,
   deriveConferenceRevenueBreakdown,
 } from "../../helpers/conferenceMetricContestants";
+import { summarizeContestSports } from "../../helpers/contestSport";
 
 /** Coerce Strapi decimals / bigintegers (often strings) into numbers. */
 export const num = (v: unknown): number => {
@@ -56,6 +57,11 @@ export interface Showtime {
 
 const PER_PAGE = { page: 1, perPage: 5000 };
 const RAW = { meta: { raw: true } };
+/** Contest Corner reads the sport off the ticket and the team off the row. */
+const CONTESTANT_SPORT_POPULATE = {
+  conference_ticket: true,
+  team: true,
+} as const;
 
 const scopeFilter = (
   confId: number | undefined,
@@ -198,14 +204,13 @@ export const useConferenceMetrics = (
     filter: scope,
     pagination: PER_PAGE,
   });
+  // The sport a contestant is in lives on their ticket's name, and Golf Teams
+  // is a distinct count of the teams golfers sit on — populate both relations
+  // explicitly rather than leaning on `populate=*`.
   const { data: contestants } = useGetList("conference-contestants", {
     ...RAW,
+    meta: { ...RAW.meta, populate: CONTESTANT_SPORT_POPULATE },
     filter: buildContestantMetricsFilter(scope),
-    pagination: PER_PAGE,
-  });
-  const { data: teams } = useGetList("conference-teams", {
-    ...RAW,
-    filter: scope,
     pagination: PER_PAGE,
   });
   const { data: tasteTest } = useGetList("taste-test-contestants", {
@@ -382,7 +387,12 @@ export const useConferenceMetrics = (
       .sort((a, b) => b.amount - a.amount);
 
     // --- Contest ---------------------------------------------------------
-    const contestantsByType = topCounts(con.map((c) => c.type as string));
+    // Buckets follow the ticket's sport stem, so every "Golfer …" / "Fishing …"
+    // ticket variant folds into one number. Rows whose ticket names no sport
+    // still count toward the total, so the buckets need not sum to it.
+    const contestSports = summarizeContestSports(
+      con as Array<{ type?: unknown; conference_ticket?: unknown; team?: unknown }>
+    );
 
     return {
       isLoading: l1 || l2 || l3 || l4,
@@ -441,11 +451,12 @@ export const useConferenceMetrics = (
       },
 
       contest: {
-        contestants: con.length,
-        byType: contestantsByType,
+        contestants: contestSports.total,
+        fishers: contestSports.fishers,
+        golfers: contestSports.golfers,
+        golfTeams: contestSports.golfTeams,
         fees: contestantRevenue,
         pendingRefundFees: cancelledPendingRefundContestantRevenue,
-        teams: (teams ?? []).length,
         tasteTest: (tasteTest ?? []).length,
       },
 
@@ -461,7 +472,6 @@ export const useConferenceMetrics = (
     booths,
     sponsors,
     contestants,
-    teams,
     tasteTest,
     feedback,
     catering,
