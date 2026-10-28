@@ -103,6 +103,8 @@ export interface StrapiFile {
   id: number
   name: string
   url: string
+  /** Set by Strapi; changes when the file is replaced in place. */
+  updatedAt?: string
 }
 
 export interface IProjectType {

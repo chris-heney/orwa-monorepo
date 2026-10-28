@@ -37,6 +37,8 @@ import AssetModal, {
   isAssetPreviewable,
 } from "../../../_components/AssetModal";
 import StarIcon from '@mui/icons-material/Star';
+import RegenerateApplicantPdfButton from "./RegenerateApplicantPdfButton";
+import { applicantPdfViewUrl } from "../helpers/regenerateApplicantPdf";
 
 const projectCostSourceLabel = (source?: ProjectCostSource): string | null => {
   if (source === "even-split") return "Even Split";
@@ -271,8 +273,13 @@ const GrantApplicationDetails = () => {
     const [selectedApplication, setSelectedApplication] =
       React.useState<RaRecord | null>(null);
        const [isEmailModalOpen, setIsEmailModalOpen] = React.useState(false);
+  // The regenerated file as returned by the server; the record in the
+  // react-query cache can lag behind, and the URL itself does not change.
+  const [regeneratedPdf, setRegeneratedPdf] = React.useState<StrapiFile | null>(null);
 
   if (!record) return null;
+
+  const applicantPdf: StrapiFile | null = regeneratedPdf ?? record.applicant_pdf ?? null;
 
   // add up all payouts and subtract from award amount
   const totalGrantPayouts = record.payouts?.reduce((acc, payout) => {
@@ -324,23 +331,29 @@ const GrantApplicationDetails = () => {
         {/* Action Buttons */}
         <Box display="flex" gap={1}>
           {/* View Applicant PDF Button */}
-          {record?.applicant_pdf && (
+          {applicantPdf && (
             <Button
               variant="contained"
               size="small"
               color="primary"
               onClick={() => {
-                window.open(
-                  `${import.meta.env.VITE_API_ENDPOINT}${
-                    record.applicant_pdf.url
-                  }`,
-                  "_blank"
-                );
+                // Regeneration keeps the same URL; key on updatedAt so the
+                // browser does not show a cached copy.
+                window.open(applicantPdfViewUrl(applicantPdf), "_blank");
               }}
             >
               View Applicant PDF
             </Button>
           )}
+
+          {/* Regenerate (or create) the stored applicant PDF from the record */}
+          <RegenerateApplicantPdfButton
+            documentId={String(record.id)}
+            hasPdf={!!applicantPdf}
+            onRegenerated={(file) =>
+              setRegeneratedPdf({ id: file.id, name: file.name, url: file.url, updatedAt: file.updatedAt })
+            }
+          />
 
           {/* Generate Award Letter Button */}
           {statusesForAwardLetter.includes(
