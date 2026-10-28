@@ -72,9 +72,12 @@ deleted. `selectScoringCriteria` is the current `getSelectedCriterias`
 (filter scorings by `project_type.classification === drinkingOrWastewater`,
 checked = project id in selected set) so client and server agree.
 
-Package shape mirrors `@orwa/terms-gate` (`package.json` with `main:
-./src/index.ts`, `project.json`, `tsconfig.json`). Strapi consumes it through
-a path alias / workspace dependency so `strapi build` compiles it.
+Location: the Strapi Docker build context is `apps/strapi` only, so a
+`libs/` package cannot be imported by the server image. The renderer lives at
+`apps/strapi/src/shared/grant-application-pdf/` (compiled by `strapi build`)
+and gapp-form resolves `@orwa/grant-application-pdf` to that directory via a
+vite/tsconfig alias, the same way conference-registration aliases
+`@orwa/terms-gate`. `pdf-lib` is added to `apps/strapi/package.json`.
 
 ### 2. Strapi service `api::grant-application.applicant-pdf`
 
