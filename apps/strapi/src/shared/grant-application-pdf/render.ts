@@ -262,7 +262,18 @@ export async function renderApplicantPdf(input: ApplicantPdfInput): Promise<Uint
     y -= lineHeight * 0.25;
   }
   text(`Combined Estimated Cost: ${money(input.combinedCostOfProjects)}`, margin, y, { font: bold });
-  y -= lineHeight * 1.5;
+  y -= lineHeight;
+  const amountLines: Array<[string, number | string | null | undefined]> = [
+    ["Requested Grant Amount", input.requestedGrantAmount],
+    ["Minimum Utility Financial Contribution", input.minimumUtilityContribution],
+  ];
+  for (const [label, value] of amountLines) {
+    if (value === null || value === undefined || value === "") continue;
+    checkPageOverflow();
+    text(`${label}: ${money(value)}`, margin, y);
+    y -= lineHeight;
+  }
+  y -= lineHeight * 0.5;
 
   // Description
   text("Project Cost/Description:", margin, y, { font: bold, size: headerFontSize });

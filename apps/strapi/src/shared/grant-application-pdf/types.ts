@@ -49,6 +49,9 @@ export interface ApplicantPdfInput {
   };
   projectCosts: ApplicantPdfProjectCost[];
   combinedCostOfProjects: number;
+  /** Printed under "Combined Estimated Cost" when present (grant-manager edited). */
+  requestedGrantAmount?: number | string | null;
+  minimumUtilityContribution?: number | string | null;
   descriptionJustification: string;
   signatoryName: string;
   signatoryTitle: string;
