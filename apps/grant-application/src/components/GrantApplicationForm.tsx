@@ -9,7 +9,7 @@ import {
 } from "../providers/AppContextProvider";
 import { useUserContext } from "../providers/UserContextProvider";
 import EntryListSidebar from "../entries/EntryListSidebar";
-import { ManualUploadTest } from "../helpers/uploadApplicantPdfTest";
+import ApplicationPdfActions from "./_components/ApplicationPdfActions";
 import PreviousSessionModal from "./PreviousSessionModal";
 import {
   getSavedFormData,
@@ -152,8 +152,16 @@ const GrantApplicationForm = () => {
                 </div>
                 {isLoggedIn && isAdminView && <EntryListSidebar />}
               </div>
+              {isEditMode && !(isLoggedIn && isAdminView) && (
+                <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 pb-2">
+                  <p className="text-sm text-slate-600">
+                    Preview your application as a PDF. The copy on file updates
+                    automatically when you save.
+                  </p>
+                  <ApplicationPdfActions layout="inline" />
+                </div>
+              )}
               <StepNavigation />
-              {isLoggedIn && isAdminView && <ManualUploadTest />}
             </ValidationHighlightProvider>
           </Form>
         </section>

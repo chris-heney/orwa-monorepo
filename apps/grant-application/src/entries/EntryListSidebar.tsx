@@ -5,16 +5,17 @@ import { useFormContext } from "react-hook-form";
 import { useUserContext } from "../providers/UserContextProvider";
 import { useNotify } from "../NotificationProvider";
 import { IGrantApplicationFormPayload, IProject } from "../types/types";
-import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
+import {
+  fileUploadErrorMessage,
+  processAndUploadFiles,
+} from "../helpers/processAndUploadFiles";
 import {
   useGetApplicationId,
   useGetProjects,
   useSubmitApplication,
 } from "../data/API";
-import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
-import { useScoringCriterias } from "../providers/AppContextProvider";
-import { getSelectedCriterias } from "../helpers/getCriterias";
 import { clearSavedFormData } from "../helpers/formPersistence";
+import ApplicationPdfActions from "../components/_components/ApplicationPdfActions";
 import { fileCache } from "../helpers/fileCache";
 import {
   projectCostsMapToRows,
@@ -30,8 +31,6 @@ const EntryListSidebar = () => {
       return null; // Prevent errors if no form context exists
     }
   })();
-
-  const { scoringCriterias } = useScoringCriterias();
 
   const { getValues } = formContext || {
     getValues: (string?: string) => ({
@@ -66,43 +65,27 @@ const EntryListSidebar = () => {
     const combinedCost = sumProjectCosts(costsMap, selectedProjectIds);
 
     try {
-      // Process the payload and upload files if necessary
-      const processedPayload = await processAndUploadFiles(
-        {
-          ...formPayload,
-          project_costs: projectCostRows,
-          combined_cost_of_projects: combinedCost,
-          id: applicationId.data,
-        },
-        notify
-      );
+      // Upload any newly selected attachments; throws FileUploadError (and
+      // stops the submit) when one cannot be uploaded.
+      const processedPayload = await processAndUploadFiles({
+        ...formPayload,
+        project_costs: projectCostRows,
+        combined_cost_of_projects: combinedCost,
+        id: applicationId.data,
+      });
 
-      // Generate the applicant PDF and upload it
-      const uploadedPDF = await uploadApplicantPDF(
-        processedPayload,
-        notify,
-        getSelectedCriterias(
-          formPayload.selected_projects,
-          scoringCriterias,
-          formPayload.drinking_or_wastewater
-        )
-      );
-
+      // The applicant PDF is rendered and stored by Strapi on create.
       const payload = {
         ...processedPayload,
         project_costs: projectCostRows,
         combined_cost_of_projects: combinedCost,
         adminOptions,
-        applicant_pdf: uploadedPDF,
         additional_funding_requested: Math.round(formPayload.additional_funding_requested),
         application_id: applicationId.data,
         engineering_report_deq_approved:
           formPayload.engineering_report_deq_approved === "Yes" ? true : false,
       };
 
-      // Add the uploaded PDF id to the payload
-
-      // Submit the processed payload
       const response = await useSubmitApplication(payload);
 
       if (response.message === "success") {
@@ -117,6 +100,8 @@ const EntryListSidebar = () => {
         
         notify("Application submitted successfully!", "success");
         setViewingEntries(true);
+      } else if (response.code === "invalid_request" && response.message) {
+        notify(response.message, "error");
       } else {
         notify(
           "Error submitting application. Please try again later.",
@@ -125,11 +110,33 @@ const EntryListSidebar = () => {
       }
     } catch (error) {
       console.error("Submission error:", error);
-      notify("Error submitting application. Please try again later.", "error");
+      notify(
+        fileUploadErrorMessage(error) ??
+          "Error submitting application. Please try again later.",
+        "error"
+      );
     }
   };
   return (
     <div className="bg-white rounded-md py-2 px-6 space-y-6 border border-gray-200 col-span-3">
+      {/* Application PDF: rendered from the current form values with the
+          real application number — same renderer Strapi stores on save. */}
+      {formContext && (
+        <div>
+          <h3 className="text-lg font-semibold text-gray-700 mb-2 text-left">
+            Application PDF
+          </h3>
+          <hr className="border-gray-300 py-2" />
+          <ApplicationPdfActions layout="sidebar" />
+          <p className="text-xs text-gray-500 leading-5 mt-2 text-left">
+            Built from what is on the form right now. The stored PDF updates
+            automatically whenever the application is saved.
+          </p>
+        </div>
+      )}
+
+      {formContext && <hr className="border-gray-300" />}
+
       {/* Notifications Section */}
       <div>
         <h3 className="text-lg font-semibold text-gray-700 mb-2 text-left">

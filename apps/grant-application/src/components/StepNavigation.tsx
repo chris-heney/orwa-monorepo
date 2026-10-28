@@ -9,13 +9,14 @@ import {
 } from "../data/API";
 import { IGrantApplicationFormPayload, IProject } from "../types/types";
 import { useNotify } from "../NotificationProvider";
-import { uploadApplicantPDF } from "../helpers/uploadApplicantPdf";
 import {
   FormSteps,
   useFormSubmittedContext,
-  useScoringCriterias,
 } from "../providers/AppContextProvider";
-import { processAndUploadFiles } from "../helpers/processAndUploadFiles";
+import {
+  fileUploadErrorMessage,
+  processAndUploadFiles,
+} from "../helpers/processAndUploadFiles";
 import { clearSavedFormData } from "../helpers/formPersistence";
 import { fileCache } from "../helpers/fileCache";
 import { useUserContext } from "../providers/UserContextProvider";
@@ -32,14 +33,12 @@ import {
   ProjectCostsMap,
   sumProjectCosts,
 } from "../helpers/projectCosts";
-import { getSelectedCriterias } from "../helpers/getCriterias";
 
 const StepNavigation = () => {
   const { steps, stepIndex, setStepIndex } = useContext(FormSteps);
   const { getValues, watch, trigger, formState } = useFormContext();
   const { errors } = formState;
   const { notify } = useNotify();
-  const { scoringCriterias } = useScoringCriterias();
   const { setIsFormSubmitted, isFormSubmitted } = useFormSubmittedContext();
   const { isAdminView } = useUserContext();
   const { isEditMode, editToken, rememberEditToken, invalidateSession } =
@@ -105,26 +104,16 @@ const StepNavigation = () => {
       : applicationId.data;
 
     try {
-      const processedPayload = await processAndUploadFiles(
-        {
-          ...formPayload,
-          project_costs: projectCostRows,
-          combined_cost_of_projects: combinedCost,
-          id: submissionApplicationId,
-        },
-        notify
-      );
+      // Throws FileUploadError when a selected attachment cannot be uploaded;
+      // the save must not proceed with an un-uploaded file in the payload.
+      const processedPayload = await processAndUploadFiles({
+        ...formPayload,
+        project_costs: projectCostRows,
+        combined_cost_of_projects: combinedCost,
+        id: submissionApplicationId,
+      });
 
-      const uploadedPDF = await uploadApplicantPDF(
-        processedPayload,
-        notify,
-        getSelectedCriterias(
-          selectedProjectIds,
-          scoringCriterias,
-          formPayload.drinking_or_wastewater
-        )
-      );
-
+      // The applicant PDF is rendered and stored by Strapi on create/update.
       const payload = {
         ...processedPayload,
         project_costs: projectCostRows,
@@ -132,7 +121,6 @@ const StepNavigation = () => {
         additional_funding_requested: Math.round(
           watch("additional_funding_requested")
         ),
-        applicant_pdf: uploadedPDF,
         application_id: submissionApplicationId,
         engineering_report_deq_approved:
           watch("engineering_report_deq_approved") === "Yes",
@@ -174,6 +162,10 @@ const StepNavigation = () => {
             ? lockedApplicationMessage(response.status)
             : "Your edit link is no longer valid. Please verify your email to receive a new one."
         );
+      } else if (response.code === "invalid_request" && response.message) {
+        // e.g. a media entry Strapi could not link — the message names the file
+        setIsSubmitting(false);
+        notify(response.message, "error");
       } else {
         setIsSubmitting(false);
         notify(
@@ -184,7 +176,11 @@ const StepNavigation = () => {
     } catch (error) {
       console.error("Submission error:", error);
       setIsSubmitting(false);
-      notify("Error submitting application. Please try again later.", "error");
+      notify(
+        fileUploadErrorMessage(error) ??
+          "Error submitting application. Please try again later.",
+        "error"
+      );
     }
   };
 
