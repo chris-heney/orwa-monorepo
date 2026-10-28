@@ -15,6 +15,27 @@ import {
   pickEditableSibling,
   switchedApplicationNotice,
 } from "../helpers/edit-application-pick";
+import { invalidMediaField } from "../helpers/applicant-pdf-rules";
+
+/**
+ * 400 for media fields that are not uploaded file ids. gapp-form sends the
+ * raw `{ src, title, rawFile }` object when the browser aborted an upload;
+ * the Document Service would otherwise fail with an opaque 500.
+ */
+const rejectInvalidMedia = (ctx, data: Record<string, unknown>): boolean => {
+  const invalid = invalidMediaField(data);
+  if (!invalid) return false;
+  ctx.status = 400;
+  ctx.body = {
+    code: "invalid_request",
+    field: invalid.field,
+    title: invalid.title,
+    message: invalid.title
+      ? `"${invalid.title}" was not uploaded. Remove it and choose it again.`
+      : `${invalid.field} contains a file that was not uploaded.`,
+  };
+  return true;
+};
 
 const GRANT_APPLICATION_UID =
   "api::grant-application-final.grant-application-final" as const;
@@ -527,6 +548,8 @@ export default ({ strapi }) => {
         if ((adminOptions && adminOptions.resubmit) || !adminOptions) {
           logFormData(ctx.request.body, "grant-application");
 
+          if (rejectInvalidMedia(ctx, ctx.request.body)) return;
+
           console.log("Point of Contact", point_of_contact);
 
           const regisgrantContact: IContactEntity = await getContact(
@@ -951,6 +974,8 @@ export default ({ strapi }) => {
 
         logFormData(ctx.request.body, "grant-application-edit");
 
+        if (rejectInvalidMedia(ctx, payload as Record<string, unknown>)) return;
+
         const pocContact = await upsertFormContact(payload.point_of_contact);
         const chairmanContact = await upsertFormContact(payload.chairman);
         const engineerContact =
@@ -1000,6 +1025,38 @@ export default ({ strapi }) => {
         ctx.status = 500;
         ctx.body = { code: "error", message: "error", error: err.message };
       }
+    },
+
+    /**
+     * POST /grant-application/:documentId/regenerate-pdf
+     *
+     * Grant Manager override: re-render the stored applicant PDF from the
+     * current record regardless of status. Permission is granted to the
+     * Admin role (and roles with the grants module) in src/index.ts.
+     */
+    regeneratePdf: async (ctx) => {
+      if (!ctx.state.user?.id) {
+        return ctx.unauthorized("You must be authenticated");
+      }
+
+      const documentId = ctx.params?.documentId;
+      if (!documentId || typeof documentId !== "string") {
+        ctx.status = 400;
+        ctx.body = { code: "invalid_request", message: "documentId is required." };
+        return;
+      }
+
+      const result = await strapi
+        .service("api::grant-application.applicant-pdf")
+        .regenerate(documentId, { reason: `manual:${ctx.state.user.id}` });
+
+      if (!result.ok) {
+        ctx.status = result.code === "not_found" ? 404 : 422;
+        ctx.body = { code: result.code, error: result.error };
+        return;
+      }
+
+      ctx.body = { file: result.file, replaced: result.replaced };
     },
   };
 };

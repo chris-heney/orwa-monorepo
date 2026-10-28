@@ -36,5 +36,14 @@ export default {
        middlewares: [],
      },
     },
+    {
+     method: 'POST',
+     path: '/grant-application/:documentId/regenerate-pdf',
+     handler: 'grant-application.regeneratePdf',
+     config: {
+       policies: [],
+       middlewares: [],
+     },
+    },
   ],
 };

@@ -308,6 +308,34 @@ export const configureNaylorExportPermissions = async (strapi) => {
   }
 };
 
+// Grant Manager "Regenerate PDF" (POST /grant-application/:documentId/regenerate-pdf).
+// Custom routes ship with no role permission; grant it to Admin and to every
+// role whose module list includes the grants module (the roles that can edit
+// applications in Member Manager). Never public/authenticated.
+export const GRANT_PDF_ACTIONS = [
+  'api::grant-application.grant-application.regeneratePdf',
+];
+
+export const configureGrantPdfPermissions = async (strapi) => {
+  try {
+    await ensureRolePermissions(strapi, { type: 'admin' }, GRANT_PDF_ACTIONS);
+
+    const roles = await strapi.db
+      .query('plugin::users-permissions.role')
+      .findMany({ select: ['id', 'type', 'modules'] });
+    for (const role of roles || []) {
+      if (['public', 'authenticated'].includes(role.type)) continue;
+      const modules = Array.isArray(role.modules) ? role.modules : [];
+      if (!modules.includes('grants')) continue;
+      await ensureRolePermissions(strapi, { id: role.id }, GRANT_PDF_ACTIONS);
+    }
+  } catch (error) {
+    strapi.log.warn(
+      `Unable to configure grant PDF permissions: ${error.message}`,
+    );
+  }
+};
+
 // User impersonation ("test as user") is Admin-only. Never grant to
 // public/authenticated/staff — it mints a session token for any target user.
 const ADMIN_IMPERSONATION_ACTIONS = [
@@ -510,6 +538,7 @@ export default {
     await configureAdminImpersonationPermissions(strapi);
     await configureContestantLifecyclePermissions(strapi);
     await configureNaylorExportPermissions(strapi);
+    await configureGrantPdfPermissions(strapi);
     await configureScholarshipAwardPermissions(strapi);
     await configureAwardTypeApiTokenFind(strapi);
     await seedAwardTypeCatalog(strapi);
