@@ -41,8 +41,8 @@ export async function buildPreviewPdf(
     formValues.drinking_or_wastewater
   );
 
-  const bytes = await renderApplicantPdf(
-    formPayloadToPdfInput(
+  const bytes = await renderApplicantPdf({
+    ...formPayloadToPdfInput(
       {
         ...formValues,
         project_costs: projectCosts,
@@ -51,8 +51,9 @@ export async function buildPreviewPdf(
       criteria,
       identity.applicationNumber,
       identity.applicationDate ?? new Date()
-    )
-  );
+    ),
+    revisedDate: identity.applicationDate ? new Date() : null,
+  });
 
   return {
     blob: new Blob([bytes], { type: "application/pdf" }),

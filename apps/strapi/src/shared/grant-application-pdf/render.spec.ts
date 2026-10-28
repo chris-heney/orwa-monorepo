@@ -106,6 +106,25 @@ describe("renderApplicantPdf", () => {
     expect(raw).not.toContain(new Date().toLocaleDateString("en-US"));
   });
 
+  it("stamps a Revised line only when revisedDate is given", async () => {
+    const today = new Date().toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const revised = await pdfText(
+      await renderApplicantPdf({
+        ...applicationToPdfInput(APPLICATION, SCORINGS),
+        revisedDate: new Date(),
+      })
+    );
+    expect(revised).toContain(`Revised: ${today}`);
+    expect(revised).toContain("Date Received: August 26, 2026");
+
+    const plain = await pdfText(await renderApplicantPdf(applicationToPdfInput(APPLICATION, SCORINGS)));
+    expect(plain).not.toContain("Revised:");
+  });
+
   it("renders without a signature image and with a PNG data URL", async () => {
     const noSig = await renderApplicantPdf(applicationToPdfInput(APPLICATION, SCORINGS));
     expect(noSig.byteLength).toBeGreaterThan(1000);

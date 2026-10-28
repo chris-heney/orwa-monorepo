@@ -90,7 +90,10 @@ export default ({ strapi }) => ({
         populate: { project_type: true },
         limit: 1000,
       });
-      bytes = await renderApplicantPdf(applicationToPdfInput(application, scorings));
+      bytes = await renderApplicantPdf({
+        ...applicationToPdfInput(application, scorings),
+        revisedDate: reason === "create" ? null : new Date(),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       strapi.log.error(

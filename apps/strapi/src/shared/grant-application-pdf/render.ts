@@ -115,6 +115,13 @@ export async function renderApplicantPdf(input: ApplicantPdfInput): Promise<Uint
   // Header
   text(`Application # ${input.applicationNumber}`, margin, height - margin / 2, { font: bold });
   text(`Date Received: ${longDate(applicationDate)}`, width - margin - 150, height - margin / 2);
+  if (input.revisedDate) {
+    text(
+      `Revised: ${longDate(asDate(input.revisedDate))}`,
+      width - margin - 150,
+      height - margin / 2 - lineHeight
+    );
+  }
   y -= lineHeight * 2;
 
   const title = "DEQ/ORWA Rural Infrastructure Grant (RIG)";

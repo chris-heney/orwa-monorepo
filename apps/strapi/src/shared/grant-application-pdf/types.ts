@@ -20,6 +20,8 @@ export interface ApplicantPdfInput {
   applicationNumber: string;
   /** "Date Received" and the signature-line date. */
   applicationDate: Date | string | null | undefined;
+  /** When set, a "Revised: …" line is stamped under "Date Received". */
+  revisedDate?: Date | string | null;
   legalEntityName: string;
   facilityId?: string | null;
   county?: string | null;
