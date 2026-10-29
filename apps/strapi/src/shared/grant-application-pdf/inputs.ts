@@ -35,8 +35,6 @@ export interface ApplicationLike {
   applied_to_other_loans?: boolean | null;
   project_costs?: ApplicantPdfInput["projectCosts"] | null;
   combined_cost_of_projects?: number | string | null;
-  requested_grant_amount?: number | string | null;
-  minimum_utility_financial_contribution?: number | string | null;
   description_justification_estimated_cost?: string | null;
   signatory_name?: string | null;
   signatory_title?: string | null;
@@ -84,8 +82,6 @@ export function toPdfInput(
     },
     projectCosts: Array.isArray(record.project_costs) ? record.project_costs : [],
     combinedCostOfProjects: Number(record.combined_cost_of_projects ?? 0),
-    requestedGrantAmount: record.requested_grant_amount ?? null,
-    minimumUtilityContribution: record.minimum_utility_financial_contribution ?? null,
     descriptionJustification: record.description_justification_estimated_cost ?? "",
     signatoryName: record.signatory_name ?? "",
     signatoryTitle: record.signatory_title ?? "",

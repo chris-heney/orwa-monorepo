@@ -47,11 +47,9 @@ export interface ApplicantPdfInput {
     moneySetAside: boolean;
     appliedToOtherLoans: boolean;
   };
+  /** Carried for callers; the PDF prints only the combined "Estimated Cost". */
   projectCosts: ApplicantPdfProjectCost[];
   combinedCostOfProjects: number;
-  /** Printed under "Combined Estimated Cost" when present (grant-manager edited). */
-  requestedGrantAmount?: number | string | null;
-  minimumUtilityContribution?: number | string | null;
   descriptionJustification: string;
   signatoryName: string;
   signatoryTitle: string;

@@ -13,6 +13,15 @@ describe("shouldRegenerateFor", () => {
     expect(shouldRegenerateFor("New Application", ["edit_token", "edit_token_expires"])).toBe(false);
   });
 
+  it("ignores the grant-manager amount fields the PDF no longer prints", () => {
+    expect(
+      shouldRegenerateFor("New Application", [
+        "requested_grant_amount",
+        "minimum_utility_financial_contribution",
+      ])
+    ).toBe(false);
+  });
+
   it("never auto-regenerates after committee", () => {
     expect(shouldRegenerateFor("Committee Approved", ["legal_entity_name"])).toBe(false);
     expect(shouldRegenerateFor(null, ["legal_entity_name"])).toBe(false);

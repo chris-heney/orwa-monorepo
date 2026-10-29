@@ -27,8 +27,6 @@ export const PDF_RELEVANT_FIELDS = [
   "selected_projects",
   "project_costs",
   "combined_cost_of_projects",
-  "requested_grant_amount",
-  "minimum_utility_financial_contribution",
   "description_justification_estimated_cost",
   "engineering_report",
   "report_approved_by_deq",

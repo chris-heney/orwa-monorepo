@@ -248,32 +248,9 @@ export async function renderApplicantPdf(input: ApplicantPdfInput): Promise<Uint
   y = lastStatusY - lineHeight;
   y -= lineHeight * 1.5;
 
-  // Costs
-  const costs = input.projectCosts ?? [];
-  if (costs.length > 0) {
-    text("Estimated Costs by Project Type", margin, y, { font: bold });
-    y -= lineHeight;
-    for (const row of costs) {
-      checkPageOverflow();
-      const name = row.name?.trim() || `Project ${row.project_type_id ?? ""}`;
-      text(`${name}: ${money(row.amount)}`, margin, y, { maxWidth: width - 2 * margin });
-      y -= lineHeight;
-    }
-    y -= lineHeight * 0.25;
-  }
-  text(`Combined Estimated Cost: ${money(input.combinedCostOfProjects)}`, margin, y, { font: bold });
-  y -= lineHeight;
-  const amountLines: Array<[string, number | string | null | undefined]> = [
-    ["Requested Grant Amount", input.requestedGrantAmount],
-    ["Minimum Utility Financial Contribution", input.minimumUtilityContribution],
-  ];
-  for (const [label, value] of amountLines) {
-    if (value === null || value === undefined || value === "") continue;
-    checkPageOverflow();
-    text(`${label}: ${money(value)}`, margin, y);
-    y -= lineHeight;
-  }
-  y -= lineHeight * 0.5;
+  // Cost
+  text(`Estimated Cost: ${money(input.combinedCostOfProjects)}`, margin, y, { font: bold });
+  y -= lineHeight * 1.5;
 
   // Description
   text("Project Cost/Description:", margin, y, { font: bold, size: headerFontSize });

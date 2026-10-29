@@ -40,8 +40,6 @@ const APPLICATION = {
   applied_to_other_loans: false,
   project_costs: [{ project_type_id: 18, name: "Financial Auditing", amount: 25850 }],
   combined_cost_of_projects: "25900",
-  requested_grant_amount: "20680",
-  minimum_utility_financial_contribution: "5170",
   description_justification_estimated_cost: "Line one\nLine two",
   signatory_name: "Kim Lee",
   signatory_title: "Clerk",
@@ -95,8 +93,6 @@ describe("applicationToPdfInput", () => {
     ]);
     expect(input.projectStatus.moneySetAside).toBe(true);
     expect(input.combinedCostOfProjects).toBe(25900);
-    expect(input.requestedGrantAmount).toBe("20680");
-    expect(input.minimumUtilityContribution).toBe("5170");
   });
 });
 
@@ -110,24 +106,16 @@ describe("renderApplicantPdf", () => {
     expect(raw).not.toContain(new Date().toLocaleDateString("en-US"));
   });
 
-  it("prints the grant-manager amounts under the combined cost, skipping empty ones", async () => {
-    const raw = await pdfText(await renderApplicantPdf(applicationToPdfInput(APPLICATION, SCORINGS)));
-    expect(raw).toContain("Financial Auditing: $25,850");
-    expect(raw).toContain("Combined Estimated Cost: $25,900");
-    expect(raw).toContain("Requested Grant Amount: $20,680");
-    expect(raw).toContain("Minimum Utility Financial Contribution: $5,170");
-
-    const partial = await pdfText(
-      await renderApplicantPdf(
-        applicationToPdfInput(
-          { ...APPLICATION, requested_grant_amount: null, minimum_utility_financial_contribution: "" },
-          SCORINGS
-        )
-      )
-    );
-    expect(partial).toContain("Combined Estimated Cost: $25,900");
-    expect(partial).not.toContain("Requested Grant Amount:");
-    expect(partial).not.toContain("Minimum Utility Financial Contribution:");
+  it("prints a single Estimated Cost line and fits on one page", async () => {
+    const bytes = await renderApplicantPdf(applicationToPdfInput(APPLICATION, SCORINGS));
+    const raw = await pdfText(bytes);
+    expect(raw).toContain("Estimated Cost: $25,900");
+    expect(raw).not.toContain("Estimated Costs by Project Type");
+    expect(raw).not.toContain("Combined Estimated Cost");
+    expect(raw).not.toContain("Requested Grant Amount");
+    expect(raw).not.toContain("Minimum Utility Financial Contribution");
+    expect(raw).not.toContain("Financial Auditing: $25,850");
+    expect((await PDFDocument.load(bytes)).getPageCount()).toBe(1);
   });
 
   it("stamps a Revised line only when revisedDate is given", async () => {
