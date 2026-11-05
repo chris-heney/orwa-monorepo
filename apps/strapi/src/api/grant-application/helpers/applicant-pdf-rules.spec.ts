@@ -40,6 +40,11 @@ describe("invalidMediaField", () => {
     ).toBeNull();
   });
 
+  it("treats an empty-object placeholder as no file (hidden Consent Order field)", () => {
+    expect(invalidMediaField({ consent_order: {} })).toBeNull();
+    expect(invalidMediaField({ proposals: [{}, 5611] })).toBeNull();
+  });
+
   it("names the field and file title of an un-uploaded entry", () => {
     expect(
       invalidMediaField({

@@ -67,6 +67,16 @@ export const GRANT_APPLICATION_MEDIA_FIELDS = [
   "applicant_pdf",
 ];
 
+/**
+ * gapp-form's default payload carries `consent_order: {}` for the hidden
+ * Consent Order field; it is "no file", not an un-uploaded one.
+ */
+const isEmptyMedia = (value: unknown): boolean =>
+  !!value &&
+  typeof value === "object" &&
+  !Array.isArray(value) &&
+  Object.keys(value as object).length === 0;
+
 const isMediaId = (value: unknown): boolean => {
   if (typeof value === "number") return Number.isInteger(value) && value > 0;
   if (typeof value === "string") return /^\d+$/.test(value);
@@ -93,7 +103,7 @@ export const invalidMediaField = (
     if (value === null || value === undefined || value === "") continue;
     const entries = Array.isArray(value) ? value : [value];
     for (const entry of entries) {
-      if (isMediaId(entry)) continue;
+      if (isMediaId(entry) || isEmptyMedia(entry)) continue;
       const title =
         entry && typeof entry === "object"
           ? ((entry as { title?: unknown; name?: unknown }).title ??
