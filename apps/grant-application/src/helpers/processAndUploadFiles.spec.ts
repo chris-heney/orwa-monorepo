@@ -61,6 +61,14 @@ describe("processAndUploadFiles", () => {
     expect(fileUploadErrorMessage(new Error("other"))).toBeNull();
   });
 
+  it("sends null for an untouched single-file field (defaultPayload `{}`)", async () => {
+    const result = await processAndUploadFiles({ consent_order: {}, proposals: [], project_costs: [] });
+    expect(result.consent_order).toBeNull();
+    expect(result.proposals).toEqual([]);
+    expect(result.project_costs).toEqual([]);
+    expect(uploadFile).not.toHaveBeenCalled();
+  });
+
   it("links an already-uploaded single file by id", async () => {
     const result = await processAndUploadFiles({ consent_order: existing });
     expect(result.consent_order).toBe(5611);

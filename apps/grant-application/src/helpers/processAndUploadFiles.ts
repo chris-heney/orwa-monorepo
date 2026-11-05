@@ -12,6 +12,10 @@ const isUploadedFile = (value: any) =>
 
 const isNewFile = (value: any) => !!value?.rawFile;
 
+// defaultPayload seeds single-file fields with `{}`; send "no file" instead.
+const isEmptyFile = (value: any) =>
+  value && typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0;
+
 /**
  * A selected file could not be uploaded. The submit MUST stop here: sending
  * the raw `{ src, rawFile }` object on to Strapi fails the whole save (and
@@ -104,6 +108,8 @@ export const processAndUploadFiles = async (
       processedPayload[key] = await uploadOne(key, value);
     } else if (isUploadedFile(value)) {
       processedPayload[key] = value.id;
+    } else if (isEmptyFile(value)) {
+      processedPayload[key] = null;
     }
   }
 
