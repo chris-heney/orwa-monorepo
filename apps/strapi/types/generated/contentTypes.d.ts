@@ -3455,7 +3455,7 @@ export interface ApiScholarshipApplicationScholarshipApplication
     school_name: Schema.Attribute.String & Schema.Attribute.Required;
     submission_date: Schema.Attribute.DateTime;
     system_name: Schema.Attribute.String & Schema.Attribute.Required;
-    test_scores: Schema.Attribute.Media<'files'> & Schema.Attribute.Required;
+    test_scores: Schema.Attribute.Media<'files'>;
     transcript: Schema.Attribute.Media<'images' | 'files'> &
       Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
