@@ -74,7 +74,6 @@ const HighSchoolDataStep = () => {
             label="SAT Test Score"
             min={400}
             max={1600}
-            required
           />
         </Grid>
         <Grid size={{ xs: 12, md: 4 }}>
@@ -83,7 +82,6 @@ const HighSchoolDataStep = () => {
             label="ACT Test Score"
             min={1}
             max={36}
-            required
           />
         </Grid>
 
@@ -101,7 +99,6 @@ const HighSchoolDataStep = () => {
           <FileInput
             name="test_scores"
             label="Upload ACT/SAT Scores"
-            required
             maxSizeMB={50}
             acceptedTypes={['.pdf', '.doc', '.docx', '.jpg', '.png']}
             helperText="Max. file size: 50 MB."
