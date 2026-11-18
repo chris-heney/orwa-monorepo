@@ -19,7 +19,9 @@ import RolesContextProvider from '../../../context/RolesContextProvider';
 export const ContactsGrid = () => {
   const isSmall = useMediaQuery<Theme>((theme) => theme.breakpoints.down('sm'));
   const { can } = useCan();
-  // Editors get the Actions column (edit + create-user) instead of rowClick.
+  // Rows always open the contact (editors land on Edit). The Actions column is
+  // hideable in Columns, so it must never be the only way in — a saved column
+  // pref without it left editors unable to open, update or delete any contact.
   const canEditContacts = can('update', 'contact');
 
   if (isSmall) {
@@ -39,7 +41,7 @@ export const ContactsGrid = () => {
     <DatagridConfigurable
       sx={customDatagridStyle}
       bulkActionButtons={false}
-      rowClick={canEditContacts ? false : 'show'}
+      rowClick={canEditContacts ? 'edit' : 'show'}
     >
       <TextField source="id" label="ID" />
       <TextField source="first" label="First Name" noWrap />
@@ -54,7 +56,12 @@ export const ContactsGrid = () => {
         <FunctionField
           label="Actions"
           render={(record: any) => (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            // Clicks here (and in CreateUserModal's dialog, which bubbles
+            // through its portal) must not trigger the row click.
+            <Box
+              sx={{ display: 'flex', justifyContent: 'flex-end' }}
+              onClick={(e) => e.stopPropagation()}
+            >
               {typeof record.user !== 'number' && (
                 <CreateUserModal contact={record} />
               )}
