@@ -6,6 +6,8 @@ import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
 export default defineConfig(() => ({
   root: __dirname,
+  // Served from https://orwa.org/associate-directory/ — asset URLs must be relative.
+  base: './',
   cacheDir: '../../node_modules/.vite/apps/associate-directory',
   server: {
     port: 4207,
